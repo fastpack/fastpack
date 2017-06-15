@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(executables
+ ((names (fastpack))
+  (libraries (lwt.unix flow_parser))
+  (preprocess (pps (lwt.ppx)))))
