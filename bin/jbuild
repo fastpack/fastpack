@@ -2,5 +2,5 @@
 
 (executables
  ((names (fastpack))
-  (libraries (lwt.unix flow_parser))
+  (libraries (lwt.unix flow_parser sedlex fileutils))
   (preprocess (pps (lwt.ppx)))))
