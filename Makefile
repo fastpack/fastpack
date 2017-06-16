@@ -3,10 +3,10 @@ build: build-bin
 build-bin:
 	@jbuilder build bin/fastpack.exe
 
-bootsrap: install conf-merlin build
+bootstrap: install conf-merlin build
 
 install:
-	@opam install -y ocp-indent flow_parser
+	@opam install -y ocp-indent flow_parser fileutils
 	@opam pin add --dev-repo lwt
 	@opam pin add merlin 'https://github.com/ocaml/merlin.git#beta'
 
