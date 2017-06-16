@@ -1,6 +1,8 @@
 module Module = struct
   type t = {
+    (** Absolute module filename *)
     filename : string;
+    (** Original module source *)
     source : string option;
   }
 
@@ -8,8 +10,10 @@ end
 
 module Dependency = struct
   type t = {
+    (** Original request to a dependency *)
     request : string;
-    source : string;
+    (** The filename this dependency was requested from *)
+    requested_from_filename : string;
   }
 
   let from_program filename program =
@@ -24,7 +28,7 @@ module Dependency = struct
       match stmt with
       | S.ImportDeclaration {
           source = (_, { value = L.String request });
-        } -> dependencies := { request; source = filename; }::!dependencies
+        } -> dependencies := { request; requested_from_filename = filename; }::!dependencies
       | _ -> ()
     in
 
@@ -34,7 +38,7 @@ module Dependency = struct
           callee = (_, E.Identifier (_, "require"));
           arguments = [E.Expression (_, E.Literal { value = L.String request })]
         } ->
-        dependencies := { request; source = filename; }::!dependencies
+        dependencies := { request; requested_from_filename = filename; }::!dependencies
       | _ ->
         ()
     in
@@ -50,7 +54,7 @@ module Dependency = struct
     !dependencies
 
   let resolve request =
-    let basedir = FilePath.dirname request.source in
+    let basedir = FilePath.dirname request.requested_from_filename in
     Fastpack_resolve.resolve request.request basedir
 
 end
@@ -107,7 +111,6 @@ let%lwt () =
       fun ({ Dependency. request } as req) ->
         (match%lwt Dependency.resolve req with
          | None ->
-           print_endline ("REQUEST: " ^ request);
            print_endline "ERROR: cannot resolve";
            Lwt.return_unit
          | Some r ->
