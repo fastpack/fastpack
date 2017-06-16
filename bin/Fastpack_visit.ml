@@ -281,9 +281,15 @@ and visit_function handler (loc, { Spider_monkey_ast.Function. id; params; body;
 and visit_block handler ((loc, block) : (Loc.t * Statement.Block.t)) =
   visit_list handler visit_statement block.body
 
-and visit_variable_declaration handler value =
-  (* TODO: *)
-  ()
+and visit_variable_declaration handler (_, { declarations }) =
+  visit_list handler
+    (fun handler (_, { Statement.VariableDeclaration.Declarator. init }) ->
+       (match init with
+        | None  -> ();
+        | Some expr -> visit_expression handler expr);
+       ()
+    )
+    declarations;
 
 and visit_expression_or_spread handler item = match item with
   | Expression.Expression expression -> visit_expression handler expression

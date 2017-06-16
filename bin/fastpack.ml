@@ -1,6 +1,7 @@
 module Module = struct
   type t = {
     filename : string;
+    source : string option;
   }
 
 end
@@ -27,12 +28,15 @@ module Dependency = struct
       | _ -> ()
     in
 
-    let find_require_expression (_, expr) = match expr with
+    let find_require_expression (_, expr) =
+      match expr with
       | E.Call {
           callee = (_, E.Identifier (_, "require"));
           arguments = [E.Expression (_, E.Literal { value = L.String request })]
-        } -> dependencies := { request; source = filename; }::!dependencies
-      | _ -> ()
+        } ->
+        dependencies := { request; source = filename; }::!dependencies
+      | _ ->
+        ()
     in
 
     let handler = {
@@ -58,7 +62,7 @@ module DependencyGraph = struct
     dependents : (string, Module.t) Hashtbl.t;
   }
 
-  let empty ?(size=200) = {
+  let empty ?(size=200) () = {
     modules = Hashtbl.create size;
     dependencies = Hashtbl.create (size * 20);
     dependents = Hashtbl.create (size * 20);
@@ -91,13 +95,13 @@ let read_file file_name =
 
 let%lwt () =
 
-  let graph = DependencyGraph.empty ~size:100 in
+  let graph = DependencyGraph.empty () in
 
   let rec process (m : Module.t) =
     DependencyGraph.add_module graph m;
     print_endline (" *** Processing: " ^ m.filename);
-    let%lwt src = read_file m.filename in
-    let (ast, errors) = Parser_flow.program_file src None in
+    let%lwt source = read_file m.filename in
+    let (ast, errors) = Parser_flow.program_file source None in
     let deps = Dependency.from_program m.filename ast in
     Lwt_list.iter_p (
       fun ({ Dependency. request } as req) ->
@@ -105,13 +109,16 @@ let%lwt () =
          | None ->
            print_endline ("REQUEST: " ^ request);
            print_endline "ERROR: cannot resolve";
-           Lwt.return ()
+           Lwt.return_unit
          | Some r ->
            print_endline ("REQUEST: " ^ request);
            print_endline ("RESOLVE: " ^ r);
            match DependencyGraph.lookup_module graph r with
-           | None -> process { Module. filename = r }
-           | Some _ -> Lwt.return ()
+           | None ->
+             let m = { Module. filename = r; source = Some source } in
+             process m
+           | Some _ ->
+             Lwt.return_unit
         )
     ) deps
   in
@@ -119,7 +126,8 @@ let%lwt () =
   let pwd = FileUtil.pwd () in
   let entry = {
     Module.
-    filename = FilePath.make_absolute pwd "./example/index.js"
+    filename = FilePath.make_absolute pwd "./example/index.js";
+    source = None;
   } in
   process entry;
 

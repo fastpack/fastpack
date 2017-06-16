@@ -6,9 +6,35 @@ let stat_option path =
     Lwt.return_none
 
 let package_entry_point package_json_path =
-  (** TODO: read "main" from "package.json" *)
   let package_path = FilePath.dirname package_json_path in
-  Lwt.return (FilePath.concat package_path "index.js")
+
+  let find_option find list =
+    try
+      Some (List.find find list)
+    with Not_found ->
+      None
+  in
+
+  let%lwt main_value =
+    let%lwt data = Lwt_io.with_file ~mode:Lwt_io.Input package_json_path Lwt_io.read in
+    let package = Yojson.Basic.from_string data in
+    match package with
+    | `Assoc fields ->
+      let main = find_option (fun (k, _) -> k = "main") fields in
+      (match main with
+       | Some (_, `String main_value) ->
+         Lwt.return_some main_value
+       | _ ->
+         Lwt.return_none)
+    | _ ->
+      Lwt.return_none
+  in
+
+  match main_value with
+  | Some main_value ->
+    Lwt.return (FilePath.concat package_path main_value)
+  | None ->
+    Lwt.return (FilePath.concat package_path "index.js")
 
 (** Try to resolve an absolute path *)
 let resolve_path path =

@@ -2,5 +2,5 @@
 
 (executables
  ((names (fastpack))
-  (libraries (lwt.unix flow_parser sedlex fileutils))
+  (libraries (lwt.unix flow_parser fileutils yojson))
   (preprocess (pps (lwt.ppx)))))
