@@ -144,43 +144,43 @@ let read_file file_name =
 
 module StringSet = Set.Make(String)
 
-let bundle graph entry =
-  let pre = "{\n" in
-  let post = "\n}" in
+let emit_bundle out graph entry =
+
+  let emit bytes =
+    Lwt_io.write out bytes
+  in
+
   let seen = StringSet.empty in
-  let modules =
+  let emit_modules () =
     let q = "\"" in
     let rec print_module seen (m : Module.t) =
       if StringSet.mem m.id seen
-      then (seen, None)
+      then Lwt.return seen
       else
         let seen = StringSet.add m.id seen in
         let Some workspace = m.workspace in
         let source = Fastpack_workspace.to_string workspace in
+        let%lwt () = emit (q ^ m.id ^ q ^
+                           ": function(module, exports, __fastpack_require__) {\n"
+                           ^ source
+                           ^ "\n},") in
         let dependencies = DependencyGraph.lookup_dependencies graph m in
-        let (seen, printed_dependencies) = List.fold_left
-            (fun (seen, printed_dependencies) (_dep, Some m) ->
-               match print_module seen m with
-               | (seen, None) -> (seen, printed_dependencies)
-               | (seen, Some s) -> (seen, s::printed_dependencies)
-            )
-            (seen, [])
+        let%lwt seen = Lwt_list.fold_left_s
+            (fun seen (_dep, Some m) -> print_module seen m)
+            seen
             dependencies
         in
-        let printed_module = (q ^ m.id ^ q ^
-                              ": function(module, exports, __fastpack_require__) {\n"
-                              ^ source
-                              ^ "\n},") in
-        let printed =
-          printed_module ^ (String.concat "\n" printed_dependencies)
-        in
-        (seen, Some printed)
+        Lwt.return seen
 
     in
-    let (_, Some printed_module) = print_module seen entry in
-    printed_module
+    let%lwt _ = print_module seen entry in
+    Lwt.return_unit
   in
-  pre ^ modules ^ post
+
+  let%lwt () = emit "{\n" in
+  let%lwt () = emit_modules () in
+  let%lwt () = emit "\n}" in
+  Lwt.return_unit
 
 let%lwt () =
 
@@ -222,6 +222,4 @@ let%lwt () =
     workspace = None;
   } in
   let%lwt entry = process entry in
-  let bundle_string = bundle graph entry in
-  print_endline bundle_string;
-  Lwt.return_unit;
+  emit_bundle Lwt_io.stdout graph entry
