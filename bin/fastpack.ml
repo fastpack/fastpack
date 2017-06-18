@@ -1,20 +1,4 @@
-module Module = struct
-  type t = {
-    (** Opaque module id *)
-    id : string;
-
-    (** Absolute module filename *)
-    filename : string;
-
-    (** Original module source *)
-    workspace : Fastpack_workspace.t option;
-  }
-
-  let make_id filename =
-    let digest = Digest.string filename in
-    Digest.to_hex digest
-
-end
+module StringSet = Set.Make(String)
 
 module Dependency = struct
   type t = {
@@ -27,6 +11,33 @@ module Dependency = struct
   let resolve request =
     let basedir = FilePath.dirname request.requested_from_filename in
     Fastpack_resolve.resolve request.request basedir
+
+  let compare a b = compare
+      (a.request, a.requested_from_filename)
+      (b.request, b.requested_from_filename)
+
+end
+
+module DependencyMap = Map.Make(struct
+    type t = Dependency.t
+    let compare = Dependency.compare
+  end)
+
+module Module = struct
+  type t = {
+    (** Opaque module id *)
+    id : string;
+
+    (** Absolute module filename *)
+    filename : string;
+
+    (** Original module source *)
+    workspace : t DependencyMap.t Fastpack_workspace.t option;
+  }
+
+  let make_id filename =
+    let digest = Digest.string filename in
+    Digest.to_hex digest
 
 end
 
@@ -83,6 +94,14 @@ module Fastpack_analyze = struct
     let dependency_id = ref 0 in
     let workspace = ref (Fastpack_workspace.of_string source) in
 
+    let dependency_to_module_id ctx dep =
+      try
+        let m = DependencyMap.find dep ctx in
+        m.Module.id
+      with |
+        Not_found -> "fastpack/not_found"
+    in
+
     let visit_import_declaration ((loc: Loc.t), stmt) =
       match stmt with
       | S.ImportDeclaration {
@@ -90,7 +109,7 @@ module Fastpack_analyze = struct
         } ->
         let rewrite_import = {
           Fastpack_workspace.
-          patch = "OKOKOK";
+          patch = (fun ctx -> "OKOKOK");
           offset_start = loc.start.offset;
           offset_end = loc._end.offset;
         } in
@@ -104,23 +123,27 @@ module Fastpack_analyze = struct
       | _ -> ()
     in
 
-    let visit_require_call ((loc: Loc.t), expr) =
+    let visit_require_call (loc, expr) =
       match expr with
       | E.Call {
           callee = (_, E.Identifier (_, "require"));
           arguments = [E.Expression (_, E.Literal { value = L.String request })]
         } ->
-        dependency_id := !dependency_id + 1;
-        dependencies := {
+        let dep = {
           Dependency.
           request;
           requested_from_filename = filename;
-        }::!dependencies;
+        } in
+        dependency_id := !dependency_id + 1;
+        dependencies := dep::!dependencies;
         let rewrite_require = {
           Fastpack_workspace.
-          patch = "__fastpack_require__(" ^ (string_of_int !dependency_id) ^ ")";
-          offset_start = loc.start.offset;
-          offset_end = loc._end.offset;
+          patch = (fun ctx ->
+              let module_id = dependency_to_module_id ctx dep in
+              Printf.sprintf "__fastpack_require__(\"%s\") // \"%s\" " module_id dep.request
+            );
+          offset_start = loc.Loc.start.offset;
+          offset_end = loc.Loc._end.offset;
         } in
         workspace := Fastpack_workspace.patch !workspace rewrite_require;
       | _ ->
@@ -142,43 +165,36 @@ end
 let read_file file_name =
   Lwt_io.with_file ~mode:Lwt_io.Input file_name Lwt_io.read
 
-module StringSet = Set.Make(String)
-
 let emit_bundle out graph entry =
+  let emit bytes = Lwt_io.write out bytes in
+  let rec emit_module ?(seen=StringSet.empty) m =
+    if StringSet.mem m.Module.id seen
+    then Lwt.return seen
+    else
+      let seen = StringSet.add m.Module.id seen in
+      let Some workspace = m.Module.workspace in
+      let ctx = DependencyMap.empty in
+      let dependencies = DependencyGraph.lookup_dependencies graph m in
+      let%lwt (ctx, seen) = Lwt_list.fold_left_s
+          (fun (ctx, seen) (dep, Some m) ->
+             let%lwt seen = emit_module ~seen:seen m in
+             let ctx = DependencyMap.add dep m ctx in
+             Lwt.return (ctx, seen))
+          (ctx, seen)
+          dependencies
+      in
+      let source = Fastpack_workspace.to_string workspace ctx in
+      let%lwt () = emit @@ Printf.sprintf "
+\"%s\": function(module, exports, __fastpack_require__) {
+%s
+},
+      " m.id source in
+      Lwt.return seen
 
-  let emit bytes =
-    Lwt_io.write out bytes
-  in
-
-  let seen = StringSet.empty in
-  let emit_modules () =
-    let q = "\"" in
-    let rec print_module seen (m : Module.t) =
-      if StringSet.mem m.id seen
-      then Lwt.return seen
-      else
-        let seen = StringSet.add m.id seen in
-        let Some workspace = m.workspace in
-        let source = Fastpack_workspace.to_string workspace in
-        let%lwt () = emit (q ^ m.id ^ q ^
-                           ": function(module, exports, __fastpack_require__) {\n"
-                           ^ source
-                           ^ "\n},") in
-        let dependencies = DependencyGraph.lookup_dependencies graph m in
-        let%lwt seen = Lwt_list.fold_left_s
-            (fun seen (_dep, Some m) -> print_module seen m)
-            seen
-            dependencies
-        in
-        Lwt.return seen
-
-    in
-    let%lwt _ = print_module seen entry in
-    Lwt.return_unit
   in
 
   let%lwt () = emit "{\n" in
-  let%lwt () = emit_modules () in
+  let%lwt _ = emit_module entry in
   let%lwt () = emit "\n}" in
   Lwt.return_unit
 
@@ -195,8 +211,7 @@ let%lwt () =
         fun ({ Dependency. request } as req) ->
           (match%lwt Dependency.resolve req with
            | None ->
-             print_endline ("ERROR: cannot resolve: " ^ request);
-             Lwt.return_unit
+             Lwt_io.write Lwt_io.stderr ("ERROR: cannot resolve: " ^ request ^ "\n");
            | Some resolved ->
              let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
                | None ->
