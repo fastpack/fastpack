@@ -1,10 +1,18 @@
 module Module = struct
   type t = {
+    (** Opaque module id *)
+    id : string;
+
     (** Absolute module filename *)
     filename : string;
+
     (** Original module source *)
     workspace : Fastpack_workspace.t option;
   }
+
+  let make_id filename =
+    let digest = Digest.string filename in
+    Digest.to_hex digest
 
 end
 
@@ -64,7 +72,7 @@ end
 
 module Fastpack_analyze = struct
 
-  let analyze filename source =
+  let analyze id filename source =
     let (program, _errors) = Parser_flow.program_file source None in
 
     let module S = Spider_monkey_ast.Statement in
@@ -72,6 +80,7 @@ module Fastpack_analyze = struct
     let module L = Spider_monkey_ast.Literal in
 
     let dependencies = ref [] in
+    let dependency_id = ref 0 in
     let workspace = ref (Fastpack_workspace.of_string source) in
 
     let visit_import_declaration ((loc: Loc.t), stmt) =
@@ -86,6 +95,7 @@ module Fastpack_analyze = struct
           offset_end = loc._end.offset;
         } in
         workspace := Fastpack_workspace.patch !workspace rewrite_import;
+        dependency_id := !dependency_id + 1;
         dependencies := {
           Dependency.
           request;
@@ -94,17 +104,25 @@ module Fastpack_analyze = struct
       | _ -> ()
     in
 
-    let visit_require_call (_, expr) =
+    let visit_require_call ((loc: Loc.t), expr) =
       match expr with
       | E.Call {
           callee = (_, E.Identifier (_, "require"));
           arguments = [E.Expression (_, E.Literal { value = L.String request })]
         } ->
+        dependency_id := !dependency_id + 1;
         dependencies := {
           Dependency.
           request;
           requested_from_filename = filename;
-        }::!dependencies
+        }::!dependencies;
+        let rewrite_require = {
+          Fastpack_workspace.
+          patch = "__fastpack_require__(" ^ (string_of_int !dependency_id) ^ ")";
+          offset_start = loc.start.offset;
+          offset_end = loc._end.offset;
+        } in
+        workspace := Fastpack_workspace.patch !workspace rewrite_require;
       | _ ->
         ()
     in
@@ -124,49 +142,86 @@ end
 let read_file file_name =
   Lwt_io.with_file ~mode:Lwt_io.Input file_name Lwt_io.read
 
+module StringSet = Set.Make(String)
+
+let bundle graph entry =
+  let pre = "{\n" in
+  let post = "\n}" in
+  let seen = StringSet.empty in
+  let modules =
+    let q = "\"" in
+    let rec print_module seen (m : Module.t) =
+      if StringSet.mem m.id seen
+      then (seen, None)
+      else
+        let seen = StringSet.add m.id seen in
+        let Some workspace = m.workspace in
+        let source = Fastpack_workspace.to_string workspace in
+        let dependencies = DependencyGraph.lookup_dependencies graph m in
+        let (seen, printed_dependencies) = List.fold_left
+            (fun (seen, printed_dependencies) (_dep, Some m) ->
+               match print_module seen m with
+               | (seen, None) -> (seen, printed_dependencies)
+               | (seen, Some s) -> (seen, s::printed_dependencies)
+            )
+            (seen, [])
+            dependencies
+        in
+        let printed_module = (q ^ m.id ^ q ^
+                              ": function(module, exports, __fastpack_require__) {\n"
+                              ^ source
+                              ^ "\n},") in
+        let printed =
+          printed_module ^ (String.concat "\n" printed_dependencies)
+        in
+        (seen, Some printed)
+
+    in
+    let (_, Some printed_module) = print_module seen entry in
+    printed_module
+  in
+  pre ^ modules ^ post
+
 let%lwt () =
 
   let graph = DependencyGraph.empty () in
 
   let rec process (m : Module.t) =
     let%lwt source = read_file m.filename in
-    let (workspace, dependencies) = Fastpack_analyze.analyze m.filename source in
-    DependencyGraph.add_module graph { m with workspace = Some workspace };
-    Lwt_list.iter_p (
-      fun ({ Dependency. request } as req) ->
-        (match%lwt Dependency.resolve req with
-         | None ->
-           print_endline ("ERROR: cannot resolve: " ^ request);
-           Lwt.return_unit
-         | Some r ->
-           match DependencyGraph.lookup_module graph r with
+    let (workspace, dependencies) = Fastpack_analyze.analyze m.id m.filename source in
+    let m = { m with workspace = Some workspace } in
+    DependencyGraph.add_module graph m;
+    let%lwt () = Lwt_list.iter_p (
+        fun ({ Dependency. request } as req) ->
+          (match%lwt Dependency.resolve req with
            | None ->
-             let m = { Module. filename = r; workspace = None } in
-             process m
-           | Some _ ->
+             print_endline ("ERROR: cannot resolve: " ^ request);
              Lwt.return_unit
-        )
-    ) dependencies
+           | Some resolved ->
+             let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
+               | None ->
+                 let id = Module.make_id resolved in
+                 let m = { Module. id = id; filename = resolved; workspace = None } in
+                 process m
+               | Some m ->
+                 Lwt.return m
+             in
+             DependencyGraph.add_dependency graph m (req, Some dep_module);
+             Lwt.return_unit
+          )
+      ) dependencies in
+    Lwt.return m
   in
 
   let pwd = FileUtil.pwd () in
+  let entry_filename = FilePath.make_absolute pwd "./example/index.js" in
   let entry = {
     Module.
-    filename = FilePath.make_absolute pwd "./example/index.js";
+    id = Module.make_id entry_filename;
+    filename = entry_filename;
     workspace = None;
   } in
-  let%lwt () = process entry in
-  let () = DependencyGraph.iter_modules (fun _k m ->
-      if m.filename = "/Users/andreypopp/Workspace/fastpack/example/index.js"
-      then
-        match m.workspace with
-        | Some workspace ->
-          print_endline ("*** " ^ m.filename ^ " ***");
-          print_endline (Fastpack_workspace.to_string workspace)
-        | None ->
-          ()
-      else ()
-    ) graph in
+  let%lwt entry = process entry in
+  let bundle_string = bundle graph entry in
+  print_endline bundle_string;
   Lwt.return_unit;
-
-
