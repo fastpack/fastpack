@@ -1,10 +1,13 @@
-build: build-bin build-FastpackResolver
+build: build-bin
 
 build-bin:
-	@jbuilder build bin/fastpack.exe
+	@jbuilder build bin/fpack.exe
 
 build-FastpackResolver:
-	@jbuilder build bin/fastpack.exe
+	@jbuilder build FastpackResolver/FastpackResolver.cma FastpackResolver/FastpackResolver.cmxa
+
+build-Fastpack:
+	@jbuilder build Fastpack/Fastpack.cma Fastpack/Fastpack.cmxa
 
 bootstrap: install conf-merlin build
 
@@ -14,7 +17,7 @@ install:
 	@opam pin add merlin 'https://github.com/ocaml/merlin.git#beta'
 
 conf-merlin:
-	@jbuilder build bin/.merlin FastpackResolver/.merlin
+	@jbuilder build bin/.merlin FastpackResolver/.merlin Fastpack/.merlin
 
 clean:
 	@rm -rf _build/

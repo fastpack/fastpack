@@ -31,7 +31,7 @@ module Module = struct
     filename : string;
 
     (** Original module source *)
-    workspace : t DependencyMap.t Fastpack_workspace.t option;
+    workspace : t DependencyMap.t Fastpack.Workspace.t option;
   }
 
   let make_id filename =
@@ -91,7 +91,7 @@ module Fastpack_analyze = struct
 
     let dependencies = ref [] in
     let dependency_id = ref 0 in
-    let workspace = ref (Fastpack_workspace.of_string source) in
+    let workspace = ref (Fastpack.Workspace.of_string source) in
 
     let dependency_to_module_id ctx dep =
       try
@@ -107,12 +107,12 @@ module Fastpack_analyze = struct
           source = (_, { value = L.String request });
         } ->
         let rewrite_import = {
-          Fastpack_workspace.
+          Fastpack.Workspace.
           patch = (fun ctx -> "OKOKOK");
           offset_start = loc.start.offset;
           offset_end = loc._end.offset;
         } in
-        workspace := Fastpack_workspace.patch !workspace rewrite_import;
+        workspace := Fastpack.Workspace.patch !workspace rewrite_import;
         dependency_id := !dependency_id + 1;
         dependencies := {
           Dependency.
@@ -136,7 +136,7 @@ module Fastpack_analyze = struct
         dependency_id := !dependency_id + 1;
         dependencies := dep::!dependencies;
         let rewrite_require = {
-          Fastpack_workspace.
+          Fastpack.Workspace.
           patch = (fun ctx ->
               let module_id = dependency_to_module_id ctx dep in
               Printf.sprintf "__fastpack_require__(\"%s\") // \"%s\" " module_id dep.request
@@ -144,18 +144,18 @@ module Fastpack_analyze = struct
           offset_start = loc.Loc.start.offset;
           offset_end = loc.Loc._end.offset;
         } in
-        workspace := Fastpack_workspace.patch !workspace rewrite_require;
+        workspace := Fastpack.Workspace.patch !workspace rewrite_require;
       | _ ->
         ()
     in
 
     let handler = {
-      Fastpack_visit.
+      Fastpack.Visit.
       visit_statement = visit_import_declaration;
       visit_expression = visit_require_call;
     } in
 
-    Fastpack_visit.visit handler program;
+    Fastpack.Visit.visit handler program;
 
     (!workspace, !dependencies)
 
@@ -182,7 +182,7 @@ let emit_bundle out graph entry =
           (ctx, seen)
           dependencies
       in
-      let source = Fastpack_workspace.to_string workspace ctx in
+      let source = Fastpack.Workspace.to_string workspace ctx in
       let%lwt () = emit @@ Printf.sprintf "
 \"%s\": function(module, exports, __fastpack_require__) {
 %s

@@ -1,6 +1,8 @@
 (jbuild_version 1)
 
-(executables
- ((names (fastpack))
-  (libraries (FastpackResolver lwt.unix flow_parser fileutils yojson))
+(executable
+ ((name fpack)
+  (public_name fpack)
+  (package Fastpack)
+  (libraries (Fastpack FastpackResolver lwt.unix flow_parser fileutils yojson))
   (preprocess (pps (lwt.ppx)))))
