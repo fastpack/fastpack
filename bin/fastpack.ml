@@ -10,12 +10,11 @@ module Dependency = struct
 
   let resolve request =
     let basedir = FilePath.dirname request.requested_from_filename in
-    Fastpack_resolve.resolve request.request basedir
+    FastpackResolver.resolve request.request basedir
 
   let compare a b = compare
       (a.request, a.requested_from_filename)
       (b.request, b.requested_from_filename)
-
 end
 
 module DependencyMap = Map.Make(struct
