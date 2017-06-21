@@ -189,7 +189,6 @@ let emit_bundle out graph entry =
 },
       " m.id source in
       Lwt.return seen
-
   in
 
   let%lwt () = emit "{\n" in
@@ -197,7 +196,12 @@ let emit_bundle out graph entry =
   let%lwt () = emit "\n}" in
   Lwt.return_unit
 
-let%lwt () =
+type bundle_error_reason =
+  | InvalidEntryPoint of string
+
+exception BundleError of bundle_error_reason
+
+let () =
 
   let graph = DependencyGraph.empty () in
 
@@ -227,13 +231,63 @@ let%lwt () =
     Lwt.return m
   in
 
-  let pwd = FileUtil.pwd () in
-  let entry_filename = FilePath.make_absolute pwd "./example/index.js" in
-  let entry = {
-    Module.
-    id = Module.make_id entry_filename;
-    filename = entry_filename;
-    workspace = None;
-  } in
-  let%lwt entry = process entry in
-  emit_bundle Lwt_io.stdout graph entry
+  let check_entry filename =
+    let pwd = FileUtil.pwd () in
+    let filename = match filename with
+      | None -> "./index.js"
+      | Some filename -> filename
+    in
+    let filename = FilePath.make_absolute pwd filename in
+    try%lwt
+      let%lwt _ = Lwt_unix.stat filename in
+      Lwt.return filename
+    with Unix.Unix_error _ ->
+      raise (BundleError (InvalidEntryPoint filename))
+  in
+
+  let run entry_filename =
+    let do_run =
+      let%lwt entry_filename = check_entry entry_filename in
+      let entry = {
+        Module.
+        id = Module.make_id entry_filename;
+        filename = entry_filename;
+        workspace = None;
+      } in
+      let%lwt entry = process entry in
+      let%lwt () = emit_bundle Lwt_io.stdout graph entry in
+      Lwt.return_unit
+    in
+    Lwt_main.run do_run
+  in
+
+  (* Command line interface *)
+
+  let open Cmdliner in
+
+  let run_t =
+
+    let run entry =
+      try
+        `Ok (run entry)
+      with
+      | BundleError (InvalidEntryPoint filename) ->
+        `Error (false, Printf.sprintf "Cannot find entry point: %s" filename)
+    in
+
+    let entry_t =
+      let doc = "Entry point" in
+      Arg.(value & pos 0 (some string) None & info [] ~docv:"MSG" ~doc)
+    in
+
+    Term.(ret (const run $ entry_t))
+  in
+
+  let info =
+    let doc =
+      "Pack JavaScript code into a single bundle"
+    in
+    Term.info "fpack" ~version:"technology preview" ~doc ~exits:Term.default_exits
+  in
+
+  Term.exit @@ Term.eval (run_t, info)

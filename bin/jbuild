@@ -4,5 +4,5 @@
  ((name fpack)
   (public_name fpack)
   (package Fastpack)
-  (libraries (Fastpack FastpackResolver lwt.unix flow_parser fileutils yojson))
+  (libraries (Fastpack FastpackResolver cmdliner lwt.unix flow_parser fileutils yojson))
   (preprocess (pps (lwt.ppx)))))
