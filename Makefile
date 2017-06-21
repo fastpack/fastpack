@@ -1,3 +1,4 @@
+b: build
 build: build-bin
 
 build-bin:
