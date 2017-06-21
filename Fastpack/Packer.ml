@@ -77,16 +77,16 @@ let check_entry filename =
 
 let pack entry_filename =
   let graph = DependencyGraph.empty () in
-  let do_run =
-    let%lwt entry_filename = check_entry entry_filename in
-    let entry = {
-      Module.
-      id = Module.make_id entry_filename;
-      filename = entry_filename;
-      workspace = None;
-    } in
-    let%lwt entry = process graph entry in
-    let%lwt () = emit Lwt_io.stdout graph entry in
-    Lwt.return_unit
-  in
-  Lwt_main.run do_run
+  let%lwt entry_filename = check_entry entry_filename in
+  let entry = {
+    Module.
+    id = Module.make_id entry_filename;
+    filename = entry_filename;
+    workspace = None;
+  } in
+  let%lwt entry = process graph entry in
+  let%lwt () = emit Lwt_io.stdout graph entry in
+  Lwt.return_unit
+
+let pack_main entry =
+  Lwt_main.run (pack entry)

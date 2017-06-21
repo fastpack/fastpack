@@ -9,7 +9,7 @@ let () =
         | Some entry -> entry
       in
       try
-        `Ok (Fastpack.Packer.pack entry)
+        `Ok (Fastpack.Packer.pack_main entry)
       with
       | Fastpack.Packer.PackError (InvalidEntryPoint filename) ->
         `Error (
@@ -20,7 +20,8 @@ let () =
 
     let entry_t =
       let doc = "Entry point" in
-      Arg.(value & pos 0 (some string) None & info [] ~docv:"ENTRY" ~doc)
+      let docv = "ENTRY" in
+      Arg.(value & pos 0 (some string) None & info [] ~docv ~doc)
     in
 
     Term.(ret (const run $ entry_t))
