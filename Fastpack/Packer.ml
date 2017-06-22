@@ -1,12 +1,28 @@
 module StringSet = Set.Make(String)
 
 type pack_error_reason =
-  | InvalidEntryPoint of string
+  | CannotReadModule of string
 
 exception PackError of pack_error_reason
 
-let read_file file_name =
-  Lwt_io.with_file ~mode:Lwt_io.Input file_name Lwt_io.read
+let read_module filename =
+  let%lwt source =
+    try%lwt
+      Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
+    with Unix.Unix_error _ ->
+      raise (PackError (CannotReadModule filename))
+  in
+  Lwt.return {
+    Module.
+    id = Module.make_id filename;
+    filename = filename;
+    workspace = Workspace.of_string source;
+  }
+
+let read_entry_module filename =
+  let pwd = FileUtil.pwd () in
+  let filename = FilePath.make_absolute pwd filename in
+  read_module filename
 
 let emit out graph entry =
   let emit bytes = Lwt_io.write out bytes in
@@ -15,14 +31,19 @@ let emit out graph entry =
     then Lwt.return seen
     else
       let seen = StringSet.add m.Module.id seen in
-      let Some workspace = m.Module.workspace in
+      let workspace = m.Module.workspace in
       let ctx = Module.DependencyMap.empty in
       let dependencies = DependencyGraph.lookup_dependencies graph m in
       let%lwt (ctx, seen) = Lwt_list.fold_left_s
-          (fun (ctx, seen) (dep, Some m) ->
-             let%lwt seen = emit_module ~seen:seen m in
-             let ctx = Module.DependencyMap.add dep m ctx in
-             Lwt.return (ctx, seen))
+          (fun (ctx, seen) (dep, m) ->
+             match m with
+             | None ->
+               (* TODO: emit stub module for the missing dep *)
+               Lwt.return (ctx, seen)
+             | Some m ->
+               let%lwt seen = emit_module ~seen:seen m in
+               let ctx = Module.DependencyMap.add dep m ctx in
+               Lwt.return (ctx, seen))
           (ctx, seen)
           dependencies
       in
@@ -42,9 +63,9 @@ let emit out graph entry =
 
 
 let rec process graph (m : Module.t) =
-  let%lwt source = read_file m.filename in
+  let source = m.Module.workspace.Workspace.value in
   let (workspace, dependencies) = Analyze.analyze m.id m.filename source in
-  let m = { m with workspace = Some workspace } in
+  let m = { m with workspace = workspace } in
   DependencyGraph.add_module graph m;
   let%lwt () = Lwt_list.iter_p (
       fun ({ Dependency. request } as req) ->
@@ -54,8 +75,7 @@ let rec process graph (m : Module.t) =
          | Some resolved ->
            let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
              | None ->
-               let id = Module.make_id resolved in
-               let m = { Module. id = id; filename = resolved; workspace = None } in
+               let%lwt m = read_module resolved in
                process graph m
              | Some m ->
                Lwt.return m
@@ -66,24 +86,9 @@ let rec process graph (m : Module.t) =
     ) dependencies in
   Lwt.return m
 
-let check_entry filename =
-  let pwd = FileUtil.pwd () in
-  let filename = FilePath.make_absolute pwd filename in
-  try%lwt
-    let%lwt _ = Lwt_unix.stat filename in
-    Lwt.return filename
-  with Unix.Unix_error _ ->
-    raise (PackError (InvalidEntryPoint filename))
-
 let pack entry_filename =
   let graph = DependencyGraph.empty () in
-  let%lwt entry_filename = check_entry entry_filename in
-  let entry = {
-    Module.
-    id = Module.make_id entry_filename;
-    filename = entry_filename;
-    workspace = None;
-  } in
+  let%lwt entry = read_entry_module entry_filename in
   let%lwt entry = process graph entry in
   let%lwt () = emit Lwt_io.stdout graph entry in
   Lwt.return_unit

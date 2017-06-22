@@ -10,8 +10,8 @@ type t = {
   (** Absolute module filename *)
   filename : string;
 
-  (** Original module source *)
-  workspace : t DependencyMap.t Fastpack.Workspace.t option;
+  (** Module source along with transformations applied *)
+  workspace : t DependencyMap.t Workspace.t;
 }
 
 let make_id filename =

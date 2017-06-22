@@ -11,7 +11,7 @@ let () =
       try
         `Ok (Fastpack.Packer.pack_main entry)
       with
-      | Fastpack.Packer.PackError (InvalidEntryPoint filename) ->
+      | Fastpack.Packer.PackError (CannotReadModule filename) ->
         `Error (
           false,
           Printf.sprintf "Cannot find entry point %s" filename
