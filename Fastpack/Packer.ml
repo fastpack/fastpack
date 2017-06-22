@@ -24,6 +24,78 @@ let read_entry_module filename =
   let filename = FilePath.make_absolute pwd filename in
   read_module filename
 
+let emit_runtime out entry_id =
+  (**
+     I just copy-pasted that piece of code from webpack
+
+     TODO: Give them proper credits!
+  *)
+  Lwt_io.write out (Printf.sprintf "
+(function(modules) {
+  // The module cache
+  var installedModules = {};
+
+  // The require function
+  function __fastpack_require__(moduleId) {
+
+    // Check if module is in cache
+    if(installedModules[moduleId]) {
+      return installedModules[moduleId].exports;
+    }
+    // Create a new module (and put it into the cache)
+    var module = installedModules[moduleId] = {
+      i: moduleId,
+      l: false,
+      exports: {}
+    };
+
+    // Execute the module function
+    modules[moduleId].call(module.exports, module, module.exports, __fastpack_require__);
+
+    // Flag the module as loaded
+    module.l = true;
+
+    // Return the exports of the module
+    return module.exports;
+  }
+
+  // expose the modules object
+  __fastpack_require__.m = modules;
+
+  // expose the module cache
+  __fastpack_require__.c = installedModules;
+
+  // define getter function for harmony exports
+  __fastpack_require__.d = function(exports, name, getter) {
+    if(!__fastpack_require__.o(exports, name)) {
+      Object.defineProperty(exports, name, {
+        configurable: false,
+        enumerable: true,
+        get: getter
+      });
+    }
+  };
+
+  // getDefaultExport function for compatibility with non-harmony modules
+  __fastpack_require__.n = function(module) {
+    var getter = module && module.__esModule ?
+      function getDefault() { return module['default']; } :
+      function getModuleExports() { return module; };
+    __fastpack_require__.d(getter, 'a', getter);
+    return getter;
+  };
+
+  // Object.prototype.hasOwnProperty.call
+  __fastpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+
+  // Public path
+  __fastpack_require__.p = '';
+
+  // Load entry module and return exports
+  return __fastpack_require__(__fastpack_require__.s = '%s');
+})
+" entry_id)
+
 let emit out graph entry =
   let emit bytes = Lwt_io.write out bytes in
   let rec emit_module ?(seen=StringSet.empty) m =
@@ -48,17 +120,18 @@ let emit out graph entry =
           dependencies
       in
       let source = Workspace.to_string workspace ctx in
-      let%lwt () = emit @@ Printf.sprintf "
+      let%lwt () = emit (Printf.sprintf "
 \"%s\": function(module, exports, __fastpack_require__) {
 %s
 },
-      " m.id source in
+      " m.id source) in
       Lwt.return seen
   in
 
-  let%lwt () = emit "{\n" in
+  let%lwt () = emit_runtime out entry.Module.id in
+  let%lwt () = emit "({\n" in
   let%lwt _ = emit_module entry in
-  let%lwt () = emit "\n}" in
+  let%lwt () = emit "\n})" in
   Lwt.return_unit
 
 
