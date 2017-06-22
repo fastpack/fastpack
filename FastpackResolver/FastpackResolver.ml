@@ -114,7 +114,7 @@ let resolve path basedir =
     | '@' ->
       let (package, path) = match String.split_on_char '/' path with
         | [] -> (None, None)
-        | scope::[] -> (None, None)
+        | _scope::[] -> (None, None)
         | scope::package::[] -> (Some (scope ^ "/" ^ package), None)
         | scope::package::rest -> (Some (scope ^ "/" ^ package), Some (String.concat "/" rest))
       in

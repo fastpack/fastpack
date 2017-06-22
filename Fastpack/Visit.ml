@@ -34,7 +34,7 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
   | Statement.Block { body } ->
     visit_list handler visit_statement body
 
-  | Statement.Expression { expression } ->
+  | Statement.Expression { expression; directive = _directive } ->
     visit_expression handler expression
 
   | Statement.If { test; consequent; alternate } ->
@@ -42,19 +42,23 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
     visit_statement handler consequent;
     visit_if_some handler visit_statement alternate
 
-  | Statement.Labeled { label = (loc, label); body } ->
+  | Statement.Labeled { label = (_loc, _label); body } ->
     visit_statement handler body
 
-  | Statement.Break { label } ->
+  | Statement.Break { label = _label } ->
     ()
 
-  | Statement.Continue { label } ->
+  | Statement.Continue { label = _label } ->
     ()
 
   | Statement.With { _object; body } ->
     visit_statement handler body
 
-  | Statement.TypeAlias { id = (_, id); typeParameters; right } ->
+  | Statement.TypeAlias {
+      id = _id;
+      typeParameters = _typeParameters;
+      right = _right
+    } ->
     ()
 
   | Statement.Switch { discriminant; cases } ->
@@ -94,14 +98,14 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
     visit_if_some handler visit_expression update;
     visit_statement handler body;
 
-  | Statement.ForIn { left; right; body; each } ->
+  | Statement.ForIn { left; right; body; each = _each } ->
     (match left with
      | Statement.ForIn.LeftDeclaration decl -> visit_variable_declaration handler decl
      | Statement.ForIn.LeftExpression expression -> visit_expression handler expression);
     visit_expression handler right;
     visit_statement handler body
 
-  | Statement.ForOf { left; right; body; async } ->
+  | Statement.ForOf { left; right; body; async = _async } ->
     (match left with
      | Statement.ForOf.LeftDeclaration decl -> visit_variable_declaration handler decl
      | Statement.ForOf.LeftExpression expression -> visit_expression handler expression);
@@ -114,15 +118,34 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
   | Statement.VariableDeclaration decl ->
     visit_variable_declaration handler (loc, decl)
 
-  | Statement.ClassDeclaration { id; body = (_, { body }); superClass; typeParameters; superTypeParameters; implements;
-                                 classDecorators } ->
+  | Statement.ClassDeclaration {
+      id = _id;
+      body = (_, { body });
+      superClass;
+      typeParameters = _typeParameters;
+      superTypeParameters = _superTypeParameters;
+      implements = _implements;
+      classDecorators = _classDecorators;
+    } ->
     (** TODO: handle `classDecorators` *)
     (** TODO: handle `implements` *)
     visit_if_some handler visit_expression superClass;
     visit_list handler (fun handler item -> match item with
-        | Class.Body.Method (_loc, { kind; key; value; static; decorators }) ->
+        | Class.Body.Method (_loc, {
+            kind = _kind;
+            key = _key;
+            value;
+            static = _static;
+            decorators = _decorators
+          }) ->
           visit_function handler value
-        | Class.Body.Property (loc, { key; value; typeAnnotation; static; variance }) ->
+        | Class.Body.Property (_loc, {
+            key;
+            value;
+            typeAnnotation = _typeAnnotation;
+            static = _static;
+            variance = _variance;
+          }) ->
           visit_object_property_key handler key;
           visit_if_some handler visit_expression value
       ) body
@@ -155,7 +178,12 @@ and visit_expression handler ((loc, expression) : Expression.t) =
     visit_list
       handler
       (fun handler prop -> match prop with
-         | Expression.Object.Property (_, { key; value; _method; shorthand }) ->
+         | Expression.Object.Property (_, {
+             key;
+             value;
+             _method;
+             shorthand = _shorthand;
+           }) ->
            (match value with
             | Expression.Object.Property.Init expr ->
               visit_object_property_key handler key;
@@ -176,21 +204,21 @@ and visit_expression handler ((loc, expression) : Expression.t) =
   | Expression.Sequence { expressions } ->
     visit_list handler visit_expression expressions
 
-  | Expression.Unary { operator; prefix; argument } ->
+  | Expression.Unary { operator = _operator; prefix = _prefix; argument } ->
     visit_expression handler argument
 
-  | Expression.Binary { operator; left; right } ->
+  | Expression.Binary { operator = _operator; left; right } ->
     visit_expression handler left;
     visit_expression handler right
 
-  | Expression.Assignment { operator; left; right } ->
+  | Expression.Assignment { operator = _operator; left; right } ->
     visit_pattern handler left;
     visit_expression handler right
 
-  | Expression.Update { operator; argument; prefix } ->
+  | Expression.Update { operator = _operator; argument; prefix = _prefix } ->
     visit_expression handler argument
 
-  | Expression.Logical { operator; left; right } ->
+  | Expression.Logical { operator = _operator; left; right } ->
     visit_expression handler left;
     visit_expression handler right
 
@@ -207,10 +235,10 @@ and visit_expression handler ((loc, expression) : Expression.t) =
     visit_expression handler callee;
     visit_list handler visit_expression_or_spread arguments
 
-  | Expression.Member { _object; property; computed } ->
+  | Expression.Member { _object; property = _property; computed = _computed } ->
     visit_expression handler _object
 
-  | Expression.Yield { argument; delegate } ->
+  | Expression.Yield { argument; delegate = _delegate } ->
     visit_if_some handler visit_expression argument
 
   | Expression.Comprehension _ -> ()
@@ -224,20 +252,20 @@ and visit_expression handler ((loc, expression) : Expression.t) =
   | Expression.TypeCast _ -> ()
   | Expression.MetaProperty _ -> ()
 
-and visit_pattern (handler : visit_handler) ((loc, pattern) : Pattern.t) =
+and visit_pattern (handler : visit_handler) ((_loc, pattern) : Pattern.t) =
   match pattern with
 
-  | Pattern.Object { properties; typeAnnotation } ->
+  | Pattern.Object { properties; typeAnnotation = _typeAnnotation } ->
     visit_list
       handler
       (fun handler prop -> match prop with
-         | Pattern.Object.Property (_,{ key; pattern; shorthand }) ->
+         | Pattern.Object.Property (_,{ key = _key; pattern; shorthand = _shorthand }) ->
            visit_pattern handler pattern
          | Pattern.Object.RestProperty (_,{ argument }) ->
            visit_pattern handler argument
       ) properties
 
-  | Pattern.Array { elements; typeAnnotation } ->
+  | Pattern.Array { elements; typeAnnotation = _typeAnnotation } ->
     visit_list
       handler
       (fun handler element -> match element with
@@ -252,21 +280,31 @@ and visit_pattern (handler : visit_handler) ((loc, pattern) : Pattern.t) =
     visit_pattern handler left;
     visit_expression handler right
 
-  | Pattern.Identifier { name; typeAnnotation; optional } -> ()
+  | Pattern.Identifier { name = _name; typeAnnotation = _typeAnnotation; optional = _optional } -> ()
 
   | Pattern.Expression expr -> visit_expression handler expr
 
 and visit_object_property_key handler key =
   match key with
-  | Expression.Object.Property.Literal lit ->
+  | Expression.Object.Property.Literal _lit ->
     ()
-  | Expression.Object.Property.Identifier id ->
+  | Expression.Object.Property.Identifier _id ->
     ()
   | Expression.Object.Property.Computed expr ->
     visit_expression handler expr
 
-and visit_function handler (loc, { Spider_monkey_ast.Function. id; params; body; async; generator; predicate;
-                                   expression; returnType; typeParameters }) =
+and visit_function handler (_loc, {
+    Spider_monkey_ast.Function.
+    id = _id;
+    params;
+    body;
+    async = _async;
+    generator = _generator;
+    predicate = _predicate;
+    expression = _expression;
+    returnType = _returnType;
+    typeParameters = _typeParameters;
+  }) =
   (** TODO: handle `predicate` *)
   (
     let (params, rest) = params in
@@ -278,12 +316,12 @@ and visit_function handler (loc, { Spider_monkey_ast.Function. id; params; body;
    | Spider_monkey_ast.Function.BodyBlock block -> visit_block handler block
    | Spider_monkey_ast.Function.BodyExpression expr -> visit_expression handler expr)
 
-and visit_block handler ((loc, block) : (Loc.t * Statement.Block.t)) =
+and visit_block handler ((_loc, block) : (Loc.t * Statement.Block.t)) =
   visit_list handler visit_statement block.body
 
-and visit_variable_declaration handler (_, { declarations }) =
+and visit_variable_declaration handler (_, { declarations; kind = _kind }) =
   visit_list handler
-    (fun handler (_, { Statement.VariableDeclaration.Declarator. init }) ->
+    (fun handler (_, { Statement.VariableDeclaration.Declarator. init; id = _id }) ->
        (match init with
         | None  -> ();
         | Some expr -> visit_expression handler expr);

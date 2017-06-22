@@ -1,4 +1,4 @@
-let analyze id filename source =
+let analyze _id filename source =
   let (program, _errors) = Parser_flow.program_file source None in
 
   let module S = Spider_monkey_ast.Statement in
@@ -20,11 +20,12 @@ let analyze id filename source =
   let visit_import_declaration ((loc: Loc.t), stmt) =
     match stmt with
     | S.ImportDeclaration {
-        source = (_, { value = L.String request });
+        source = (_, { value = L.String request; _ });
+        _;
       } ->
       let rewrite_import = {
         Workspace.
-        patch = (fun ctx -> "OKOKOK");
+        patch = (fun _ctx -> "OKOKOK");
         offset_start = loc.start.offset;
         offset_end = loc._end.offset;
       } in
@@ -42,7 +43,7 @@ let analyze id filename source =
     match expr with
     | E.Call {
         callee = (_, E.Identifier (_, "require"));
-        arguments = [E.Expression (_, E.Literal { value = L.String request })]
+        arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
       } ->
       let dep = {
         Dependency.

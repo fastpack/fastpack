@@ -2,7 +2,7 @@ b: build
 build: build-bin
 
 build-bin:
-	@jbuilder build bin/fpack.exe
+	@jbuilder build --dev bin/fpack.exe
 
 build-FastpackResolver:
 	@jbuilder build FastpackResolver/FastpackResolver.cma FastpackResolver/FastpackResolver.cmxa

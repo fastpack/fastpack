@@ -85,7 +85,7 @@ let print program =
       |> dedent
       |> emit "}"
 
-    | Statement.Expression { expression } ->
+    | Statement.Expression { expression; directive = _directive } ->
       emit_expression expression ctx
 
     | Statement.If { test; consequent; alternate } ->
@@ -97,7 +97,7 @@ let print program =
           |> emit " else "
           |> emit_statement alternate) alternate
 
-    | Statement.Labeled { label = (loc, label); body } ->
+    | Statement.Labeled { label = (_loc, label); body } ->
       ctx
       |> emit label
       |> emit ":"
@@ -108,12 +108,12 @@ let print program =
     | Statement.Break { label } ->
       ctx
       |> emit "break"
-      |> emit_if_some (fun (loc, name) ctx -> ctx |> emit_space |> emit name) label
+      |> emit_if_some (fun (_loc, name) ctx -> ctx |> emit_space |> emit name) label
 
     | Statement.Continue { label } ->
       ctx
       |> emit "continue"
-      |> emit_if_some (fun (loc, name) ctx -> ctx |> emit_space |> emit name) label
+      |> emit_if_some (fun (_loc, name) ctx -> ctx |> emit_space |> emit name) label
 
     | Statement.With { _object; body } ->
       ctx
@@ -193,7 +193,7 @@ let print program =
       |> emit_statement body
       |> dedent
 
-    | Statement.ForIn { left; right; body; each } ->
+    | Statement.ForIn { left; right; body; each = _each } ->
       (* TODO: handle `each` *)
       ctx
       |> emit "for ("
@@ -207,7 +207,7 @@ let print program =
       |> emit_statement body
       |> dedent
 
-    | Statement.ForOf { left; right; body; async } ->
+    | Statement.ForOf { left; right; body; async = _async } ->
       (* TODO: handle `async` *)
       ctx
       |> emit "for ("
@@ -232,8 +232,14 @@ let print program =
       ctx
       |> emit_variable_declaration (loc, decl)
 
-    | Statement.ClassDeclaration { id; body = (_, { body }); superClass; typeParameters; superTypeParameters; implements;
-                                   classDecorators } ->
+    | Statement.ClassDeclaration { id;
+                                   body = (_, { body });
+                                   superClass;
+                                   typeParameters;
+                                   superTypeParameters;
+                                   implements = _implements;
+                                   classDecorators = _classDecorators;
+                                 } ->
       (** TODO: handle `classDecorators` *)
       (** TODO: handle `implements` *)
       ctx
@@ -248,7 +254,13 @@ let print program =
       |> indent
       |> emit_list ~emit_sep:emit_newline (fun item ctx -> match item with
 
-          | Class.Body.Method (_loc, { kind; key; value; static; decorators }) ->
+          | Class.Body.Method (_loc, {
+              kind;
+              key;
+              value;
+              static;
+              decorators = _decorators
+            }) ->
             (** TODO: handle `decorators` *)
             ctx
             |> (if static then emit "static " else emit_none)
@@ -259,7 +271,7 @@ let print program =
                 | Class.Method.Set -> emit "set ")
             |> emit_function ~as_method:true ~emit_id:(emit_object_property_key key) value
 
-          | Class.Body.Property (loc, { key; value; typeAnnotation; static; variance }) ->
+          | Class.Body.Property (_loc, { key; value; typeAnnotation; static; variance }) ->
             ctx
             |> (if static then emit "static " else emit_none)
             |> emit_if_some emit_variance variance
@@ -273,7 +285,7 @@ let print program =
       |> dedent
       |> emit "}"
 
-    | Statement.InterfaceDeclaration { id; typeParameters; body; extends; mixins } ->
+    | Statement.InterfaceDeclaration { id; typeParameters; body; extends; mixins = _mixins} ->
       (** TODO: handle `mixins` *)
       ctx
       |> emit "interface "
@@ -313,7 +325,7 @@ let print program =
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
         (fun prop ctx -> match prop with
-           | Expression.Object.Property (_, { key; value; _method; shorthand }) ->
+           | Expression.Object.Property (_, { key; value; _method; shorthand = _shorthand }) ->
              (match value with
               | Expression.Object.Property.Init expr ->
                 ctx |> emit_object_property_key key |> emit ": " |> emit_expression expr
@@ -334,7 +346,8 @@ let print program =
       |> emit "("
       |> emit_list ~emit_sep:emit_comma emit_expression expressions
       |> emit ")"
-    | Expression.Unary { operator; prefix; argument } ->
+    | Expression.Unary { operator; prefix = _prefix; argument } ->
+      (* TODO: handle prefix *)
       ctx
       |> (match operator with
           | Expression.Unary.Minus -> emit "-"
@@ -448,14 +461,14 @@ let print program =
     | Expression.TypeCast _ -> ctx
     | Expression.MetaProperty _ -> ctx
 
-  and emit_pattern ((loc, pattern) : Pattern.t) ctx =
+  and emit_pattern ((_loc, pattern) : Pattern.t) ctx =
     match pattern with
     | Pattern.Object { properties; typeAnnotation } ->
       ctx
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
         (fun prop ctx -> match prop with
-           | Pattern.Object.Property (_,{ key; pattern; shorthand }) ->
+           | Pattern.Object.Property (_,{ key; pattern; shorthand = _shorthand }) ->
              (** TODO: what to do with `shorthand`? *)
              ctx |> emit_pattern pattern |> emit ": " |> emit_object_pattern_property_key key
            | Pattern.Object.RestProperty (_,{ argument }) ->
@@ -500,8 +513,18 @@ let print program =
     | Expression.Object.Property.Computed expr ->
       ctx |> emit "[" |> emit_expression expr |> emit "]"
 
-  and emit_function ?(as_method=false) ?emit_id (loc, { Spider_monkey_ast.Function. id; params; body; async; generator; predicate;
-                                                        expression; returnType; typeParameters }) ctx =
+  and emit_function ?(as_method=false) ?emit_id (_loc, {
+      Spider_monkey_ast.Function.
+      id;
+      params;
+      body;
+      async;
+      generator;
+      predicate = _predicate;
+      expression = _expression;
+      returnType;
+      typeParameters
+    }) ctx =
     (** TODO: handle `predicate` *)
     ctx
     |> (if async then emit "async " else emit_none)
@@ -534,7 +557,7 @@ let print program =
     | Variance.Plus -> emit "+"
     | Variance.Minus -> emit "-"
 
-  and emit_block ((loc, block) : (Loc.t * Statement.Block.t)) ctx =
+  and emit_block ((_loc, block) : (Loc.t * Statement.Block.t)) ctx =
     ctx
     |> emit "{"
     |> indent
@@ -542,10 +565,10 @@ let print program =
     |> dedent
     |> emit "}"
 
-  and emit_identifier ((loc, identifier) : Spider_monkey_ast.Identifier.t) =
+  and emit_identifier ((_loc, identifier) : Spider_monkey_ast.Identifier.t) =
     emit identifier
 
-  and emit_variable_declaration value ctx =
+  and emit_variable_declaration _value ctx =
     ctx
 
   and emit_expression_or_spread item ctx = match item with
@@ -569,7 +592,7 @@ let print program =
     | Type.String -> emit "string" ctx
     | Type.Boolean -> emit "boolean" ctx
     | Type.Nullable typ -> ctx |> emit "?" |> emit_type typ
-    | Type.Function { params; returnType; typeParameters } -> ctx
+    | Type.Function { params = _params; returnType = _returnType; typeParameters = _typeParameters} -> ctx
     | Type.Object typ -> emit_object_type (loc, typ) ctx
     | Type.Array _ -> ctx
     | Type.Generic typ -> emit_generic_type (loc, typ) ctx
@@ -582,10 +605,10 @@ let print program =
     | Type.BooleanLiteral _ -> ctx
     | Type.Exists -> ctx
 
-  and emit_object_type (_loc, value) ctx =
+  and emit_object_type (_loc, _value) ctx =
     ctx
 
-  and emit_generic_type (_loc, value) ctx =
+  and emit_generic_type (_loc, _value) ctx =
     ctx
 
   and emit_type_parameter (_loc, value) ctx =
@@ -599,10 +622,10 @@ let print program =
   and emit_type_parameter_declaration (_loc, { params }) ctx =
     ctx |> emit "<" |> emit_list ~emit_sep:emit_comma emit_type_parameter params |> emit ">"
 
-  and emit_type_parameter_instantiation value ctx =
+  and emit_type_parameter_instantiation _value ctx =
     ctx
 
-  and emit_literal (_loc, { raw }) ctx =
+  and emit_literal (_loc, { raw; value = _value }) ctx =
     emit raw ctx
   in
 

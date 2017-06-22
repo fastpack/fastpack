@@ -119,12 +119,9 @@ let emit out graph entry =
           (ctx, seen)
           dependencies
       in
-      let source = Workspace.to_string workspace ctx in
-      let%lwt () = emit (Printf.sprintf "
-\"%s\": function(module, exports, __fastpack_require__) {
-%s
-},
-      " m.id source) in
+      let%lwt () = emit (Printf.sprintf "\"%s\": function(module, exports, __fastpack_require__) {\n" m.id) in
+      let%lwt () = Workspace.write out workspace ctx in
+      let%lwt () = emit "},\n" in
       Lwt.return seen
   in
 
@@ -141,7 +138,7 @@ let rec process graph (m : Module.t) =
   let m = { m with workspace = workspace } in
   DependencyGraph.add_module graph m;
   let%lwt () = Lwt_list.iter_p (
-      fun ({ Dependency. request } as req) ->
+      fun ({ Dependency. request; _ } as req) ->
         (match%lwt Dependency.resolve req with
          | None ->
            Lwt_io.write Lwt_io.stderr ("ERROR: cannot resolve: " ^ request ^ "\n");

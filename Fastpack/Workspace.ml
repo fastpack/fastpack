@@ -27,12 +27,25 @@ and 'ctx patch = {
 }
 
 let of_string s =
-  {
-    value = s;
-    patches = [];
-  }
+  { value = s; patches = []; }
 
-let rec to_string w ctx =
+let patch w p =
+  { w with patches = p::w.patches }
+
+let write out w ctx =
+  let patches = List.rev w.patches in
+  let rec write_patch offset value patches =
+    match patches with
+    | [] ->
+      Lwt_io.write_from_exactly out value offset (String.length value - offset)
+    | patch::patches ->
+      let%lwt () = Lwt_io.write_from_exactly out value offset (patch.offset_start - offset) in
+      let%lwt () = Lwt_io.write out (patch.patch ctx) in
+      write_patch patch.offset_end value patches
+  in
+  write_patch 0 w.value patches
+
+let to_string w ctx =
   let patches = List.rev w.patches in
   let rec print offset value patches =
     match patches with
@@ -43,8 +56,3 @@ let rec to_string w ctx =
       patch_pre ^ (patch.patch ctx) ^ (print patch.offset_end value patches)
   in
   print 0 w.value patches
-
-let patch w p =
-  {
-    w with patches = p::w.patches
-  }
