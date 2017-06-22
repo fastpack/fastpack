@@ -1,8 +1,14 @@
 b: build
 build: build-bin
 
+top: build-top
+	@rlwrap ./_build/default/top/main.exe
+
 build-bin:
 	@jbuilder build --dev bin/fpack.exe
+
+build-top:
+	@jbuilder build top/main.exe
 
 build-FastpackResolver:
 	@jbuilder build FastpackResolver/FastpackResolver.cma FastpackResolver/FastpackResolver.cmxa

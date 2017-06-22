@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(executable
+ ((name       main)
+  (libraries  (compiler-libs.toplevel Fastpack FastpackResolver FastpackSourceMap))
+  (link_flags (-linkall))
+  (modes      (byte))))

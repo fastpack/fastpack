@@ -11,3 +11,7 @@ Make sure you have opam environment activated and run:
 Then to produce the executable:
 
     % make build
+
+To execute toplevel (OCaml REPL):
+
+    % make top
