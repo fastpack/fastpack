@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+ ((name        FastpackSourceMap)
+  (public_name FastpackSourceMap)
+  (libraries (yojson))))

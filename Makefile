@@ -11,10 +11,13 @@ build-top:
 	@jbuilder build top/main.exe
 
 build-FastpackResolver:
-	@jbuilder build FastpackResolver/FastpackResolver.cma FastpackResolver/FastpackResolver.cmxa
+	@jbuilder build --dev FastpackResolver/FastpackResolver.cma FastpackResolver/FastpackResolver.cmxa
+
+build-FastpackSourceMap:
+	@jbuilder build --dev FastpackSourceMap/FastpackSourceMap.cma FastpackSourceMap/FastpackSourceMap.cmxa
 
 build-Fastpack:
-	@jbuilder build Fastpack/Fastpack.cma Fastpack/Fastpack.cmxa
+	@jbuilder build --dev Fastpack/Fastpack.cma Fastpack/Fastpack.cmxa
 
 bootstrap: install conf-merlin build
 
