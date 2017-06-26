@@ -1,3 +1,25 @@
+module PackageJson = struct
+  type t = {
+    name : string;
+    main : string option;
+    browser : string option;
+  }
+
+  let of_json data =
+    let open Yojson.Safe.Util in
+    try
+      let name = member "name" data |> to_string in
+      let main = member "main" data |> to_string_option in
+      let browser = member "browser" data |> to_string_option in
+      Result.Ok { name; main; browser }
+    with Type_error _ ->
+      Result.Error "Error parsing package.json"
+
+  let of_string data =
+    let data = Yojson.Safe.from_string data in
+    of_json data
+end
+
 let stat_option path =
   try%lwt
     let%lwt stat = Lwt_unix.stat path in
@@ -8,25 +30,13 @@ let stat_option path =
 let package_entry_point package_json_path =
   let package_path = FilePath.dirname package_json_path in
 
-  let find_option find list =
-    try
-      Some (List.find find list)
-    with Not_found ->
-      None
-  in
-
   let%lwt main_value =
     let%lwt data = Lwt_io.with_file ~mode:Lwt_io.Input package_json_path Lwt_io.read in
-    let package = Yojson.Basic.from_string data in
-    match package with
-    | `Assoc fields ->
-      let main = find_option (fun (k, _) -> k = "main") fields in
-      (match main with
-       | Some (_, `String main_value) ->
-         Lwt.return_some main_value
-       | _ ->
-         Lwt.return_none)
-    | _ ->
+    match PackageJson.of_string data with
+    | Result.Ok package ->
+      Lwt.return package.PackageJson.main
+    | Result.Error _ ->
+      (** TODO: missing error handling here *)
       Lwt.return_none
   in
 
