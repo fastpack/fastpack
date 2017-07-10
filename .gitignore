@@ -3,3 +3,4 @@ _build
 _install
 yarn-error.log
 .merlin
+tags
