@@ -1,11 +1,18 @@
+FPACK_TEST_PATH = "$(shell pwd)/test"
+
+
 b: build
 build: build-bin
+
+test: build
+	@FPACK_TEST_PATH="$(FPACK_TEST_PATH)" _build/default/bin/fpack_test.exe
 
 top: build-top
 	@rlwrap ./_build/default/top/main.exe
 
 build-bin:
 	@jbuilder build --dev bin/fpack.exe
+	@jbuilder build --dev bin/fpack_test.exe
 
 build-top:
 	@jbuilder build top/main.exe
