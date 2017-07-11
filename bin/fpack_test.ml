@@ -1,7 +1,8 @@
 let () =
   let echo x = x in
   let tests = [
-    ("echo.js", echo)
+      ("echo.js", echo)
+    ; ("echo2.js", echo)
   ] in
 
   let (>>=) = Lwt.(>>=) in
@@ -12,34 +13,71 @@ let () =
   let print s = Lwt_io.write Lwt_io.stderr (s ^ "\n") in
 
   let test_all path train =
-    (Lwt_main.run @@ print @@ "Train mode: " ^ (string_of_bool train));
 
-    let read_file name =
-      Lwt_io.with_file ~mode:Lwt_io.Input (path ^ "/" ^ name) Lwt_io.read
+    let get_contents name =
+      try%lwt
+        Lwt_io.with_file ~mode:Lwt_io.Input (path ^ "/" ^ name) Lwt_io.read
+        >>= Lwt.return_some
+      with Unix.Unix_error _ ->
+         print ("Error, while reading: " ^ name) >> Lwt.return_none
+    in
+
+    let save_or_reject filename data answer =
+      match answer with
+      | "y" ->
+        Lwt_io.with_file
+          ~mode:Lwt_io.Output (path ^ "/" ^ filename)
+          ~perm:0o640
+          ~flags:[Unix.O_CREAT; Unix.O_TRUNC; Unix.O_RDWR]
+          (fun ch -> Lwt_io.write ch data)
+        >> Lwt.return_some true
+      | "n" -> Lwt.return_some false
+      | _ -> Lwt.return_none
+    in
+
+    let show_diff actual expected =
+      print "Actual:"
+      >> print actual
+      >> print "Expected"
+      >> print expected
+    in
+
+    let save_data message filename data =
+      print (message ^ " [y(yes)/n(no - continue)/<any key>(halt)]? ")
+      >> Lwt_io.read_line Lwt_io.stdin
+      >>= save_or_reject filename data
     in
 
     let test_one (fname, f) =
+      (Lwt_main.run (print @@ fname ^ "\n-------------------");
       let expect_fname = "expected/" ^ fname in
-      let%lwt contents =
-        try%lwt
-            read_file fname >>= Lwt.return_some
-        with Unix.Unix_error _ ->
-           print ("Error, while reading: " ^ fname) >> Lwt.return_none
-      in
-      let%lwt expect =
-        try%lwt
-          read_file expect_fname >>= Lwt.return_some
-        with Unix.Unix_error _ ->
-          print ("Error, while reading: " ^ expect_fname) >> Lwt.return_none
-      in
-      (match (contents, expect) with
-       | (Some c, Some e) -> Lwt.return (f c = e)
-       | _ -> Lwt.return false
+      let%lwt contents = get_contents fname in
+      let%lwt expect = get_contents expect_fname in
+       match (contents, expect, train) with
+       | (Some c, Some e, false) -> Lwt.return_some (f c = e)
+       | (Some c, Some e, true) ->
+         let result = f c in
+         if result = e
+           then Lwt.return_some true
+           else show_diff result e
+                >> save_data "Replace old expectation" expect_fname result
+       | (Some c, None, true) ->
+         let result = f c in
+         print "New output:"
+         >> print result
+         >> save_data "Save new output" expect_fname result
+       | _ -> Lwt.return_some false
       )
     in
-    List.length
-    @@ List.filter (fun r -> not r)
-    @@ List.map (fun t -> Lwt_main.run (test_one t)) tests
+
+    let gather_result result test =
+      match (result, Lwt_main.run (test_one test)) with
+      | (Some n, Some false) -> Some (n + 1)
+      | (Some n, Some true) -> Some n
+      | _ -> None
+    in
+
+    List.fold_left gather_result (Some 0) tests
   in
 
   let run_t =
@@ -55,16 +93,16 @@ let () =
 
     let test_all_t path train =
       let total = List.length tests in
-      let failed = test_all path train in
-      let message =
-        (if failed = 0 then
-          Printf.sprintf "OK. %d passed." total
-         else
-          Printf.sprintf "FAIL. %d failed of %d total." failed total
-        )
+      let (ok, message) =
+        match test_all path train with
+        | Some 0 ->
+          (true, Printf.sprintf "OK. %d passed." total)
+        | Some n ->
+          (false,  Printf.sprintf "FAIL. %d failed of %d total." n total)
+        | None   -> (false,  "Halted.")
       in(
         Lwt_main.run (print message);
-        if failed = 0 then
+        if ok then
           `Ok message
         else
           `Error (false, message)
