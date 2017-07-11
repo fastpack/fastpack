@@ -4,8 +4,11 @@ FPACK_TEST_PATH = "$(shell pwd)/test"
 b: build
 build: build-bin
 
+train: build
+	@_build/default/bin/fpack_test.exe --train $(FPACK_TEST_PATH)
+
 test: build
-	@FPACK_TEST_PATH="$(FPACK_TEST_PATH)" _build/default/bin/fpack_test.exe
+	@_build/default/bin/fpack_test.exe $(FPACK_TEST_PATH)
 
 top: build-top
 	@rlwrap ./_build/default/top/main.exe
