@@ -22,31 +22,29 @@ let () =
          print ("Error, while reading: " ^ name) >> Lwt.return_none
     in
 
-    let save_or_reject filename data answer =
-      match answer with
-      | "y" ->
+    let write_file name data =
         Lwt_io.with_file
           ~mode:Lwt_io.Output
           ~perm:0o640
           ~flags:[Unix.O_CREAT; Unix.O_TRUNC; Unix.O_RDWR]
-          (path ^ "/" ^ filename)
+          name
           (fun ch -> Lwt_io.write ch data)
-        >> Lwt.return_some true
+    in
+
+    let save_or_reject filename data answer =
+      match answer with
+      | "y" -> write_file (path ^ "/" ^ filename) data >> Lwt.return_some true
       | "n" -> Lwt.return_some false
       | _ -> Lwt.return_none
     in
 
-
     let show_diff name actual =
+      (* TODO:
+       * Lwt.finalize/unlink;
+       * temp_file into Lwt ?
+       * *)
       let temp_file = Filename.temp_file "" ".result.js" in
-      let _ =
-        Lwt_io.with_file
-          ~mode:Lwt_io.Output
-          ~perm:0o640
-          ~flags:[Unix.O_CREAT; Unix.O_TRUNC; Unix.O_RDWR]
-          temp_file
-          (fun ch -> Lwt_io.write ch actual)
-      in
+      let _ = write_file temp_file actual in
       let cmd = "diff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
       let%lwt output = Lwt_process.pread (Lwt_process.shell cmd) in
       print output
