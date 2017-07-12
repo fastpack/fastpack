@@ -1,10 +1,11 @@
-let () =
-  let echo x = x in
-  let tests = [
-      ("echo.js", echo)
-    ; ("echo2.js", echo)
-  ] in
+let echo x = x;;
+let tests = [
+    ("echo.js", echo)
+  ; ("echo2.js", echo)
+]
+;;
 
+let () =
   let (>>=) = Lwt.(>>=) in
 
   let open Cmdliner in
@@ -15,19 +16,19 @@ let () =
 
     let get_contents name =
       try%lwt
-        Lwt_io.with_file ~mode:Lwt_io.Input (path ^ "/" ^ name) Lwt_io.read
+        Lwt_io.(with_file ~mode:Input (path ^ "/" ^ name) read)
         >>= Lwt.return_some
       with Unix.Unix_error _ ->
          print ("Error, while reading: " ^ name) >> Lwt.return_none
     in
 
     let write_file name data =
-        Lwt_io.with_file
-          ~mode:Lwt_io.Output
+        Lwt_io.(with_file
+          ~mode:Output
           ~perm:0o640
-          ~flags:[Unix.O_CREAT; Unix.O_TRUNC; Unix.O_RDWR]
+          ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
           name
-          (fun ch -> Lwt_io.write ch data)
+          (fun ch -> write ch data))
     in
 
     let save_or_reject filename data answer =
@@ -41,7 +42,7 @@ let () =
       let temp_file = Filename.temp_file "" ".result.js" in
       let _ = write_file temp_file actual in
       let cmd = "diff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
-      let%lwt output = Lwt_process.pread (Lwt_process.shell cmd) in
+      let%lwt output = Lwt_process.(pread @@ shell cmd) in
       Lwt.finalize
         (fun () -> print output)
         (fun () -> Lwt_unix.unlink temp_file)
@@ -49,7 +50,7 @@ let () =
 
     let save_data message filename data =
       print (message ^ " [y(yes)/n(no)/<any key>(halt)]? ")
-      >> Lwt_io.read_line Lwt_io.stdin
+      >> Lwt_io.(read_line stdin)
       >>= save_or_reject filename data
     in
 
