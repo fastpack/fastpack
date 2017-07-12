@@ -26,24 +26,34 @@ let () =
       match answer with
       | "y" ->
         Lwt_io.with_file
-          ~mode:Lwt_io.Output (path ^ "/" ^ filename)
+          ~mode:Lwt_io.Output
           ~perm:0o640
           ~flags:[Unix.O_CREAT; Unix.O_TRUNC; Unix.O_RDWR]
+          (path ^ "/" ^ filename)
           (fun ch -> Lwt_io.write ch data)
         >> Lwt.return_some true
       | "n" -> Lwt.return_some false
       | _ -> Lwt.return_none
     in
 
-    let show_diff actual expected =
-      print "Actual:"
-      >> print actual
-      >> print "Expected"
-      >> print expected
+
+    let show_diff name actual =
+      let temp_file = Filename.temp_file "" ".result.js" in
+      let _ =
+        Lwt_io.with_file
+          ~mode:Lwt_io.Output
+          ~perm:0o640
+          ~flags:[Unix.O_CREAT; Unix.O_TRUNC; Unix.O_RDWR]
+          temp_file
+          (fun ch -> Lwt_io.write ch actual)
+      in
+      let cmd = "diff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
+      let%lwt output = Lwt_process.pread (Lwt_process.shell cmd) in
+      print output
     in
 
     let save_data message filename data =
-      print (message ^ " [y(yes)/n(no - continue)/<any key>(halt)]? ")
+      print (message ^ " [y(yes)/n(no)/<any key>(halt)]? ")
       >> Lwt_io.read_line Lwt_io.stdin
       >>= save_or_reject filename data
     in
@@ -59,7 +69,7 @@ let () =
          let result = f c in
          if result = e
            then Lwt.return_some true
-           else show_diff result e
+           else show_diff expect_fname result
                 >> save_data "Replace old expectation" expect_fname result
        | (Some c, None, true) ->
          let result = f c in
@@ -71,10 +81,13 @@ let () =
     in
 
     let gather_result result test =
-      match (result, Lwt_main.run (test_one test)) with
-      | (Some n, Some false) -> Some (n + 1)
-      | (Some n, Some true) -> Some n
-      | _ -> None
+      match result with
+      | None -> None (* short-circuit if previous test is halted *)
+      | Some n ->
+        match Lwt_main.run (test_one test) with
+        | Some false -> Some (n + 1)
+        | Some true -> Some n
+        | None -> None
     in
 
     List.fold_left gather_result (Some 0) tests
@@ -101,7 +114,7 @@ let () =
           (false,  Printf.sprintf "FAIL. %d failed of %d total." n total)
         | None   -> (false,  "Halted.")
       in(
-        Lwt_main.run (print message);
+        Lwt_main.run (print @@ "\n" ^ message);
         if ok then
           `Ok message
         else
