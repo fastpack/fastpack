@@ -47,7 +47,9 @@ let () =
       let _ = write_file temp_file actual in
       let cmd = "diff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
       let%lwt output = Lwt_process.pread (Lwt_process.shell cmd) in
-      print output
+      Lwt.finalize
+        (fun () -> print output)
+        (fun () -> Lwt_unix.unlink temp_file)
     in
 
     let save_data message filename data =
