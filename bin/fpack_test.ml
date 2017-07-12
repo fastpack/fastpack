@@ -9,7 +9,6 @@ let () =
 
   let open Cmdliner in
 
-
   let print s = Lwt_io.write Lwt_io.stderr (s ^ "\n") in
 
   let test_all path train =
@@ -39,10 +38,6 @@ let () =
     in
 
     let show_diff name actual =
-      (* TODO:
-       * Lwt.finalize/unlink;
-       * temp_file into Lwt ?
-       * *)
       let temp_file = Filename.temp_file "" ".result.js" in
       let _ = write_file temp_file actual in
       let cmd = "diff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
@@ -58,33 +53,51 @@ let () =
       >>= save_or_reject filename data
     in
 
-    let test_one (fname, f) =
-      (Lwt_main.run (print @@ fname ^ "\n-------------------");
-      let expect_fname = "expected/" ^ fname in
-      let%lwt contents = get_contents fname in
-      let%lwt expect = get_contents expect_fname in
-       match (contents, expect, train) with
-       | (Some c, Some e, false) -> Lwt.return_some (f c = e)
-       | (Some c, Some e, true) ->
-         let result = f c in
-         if result = e
+    let test_one f actual expect_fname =
+      let%lwt some_expected = get_contents expect_fname in
+      match some_expected with
+      | Some expected -> (
+        let result = f actual in
+        match result = expected with
+        | true -> Lwt.return_some true
+        | false -> show_diff expect_fname result >> Lwt.return_some false)
+      | None -> Lwt.return_some false
+    in
+
+    let train_one f actual expect_fname =
+      let%lwt some_expected = get_contents expect_fname in
+      let result = f actual in
+      match some_expected with
+      | Some expected ->
+         if result = expected
            then Lwt.return_some true
            else show_diff expect_fname result
                 >> save_data "Replace old expectation" expect_fname result
-       | (Some c, None, true) ->
-         let result = f c in
+      | None ->
          print "New output:"
          >> print result
          >> save_data "Save new output" expect_fname result
-       | _ -> Lwt.return_some false
-      )
+    in
+
+    let test_or_train_one title f actual expect_fname =
+      let _ = Lwt_main.run (print @@ title ^ "\n-------------------") in
+      let run = if train then train_one else test_one in
+      run f actual expect_fname
+    in
+
+    let run_one (fname, f) =
+      let%lwt actual = get_contents fname in
+      let expect_fname = "expected/" ^ fname in
+      match actual with
+      | Some c -> test_or_train_one fname f c expect_fname
+      | None -> Lwt.return_some false
     in
 
     let gather_result result test =
       match result with
       | None -> None (* short-circuit if previous test is halted *)
       | Some n ->
-        match Lwt_main.run (test_one test) with
+        match Lwt_main.run (run_one test) with
         | Some false -> Some (n + 1)
         | Some true -> Some n
         | None -> None
