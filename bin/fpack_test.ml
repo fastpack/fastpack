@@ -1,9 +1,8 @@
-let echo x = x;;
+let transpile = Fastpack.Transpile.test
+
 let tests = [
-    ("echo.js", echo)
-  ; ("echo2.js", echo)
+  ("babel-object-spread.js", transpile);
 ]
-;;
 
 let () =
   let (>>=) = Lwt.(>>=) in
@@ -13,7 +12,6 @@ let () =
   let print s = Lwt_io.write Lwt_io.stderr (s ^ "\n") in
 
   let test_all path train =
-
     let get_contents name =
       try%lwt
         Lwt_io.(with_file ~mode:Input (path ^ "/" ^ name) read)
