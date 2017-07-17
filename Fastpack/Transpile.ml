@@ -1,21 +1,7 @@
-let transpile program workspace =
+let transpile program (patcher: 'a Workspace.patcher) =
   let module S = Spider_monkey_ast.Statement in
   let module E = Spider_monkey_ast.Expression in
   let module L = Spider_monkey_ast.Literal in
-
-  let add_patch offset_start offset_end patch =
-    begin
-      workspace := Workspace.patch !workspace {
-        Workspace.
-        patch;
-        offset_start;
-        offset_end;
-      }
-    end
-  in
-
-  let const s _ = s in
-  let remove = const "" in
 
   let rec visit_expression ((loc: Loc.t), expr) =
     match expr with
@@ -30,23 +16,23 @@ let transpile program workspace =
         List.iter (fun prop ->
             match prop with
             | E.Object.SpreadProperty (loc, {argument}) ->
-              add_patch loc.start.offset (loc.start.offset + 3) remove;
+              patcher.remove loc.start.offset 3;
               Visit.visit_expression handler argument
             | E.Object.Property p ->
               let (loc, _) = p in
               begin
-                add_patch loc.start.offset loc.start.offset @@ const "{";
+                patcher.const loc.start.offset 0 "{";
                 Visit.visit_object_property handler p;
-                add_patch loc._end.offset loc._end.offset @@ const "}"
+                patcher.const loc._end.offset 0 "}"
               end
           )
       in
 
       if has_spread
         then begin
-          add_patch loc.start.offset (loc.start.offset + 1) @@ const "Object.assign(";
+          patcher.const loc.start.offset 1 "Object.assign(";
           transpile_spread properties;
-          add_patch (loc._end.offset - 1) loc._end.offset @@ const ")";
+          patcher.const loc._end.offset (-1) ")";
           Visit.GoRight
         end
         else
@@ -79,6 +65,6 @@ let test source =
        @@ Lwt_io.position ch
   in
   begin
-    transpile program workspace;
+    transpile program @@ Workspace.make_patcher workspace;
     Lwt_main.run (to_string !workspace)
   end
