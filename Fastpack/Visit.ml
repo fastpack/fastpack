@@ -6,7 +6,7 @@ module Type = Spider_monkey_ast.Type
 module Variance = Spider_monkey_ast.Variance
 module Class = Spider_monkey_ast.Class
 
-type visit_action = GoDeep | GoRight
+type visit_action = Continue | Break
 
 type visit_handler = {
   visit_statement : Statement.t -> visit_action;
@@ -15,7 +15,7 @@ type visit_handler = {
 
 
 let default_visit_handler =
-  let do_nothing _ = GoDeep in
+  let do_nothing _ = Continue in
   {
     visit_statement = do_nothing;
     visit_expression = do_nothing
@@ -31,8 +31,8 @@ let visit_if_some handler visit = function
 let rec visit_statement handler ((loc, statement) : Statement.t) =
   let action = handler.visit_statement (loc, statement) in
   match action with
-  | GoRight -> ()
-  | GoDeep ->
+  | Break -> ()
+  | Continue ->
     match statement with
     | Statement.Empty ->
       ()
@@ -171,8 +171,8 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
 and visit_expression handler ((loc, expression) : Expression.t) =
   let action = handler.visit_expression (loc, expression) in
   match action with
-  | GoRight -> ()
-  | GoDeep ->
+  | Break -> ()
+  | Continue ->
     match expression with
     | Expression.This -> ()
     | Expression.Super -> ()

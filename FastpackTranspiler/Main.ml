@@ -1,55 +1,30 @@
 module Visit = Fastpack.Visit
 module Workspace = Fastpack.Workspace
 
-let transpile program { Workspace. const; remove; _ } =
+let transpile program patcher =
   let module S = Spider_monkey_ast.Statement in
   let module E = Spider_monkey_ast.Expression in
   let module L = Spider_monkey_ast.Literal in
 
-  let rec visit_expression ((loc: Loc.t), expr) =
-    match expr with
-    | E.Object { properties } ->
-      let has_spread = List.exists (fun prop -> match prop with
-          | E.Object.SpreadProperty _ -> true
-          | _ -> false
-        ) properties
-      in
-
-      let transpile_spread =
-        List.iter (fun prop ->
-            match prop with
-            | E.Object.SpreadProperty (loc, {argument}) ->
-              remove loc.start.offset 3;
-              Visit.visit_expression handler argument
-            | E.Object.Property p ->
-              let (loc, _) = p in
-              begin
-                const loc.start.offset 0 "{";
-                Visit.visit_object_property handler p;
-                const loc._end.offset 0 "}"
-              end
-          )
-      in
-
-      if has_spread
-        then begin
-          const loc.start.offset 1 "Object.assign(";
-          transpile_spread properties;
-          const loc._end.offset (-1) ")";
-          Visit.GoRight
-        end
-        else
-          Visit.GoDeep
-    | _ ->
-      Visit.GoDeep;
-
-  and visit_statement (_, _) = Visit.GoDeep
-
-  and handler = {
-    Visit.
-    visit_statement;
-    visit_expression;
-  }
+  let rec handler =
+    let visit_expression expr =
+      List.fold_left (fun result {Visit. visit_expression; _} ->
+          match result with
+          | Visit.Break -> Visit.Break
+          | Visit.Continue -> visit_expression expr
+        ) Visit.Continue @@ handlers ()
+    in
+    let visit_statement stmt =
+      List.fold_left (fun result {Visit. visit_statement; _} ->
+          match result with
+          | Visit.Break -> Visit.Break
+          | Visit.Continue -> visit_statement stmt
+        ) Visit.Continue @@ handlers ()
+    in
+    { Visit. visit_expression; visit_statement }
+  and handlers _ = [
+    Spread.get_handler handler patcher
+  ]
   in
   Visit.visit handler program
 

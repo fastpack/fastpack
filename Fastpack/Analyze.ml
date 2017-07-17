@@ -40,7 +40,7 @@ let analyze _id filename source =
           requested_from_filename = filename;
         }::!dependencies
       | _ -> ()
-    in Visit.GoDeep
+    in Visit.Continue
   in
 
   let visit_expression ((loc: Loc.t), expr) =
@@ -64,7 +64,7 @@ let analyze _id filename source =
         );
       | _ ->
         ()
-    in Visit.GoDeep
+    in Visit.Continue
   in
 
   let handler = {
