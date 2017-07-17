@@ -187,18 +187,8 @@ and visit_expression handler ((loc, expression) : Expression.t) =
       visit_list
         handler
         (fun handler prop -> match prop with
-           | Expression.Object.Property (_, {
-               key;
-               value;
-               _method;
-               shorthand = _shorthand;
-             }) ->
-             (match value with
-              | Expression.Object.Property.Init expr ->
-                visit_object_property_key handler key;
-                visit_expression handler expr
-              | Expression.Object.Property.Get func -> visit_function handler func
-              | Expression.Object.Property.Set func -> visit_function handler func)
+           | Expression.Object.Property property ->
+             visit_object_property handler property
            | Expression.Object.SpreadProperty (_, { argument }) ->
              visit_expression handler argument
         )
@@ -292,6 +282,20 @@ and visit_pattern (handler : visit_handler) ((_loc, pattern) : Pattern.t) =
   | Pattern.Identifier { name = _name; typeAnnotation = _typeAnnotation; optional = _optional } -> ()
 
   | Pattern.Expression expr -> visit_expression handler expr
+
+and visit_object_property handler (_, {
+               key;
+               value;
+               _method;
+               shorthand = _shorthand;
+             }) =
+  match value with
+  | Expression.Object.Property.Init expr ->
+    visit_object_property_key handler key;
+    visit_expression handler expr
+  | Expression.Object.Property.Get func -> visit_function handler func
+  | Expression.Object.Property.Set func -> visit_function handler func
+
 
 and visit_object_property_key handler key =
   match key with

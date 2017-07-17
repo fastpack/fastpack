@@ -4,32 +4,64 @@ let transpile program workspace =
   let module L = Spider_monkey_ast.Literal in
 
   let add_patch offset_start offset_end patch =
-    workspace := Workspace.patch !workspace {
-      Workspace.
-      patch;
-      offset_start;
-      offset_end;
-    }
+    begin
+      workspace := Workspace.patch !workspace {
+        Workspace.
+        patch;
+        offset_start;
+        offset_end;
+      }
+    end
   in
 
   let const s _ = s in
+  let remove = const "" in
 
-  let visit_expression ((loc: Loc.t), expr) =
-    let _ = match expr with
-    | E.Object _ ->
-      add_patch loc.start.offset loc.start.offset @@ const "Object.assign(";
-      add_patch loc._end.offset loc._end.offset @@ const ")";
-    | _ -> ();
-    in Visit.GoDeep
-  in
+  let rec visit_expression ((loc: Loc.t), expr) =
+    match expr with
+    | E.Object { properties } ->
+      let has_spread = List.exists (fun prop -> match prop with
+          | E.Object.SpreadProperty _ -> true
+          | _ -> false
+        ) properties
+      in
 
-  let visit_statement (_, _) = Visit.GoDeep in
+      let transpile_spread =
+        List.iter (fun prop ->
+            match prop with
+            | E.Object.SpreadProperty (loc, {argument}) ->
+              add_patch loc.start.offset (loc.start.offset + 3) remove;
+              Visit.visit_expression handler argument
+            | E.Object.Property p ->
+              let (loc, _) = p in
+              begin
+                add_patch loc.start.offset loc.start.offset @@ const "{";
+                Visit.visit_object_property handler p;
+                add_patch loc._end.offset loc._end.offset @@ const "}"
+              end
+          )
+      in
 
-  let handler = {
+      if has_spread
+        then begin
+          add_patch loc.start.offset (loc.start.offset + 1) @@ const "Object.assign(";
+          transpile_spread properties;
+          add_patch (loc._end.offset - 1) loc._end.offset @@ const ")";
+          Visit.GoRight
+        end
+        else
+          Visit.GoDeep
+    | _ ->
+      Visit.GoDeep;
+
+  and visit_statement (_, _) = Visit.GoDeep
+
+  and handler = {
     Visit.
     visit_statement;
     visit_expression;
-  } in
+  }
+  in
   Visit.visit handler program
 
 let test source =

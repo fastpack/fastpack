@@ -1,6 +1,7 @@
 let transpile = Fastpack.Transpile.test
 
 let tests = [
+  ("no-object-spread.js", transpile);
   ("babel-object-spread.js", transpile);
 ]
 
