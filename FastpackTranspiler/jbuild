@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(library
+ ((name        FastpackTranspiler)
+  (public_name FastpackTranspiler)
+  (libraries (Fastpack flow_parser lwt.unix fileutils yojson))
+  (preprocess (pps (lwt.ppx)))))

@@ -1,4 +1,4 @@
-let transpile = Fastpack.Transpile.test
+let transpile = FastpackTranspiler.Main.test
 
 let tests = [
   ("no-object-spread.js", transpile);
