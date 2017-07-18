@@ -3,6 +3,7 @@ let transpile = FastpackTranspiler.Main.test
 let tests = [
   ("no-object-spread.js", transpile);
   ("babel-object-spread.js", transpile);
+  ("object-spread-recursive.js", transpile);
 ]
 
 let () =

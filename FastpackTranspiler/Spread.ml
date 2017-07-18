@@ -40,6 +40,7 @@ let get_handler handler { Workspace. const; remove; _ } =
         Visit.Continue
     | _ -> Visit.Continue;
   in
+
   let visit_statement (_, _) = Visit.Continue
 
   in {
