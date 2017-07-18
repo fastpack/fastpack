@@ -56,6 +56,14 @@ let get_handler handler { Workspace. const; remove; _ } =
   let visit_statement (_, stmt) =
     match stmt with
     | S.VariableDeclaration { declarations; _ } ->
+      (* - source[start:end] - no
+       * - Spider_monkey_ast - documentation ?
+       *   https://github.com/facebook/flow/blob/v0.42/src/parser/spider_monkey_ast.ml
+       * var {x, ...y} = z;
+       * var {x, y} = Object.assign(z, {y: removeProps(z, ['x'])});
+       * try {...} catch({x, ...y}) {}
+       * try {...} catch($$fp$$) {var {x, y} = Object.assign($$fp$$, {y: removeProps(z, ['x'])});}
+       * *)
       let has_rest = List.exists
         (fun (_, { S.VariableDeclaration.Declarator. id; _ }) ->
           match id with

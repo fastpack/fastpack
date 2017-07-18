@@ -81,3 +81,11 @@ let make_patcher workspace =
     const;
     remove;
   }
+
+  (*
+   * patch_with;
+   * patch;
+   * remove;
+   * source;
+   * to_string;
+   * *)
