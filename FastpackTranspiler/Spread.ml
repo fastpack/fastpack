@@ -1,11 +1,14 @@
 module Visit = Fastpack.Visit
 module Workspace = Fastpack.Workspace
+module S = Spider_monkey_ast.Statement
+module E = Spider_monkey_ast.Expression
+module L = Spider_monkey_ast.Literal
+module P = Spider_monkey_ast.Pattern
 
-let get_handler handler { Workspace. patch; remove; _ } =
-  let module S = Spider_monkey_ast.Statement in
-  let module E = Spider_monkey_ast.Expression in
-  let module L = Spider_monkey_ast.Literal in
-  let module P = Spider_monkey_ast.Pattern in
+type pattern_action = Drop of string list * string list
+                    | Nop
+
+let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
 
   let visit_expression ((loc: Loc.t), expr) =
     match expr with
@@ -53,6 +56,18 @@ let get_handler handler { Workspace. patch; remove; _ } =
     ) properties
   in
 
+  let process_pattern ({ properties; _ } : P.Object.t) =
+    match properties with
+    | (P.Object.RestProperty (_, {argument}))::[] ->
+      begin
+        match argument with
+        | _, (P.Identifier {name = (loc, _); _}) ->
+          Drop ([sub_loc loc], [])
+        | _ -> Nop
+      end
+    | _ -> Nop
+  in
+
   let visit_statement (_, stmt) =
     match stmt with
     | S.VariableDeclaration { declarations; _ } ->
@@ -63,7 +78,19 @@ let get_handler handler { Workspace. patch; remove; _ } =
        * var {x, y} = Object.assign(z, {y: removeProps(z, ['x'])});
        * try {...} catch({x, ...y}) {}
        * try {...} catch($$fp$$) {var {x, y} = Object.assign($$fp$$, {y: removeProps(z, ['x'])});}
-       * *)
+       *
+          let {
+            x: { a: xa, [d]: f, ...asdf },
+            y: { ...d },
+            ...g
+          } = complex;
+          let { x: {a: xa, [d]: f, asdf }, y: {d}, g} = Object.assign(
+                complex,
+                {x: Object.assign(complex.x, {asdf: removeProps(complex.x, ["a", d])})},
+                {y: Object.assign(complex.y, {d: removeProps(complex.y, [])})}
+                {g: removeProps(complex, ["g"])}
+          )
+          *)
       let has_rest = List.exists
         (fun (_, { S.VariableDeclaration.Declarator. id; _ }) ->
           match id with
@@ -75,6 +102,20 @@ let get_handler handler { Workspace. patch; remove; _ } =
       if has_rest then
         begin
           print_endline "Yes rest";
+          List.iter
+            (fun (_, { S.VariableDeclaration.Declarator. id; _ }) ->
+              begin
+                let action = match id with
+                  | (_, P.Object pattern) -> process_pattern pattern
+                  | _ -> Nop
+                in
+                let loc, _ = id in
+                match action with
+                | Drop (name::[],_) -> patch_loc loc name
+                | _ -> ()
+              end
+            )
+            declarations;
           Visit.Continue
         end
       else

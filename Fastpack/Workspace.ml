@@ -30,6 +30,11 @@ type 'ctx patcher = {
   patch_with : int -> int -> ('ctx -> string) -> unit;
   patch : int -> int -> string -> unit;
   remove : int -> int -> unit;
+  patch_loc_with : Loc.t -> ('ctx -> string) -> unit;
+  patch_loc : Loc.t -> string -> unit;
+  remove_loc : Loc.t -> unit;
+  sub : int -> int -> string;
+  sub_loc : Loc.t -> string;
 }
 
 let of_string s =
@@ -75,9 +80,26 @@ let make_patcher workspace =
     end
   in
   let patch start offset s = patch_with start offset (fun _ -> s) in
-  let remove start offset = patch start offset ""
+  let remove start offset = patch start offset "" in
+  let patch_loc_with (loc: Loc.t) f =
+    patch_with loc.start.offset (loc._end.offset - loc.start.offset) f
+  in
+  let patch_loc (loc: Loc.t) s =
+    patch loc.start.offset (loc._end.offset - loc.start.offset) s
+  in
+  let remove_loc (loc: Loc.t) =
+    remove loc.start.offset (loc._end.offset - loc.start.offset)
+  in
+  let sub start len = String.sub (!workspace).value start len in
+  let sub_loc (loc : Loc.t) =
+    sub (loc.start.offset) (loc._end.offset - loc.start.offset)
   in {
     patch_with;
     patch;
     remove;
+    patch_loc_with;
+    patch_loc;
+    remove_loc;
+    sub;
+    sub_loc;
   }
