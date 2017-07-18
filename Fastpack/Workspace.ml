@@ -27,8 +27,8 @@ and 'ctx patch = {
 }
 
 type 'ctx patcher = {
-  add : int -> int -> ('ctx -> string) -> unit;
-  const : int -> int -> string -> unit;
+  patch_with : int -> int -> ('ctx -> string) -> unit;
+  patch : int -> int -> string -> unit;
   remove : int -> int -> unit;
 }
 
@@ -64,7 +64,7 @@ let to_string w ctx =
   print 0 w.value patches
 
 let make_patcher workspace =
-  let add start offset f =
+  let patch_with start offset f =
     let _end = start + offset in
     begin
       workspace := patch !workspace {
@@ -74,18 +74,10 @@ let make_patcher workspace =
       }
     end
   in
-  let const start offset s = add start offset (fun _ -> s) in
-  let remove start offset = const start offset ""
+  let patch start offset s = patch_with start offset (fun _ -> s) in
+  let remove start offset = patch start offset ""
   in {
-    add;
-    const;
+    patch_with;
+    patch;
     remove;
   }
-
-  (*
-   * patch_with;
-   * patch;
-   * remove;
-   * source;
-   * to_string;
-   * *)

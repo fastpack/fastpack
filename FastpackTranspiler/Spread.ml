@@ -1,7 +1,7 @@
 module Visit = Fastpack.Visit
 module Workspace = Fastpack.Workspace
 
-let get_handler handler { Workspace. const; remove; _ } =
+let get_handler handler { Workspace. patch; remove; _ } =
   let module S = Spider_monkey_ast.Statement in
   let module E = Spider_monkey_ast.Expression in
   let module L = Spider_monkey_ast.Literal in
@@ -19,7 +19,7 @@ let get_handler handler { Workspace. const; remove; _ } =
       if has_spread
       then
         begin
-        const loc.start.offset 1 "Object.assign(";
+        patch loc.start.offset 1 "Object.assign(";
         Visit.visit_list
           handler
           (fun handler prop ->
@@ -30,12 +30,12 @@ let get_handler handler { Workspace. const; remove; _ } =
             | E.Object.Property p ->
               let (loc, _) = p in
               begin
-                const loc.start.offset 0 "{";
+                patch loc.start.offset 0 "{";
                 Visit.visit_object_property handler p;
-                const loc._end.offset 0 "}"
+                patch loc._end.offset 0 "}"
               end)
           properties;
-        const loc._end.offset (-1) ")";
+        patch loc._end.offset (-1) ")";
         Visit.Break
         end
       else
