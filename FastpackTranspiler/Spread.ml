@@ -5,6 +5,7 @@ let get_handler handler { Workspace. const; remove; _ } =
   let module S = Spider_monkey_ast.Statement in
   let module E = Spider_monkey_ast.Expression in
   let module L = Spider_monkey_ast.Literal in
+  let module P = Spider_monkey_ast.Pattern in
 
   let visit_expression ((loc: Loc.t), expr) =
     match expr with
@@ -19,8 +20,9 @@ let get_handler handler { Workspace. const; remove; _ } =
       then
         begin
         const loc.start.offset 1 "Object.assign(";
-        List.iter
-          (fun prop ->
+        Visit.visit_list
+          handler
+          (fun handler prop ->
             match prop with
             | E.Object.SpreadProperty (loc, {argument}) ->
               remove loc.start.offset 3;
@@ -38,11 +40,41 @@ let get_handler handler { Workspace. const; remove; _ } =
         end
       else
         Visit.Continue
+
     | _ -> Visit.Continue;
   in
 
-  let visit_statement (_, _) = Visit.Continue
+  let rec pattern_has_rest ({ properties; _ } : P.Object.t)  = List.exists
+    (fun prop -> match prop with
+      | P.Object.RestProperty _ -> true
+      | P.Object.Property (_, { pattern = (_, P.Object pattern); _}) ->
+        pattern_has_rest pattern
+      | P.Object.Property _ -> false
+    ) properties
+  in
 
+  let visit_statement (_, stmt) =
+    match stmt with
+    | S.VariableDeclaration { declarations; _ } ->
+      let has_rest = List.exists
+        (fun (_, { S.VariableDeclaration.Declarator. id; _ }) ->
+          match id with
+          | (_, P.Object pattern) -> pattern_has_rest pattern
+          | _ -> false
+        )
+        declarations
+      in
+      if has_rest then
+        begin
+          print_endline "Yes rest";
+          Visit.Continue
+        end
+      else
+        begin
+          print_endline "No rest";
+          Visit.Continue
+        end
+    | _ -> Visit.Continue
   in {
     Visit.
     visit_statement;

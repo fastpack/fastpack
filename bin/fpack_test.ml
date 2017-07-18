@@ -4,6 +4,7 @@ let tests = [
   ("no-object-spread.js", transpile);
   ("babel-object-spread.js", transpile);
   ("object-spread-recursive.js", transpile);
+  ("object-rest-assignment.js", transpile);
 ]
 
 let () =

@@ -334,7 +334,8 @@ and visit_block handler ((_loc, block) : (Loc.t * Statement.Block.t)) =
 
 and visit_variable_declaration handler (_, { declarations; kind = _kind }) =
   visit_list handler
-    (fun handler (_, { Statement.VariableDeclaration.Declarator. init; id = _id }) ->
+    (fun handler (_, { Statement.VariableDeclaration.Declarator. init; id }) ->
+       visit_pattern handler id;
        (match init with
         | None  -> ();
         | Some expr -> visit_expression handler expr);
