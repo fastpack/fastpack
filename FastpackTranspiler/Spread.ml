@@ -91,38 +91,30 @@ let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
                 {g: removeProps(complex, ["g"])}
           )
           *)
-      let has_rest = List.exists
-        (fun (_, { S.VariableDeclaration.Declarator. id; _ }) ->
-          match id with
-          | (_, P.Object pattern) -> pattern_has_rest pattern
-          | _ -> false
+      List.iter
+        (fun declarator ->
+          let (_, { S.VariableDeclaration.Declarator. id; _ }) = declarator in
+          let loc, p = id in
+          let has_rest = match p with
+            | P.Object pattern -> pattern_has_rest pattern
+            | _ -> false
+          in
+          if has_rest then
+          begin
+            print_endline "Yes rest";
+            let action = match id with
+              | (_, P.Object pattern) -> process_pattern pattern
+              | _ -> Nop
+            in
+            match action with
+            | Drop (name::[], _) -> patch_loc loc name
+            | _ -> ()
+          end
+          else
+            Visit.visit_variable_declarator handler declarator
         )
-        declarations
-      in
-      if has_rest then
-        begin
-          print_endline "Yes rest";
-          List.iter
-            (fun (_, { S.VariableDeclaration.Declarator. id; _ }) ->
-              begin
-                let action = match id with
-                  | (_, P.Object pattern) -> process_pattern pattern
-                  | _ -> Nop
-                in
-                let loc, _ = id in
-                match action with
-                | Drop (name::[],_) -> patch_loc loc name
-                | _ -> ()
-              end
-            )
-            declarations;
-          Visit.Continue
-        end
-      else
-        begin
-          print_endline "No rest";
-          Visit.Continue
-        end
+        declarations;
+      Visit.Break
     | _ -> Visit.Continue
   in {
     Visit.
