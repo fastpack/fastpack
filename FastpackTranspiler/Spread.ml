@@ -5,8 +5,8 @@ module E = Spider_monkey_ast.Expression
 module L = Spider_monkey_ast.Literal
 module P = Spider_monkey_ast.Pattern
 
-type pattern_action = Drop of string list * string list
-                    | Nop
+type pattern_action = Drop
+                    | Remove of (int * int) list
 
 let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
 
@@ -56,16 +56,68 @@ let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
     ) properties
   in
 
-  let process_pattern ({ properties; _ } : P.Object.t) =
-    match properties with
-    | (P.Object.RestProperty (_, {argument}))::[] ->
-      begin
-        match argument with
-        | _, (P.Identifier {name = (loc, _); _}) ->
-          Drop ([sub_loc loc], [])
-        | _ -> Nop
+  let rec pattern_action object_name (left: P.Object.t) =
+    let (remove_keys : string list ref) = ref [] in
+    let (assignments : string list ref) = ref [] in
+    let property_action prop =
+      match prop with
+      | P.Object.Property (_, {key; pattern=(_, pattern); _}) ->
+        begin
+          match key with
+          | P.Object.Property.Identifier (_, name) ->
+            remove_keys := !remove_keys @ ["\"" ^ name ^ "\""];
+            begin
+            match pattern with
+              | P.Object pattern ->
+                let action, _assignments =
+                  pattern_action (object_name ^ "." ^ name) pattern
+                in
+                begin
+                  assignments := !assignments @ _assignments;
+                  action
+                end
+              | _ -> Remove []
+            end;
+          | _ -> Remove [];
+        end
+
+      | P.Object.RestProperty (_, {argument = (loc, _)}) ->
+        assignments :=
+          !assignments
+          @ [Printf.sprintf "%s = $fpack.removeProps(%s, [%s])"
+              (sub_loc loc) object_name (String.concat "," !remove_keys)
+            ];
+        Drop
+    in
+    let {P.Object. properties; _} = left in
+    let property_actions = List.map property_action properties in
+    let drop_all = List.for_all
+        (fun action -> match action with
+          | Drop -> true
+          | _ -> false)
+        property_actions
+    in
+    let action = if drop_all
+      then Drop
+      else begin
+        (* let len = List.length property_actions in *)
+        let patches =
+          List.flatten
+          @@ List.mapi
+            (fun i prop ->
+              match List.nth property_actions i with
+              | Remove patches -> patches
+              | Drop -> match prop with
+                | P.Object.RestProperty (loc, _) ->
+                  [(loc.start.offset, loc._end.offset - loc.start.offset)]
+                | P.Object.Property (loc, _) ->
+                  [(loc.start.offset, loc._end.offset - loc.start.offset)]
+            )
+            properties
+        in Remove patches
       end
-    | _ -> Nop
+    in
+    (action, !assignments)
   in
 
   let visit_statement (_, stmt) =
@@ -93,24 +145,29 @@ let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
           *)
       List.iter
         (fun declarator ->
-          let (_, { S.VariableDeclaration.Declarator. id; _ }) = declarator in
-          let loc, p = id in
-          let has_rest = match p with
+          let (loc, { S.VariableDeclaration.Declarator. id; init }) = declarator in
+          let _, left = id in
+          let has_rest = match left with
             | P.Object pattern -> pattern_has_rest pattern
             | _ -> false
           in
-          if has_rest then
-          begin
-            print_endline "Yes rest";
-            let action = match id with
-              | (_, P.Object pattern) -> process_pattern pattern
-              | _ -> Nop
+          match has_rest, left, init with
+          | true, P.Object pattern, Some (init_loc, _) ->
+            (* TODO: get object_name properly *)
+            let object_name = sub_loc init_loc in
+            let action, assignments =
+              pattern_action object_name pattern
             in
-            match action with
-            | Drop (name::[], _) -> patch_loc loc name
-            | _ -> ()
-          end
-          else
+            let s_assigments = String.concat ", " assignments in
+            begin
+              match action with
+              | Drop ->
+                patch_loc loc s_assigments
+              | Remove patches ->
+                List.iter (fun (s, o) -> remove s o) patches;
+                patch init_loc._end.offset 0 @@ ", " ^ s_assigments
+            end
+          | _ ->
             Visit.visit_variable_declarator handler declarator
         )
         declarations;
