@@ -15,7 +15,8 @@ let () =
   let print s = Lwt_io.write Lwt_io.stderr (s ^ "\n") in
 
   let test_all path train =
-    let get_contents name =
+
+  let get_contents name =
       try%lwt
         Lwt_io.(with_file ~mode:Input (path ^ "/" ^ name) read)
         >>= Lwt.return_some
