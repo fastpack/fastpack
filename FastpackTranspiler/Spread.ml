@@ -164,7 +164,6 @@ let get_handler handler transpile_source scope
           in
           match has_rest, id, init with
           | true, (id_loc, P.Object pattern), Some (init_loc, init_expr) ->
-            (* TODO: get object_name properly *)
             let object_name =
               match init_expr with
               | E.Identifier _ -> sub_loc init_loc
