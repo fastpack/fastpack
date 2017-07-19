@@ -82,8 +82,8 @@ let get_handler handler transpile_source scope
             (* TODO: Computed is complex. May require adding another name
              *  Example: let {[0 + 1]: {y}} = {1: {y: 500}};
              * *)
-            | P.Object.Property.Computed (loc, E.Identifier _) ->
-              Some (sub_loc loc)
+            | P.Object.Property.Computed (_, E.Identifier (_, name)) ->
+              Some name
             | P.Object.Property.Computed (loc, _) ->
               let name, value = new_name @@ sub_loc loc in
               begin
@@ -122,8 +122,7 @@ let get_handler handler transpile_source scope
       | P.Object.RestProperty (_, {argument = (loc, _)}) ->
         after := !after
           @ [(sub_loc loc)
-             ^ " = "
-             ^ (Util.removeProps object_name !remove_props)
+             ^ " = " ^ (Util.removeProps object_name !remove_props)
             ];
         Drop
     in
@@ -181,7 +180,7 @@ let get_handler handler transpile_source scope
           | true, (id_loc, P.Object pattern), Some (init_loc, init_expr) ->
             let object_name =
               match init_expr with
-              | E.Identifier _ -> sub_loc init_loc
+              | E.Identifier (_,name) -> name
               | _ ->
                 let name, value = new_name @@ sub_loc init_loc in
                 begin

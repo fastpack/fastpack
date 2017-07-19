@@ -22,6 +22,9 @@ let removeProps object_name props =
 
 let make_scope () =
   let i = ref 0 in
+  (*
+   * let tmp_var cur_scope = check name in scope
+   * *)
   let tmp_var () =
     i := !i + 1;
     "$$fpack_" ^ (string_of_int !i)

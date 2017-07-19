@@ -90,6 +90,7 @@ let make_patcher workspace =
   let remove_loc (loc: Loc.t) =
     remove loc.start.offset (loc._end.offset - loc.start.offset)
   in
+  (* TODO: rename this to something more descriptive *)
   let sub start len = String.sub (!workspace).value start len in
   let sub_loc (loc : Loc.t) =
     sub (loc.start.offset) (loc._end.offset - loc.start.offset)
