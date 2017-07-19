@@ -8,7 +8,7 @@ module P = Spider_monkey_ast.Pattern
 type pattern_action = Drop
                     | Remove of (int * int) list
 
-let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
+let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ } =
 
   let visit_expression ((loc: Loc.t), expr) =
     match expr with
@@ -56,7 +56,7 @@ let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
     ) properties
   in
 
-  let rec pattern_action object_name (left: P.Object.t) =
+  let rec pattern_action object_name (object_pattern: P.Object.t) =
     let (remove_keys : string list ref) = ref [] in
     let (assignments : string list ref) = ref [] in
     let property_action prop =
@@ -89,7 +89,7 @@ let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
             ];
         Drop
     in
-    let {P.Object. properties; _} = left in
+    let {P.Object. properties; _} = object_pattern in
     let property_actions = List.map property_action properties in
     let drop_all = List.for_all
         (fun action -> match action with
@@ -101,6 +101,15 @@ let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
       then Drop
       else begin
         (* let len = List.length property_actions in *)
+        let maybe_comma is_first (loc : Loc.t) =
+          let start = if is_first
+            then loc.start.offset
+            else match Util.find_comma_pos sub loc.start.offset with
+            | Some pos -> pos
+            | None -> loc.start.offset
+          in
+          (start, loc._end.offset - start)
+        in
         let patches =
           List.flatten
           @@ List.mapi
@@ -109,9 +118,9 @@ let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
               | Remove patches -> patches
               | Drop -> match prop with
                 | P.Object.RestProperty (loc, _) ->
-                  [(loc.start.offset, loc._end.offset - loc.start.offset)]
+                  [ maybe_comma (i = 0) loc ]
                 | P.Object.Property (loc, _) ->
-                  [(loc.start.offset, loc._end.offset - loc.start.offset)]
+                  [ maybe_comma (i = 0) loc ]
             )
             properties
         in Remove patches
@@ -146,13 +155,12 @@ let get_handler handler { Workspace. sub_loc; patch; remove; patch_loc; _ } =
       List.iter
         (fun declarator ->
           let (loc, { S.VariableDeclaration.Declarator. id; init }) = declarator in
-          let _, left = id in
-          let has_rest = match left with
-            | P.Object pattern -> pattern_has_rest pattern
+          let has_rest = match id with
+            | (_, P.Object pattern) -> pattern_has_rest pattern
             | _ -> false
           in
-          match has_rest, left, init with
-          | true, P.Object pattern, Some (init_loc, _) ->
+          match has_rest, id, init with
+          | true, (_, P.Object pattern), Some (init_loc, _) ->
             (* TODO: get object_name properly *)
             let object_name = sub_loc init_loc in
             let action, assignments =
