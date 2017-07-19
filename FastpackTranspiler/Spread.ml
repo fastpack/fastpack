@@ -57,7 +57,7 @@ let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ }
   in
 
   let rec pattern_action object_name (object_pattern: P.Object.t) =
-    let (remove_keys : string list ref) = ref [] in
+    let (remove_props : string list ref) = ref [] in
     let (assignments : string list ref) = ref [] in
     let property_action prop =
       match prop with
@@ -77,10 +77,11 @@ let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ }
           begin
             match some_name with
             | Some name ->
-              remove_keys := !remove_keys @ [name];
+              remove_props := !remove_props @ [name];
               begin
                 match pattern with
                 | P.Object pattern ->
+                  (* TODO: prettify name handling *)
                   let new_object_name =
                     if name.[0] = '"'
                     then object_name ^ "." ^ (String.sub name 1 ((String.length name) - 2))
@@ -102,8 +103,9 @@ let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ }
       | P.Object.RestProperty (_, {argument = (loc, _)}) ->
         assignments :=
           !assignments
-          @ [Printf.sprintf "%s = $fpack.removeProps(%s, [%s])"
-              (sub_loc loc) object_name (String.concat "," !remove_keys)
+          @ [(sub_loc loc)
+             ^ " = "
+             ^ (Util.removeProps object_name !remove_props)
             ];
         Drop
     in
@@ -150,26 +152,6 @@ let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ }
   let visit_statement (_, stmt) =
     match stmt with
     | S.VariableDeclaration { declarations; _ } ->
-      (* - source[start:end] - no
-       * - Spider_monkey_ast - documentation ?
-       *   https://github.com/facebook/flow/blob/v0.42/src/parser/spider_monkey_ast.ml
-       * var {x, ...y} = z;
-       * var {x, y} = Object.assign(z, {y: removeProps(z, ['x'])});
-       * try {...} catch({x, ...y}) {}
-       * try {...} catch($$fp$$) {var {x, y} = Object.assign($$fp$$, {y: removeProps(z, ['x'])});}
-       *
-          let {
-            x: { a: xa, [d]: f, ...asdf },
-            y: { ...d },
-            ...g
-          } = complex;
-          let { x: {a: xa, [d]: f, asdf }, y: {d}, g} = Object.assign(
-                complex,
-                {x: Object.assign(complex.x, {asdf: removeProps(complex.x, ["a", d])})},
-                {y: Object.assign(complex.y, {d: removeProps(complex.y, [])})}
-                {g: removeProps(complex, ["g"])}
-          )
-          *)
       List.iter
         (fun declarator ->
           let (loc, { S.VariableDeclaration.Declarator. id; init }) = declarator in

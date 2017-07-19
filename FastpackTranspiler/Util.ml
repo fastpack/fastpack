@@ -10,3 +10,8 @@ let find_comma_pos ?(direction=GoBackward) sub start =
     | _ -> None
   in
   next @@ start + step
+
+let removeProps object_name props =
+  Printf.sprintf "$fpack.removeProps(%s, [%s])"
+    object_name
+    @@ String.concat ", " props
