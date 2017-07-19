@@ -1,3 +1,18 @@
+/*
+ * *********************** Object Spread Expressions ***********************
+ */
+
+/* Own */
+({ x, y, a, b, c: "test" });
+(Object.assign( {x}, y, {a}, b, {c}, {inner: Object.assign({some}, rest)} ));
+
+/* Babel */
+(Object.assign( {x}, y, {a}, b, {c} ));
+
+/*
+ * *********************** Variable Assignment ***********************
+ */
+
 /* Babel */
 var z = {};
 var x = $fpack.removeProps(z, []);

@@ -1,3 +1,18 @@
+/*
+ * *********************** Object Spread Expressions ***********************
+ */
+
+/* Own */
+({ x, y, a, b, c: "test" });
+({ x, ...y, a, ...b, c, inner: {some, ...rest} });
+
+/* Babel */
+({ x, ...y, a, ...b, c });
+
+/*
+ * *********************** Variable Assignment ***********************
+ */
+
 /* Babel */
 var z = {};
 var { ...x } = z;
