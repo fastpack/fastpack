@@ -8,7 +8,10 @@ module P = Spider_monkey_ast.Pattern
 type pattern_action = Drop
                     | Remove of (int * int) list
 
-let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ } =
+let get_handler handler transpile_source scope
+    { Workspace. sub; sub_loc; patch; remove; patch_loc; _ } =
+
+  let tmp_var = scope.Util. tmp_var in
 
   let visit_expression ((loc: Loc.t), expr) =
     match expr with
@@ -160,9 +163,22 @@ let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ }
             | _ -> false
           in
           match has_rest, id, init with
-          | true, (_, P.Object pattern), Some (init_loc, _) ->
+          | true, (id_loc, P.Object pattern), Some (init_loc, init_expr) ->
             (* TODO: get object_name properly *)
-            let object_name = sub_loc init_loc in
+            let object_name =
+              match init_expr with
+              | E.Identifier _ -> sub_loc init_loc
+              | _ ->
+                let name = tmp_var () in
+                let source =
+                  Printf.sprintf "%s = %s" name @@ sub_loc init_loc
+                in
+                let transpiled = transpile_source scope source in
+                begin
+                  patch id_loc.start.offset 0 @@ transpiled ^ ", ";
+                  name
+                end
+            in
             let action, assignments =
               pattern_action object_name pattern
             in
@@ -173,6 +189,8 @@ let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ }
                 patch_loc loc s_assigments
               | Remove patches ->
                 List.iter (fun (s, o) -> remove s o) patches;
+                if object_name != (sub_loc init_loc)
+                  then patch_loc init_loc object_name;
                 patch init_loc._end.offset 0 @@ ", " ^ s_assigments
             end
           | _ ->

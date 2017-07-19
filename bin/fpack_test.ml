@@ -1,10 +1,12 @@
-let transpile = FastpackTranspiler.Main.test
+let transpile () =
+  let scope = FastpackTranspiler.Util.make_scope () in
+  FastpackTranspiler.Main.transpile_source scope
 
 let tests = [
-  ("no-object-spread.js", transpile);
-  ("babel-object-spread.js", transpile);
-  ("object-spread-recursive.js", transpile);
-  ("object-rest-assignment.js", transpile);
+  ("no-object-spread.js", transpile ());
+  ("babel-object-spread.js", transpile ());
+  ("object-spread-recursive.js", transpile ());
+  ("object-rest-assignment.js", transpile ());
 ]
 
 let () =

@@ -1,10 +1,10 @@
 module Visit = Fastpack.Visit
 
-let transpile program patcher =
+let rec transpile program scope patcher =
 
   let rec handler =
     let handlers () =
-      List.map (fun f -> f handler patcher)
+      List.map (fun f -> f handler transpile_source scope patcher)
       [
        Spread.get_handler
       ]
@@ -26,10 +26,11 @@ let transpile program patcher =
         ) Visit.Continue @@ handlers ()
     in
     { Visit. visit_expression; visit_statement }
+
   in
   Visit.visit handler program
 
-let test source =
+and transpile_source  scope source =
   let module Workspace = Fastpack.Workspace in
   let (program, _errors) = Parser_flow.program_file source None in
   let workspace = ref (Workspace.of_string source) in
@@ -45,6 +46,7 @@ let test source =
        @@ Lwt_io.position ch
   in
   begin
-    transpile program @@ Workspace.make_patcher workspace;
+    let patcher = Workspace.make_patcher workspace in
+    transpile program scope patcher;
     Lwt_main.run (to_string !workspace)
   end
