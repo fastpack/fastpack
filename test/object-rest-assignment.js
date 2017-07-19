@@ -35,3 +35,7 @@ let {...x} = (function(){
   let {a, ...b} = {a: 1, b:2, c: 3};
   return b;
 })();
+
+// Computed property handling
+let {[(function() {return "a";})()]:{...b}} = {a: {b: 2, c: 3}};
+let {[(function() {return "a";})()]:{b, ...cc}} = {a: {b: 2, c: 3}};

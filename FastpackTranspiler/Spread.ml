@@ -13,6 +13,13 @@ let get_handler handler transpile_source scope
 
   let tmp_var = scope.Util. tmp_var in
 
+  let new_name value =
+    let name = tmp_var () in
+    let source = Printf.sprintf "%s = %s" name value in
+    let ret = transpile_source scope source in
+    (name, ret)
+  in
+
   let visit_expression ((loc: Loc.t), expr) =
     match expr with
     | E.Object { properties } ->
@@ -61,7 +68,9 @@ let get_handler handler transpile_source scope
 
   let rec pattern_action object_name (object_pattern: P.Object.t) =
     let (remove_props : string list ref) = ref [] in
-    let (assignments : string list ref) = ref [] in
+    let (before : string list ref) = ref [] in
+    let (after : string list ref) = ref [] in
+
     let property_action prop =
       match prop with
       | P.Object.Property (_, {key; pattern=(_, pattern); _}) ->
@@ -75,6 +84,12 @@ let get_handler handler transpile_source scope
              * *)
             | P.Object.Property.Computed (loc, E.Identifier _) ->
               Some (sub_loc loc)
+            | P.Object.Property.Computed (loc, _) ->
+              let name, value = new_name @@ sub_loc loc in
+              begin
+                before := !before @ [value];
+                Some name
+              end
             | _ -> None
           in
           begin
@@ -90,11 +105,12 @@ let get_handler handler transpile_source scope
                     then object_name ^ "." ^ (String.sub name 1 ((String.length name) - 2))
                     else object_name ^ "[" ^ name ^ "]"
                   in
-                  let action, _assignments =
+                  let action, _before, _after =
                     pattern_action new_object_name pattern
                   in
                   begin
-                    assignments := !assignments @ _assignments;
+                    after := !after @ _after;
+                    before := !before @ _before;
                     action
                   end
                 | _ -> Remove []
@@ -104,8 +120,7 @@ let get_handler handler transpile_source scope
         end
 
       | P.Object.RestProperty (_, {argument = (loc, _)}) ->
-        assignments :=
-          !assignments
+        after := !after
           @ [(sub_loc loc)
              ^ " = "
              ^ (Util.removeProps object_name !remove_props)
@@ -149,7 +164,7 @@ let get_handler handler transpile_source scope
         in Remove patches
       end
     in
-    (action, !assignments)
+    (action, !before, !after)
   in
 
   let visit_statement (_, stmt) =
@@ -168,29 +183,28 @@ let get_handler handler transpile_source scope
               match init_expr with
               | E.Identifier _ -> sub_loc init_loc
               | _ ->
-                let name = tmp_var () in
-                let source =
-                  Printf.sprintf "%s = %s" name @@ sub_loc init_loc
-                in
-                let transpiled = transpile_source scope source in
+                let name, value = new_name @@ sub_loc init_loc in
                 begin
-                  patch id_loc.start.offset 0 @@ transpiled ^ ", ";
+                  patch id_loc.start.offset 0 @@ value ^ ", ";
                   name
                 end
             in
-            let action, assignments =
+            let action, before, after =
               pattern_action object_name pattern
             in
-            let s_assigments = String.concat ", " assignments in
+            let s_before = String.concat ", " before in
+            let s_after = String.concat ", " after in
             begin
               match action with
               | Drop ->
-                patch_loc loc s_assigments
+                patch_loc loc @@ String.concat ", " @@ before @ after
               | Remove patches ->
+                if s_before <> "" then
+                  patch id_loc.start.offset 0 @@ s_before ^ ", ";
                 List.iter (fun (s, o) -> remove s o) patches;
                 if object_name != (sub_loc init_loc)
                   then patch_loc init_loc object_name;
-                patch init_loc._end.offset 0 @@ ", " ^ s_assigments
+                patch init_loc._end.offset 0 @@ ", " ^ s_after
             end
           | _ ->
             Visit.visit_variable_declarator handler declarator

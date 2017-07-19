@@ -33,3 +33,7 @@ let $$fpack_7 = (function(){
   let $$fpack_8 = {a: 1, b:2, c: 3}, {a} = $$fpack_8, b = $fpack.removeProps($$fpack_8, ["a"]);
   return b;
 })(), x = $fpack.removeProps($$fpack_7, []);
+
+// Computed property handling
+let $$fpack_9 = {a: {b: 2, c: 3}}, $$fpack_10 = (function() {return "a";})(), b = $fpack.removeProps($$fpack_9[$$fpack_10], []);
+let $$fpack_11 = {a: {b: 2, c: 3}}, $$fpack_12 = (function() {return "a";})(), {[(function() {return "a";})()]:{b}} = $$fpack_11, cc = $fpack.removeProps($$fpack_11[$$fpack_12], ["b"]);
