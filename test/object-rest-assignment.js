@@ -1,3 +1,4 @@
+/* Babel */
 var z = {};
 var { ...x } = z;
 var { ...a } = { a: 1 };

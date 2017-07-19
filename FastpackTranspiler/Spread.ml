@@ -63,22 +63,40 @@ let get_handler handler { Workspace. sub; sub_loc; patch; remove; patch_loc; _ }
       match prop with
       | P.Object.Property (_, {key; pattern=(_, pattern); _}) ->
         begin
-          match key with
-          | P.Object.Property.Identifier (_, name) ->
-            remove_keys := !remove_keys @ ["\"" ^ name ^ "\""];
-            begin
-            match pattern with
-              | P.Object pattern ->
-                let action, _assignments =
-                  pattern_action (object_name ^ "." ^ name) pattern
-                in
-                begin
-                  assignments := !assignments @ _assignments;
-                  action
-                end
-              | _ -> Remove []
-            end;
-          | _ -> Remove [];
+          let some_name =
+            match key with
+            | P.Object.Property.Identifier (_, name) ->
+              Some ("\"" ^ name ^ "\"")
+            (* TODO: Computed is complex. May require adding another name
+             *  Example: let {[0 + 1]: {y}} = {1: {y: 500}};
+             * *)
+            | P.Object.Property.Computed (loc, E.Identifier _) ->
+              Some (sub_loc loc)
+            | _ -> None
+          in
+          begin
+            match some_name with
+            | Some name ->
+              remove_keys := !remove_keys @ [name];
+              begin
+                match pattern with
+                | P.Object pattern ->
+                  let new_object_name =
+                    if name.[0] = '"'
+                    then object_name ^ "." ^ (String.sub name 1 ((String.length name) - 2))
+                    else object_name ^ "[" ^ name ^ "]"
+                  in
+                  let action, _assignments =
+                    pattern_action new_object_name pattern
+                  in
+                  begin
+                    assignments := !assignments @ _assignments;
+                    action
+                  end
+                | _ -> Remove []
+              end
+            | _ -> Remove []
+          end;
         end
 
       | P.Object.RestProperty (_, {argument = (loc, _)}) ->
