@@ -19,18 +19,20 @@ To execute toplevel (OCaml REPL):
 ## TODO
 
 ### MVP
-- syntax: object spread, rest operators [zindel, in progress]
-- syntax: decorators
-- syntax: jsx
-- syntax: flow - remove annotations
-- CSS support in import statements (webpack ICSS)?
-- support external command execution for LESS/SASS/other processing
-- watch mode (watchman?)
-- source maps [andreypopp, in progress]
-- syntax error reporting
+
+- [ ] FastpackTraspiler: object spread, rest operators [zindel, in progress]
+- [ ] FastpackTraspiler: decorators
+- [ ] FastpackTraspiler: jsx
+- [ ] FastpackTraspiler: flow - remove annotations
+- [ ] CSS support in import statements (webpack ICSS)?
+- [ ] Support external command execution for LESS/SASS/other processing
+- [ ] Watch mode (watchman?)
+- [ ] Source maps [andreypopp, in progress]
+- [ ] UI/UX (error reporting, config)
 
 ### Heap
-- support AST variable scope and check collisions with tmp_vars;
-- think of Workspace.make_patcher API;
-- think of integration with Flow
+
+- [ ] support AST variable scope and check collisions with tmp_vars
+- [ ] Think of Workspace.make_patcher API
+- [ ] Think of integration with Flow
 
