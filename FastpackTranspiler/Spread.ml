@@ -34,7 +34,7 @@ let get_handler handler transpile_source scope
       if has_spread
       then
         begin
-        patch loc.start.offset 1 "Object.assign(";
+        patch loc.start.offset 1 "Object.assign({},";
         Visit.visit_list
           handler
           (fun handler prop ->
@@ -81,9 +81,6 @@ let get_handler handler transpile_source scope
             match key with
             | P.Object.Property.Identifier (_, name) ->
               Some (name, Quoted)
-            (* TODO: Computed is complex. May require adding another name
-             *  Example: let {[0 + 1]: {y}} = {1: {y: 500}};
-             * *)
             | P.Object.Property.Computed (_, E.Identifier (_, name)) ->
               Some (name, Unquoted)
             | P.Object.Property.Computed (loc, _) ->
