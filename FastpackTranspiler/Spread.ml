@@ -6,7 +6,9 @@ module L = Spider_monkey_ast.Literal
 module P = Spider_monkey_ast.Pattern
 
 type pattern_action = Drop
-                    | Remove of (int * int) list
+                    | Patch of (int * int * string) list
+
+type name_kind = Quoted | Unquoted | Generated of Loc.t
 
 let get_handler handler transpile_source scope
     { Workspace. sub; sub_loc; patch; remove; patch_loc; _ } =
@@ -78,32 +80,36 @@ let get_handler handler transpile_source scope
           let some_name =
             match key with
             | P.Object.Property.Identifier (_, name) ->
-              Some ("\"" ^ name ^ "\"")
+              Some (name, Quoted)
             (* TODO: Computed is complex. May require adding another name
              *  Example: let {[0 + 1]: {y}} = {1: {y: 500}};
              * *)
             | P.Object.Property.Computed (_, E.Identifier (_, name)) ->
-              Some name
+              Some (name, Unquoted)
             | P.Object.Property.Computed (loc, _) ->
               let name, value = new_name @@ sub_loc loc in
               begin
                 before := !before @ [value];
-                Some name
+                Some (name, Generated loc)
               end
             | _ -> None
           in
           begin
             match some_name with
-            | Some name ->
-              remove_props := !remove_props @ [name];
+            | Some (name, kind) ->
+              let prop_name =
+                match kind with
+                | Quoted -> "\"" ^ name ^ "\""
+                | _ -> name
+              in
+              remove_props := !remove_props @ [prop_name];
               begin
                 match pattern with
                 | P.Object pattern ->
-                  (* TODO: prettify name handling *)
                   let new_object_name =
-                    if name.[0] = '"'
-                    then object_name ^ "." ^ (String.sub name 1 ((String.length name) - 2))
-                    else object_name ^ "[" ^ name ^ "]"
+                    match kind with
+                    | Quoted -> object_name ^ "." ^ name
+                    | _ -> object_name ^ "[" ^ name ^ "]"
                   in
                   let action, _before, _after =
                     pattern_action new_object_name pattern
@@ -111,11 +117,21 @@ let get_handler handler transpile_source scope
                   begin
                     after := !after @ _after;
                     before := !before @ _before;
-                    action
+                    let key_patch =
+                      match kind with
+                      | Generated {start={offset=s; _};
+                                   _end={offset=e; _}; _}
+                        -> Some (s, e - s, name)
+                      | _ -> None
+                    in
+                    match key_patch, action with
+                    | None, action -> action
+                    | _, Drop -> action
+                    | Some patch, Patch patches -> Patch (patch::patches)
                   end
-                | _ -> Remove []
+                | _ -> Patch []
               end
-            | _ -> Remove []
+            | _ -> Patch []
           end;
         end
 
@@ -145,14 +161,14 @@ let get_handler handler transpile_source scope
             | Some pos -> pos
             | None -> loc.start.offset
           in
-          (start, loc._end.offset - start)
+          (start, loc._end.offset - start, "")
         in
         let patches =
           List.flatten
           @@ List.mapi
             (fun i prop ->
               match List.nth property_actions i with
-              | Remove patches -> patches
+              | Patch patches -> patches
               | Drop -> match prop with
                 | P.Object.RestProperty (loc, _) ->
                   [ maybe_comma (i = 0) loc ]
@@ -160,7 +176,7 @@ let get_handler handler transpile_source scope
                   [ maybe_comma (i = 0) loc ]
             )
             properties
-        in Remove patches
+        in Patch patches
       end
     in
     (action, !before, !after)
@@ -197,10 +213,11 @@ let get_handler handler transpile_source scope
               match action with
               | Drop ->
                 patch_loc loc @@ String.concat ", " @@ before @ after
-              | Remove patches ->
+              | Patch patches ->
                 if s_before <> "" then
                   patch id_loc.start.offset 0 @@ s_before ^ ", ";
-                List.iter (fun (s, o) -> remove s o) patches;
+                List.iter
+                  (fun (start, offset, s) -> patch start offset s) patches;
                 if object_name != (sub_loc init_loc)
                   then patch_loc init_loc object_name;
                 patch init_loc._end.offset 0 @@ ", " ^ s_after
