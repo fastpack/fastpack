@@ -39,6 +39,22 @@ let { x4: { ...y4 } } = z;
 
 var { ...{ z } } = { z: 1 };
 var { ...{ x = 5 } } = { x : 1 };
+const { outer: { inner: { three, ...other } } } = defunct
+const test = {
+  foo: {
+    bar: {
+      baz: {
+        a: {
+          x: 1,
+          y: 2,
+          z: 3,
+        },
+      },
+    },
+  },
+};
+
+const { foo: { bar: { baz: { a: { x, ...other } } } } } = test;
 
 /* Own */
 
@@ -57,3 +73,17 @@ let {...x} = (function(){
 // Computed property handling
 let {[(function() {return "a";})()]:{...b}} = {a: {b: 2, c: 3}};
 let {[(function() {return "a";})()]:{b, ...cc}} = {a: {b: 2, c: 3}};
+
+/*
+ * *********************** Assignment Expressions ***********************
+ */
+
+/* Babel */
+({ a1 } = c1);
+({ a2, ...b2 } = c2);
+
+console.log({ a3, ...b3 } = c3);
+
+/* Own */
+
+console.log({ a, ["c" + ""]:{...xx}, ...b } = {a: 1, b: 2, c: {x: 1}});

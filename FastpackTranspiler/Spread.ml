@@ -15,23 +15,46 @@ let get_handler handler transpile_source scope
 
   let tmp_var = scope.Util. tmp_var in
 
+  let transpile_assignment name value =
+    let source = Printf.sprintf "var %s = %s;" name value in
+    let ret = transpile_source scope source in
+    (name, String.sub ret 4 ((String.length ret) - 5))
+  in
+
   let new_name value =
     let name = tmp_var () in
-    let source = Printf.sprintf "%s = %s" name value in
-    let ret = transpile_source scope source in
-    (name, ret)
+    transpile_assignment name value
   in
+
 
   let visit_expression ((loc: Loc.t), expr) =
     match expr with
+    (* | E.Assignment {left; right; operator} -> *)
+    | E.Assignment {left=(loc_left, P.Object {properties; _});
+                    right=(loc_right, _); _} ->
+      begin
+        let has_rest = List.exists (fun prop -> match prop with
+            | P.Object.RestProperty _ -> true
+            | _ -> false
+          ) properties
+        in
+        if has_rest then
+        begin
+          let name, r_value = new_name @@ sub_loc loc_right in
+          let _, rest = transpile_assignment (sub_loc loc_left) name in
+          patch_loc loc @@ Printf.sprintf "(%s, %s)" r_value rest;
+          Visit.Continue
+        end
+        else
+          Visit.Continue
+      end
     | E.Object { properties } ->
-      let has_spread = List.exists (fun prop -> match prop with
+      let has_spread properties = List.exists (fun prop -> match prop with
           | E.Object.SpreadProperty _ -> true
           | _ -> false
         ) properties
       in
-
-      if has_spread
+      if has_spread properties
       then
         begin
         patch loc.start.offset 1 "Object.assign({},";

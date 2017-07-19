@@ -4,10 +4,13 @@
 
 /* Own */
 ({ x, y, a, b, c: "test" });
-(Object.assign( {x}, y, {a}, b, {c}, {inner: Object.assign({some}, rest)} ));
+(Object.assign({}, {x}, y, {a}, b, {c}, {inner: Object.assign({},{some}, rest)} ));
 
 /* Babel */
-(Object.assign( {x}, y, {a}, b, {c} ));
+(Object.assign({}, {x}, y, {a}, b, {c} ));
+z = Object.assign({}, {x}, y );
+z = { x, w: Object.assign({}, y ) };
+var z = Object.assign({}, x );
 
 /*
  * *********************** Variable Assignment ***********************
@@ -34,6 +37,22 @@ let y4 = $fpack.removeProps(z.x4, []);
 
 var $$fpack_4 = { z: 1 }, { z } = $fpack.removeProps($$fpack_4, []);
 var $$fpack_5 = { x : 1 }, { x = 5 } = $fpack.removeProps($$fpack_5, []);
+const { outer: { inner: { three } } } = defunct, other = $fpack.removeProps(defunct.outer.inner, ["three"])
+const test = {
+  foo: {
+    bar: {
+      baz: {
+        a: {
+          x: 1,
+          y: 2,
+          z: 3,
+        },
+      },
+    },
+  },
+};
+
+const { foo: { bar: { baz: { a: { x } } } } } = test, other = $fpack.removeProps(test.foo.bar.baz.a, ["x"]);
 
 /* Own */
 
@@ -52,3 +71,17 @@ let $$fpack_7 = (function(){
 // Computed property handling
 let $$fpack_9 = {a: {b: 2, c: 3}}, $$fpack_10 = (function() {return "a";})(), b = $fpack.removeProps($$fpack_9[$$fpack_10], []);
 let $$fpack_11 = {a: {b: 2, c: 3}}, $$fpack_12 = (function() {return "a";})(), {[$$fpack_12]:{b}} = $$fpack_11, cc = $fpack.removeProps($$fpack_11[$$fpack_12], ["b"]);
+
+/*
+ * *********************** Assignment Expressions ***********************
+ */
+
+/* Babel */
+({ a1 } = c1);
+(($$fpack_13 = c2, { a2 } = $$fpack_13, b2 = $fpack.removeProps($$fpack_13, ["a2"])));
+
+console.log(($$fpack_14 = c3, { a3 } = $$fpack_14, b3 = $fpack.removeProps($$fpack_14, ["a3"])));
+
+/* Own */
+
+console.log(($$fpack_15 = {a: 1, b: 2, c: {x: 1}}, $$fpack_16 = "c" + "", { a } = $$fpack_15, xx = $fpack.removeProps($$fpack_15[$$fpack_16], []), b = $fpack.removeProps($$fpack_15, ["a", $$fpack_16])));
