@@ -97,10 +97,12 @@ let f1 = function ($$fpack_18) {let b = $fpack.removeProps($$fpack_18, []); };
 let f2 = ($$fpack_19) => {let c = $fpack.removeProps($$fpack_19, []); return (c);};
 let f3 = ($$fpack_20) => {let c = $fpack.removeProps($$fpack_20, []); return c};
 
-// could rest pattern be a part of the rest element?
-function f4(a, ...b) {};
-function f5(a, ...{...b}) {};
-
 // many parameters
 function f5(a, $$fpack_21, $$fpack_22) {let c = $fpack.removeProps($$fpack_21.b, []), g = $fpack.removeProps($$fpack_22.d.e.f, []); };
 let f6 = ($$fpack_23, c, $$fpack_24) => ({let {a} = $$fpack_23, b = $fpack.removeProps($$fpack_23, ["a"]), f = $fpack.removeProps($$fpack_24.d.e, []); return ({});});
+
+// could rest pattern be a part of the rest element at all?
+function f7(a, ...b) {};
+function f8(a, $$fpack_25) {let {b} = $$fpack_25, c = $fpack.removeProps($$fpack_25, ["b"]); };
+function f9(a, $$fpack_26, $$fpack_27) {let c = $fpack.removeProps($$fpack_26.b, []), d = $fpack.removeProps($$fpack_27, []); };
+
