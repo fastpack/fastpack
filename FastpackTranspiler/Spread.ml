@@ -4,6 +4,7 @@ module S = Spider_monkey_ast.Statement
 module E = Spider_monkey_ast.Expression
 module L = Spider_monkey_ast.Literal
 module P = Spider_monkey_ast.Pattern
+module F = Spider_monkey_ast.Function
 
 type pattern_action = Drop
                     | Patch of (int * int * string) list
@@ -43,7 +44,7 @@ let get_handler handler transpile_source scope
           let name, r_value = new_name @@ sub_loc loc_right in
           let _, rest = transpile_assignment (sub_loc loc_left) name in
           patch_loc loc @@ Printf.sprintf "(%s, %s)" r_value rest;
-          Visit.Continue
+          Visit.Break
         end
         else
           Visit.Continue
