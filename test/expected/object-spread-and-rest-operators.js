@@ -106,3 +106,10 @@ function f7(a, ...b) {};
 function f8(a, $$fpack_25) {let {b} = $$fpack_25, c = $fpack.removeProps($$fpack_25, ["b"]); };
 function f9(a, $$fpack_26, $$fpack_27) {let c = $fpack.removeProps($$fpack_26.b, []), d = $fpack.removeProps($$fpack_27, []); };
 
+/*
+ * *********************** For ... of ***********************
+ */
+
+for (var $$fpack_28 of []) {let {a} = $$fpack_28, b = $fpack.removeProps($$fpack_28, ["a"]);}
+for (var $$fpack_29 of []) {let {a} = $$fpack_29, b = $fpack.removeProps($$fpack_29, ["a"]);console.log(a, b);}
+for ($$fpack_30 of []) {let {a} = $$fpack_30, b = $fpack.removeProps($$fpack_30, ["a"]);}

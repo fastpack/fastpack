@@ -108,3 +108,10 @@ function f7(a, ...b) {};
 function f8(a, ...{b, ...c}) {};
 function f9(a, {b:{...c}}, ...{...d}) {};
 
+/*
+ * *********************** For ... of ***********************
+ */
+
+for (var {a, ...b} of []) {}
+for (var {a, ...b} of []) console.log(a, b);
+for ({a, ...b} of []) {}

@@ -273,6 +273,62 @@ let get_handler handler transpile_source scope
 
   let visit_statement (_, stmt) =
     match stmt with
+    | S.ForOf { left; body=(loc, stmt) as body; _} ->
+      let patch_body patches =
+        let s_patches = "let " ^ String.concat ", " patches ^ ";" in
+        match patches, stmt with
+        | ([], _) ->
+          Visit.visit_statement handler body;
+        | _, S.Block _ ->
+          patch (loc.start.offset + 1) 0 s_patches;
+          Visit.visit_statement handler body;
+        | _ ->
+          patch loc.start.offset 0 @@ "{" ^ s_patches;
+          Visit.visit_statement handler body;
+          patch loc._end.offset 0 "}"
+      in
+      begin
+        match left with
+        | S.ForOf.LeftDeclaration (_, {declarations; _}) ->
+          let patches = List.fold_left
+            (fun patches declarator ->
+              let (loc, { S.VariableDeclaration.Declarator. id; _}) = declarator in
+              let has_rest = match id with
+                | (_, P.Object pattern) -> pattern_has_rest pattern
+                | _ -> false
+              in
+              match has_rest, id  with
+              | true, (id_loc, P.Object _) ->
+                let name = tmp_var () in
+                let _, assignment = transpile_assignment (sub_loc loc) name in
+                begin
+                  patch_loc id_loc name;
+                  patches @ [assignment]
+                end;
+              | _ ->
+                Visit.visit_variable_declarator handler declarator;
+                []
+            )
+            []
+            declarations
+          in
+          patch_body patches;
+        | S.ForOf.LeftExpression (loc, E.Object {properties}) -> ();
+          let has_spread properties = List.exists (fun prop -> match prop with
+              | E.Object.SpreadProperty _ -> true
+              | _ -> false
+            ) properties
+          in
+          if has_spread properties then
+          let name = tmp_var () in
+          let _, assignment = transpile_assignment (sub_loc loc) name in
+          begin
+            patch_loc loc name;
+            patch_body [assignment];
+          end;
+        | _ -> ();
+      end;
+      Visit.Break;
     | S.VariableDeclaration { declarations; _ } ->
       List.iter
         (fun declarator ->
