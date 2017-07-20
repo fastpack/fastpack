@@ -333,11 +333,12 @@ and visit_function handler (_, {
       visit_if_some handler (fun handler (_loc, { Function.RestElement. argument }) ->
           visit_pattern handler argument) rest
     );
-    (match body with
-     | Function.BodyBlock block ->
-       visit_block handler block
-     | Function.BodyExpression expr ->
-       visit_expression handler expr)
+    visit_function_body handler body
+
+and visit_function_body handler body =
+  match body with
+  | Function.BodyBlock block -> visit_block handler block
+  | Function.BodyExpression expr -> visit_expression handler expr
 
 and visit_block handler ((_loc, block) : (Loc.t * Statement.Block.t)) =
   visit_list handler visit_statement block.body

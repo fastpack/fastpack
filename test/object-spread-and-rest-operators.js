@@ -84,7 +84,7 @@ let {[(function() {return "a";})()]:{b, ...cc}} = {a: {b: 2, c: 3}};
 
 console.log({ a3, ...b3 } = c3);
 
-/* Own */
+/* Own  - Babel fails on this */
 
 console.log({ a, ["c" + ""]:{...xx}, ...b } = {a: 1, b: 2, c: {x: 1}});
 
@@ -95,6 +95,16 @@ console.log({ a, ["c" + ""]:{...xx}, ...b } = {a: 1, b: 2, c: {x: 1}});
 /* Own */
 
 function f({...a}) {};
-let f = function ({...b}) {};
-let a1 = ({...c}) => c;
-let a2 = ({...c}) => {return c};
+let f1 = function ({...b}) {};
+let f2 = ({...c}) => c;
+let f3 = ({...c}) => {return c};
+
+// many parameters
+function f5(a, {b:{...c}}, {d:{e:{f:{...g}}}}) {};
+let f6 = ({a, ...b}, c, {d: {e: {...f}}}) => ({});
+
+// could rest pattern be a part of the rest element at all?
+function f7(a, ...b) {};
+function f8(a, ...{b, ...c}) {};
+function f9(a, {b:{...c}}, ...{...d}) {};
+

@@ -27,7 +27,6 @@ let get_handler handler transpile_source scope
     transpile_assignment name value
   in
 
-
   let rec pattern_has_rest ({ properties; _ } : P.Object.t)  = List.exists
     (fun prop -> match prop with
       | P.Object.RestProperty _ -> true
@@ -148,9 +147,74 @@ let get_handler handler transpile_source scope
     (action, !before, !after)
   in
 
-  let visit_function (_loc, _) =
-    (* print_endline @@ sub_loc loc; *)
-    Visit.Continue
+  let visit_function (_, {F. params; body; _}) =
+    let (params, rest) = params in
+    let params_with_rest =
+      List.map
+        (fun (_, p) -> match p with
+          | P.Object pattern -> pattern_has_rest pattern
+          | _ -> false
+        )
+        params
+    in
+    (* TODO: make sure this is needed and works correctly *)
+    let rest_has_rest =
+      match rest with
+      | Some (_, {F.RestElement. argument=(_, P.Object pattern)}) ->
+        pattern_has_rest pattern
+      | _ -> false
+    in
+    if (List.exists (fun x -> x) params_with_rest) || rest_has_rest then begin
+      let param_patches = List.fold_left2
+        (fun result has_rest param ->
+          match has_rest, param with
+          | true, (loc, P.Object _) ->
+            let name = tmp_var () in
+            let _, assignment = transpile_assignment (sub_loc loc) name in
+            begin
+              patch_loc loc name;
+              result @ [assignment]
+            end
+          | _ ->
+            Visit.visit_pattern handler param;
+            result
+        )
+        ([] : string list)
+        params_with_rest
+        params
+      in
+      let rest_patches =
+        if rest_has_rest then
+          match rest with
+          | Some (loc, {F.RestElement. argument=(loc_p, P.Object _)}) ->
+            let name = tmp_var () in
+            let _, assignment = transpile_assignment (sub_loc loc_p) name in
+            begin
+              patch_loc loc name;
+              [assignment]
+            end
+          | _ -> []
+        else []
+      in
+      match (param_patches @ rest_patches) with
+      | [] ->
+        Visit.Continue
+      | body_patches ->
+        let body_patch = "let " ^ (String.concat ", " body_patches) ^ "; " in
+        begin
+          match body with
+          | F.BodyBlock ((loc, _) as block) ->
+            patch (loc.start.offset + 1) 0 body_patch;
+            Visit.visit_block handler block;
+          | F.BodyExpression (loc, expr)  ->
+            patch loc.start.offset 0 @@ "{" ^ body_patch ^ "return (";
+            Visit.visit_expression handler (loc, expr);
+            patch loc._end.offset 0 ");}";
+        end;
+        Visit.Break
+    end
+    else
+      Visit.Continue
   in
 
   let visit_expression ((loc: Loc.t), expr) =

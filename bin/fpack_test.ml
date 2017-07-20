@@ -3,7 +3,8 @@ let transpile () =
   FastpackTranspiler.Main.transpile_source scope
 
 let tests = [
-  ("object-spread-and-rest-operators.js", transpile ());
+  ("current.js", transpile ());
+  (* ("object-spread-and-rest-operators.js", transpile ()); *)
 ]
 
 let () =

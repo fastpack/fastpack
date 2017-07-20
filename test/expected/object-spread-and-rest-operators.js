@@ -82,6 +82,25 @@ let $$fpack_11 = {a: {b: 2, c: 3}}, $$fpack_12 = (function() {return "a";})(), {
 
 console.log(($$fpack_14 = c3, { a3 } = $$fpack_14, b3 = $fpack.removeProps($$fpack_14, ["a3"])));
 
-/* Own */
+/* Own  - Babel fails on this */
 
 console.log(($$fpack_15 = {a: 1, b: 2, c: {x: 1}}, $$fpack_16 = "c" + "", { a } = $$fpack_15, xx = $fpack.removeProps($$fpack_15[$$fpack_16], []), b = $fpack.removeProps($$fpack_15, ["a", $$fpack_16])));
+
+/*
+ * *********************** Functions ***********************
+ */
+
+/* Own */
+
+function f($$fpack_17) {let a = $fpack.removeProps($$fpack_17, []); };
+let f1 = function ($$fpack_18) {let b = $fpack.removeProps($$fpack_18, []); };
+let f2 = ($$fpack_19) => {let c = $fpack.removeProps($$fpack_19, []); return (c);};
+let f3 = ($$fpack_20) => {let c = $fpack.removeProps($$fpack_20, []); return c};
+
+// could rest pattern be a part of the rest element?
+function f4(a, ...b) {};
+function f5(a, ...{...b}) {};
+
+// many parameters
+function f5(a, $$fpack_21, $$fpack_22) {let c = $fpack.removeProps($$fpack_21.b, []), g = $fpack.removeProps($$fpack_22.d.e.f, []); };
+let f6 = ($$fpack_23, c, $$fpack_24) => ({let {a} = $$fpack_23, b = $fpack.removeProps($$fpack_23, ["a"]), f = $fpack.removeProps($$fpack_24.d.e, []); return ({});});
