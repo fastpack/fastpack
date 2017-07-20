@@ -25,12 +25,22 @@ let rec transpile program scope patcher =
           | Visit.Continue -> visit_statement stmt
         ) Visit.Continue @@ handlers ()
     in
-    { Visit. visit_expression; visit_statement }
+
+    let visit_function func =
+      List.fold_left (fun result {Visit. visit_function; _} ->
+          match result with
+          | Visit.Break -> Visit.Break
+          | Visit.Continue -> visit_function func
+        ) Visit.Continue @@ handlers ()
+    in
+
+
+    { Visit. visit_expression; visit_statement; visit_function; }
 
   in
   Visit.visit handler program
 
-and transpile_source  scope source =
+and transpile_source scope source =
   let module Workspace = Fastpack.Workspace in
   let (program, _errors) = Parser_flow.program_file source None in
   let workspace = ref (Workspace.of_string source) in

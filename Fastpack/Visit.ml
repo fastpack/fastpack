@@ -5,12 +5,15 @@ module Literal = Spider_monkey_ast.Literal
 module Type = Spider_monkey_ast.Type
 module Variance = Spider_monkey_ast.Variance
 module Class = Spider_monkey_ast.Class
+module Function = Spider_monkey_ast.Function
+
 
 type visit_action = Continue | Break
 
 type visit_handler = {
   visit_statement : Statement.t -> visit_action;
   visit_expression : Expression.t -> visit_action;
+  visit_function : (Loc.t * Function.t) -> visit_action;
 }
 
 
@@ -18,7 +21,8 @@ let default_visit_handler =
   let do_nothing _ = Continue in
   {
     visit_statement = do_nothing;
-    visit_expression = do_nothing
+    visit_expression = do_nothing;
+    visit_function = do_nothing;
   }
 
 let visit_list (handler : visit_handler) visit list =
@@ -306,8 +310,8 @@ and visit_object_property_key handler key =
   | Expression.Object.Property.Computed expr ->
     visit_expression handler expr
 
-and visit_function handler (_loc, {
-    Spider_monkey_ast.Function.
+and visit_function handler (_, {
+    Function.
     id = _id;
     params;
     body;
@@ -317,17 +321,23 @@ and visit_function handler (_loc, {
     expression = _expression;
     returnType = _returnType;
     typeParameters = _typeParameters;
-  }) =
-  (** TODO: handle `predicate` *)
-  (
-    let (params, rest) = params in
-    visit_list handler visit_pattern params;
-    visit_if_some handler (fun handler (_loc, { Spider_monkey_ast.Function.RestElement. argument }) ->
-        visit_pattern handler argument) rest
-  );
-  (match body with
-   | Spider_monkey_ast.Function.BodyBlock block -> visit_block handler block
-   | Spider_monkey_ast.Function.BodyExpression expr -> visit_expression handler expr)
+  } as func) =
+  let action = handler.visit_function func in
+  match action with
+  | Break -> ()
+  | Continue ->
+    (** TODO: handle `predicate` *)
+    (
+      let (params, rest) = params in
+      visit_list handler visit_pattern params;
+      visit_if_some handler (fun handler (_loc, { Function.RestElement. argument }) ->
+          visit_pattern handler argument) rest
+    );
+    (match body with
+     | Function.BodyBlock block ->
+       visit_block handler block
+     | Function.BodyExpression expr ->
+       visit_expression handler expr)
 
 and visit_block handler ((_loc, block) : (Loc.t * Statement.Block.t)) =
   visit_list handler visit_statement block.body

@@ -87,3 +87,14 @@ console.log({ a3, ...b3 } = c3);
 /* Own */
 
 console.log({ a, ["c" + ""]:{...xx}, ...b } = {a: 1, b: 2, c: {x: 1}});
+
+/*
+ * *********************** Functions ***********************
+ */
+
+/* Own */
+
+function f({...a}) {};
+let f = function ({...b}) {};
+let a1 = ({...c}) => c;
+let a2 = ({...c}) => {return c};

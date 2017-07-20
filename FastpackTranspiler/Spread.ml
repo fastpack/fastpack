@@ -28,61 +28,6 @@ let get_handler handler transpile_source scope
   in
 
 
-  let visit_expression ((loc: Loc.t), expr) =
-    match expr with
-    (* | E.Assignment {left; right; operator} -> *)
-    | E.Assignment {left=(loc_left, P.Object {properties; _});
-                    right=(loc_right, _); _} ->
-      begin
-        let has_rest = List.exists (fun prop -> match prop with
-            | P.Object.RestProperty _ -> true
-            | _ -> false
-          ) properties
-        in
-        if has_rest then
-        begin
-          let name, r_value = new_name @@ sub_loc loc_right in
-          let _, rest = transpile_assignment (sub_loc loc_left) name in
-          patch_loc loc @@ Printf.sprintf "(%s, %s)" r_value rest;
-          Visit.Break
-        end
-        else
-          Visit.Continue
-      end
-    | E.Object { properties } ->
-      let has_spread properties = List.exists (fun prop -> match prop with
-          | E.Object.SpreadProperty _ -> true
-          | _ -> false
-        ) properties
-      in
-      if has_spread properties
-      then
-        begin
-        patch loc.start.offset 1 "Object.assign({},";
-        Visit.visit_list
-          handler
-          (fun handler prop ->
-            match prop with
-            | E.Object.SpreadProperty (loc, {argument}) ->
-              remove loc.start.offset 3;
-              Visit.visit_expression handler argument
-            | E.Object.Property p ->
-              let (loc, _) = p in
-              begin
-                patch loc.start.offset 0 "{";
-                Visit.visit_object_property handler p;
-                patch loc._end.offset 0 "}"
-              end)
-          properties;
-        patch loc._end.offset (-1) ")";
-        Visit.Break
-        end
-      else
-        Visit.Continue
-
-    | _ -> Visit.Continue;
-  in
-
   let rec pattern_has_rest ({ properties; _ } : P.Object.t)  = List.exists
     (fun prop -> match prop with
       | P.Object.RestProperty _ -> true
@@ -203,6 +148,65 @@ let get_handler handler transpile_source scope
     (action, !before, !after)
   in
 
+  let visit_function (_loc, _) =
+    (* print_endline @@ sub_loc loc; *)
+    Visit.Continue
+  in
+
+  let visit_expression ((loc: Loc.t), expr) =
+    match expr with
+    | E.Assignment {left=(loc_left, P.Object {properties; _});
+                    right=(loc_right, _); _} ->
+      begin
+        let has_rest = List.exists (fun prop -> match prop with
+            | P.Object.RestProperty _ -> true
+            | _ -> false
+          ) properties
+        in
+        if has_rest then
+        begin
+          let name, r_value = new_name @@ sub_loc loc_right in
+          let _, rest = transpile_assignment (sub_loc loc_left) name in
+          patch_loc loc @@ Printf.sprintf "(%s, %s)" r_value rest;
+          Visit.Break
+        end
+        else
+          Visit.Continue
+      end
+    | E.Object { properties } ->
+      let has_spread properties = List.exists (fun prop -> match prop with
+          | E.Object.SpreadProperty _ -> true
+          | _ -> false
+        ) properties
+      in
+      if has_spread properties
+      then
+        begin
+        patch loc.start.offset 1 "Object.assign({},";
+        Visit.visit_list
+          handler
+          (fun handler prop ->
+            match prop with
+            | E.Object.SpreadProperty (loc, {argument}) ->
+              remove loc.start.offset 3;
+              Visit.visit_expression handler argument
+            | E.Object.Property p ->
+              let (loc, _) = p in
+              begin
+                patch loc.start.offset 0 "{";
+                Visit.visit_object_property handler p;
+                patch loc._end.offset 0 "}"
+              end)
+          properties;
+        patch loc._end.offset (-1) ")";
+        Visit.Break
+        end
+      else
+        Visit.Continue
+
+    | _ -> Visit.Continue;
+  in
+
   let visit_statement (_, stmt) =
     match stmt with
     | S.VariableDeclaration { declarations; _ } ->
@@ -253,4 +257,5 @@ let get_handler handler transpile_source scope
     Visit.
     visit_statement;
     visit_expression;
+    visit_function;
   }
