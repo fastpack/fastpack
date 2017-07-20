@@ -24,6 +24,7 @@ To execute toplevel (OCaml REPL):
 - [ ] FastpackTraspiler: decorators
 - [ ] FastpackTraspiler: jsx
 - [ ] FastpackTraspiler: flow - remove annotations
+- [ ] FastpackTraspiler: assignments inside the class decalrations ?
 - [ ] CSS support in import statements (webpack ICSS)?
 - [ ] Support external command execution for LESS/SASS/other processing
 - [ ] Watch mode (watchman?)
@@ -32,6 +33,8 @@ To execute toplevel (OCaml REPL):
 
 ### Heap
 
+- [ ] FastpackTraspiler / patch model - how to process node by 2 different
+      transpilers, i.e. spread operations and then remove flow type annotations
 - [ ] support AST variable scope and check collisions with tmp_vars
 - [ ] Think of Workspace.make_patcher API
 - [ ] Think of integration with Flow
