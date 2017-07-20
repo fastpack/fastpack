@@ -10,27 +10,28 @@ let rec transpile program scope patcher =
       ]
     in
 
+    let and_result exec result =
+      match exec, result with
+      | Visit.Break, _ -> Visit.Break
+      | _, Visit.Break  -> Visit.Break
+      | _ -> Visit.Continue
+    in
+
     let visit_expression expr =
       List.fold_left (fun result {Visit. visit_expression; _} ->
-          match result with
-          | Visit.Break -> Visit.Break
-          | Visit.Continue -> visit_expression expr
+          and_result (visit_expression expr) result
         ) Visit.Continue @@ handlers ()
     in
 
     let visit_statement stmt =
       List.fold_left (fun result {Visit. visit_statement; _} ->
-          match result with
-          | Visit.Break -> Visit.Break
-          | Visit.Continue -> visit_statement stmt
+          and_result (visit_statement stmt) result
         ) Visit.Continue @@ handlers ()
     in
 
     let visit_function func =
       List.fold_left (fun result {Visit. visit_function; _} ->
-          match result with
-          | Visit.Break -> Visit.Break
-          | Visit.Continue -> visit_function func
+          and_result (visit_function func) result
         ) Visit.Continue @@ handlers ()
     in
 
