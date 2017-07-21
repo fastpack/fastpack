@@ -1,10 +1,11 @@
-module Expression = Spider_monkey_ast.Expression
-module Pattern = Spider_monkey_ast.Pattern
-module Statement = Spider_monkey_ast.Statement
-module Literal = Spider_monkey_ast.Literal
-module Type = Spider_monkey_ast.Type
-module Variance = Spider_monkey_ast.Variance
-module Class = Spider_monkey_ast.Class
+module E = Spider_monkey_ast.Expression
+module P = Spider_monkey_ast.Pattern
+module S = Spider_monkey_ast.Statement
+module L = Spider_monkey_ast.Literal
+module T = Spider_monkey_ast.Type
+module V = Spider_monkey_ast.Variance
+module C = Spider_monkey_ast.Class
+module F = Spider_monkey_ast.Function
 
 (** Printer context *)
 type printer_ctx = {
@@ -73,11 +74,11 @@ let  emit_if_none emit option ctx =
 
 let print program =
 
-  let rec emit_statement ((loc, statement) : Statement.t) ctx =
+  let rec emit_statement ((loc, statement) : S.t) ctx =
     match statement with
-    | Statement.Empty -> ctx
+    | S.Empty -> ctx
 
-    | Statement.Block { body } ->
+    | S.Block { body } ->
       ctx
       |> emit "{"
       |> indent
@@ -85,10 +86,10 @@ let print program =
       |> dedent
       |> emit "}"
 
-    | Statement.Expression { expression; directive = _directive } ->
+    | S.Expression { expression; directive = _directive } ->
       emit_expression expression ctx
 
-    | Statement.If { test; consequent; alternate } ->
+    | S.If { test; consequent; alternate } ->
       ctx
       |> emit "if (" |> emit_expression test |> emit ") "
       |> emit_statement consequent
@@ -97,7 +98,7 @@ let print program =
           |> emit " else "
           |> emit_statement alternate) alternate
 
-    | Statement.Labeled { label = (_loc, label); body } ->
+    | S.Labeled { label = (_loc, label); body } ->
       ctx
       |> emit label
       |> emit ":"
@@ -105,22 +106,22 @@ let print program =
       |> emit_statement body
       |> dedent
 
-    | Statement.Break { label } ->
+    | S.Break { label } ->
       ctx
       |> emit "break"
       |> emit_if_some (fun (_loc, name) ctx -> ctx |> emit_space |> emit name) label
 
-    | Statement.Continue { label } ->
+    | S.Continue { label } ->
       ctx
       |> emit "continue"
       |> emit_if_some (fun (_loc, name) ctx -> ctx |> emit_space |> emit name) label
 
-    | Statement.With { _object; body } ->
+    | S.With { _object; body } ->
       ctx
       |> emit "with (" |> emit_expression _object |> emit ") "
       |> emit_statement body
 
-    | Statement.TypeAlias { id = (_, id); typeParameters; right } ->
+    | S.TypeAlias { id = (_, id); typeParameters; right } ->
       ctx
       |> emit "type "
       |> emit id
@@ -128,11 +129,11 @@ let print program =
       |> emit " = "
       |> emit_type right
 
-    | Statement.Switch { discriminant; cases } ->
+    | S.Switch { discriminant; cases } ->
       ctx
       |> emit "swicth (" |> emit_expression discriminant |> emit ") {"
       |> indent
-      |> emit_list ~emit_sep:emit_newline (fun (_loc, { Statement.Switch.Case. test; consequent }) ctx ->
+      |> emit_list ~emit_sep:emit_newline (fun (_loc, { S.Switch.Case. test; consequent }) ctx ->
           ctx
           |> (match test with
               | None -> emit "default:"
@@ -142,17 +143,17 @@ let print program =
       |> dedent
       |> emit "}"
 
-    | Statement.Return { argument } ->
+    | S.Return { argument } ->
       ctx |> emit "return " |> emit_if_some emit_expression argument
 
-    | Statement.Throw { argument } ->
+    | S.Throw { argument } ->
       ctx |> emit "throw " |> emit_expression argument
 
-    | Statement.Try { block; handler; finalizer } ->
+    | S.Try { block; handler; finalizer } ->
       ctx
       |> emit "try "
       |> emit_block block
-      |> emit_if_some (fun (_loc, { Statement.Try.CatchClause. param; body }) ctx ->
+      |> emit_if_some (fun (_loc, { S.Try.CatchClause. param; body }) ctx ->
           ctx
           |> emit " catch (" |> emit_pattern param |> emit ") "
           |> emit_block body
@@ -163,14 +164,14 @@ let print program =
           |> emit_block finalizer
         ) finalizer
 
-    | Statement.While { test; body } ->
+    | S.While { test; body } ->
       ctx
       |> emit "while ("
       |> emit_expression test
       |> emit ") "
       |> emit_statement body
 
-    | Statement.DoWhile { body; test } ->
+    | S.DoWhile { body; test } ->
       ctx
       |> emit "do "
       |> emit_statement body
@@ -178,12 +179,12 @@ let print program =
       |> emit_expression test
       |> emit "("
 
-    | Statement.For { init; test; update; body } ->
+    | S.For { init; test; update; body } ->
       ctx
       |> emit "for ("
       |> emit_if_some (fun init -> match init with
-          | Statement.For.InitDeclaration decl -> emit_variable_declaration decl
-          | Statement.For.InitExpression expression -> emit_expression expression) init
+          | S.For.InitDeclaration decl -> emit_variable_declaration decl
+          | S.For.InitExpression expression -> emit_expression expression) init
       |> emit_semicolon
       |> emit_if_some emit_expression test
       |> emit_semicolon
@@ -193,13 +194,13 @@ let print program =
       |> emit_statement body
       |> dedent
 
-    | Statement.ForIn { left; right; body; each = _each } ->
+    | S.ForIn { left; right; body; each = _each } ->
       (* TODO: handle `each` *)
       ctx
       |> emit "for ("
       |> (match left with
-          | Statement.ForIn.LeftDeclaration decl -> emit_variable_declaration decl
-          | Statement.ForIn.LeftExpression expression -> emit_expression expression)
+          | S.ForIn.LeftDeclaration decl -> emit_variable_declaration decl
+          | S.ForIn.LeftExpression expression -> emit_expression expression)
       |> emit " in "
       |> emit_expression right
       |> emit ")"
@@ -207,13 +208,13 @@ let print program =
       |> emit_statement body
       |> dedent
 
-    | Statement.ForOf { left; right; body; async = _async } ->
+    | S.ForOf { left; right; body; async = _async } ->
       (* TODO: handle `async` *)
       ctx
       |> emit "for ("
       |> (match left with
-          | Statement.ForOf.LeftDeclaration decl -> emit_variable_declaration decl
-          | Statement.ForOf.LeftExpression expression -> emit_expression expression)
+          | S.ForOf.LeftDeclaration decl -> emit_variable_declaration decl
+          | S.ForOf.LeftExpression expression -> emit_expression expression)
       |> emit " of "
       |> emit_expression right
       |> emit ")"
@@ -221,25 +222,25 @@ let print program =
       |> emit_statement body
       |> dedent
 
-    | Statement.Debugger ->
+    | S.Debugger ->
       ctx
       |> emit "debugger"
 
-    | Statement.FunctionDeclaration func ->
+    | S.FunctionDeclaration func ->
       emit_function (loc, func) ctx
 
-    | Statement.VariableDeclaration decl ->
+    | S.VariableDeclaration decl ->
       ctx
       |> emit_variable_declaration (loc, decl)
 
-    | Statement.ClassDeclaration { id;
-                                   body = (_, { body });
-                                   superClass;
-                                   typeParameters;
-                                   superTypeParameters;
-                                   implements = _implements;
-                                   classDecorators = _classDecorators;
-                                 } ->
+    | S.ClassDeclaration { id;
+                           body = (_, { body });
+                           superClass;
+                           typeParameters;
+                           superTypeParameters;
+                           implements = _implements;
+                           classDecorators = _classDecorators;
+                         } ->
       (** TODO: handle `classDecorators` *)
       (** TODO: handle `implements` *)
       ctx
@@ -254,7 +255,7 @@ let print program =
       |> indent
       |> emit_list ~emit_sep:emit_newline (fun item ctx -> match item with
 
-          | Class.Body.Method (_loc, {
+          | C.Body.Method (_loc, {
               kind;
               key;
               value;
@@ -265,13 +266,13 @@ let print program =
             ctx
             |> (if static then emit "static " else emit_none)
             |> (match kind with
-                | Class.Method.Constructor -> emit_none
-                | Class.Method.Method -> emit_none
-                | Class.Method.Get -> emit "get "
-                | Class.Method.Set -> emit "set ")
+                | C.Method.Constructor -> emit_none
+                | C.Method.Method -> emit_none
+                | C.Method.Get -> emit "get "
+                | C.Method.Set -> emit "set ")
             |> emit_function ~as_method:true ~emit_id:(emit_object_property_key key) value
 
-          | Class.Body.Property (_loc, { key; value; typeAnnotation; static; variance }) ->
+          | C.Body.Property (_loc, { key; value; typeAnnotation; static; variance }) ->
             ctx
             |> (if static then emit "static " else emit_none)
             |> emit_if_some emit_variance variance
@@ -285,7 +286,7 @@ let print program =
       |> dedent
       |> emit "}"
 
-    | Statement.InterfaceDeclaration { id; typeParameters; body; extends; mixins = _mixins} ->
+    | S.InterfaceDeclaration { id; typeParameters; body; extends; mixins = _mixins} ->
       (** TODO: handle `mixins` *)
       ctx
       |> emit "interface "
@@ -295,23 +296,23 @@ let print program =
       |> emit_if_some emit_type_parameter_declaration typeParameters
       |> emit_object_type body
 
-    | Statement.ExportNamedDeclaration _ -> ctx
-    | Statement.ExportDefaultDeclaration _ -> ctx
-    | Statement.ImportDeclaration _ -> ctx
+    | S.ExportNamedDeclaration _ -> ctx
+    | S.ExportDefaultDeclaration _ -> ctx
+    | S.ImportDeclaration _ -> ctx
 
     (** TODO: implement cases below *)
-    | Statement.DeclareVariable _ -> ctx
-    | Statement.DeclareFunction _ -> ctx
-    | Statement.DeclareClass _ -> ctx
-    | Statement.DeclareModule _ -> ctx
-    | Statement.DeclareModuleExports _ -> ctx
-    | Statement.DeclareExportDeclaration _ -> ctx
+    | S.DeclareVariable _ -> ctx
+    | S.DeclareFunction _ -> ctx
+    | S.DeclareClass _ -> ctx
+    | S.DeclareModule _ -> ctx
+    | S.DeclareModuleExports _ -> ctx
+    | S.DeclareExportDeclaration _ -> ctx
 
-  and emit_expression ((loc, expression) : Expression.t) ctx =
+  and emit_expression ((loc, expression) : E.t) ctx =
     match expression with
-    | Expression.This -> ctx |> emit "this"
-    | Expression.Super -> ctx |> emit "super"
-    | Expression.Array { elements } ->
+    | E.This -> ctx |> emit "this"
+    | E.Super -> ctx |> emit "super"
+    | E.Array { elements } ->
       ctx
       |> emit "["
       |> emit_list ~emit_sep:emit_comma
@@ -320,201 +321,201 @@ let print program =
           | Some element -> emit_expression_or_spread element)
         elements
       |> emit "]"
-    | Expression.Object { properties } ->
+    | E.Object { properties } ->
       ctx
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
         (fun prop ctx -> match prop with
-           | Expression.Object.Property (_, { key; value; _method; shorthand = _shorthand }) ->
+           | E.Object.Property (_, { key; value; _method; shorthand = _shorthand }) ->
              (match value with
-              | Expression.Object.Property.Init expr ->
+              | E.Object.Property.Init expr ->
                 ctx |> emit_object_property_key key |> emit ": " |> emit_expression expr
-              | Expression.Object.Property.Get func ->
+              | E.Object.Property.Get func ->
                 ctx |> emit "get " |> emit_function func
-              | Expression.Object.Property.Set func ->
+              | E.Object.Property.Set func ->
                 ctx |> emit "set " |> emit_function func)
-           | Expression.Object.SpreadProperty (_, { argument }) ->
+           | E.Object.SpreadProperty (_, { argument }) ->
              ctx |> emit "..." |> emit_expression argument
         )
         properties
       |> emit "}"
-    | Expression.Function func ->
+    | E.Function func ->
       ctx |> emit_function (loc, func)
-    | Expression.ArrowFunction _ -> ctx
-    | Expression.Sequence { expressions } ->
+    | E.ArrowFunction _ -> ctx
+    | E.Sequence { expressions } ->
       ctx
       |> emit "("
       |> emit_list ~emit_sep:emit_comma emit_expression expressions
       |> emit ")"
-    | Expression.Unary { operator; prefix = _prefix; argument } ->
+    | E.Unary { operator; prefix = _prefix; argument } ->
       (* TODO: handle prefix *)
       ctx
       |> (match operator with
-          | Expression.Unary.Minus -> emit "-"
-          | Expression.Unary.Plus -> emit "+"
-          | Expression.Unary.Not -> emit "!"
-          | Expression.Unary.BitNot -> emit "~"
-          | Expression.Unary.Typeof -> emit "typeof "
-          | Expression.Unary.Void -> emit "void "
-          | Expression.Unary.Delete -> emit "delete "
-          | Expression.Unary.Await -> emit "await ")
+          | E.Unary.Minus -> emit "-"
+          | E.Unary.Plus -> emit "+"
+          | E.Unary.Not -> emit "!"
+          | E.Unary.BitNot -> emit "~"
+          | E.Unary.Typeof -> emit "typeof "
+          | E.Unary.Void -> emit "void "
+          | E.Unary.Delete -> emit "delete "
+          | E.Unary.Await -> emit "await ")
       |> emit_expression argument
-    | Expression.Binary { operator; left; right } ->
+    | E.Binary { operator; left; right } ->
       ctx
       |> emit_expression left
       |> (match operator with
-          | Expression.Binary.Equal -> emit " == "
-          | Expression.Binary.NotEqual -> emit " != "
-          | Expression.Binary.StrictEqual -> emit " === "
-          | Expression.Binary.StrictNotEqual -> emit " !== "
-          | Expression.Binary.LessThan -> emit " < "
-          | Expression.Binary.LessThanEqual -> emit " <= "
-          | Expression.Binary.GreaterThan -> emit " > "
-          | Expression.Binary.GreaterThanEqual -> emit " >= "
-          | Expression.Binary.LShift -> emit " << "
-          | Expression.Binary.RShift -> emit " >> "
-          | Expression.Binary.RShift3 -> emit " >>> "
-          | Expression.Binary.Plus -> emit " + "
-          | Expression.Binary.Minus -> emit " - "
-          | Expression.Binary.Mult -> emit " * "
-          | Expression.Binary.Exp -> emit " ** "
-          | Expression.Binary.Div -> emit " / "
-          | Expression.Binary.Mod -> emit " % "
-          | Expression.Binary.BitOr -> emit " | "
-          | Expression.Binary.Xor -> emit " ^ "
-          | Expression.Binary.BitAnd -> emit " & "
-          | Expression.Binary.In -> emit " in "
-          | Expression.Binary.Instanceof -> emit " instanceof ")
+          | E.Binary.Equal -> emit " == "
+          | E.Binary.NotEqual -> emit " != "
+          | E.Binary.StrictEqual -> emit " === "
+          | E.Binary.StrictNotEqual -> emit " !== "
+          | E.Binary.LessThan -> emit " < "
+          | E.Binary.LessThanEqual -> emit " <= "
+          | E.Binary.GreaterThan -> emit " > "
+          | E.Binary.GreaterThanEqual -> emit " >= "
+          | E.Binary.LShift -> emit " << "
+          | E.Binary.RShift -> emit " >> "
+          | E.Binary.RShift3 -> emit " >>> "
+          | E.Binary.Plus -> emit " + "
+          | E.Binary.Minus -> emit " - "
+          | E.Binary.Mult -> emit " * "
+          | E.Binary.Exp -> emit " ** "
+          | E.Binary.Div -> emit " / "
+          | E.Binary.Mod -> emit " % "
+          | E.Binary.BitOr -> emit " | "
+          | E.Binary.Xor -> emit " ^ "
+          | E.Binary.BitAnd -> emit " & "
+          | E.Binary.In -> emit " in "
+          | E.Binary.Instanceof -> emit " instanceof ")
       |> emit_expression right
-    | Expression.Assignment { operator; left; right } ->
+    | E.Assignment { operator; left; right } ->
       ctx
       |> emit_pattern left
       |> (match operator with
-          | Expression.Assignment.Assign -> emit " = "
-          | Expression.Assignment.PlusAssign -> emit " += "
-          | Expression.Assignment.MinusAssign -> emit " -= "
-          | Expression.Assignment.MultAssign -> emit " *= "
-          | Expression.Assignment.ExpAssign -> emit " **= "
-          | Expression.Assignment.DivAssign -> emit " /= "
-          | Expression.Assignment.ModAssign -> emit " %= "
-          | Expression.Assignment.LShiftAssign -> emit " <<= "
-          | Expression.Assignment.RShiftAssign -> emit " >>= "
-          | Expression.Assignment.RShift3Assign -> emit " >>>= "
-          | Expression.Assignment.BitOrAssign -> emit " |= "
-          | Expression.Assignment.BitXorAssign -> emit " ^= "
-          | Expression.Assignment.BitAndAssign -> emit " &= ")
+          | E.Assignment.Assign -> emit " = "
+          | E.Assignment.PlusAssign -> emit " += "
+          | E.Assignment.MinusAssign -> emit " -= "
+          | E.Assignment.MultAssign -> emit " *= "
+          | E.Assignment.ExpAssign -> emit " **= "
+          | E.Assignment.DivAssign -> emit " /= "
+          | E.Assignment.ModAssign -> emit " %= "
+          | E.Assignment.LShiftAssign -> emit " <<= "
+          | E.Assignment.RShiftAssign -> emit " >>= "
+          | E.Assignment.RShift3Assign -> emit " >>>= "
+          | E.Assignment.BitOrAssign -> emit " |= "
+          | E.Assignment.BitXorAssign -> emit " ^= "
+          | E.Assignment.BitAndAssign -> emit " &= ")
       |> emit_expression right
-    | Expression.Update { operator; argument; prefix } ->
+    | E.Update { operator; argument; prefix } ->
       let emit_operator ctx =
         ctx |> (match operator with
-            | Expression.Update.Increment -> emit "++"
-            | Expression.Update.Decrement -> emit "--") in
+            | E.Update.Increment -> emit "++"
+            | E.Update.Decrement -> emit "--") in
       if prefix
       then ctx |> emit_operator |> emit_expression argument
       else ctx |> emit_expression argument |> emit_operator
-    | Expression.Logical { operator; left; right } ->
+    | E.Logical { operator; left; right } ->
       ctx
       |> emit_expression left
       |> (match operator with
-          | Expression.Logical.Or -> emit " || "
-          | Expression.Logical.And -> emit " && ")
+          | E.Logical.Or -> emit " || "
+          | E.Logical.And -> emit " && ")
       |> emit_expression right
-    | Expression.Conditional { test; consequent; alternate } ->
+    | E.Conditional { test; consequent; alternate } ->
       ctx
       |> emit_expression test
       |> emit " ? "
       |> emit_expression consequent
       |> emit " : "
       |> emit_expression alternate
-    | Expression.New { callee; arguments } ->
+    | E.New { callee; arguments } ->
       ctx
       |> emit "new "
       |> emit_expression callee
       |> emit "("
       |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
       |> emit ")"
-    | Expression.Call { callee; arguments } ->
+    | E.Call { callee; arguments } ->
       ctx
       |> emit_expression callee
       |> emit "("
       |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
       |> emit ")"
-    | Expression.Member { _object; property; computed } ->
+    | E.Member { _object; property; computed } ->
       ctx |> emit_expression _object |> (fun ctx ->
           if computed
           then (ctx |> emit "[" |> emit_property property |> emit "]")
           else (ctx |> emit "." |> emit_property property))
-    | Expression.Yield { argument; delegate } ->
+    | E.Yield { argument; delegate } ->
       ctx
       |> (if delegate then emit "yield* " else emit "yield ")
       |> emit_if_some emit_expression argument
-    | Expression.Comprehension _ -> ctx
-    | Expression.Generator _ -> ctx
-    | Expression.Identifier (_, name) ->
+    | E.Comprehension _ -> ctx
+    | E.Generator _ -> ctx
+    | E.Identifier (_, name) ->
       ctx |> emit name
-    | Expression.Literal lit ->
+    | E.Literal lit ->
       ctx |> emit_literal (loc, lit)
-    | Expression.TemplateLiteral _ -> ctx
-    | Expression.TaggedTemplate _ -> ctx
-    | Expression.JSXElement _ -> ctx
-    | Expression.Class _ -> ctx
-    | Expression.TypeCast _ -> ctx
-    | Expression.MetaProperty _ -> ctx
+    | E.TemplateLiteral _ -> ctx
+    | E.TaggedTemplate _ -> ctx
+    | E.JSXElement _ -> ctx
+    | E.Class _ -> ctx
+    | E.TypeCast _ -> ctx
+    | E.MetaProperty _ -> ctx
 
-  and emit_pattern ((_loc, pattern) : Pattern.t) ctx =
+  and emit_pattern ((_loc, pattern) : P.t) ctx =
     match pattern with
-    | Pattern.Object { properties; typeAnnotation } ->
+    | P.Object { properties; typeAnnotation } ->
       ctx
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
         (fun prop ctx -> match prop with
-           | Pattern.Object.Property (_,{ key; pattern; shorthand = _shorthand }) ->
+           | P.Object.Property (_,{ key; pattern; shorthand = _shorthand }) ->
              (** TODO: what to do with `shorthand`? *)
              ctx |> emit_pattern pattern |> emit ": " |> emit_object_pattern_property_key key
-           | Pattern.Object.RestProperty (_,{ argument }) ->
+           | P.Object.RestProperty (_,{ argument }) ->
              ctx |> emit "..." |> emit_pattern argument
         ) properties
       |> emit "}"
       |> emit_if_some emit_type_annotation typeAnnotation
-    | Pattern.Array { elements; typeAnnotation } ->
+    | P.Array { elements; typeAnnotation } ->
       ctx
       |> emit "["
       |> emit_list ~emit_sep:emit_comma
         (fun element ctx -> match element with
            | None -> ctx
-           | Some (Pattern.Array.Element pattern) ->
+           | Some (P.Array.Element pattern) ->
              emit_pattern pattern ctx
-           | Some (Pattern.Array.RestElement (_,{ argument })) ->
+           | Some (P.Array.RestElement (_,{ argument })) ->
              ctx |> emit "..." |> emit_pattern argument)
         elements
       |> emit "]"
       |> emit_if_some emit_type_annotation typeAnnotation
-    | Pattern.Assignment { left; right } ->
+    | P.Assignment { left; right } ->
       ctx |> emit_pattern left |> emit " = " |> emit_expression right
-    | Pattern.Identifier { name; typeAnnotation; optional } ->
+    | P.Identifier { name; typeAnnotation; optional } ->
       ctx
       |> emit_identifier name
       |> (if optional then emit "?" else emit_none)
       |> emit_if_some emit_type_annotation typeAnnotation
-    | Pattern.Expression expr -> emit_expression expr ctx
+    | P.Expression expr -> emit_expression expr ctx
 
   and emit_object_pattern_property_key key ctx =
     match key with
-    | Pattern.Object.Property.Literal lit -> emit_literal lit ctx
-    | Pattern.Object.Property.Identifier id -> emit_identifier id ctx
-    | Pattern.Object.Property.Computed expr -> ctx |> emit "[" |> emit_expression expr |> emit "]"
+    | P.Object.Property.Literal lit -> emit_literal lit ctx
+    | P.Object.Property.Identifier id -> emit_identifier id ctx
+    | P.Object.Property.Computed expr -> ctx |> emit "[" |> emit_expression expr |> emit "]"
 
   and emit_object_property_key key ctx =
     match key with
-    | Expression.Object.Property.Literal lit ->
+    | E.Object.Property.Literal lit ->
       ctx |> emit_literal lit
-    | Expression.Object.Property.Identifier id ->
+    | E.Object.Property.Identifier id ->
       ctx |> emit_identifier id
-    | Expression.Object.Property.Computed expr ->
+    | E.Object.Property.Computed expr ->
       ctx |> emit "[" |> emit_expression expr |> emit "]"
 
   and emit_function ?(as_method=false) ?emit_id (_loc, {
-      Spider_monkey_ast.Function.
+      F.
       id;
       params;
       body;
@@ -539,25 +540,25 @@ let print program =
       let (params, rest) = params in fun ctx ->
         ctx
         |> emit_list ~emit_sep:emit_comma emit_pattern params
-        |> emit_if_some (fun (_loc, { Spider_monkey_ast.Function.RestElement.  argument }) ctx ->
+        |> emit_if_some (fun (_loc, { F.RestElement.  argument }) ctx ->
             ctx |> emit " ..." |> emit_pattern argument) rest
     )
     |> emit ")"
     |> emit_if_some emit_type_annotation returnType
     |> emit_space
     |> (match body with
-        | Spider_monkey_ast.Function.BodyBlock block -> emit_block block
-        | Spider_monkey_ast.Function.BodyExpression expr -> emit_expression expr)
+        | F.BodyBlock block -> emit_block block
+        | F.BodyExpression expr -> emit_expression expr)
 
   and emit_type_annotation (_loc, typeAnnotation) ctx =
     ctx |> emit ": " |> emit_type typeAnnotation
 
   and emit_variance (_loc, variance) =
     match variance with
-    | Variance.Plus -> emit "+"
-    | Variance.Minus -> emit "-"
+    | V.Plus -> emit "+"
+    | V.Minus -> emit "-"
 
-  and emit_block ((_loc, block) : (Loc.t * Statement.Block.t)) ctx =
+  and emit_block ((_loc, block) : (Loc.t * S.Block.t)) ctx =
     ctx
     |> emit "{"
     |> indent
@@ -572,38 +573,38 @@ let print program =
     ctx
 
   and emit_expression_or_spread item ctx = match item with
-    | Expression.Expression expression -> ctx |> emit_expression expression
-    | Expression.Spread (_, { argument }) -> ctx |> emit "..." |> emit_expression argument
+    | E.Expression expression -> ctx |> emit_expression expression
+    | E.Spread (_, { argument }) -> ctx |> emit "..." |> emit_expression argument
 
   and emit_property property ctx =
     match property with
-    | Expression.Member.PropertyIdentifier (_, name) -> emit name ctx
-    | Expression.Member.PropertyExpression expression -> emit_expression expression ctx
+    | E.Member.PropertyIdentifier (_, name) -> emit name ctx
+    | E.Member.PropertyExpression expression -> emit_expression expression ctx
 
   and emit_type (loc, value) ctx = match value with
-    | Type.Any -> emit "any" ctx
-    | Type.Mixed -> emit "mixed" ctx
-    | Type.Empty ->
+    | T.Any -> emit "any" ctx
+    | T.Mixed -> emit "mixed" ctx
+    | T.Empty ->
       (* TODO: hm... *)
       ctx
-    | Type.Void -> emit "void" ctx
-    | Type.Null -> emit "null" ctx
-    | Type.Number -> emit "number" ctx
-    | Type.String -> emit "string" ctx
-    | Type.Boolean -> emit "boolean" ctx
-    | Type.Nullable typ -> ctx |> emit "?" |> emit_type typ
-    | Type.Function { params = _params; returnType = _returnType; typeParameters = _typeParameters} -> ctx
-    | Type.Object typ -> emit_object_type (loc, typ) ctx
-    | Type.Array _ -> ctx
-    | Type.Generic typ -> emit_generic_type (loc, typ) ctx
-    | Type.Union (_,_,_) -> ctx
-    | Type.Intersection (_,_,_) -> ctx
-    | Type.Typeof _ -> ctx
-    | Type.Tuple _ -> ctx
-    | Type.StringLiteral _ -> ctx
-    | Type.NumberLiteral _ -> ctx
-    | Type.BooleanLiteral _ -> ctx
-    | Type.Exists -> ctx
+    | T.Void -> emit "void" ctx
+    | T.Null -> emit "null" ctx
+    | T.Number -> emit "number" ctx
+    | T.String -> emit "string" ctx
+    | T.Boolean -> emit "boolean" ctx
+    | T.Nullable typ -> ctx |> emit "?" |> emit_type typ
+    | T.Function { params = _params; returnType = _returnType; typeParameters = _typeParameters} -> ctx
+    | T.Object typ -> emit_object_type (loc, typ) ctx
+    | T.Array _ -> ctx
+    | T.Generic typ -> emit_generic_type (loc, typ) ctx
+    | T.Union (_,_,_) -> ctx
+    | T.Intersection (_,_,_) -> ctx
+    | T.Typeof _ -> ctx
+    | T.Tuple _ -> ctx
+    | T.StringLiteral _ -> ctx
+    | T.NumberLiteral _ -> ctx
+    | T.BooleanLiteral _ -> ctx
+    | T.Exists -> ctx
 
   and emit_object_type (_loc, _value) ctx =
     ctx
@@ -612,7 +613,7 @@ let print program =
     ctx
 
   and emit_type_parameter (_loc, value) ctx =
-    let { Type.ParameterDeclaration.TypeParam. name; bound; variance; default } = value in
+    let { T.ParameterDeclaration.TypeParam. name; bound; variance; default } = value in
     ctx
     |> emit_if_some emit_variance variance
     |> emit name
