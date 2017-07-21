@@ -10,11 +10,13 @@ let analyze _id filename source =
 
 
   let add_patch offset_start offset_end patch =
+    (* TODO: refactor to use the make_patcher API *)
     workspace := Workspace.patch !workspace {
       Workspace.
       patch;
       offset_start;
       offset_end;
+      order=0;
     }
   in
 

@@ -22,6 +22,9 @@ and 'ctx patch = {
   (* End offset into an original value *)
   offset_end : int;
 
+  (* Order of appearance, important for zero-length patches *)
+  order: int;
+
   (* Patch to apply *)
   patch : 'ctx -> string;
 }
@@ -44,7 +47,43 @@ let patch w p =
   { w with patches = p::w.patches }
 
 let write out w ctx =
-  let patches = List.rev w.patches in
+  let fold_patches patches =
+    (* The idea behind this key function is:
+     * - patch with lower start position goes first
+     * - then (same start positions): zero-length patches
+     * - then (same start positions): ordered by length in descending order
+     * - then (same length): ordered by appearance in the patch list
+     * 100000 magic constant is taken with an assumption that we won't have
+     * patches longer than that as well as the number of patches will never be
+     * greater than that.
+     * *)
+    let key {offset_start; offset_end; order; _} =
+      let magic = 100000 in
+      let len = offset_end - offset_start in
+      offset_start * magic * magic
+      - (if len = 0 then magic else len) * magic
+      + order
+    in
+    List.sort (fun p1 p2 -> compare (key p1) (key p2)) patches
+    (* TODO: all tests work without folding at the moment
+     * consider adding folding when issues appear
+     * *)
+    (* List.fold_left *)
+    (*   (fun result patch -> *)
+    (*     match result with *)
+    (*     | [] -> [patch] *)
+    (*     | last::_ -> *)
+    (*       match (patch.offset_start < last.offset_end, *)
+    (*              patch.offset_end <= last.offset_end) with *)
+    (*       | true, true -> result *)
+    (*       | true, false -> failwith "bad patch combination" *)
+    (*       | false, _ -> patch :: result *)
+    (*   ) *)
+    (*   [] *)
+    (*   @@ *)
+  in
+
+  let patches = fold_patches w.patches in
   let rec write_patch offset value patches =
     match patches with
     | [] ->
@@ -69,13 +108,16 @@ let to_string w ctx =
   print 0 w.value patches
 
 let make_patcher workspace =
+  let order = ref 0 in
   let patch_with start offset f =
     let _end = start + offset in
     begin
+      order := !order + 1;
       workspace := patch !workspace {
         patch = f;
         offset_start = min start _end;
         offset_end = max start _end;
+        order = !order;
       }
     end
   in
@@ -104,3 +146,4 @@ let make_patcher workspace =
     sub;
     sub_loc;
   }
+

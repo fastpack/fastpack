@@ -6,7 +6,8 @@ let rec transpile program scope patcher =
     let handlers () =
       List.map (fun f -> f handler transpile_source scope patcher)
       [
-       Spread.get_handler
+        Spread.get_handler;
+        Flow.get_handler;
       ]
     in
 
