@@ -30,6 +30,12 @@ let emit_newline ctx =
   Buffer.add_string ctx.buf indent;
   ctx
 
+let increase_indent ctx =
+  { ctx with indent = ctx.indent + 1 }
+
+let decrease_indent ctx =
+  { ctx with indent = ctx.indent - 1 }
+
 let indent ctx =
   let ctx = { ctx with indent = ctx.indent + 1 } in
   emit_newline ctx
@@ -40,6 +46,9 @@ let dedent ctx =
 
 let emit_comma ctx =
   ctx |> emit ","
+
+let emit_comma_and_newline ctx =
+  ctx |> emit "," |> emit_newline
 
 let emit_semicolon ctx =
   ctx |> emit ";"
@@ -241,6 +250,34 @@ let print program =
                            implements = _implements;
                            classDecorators = _classDecorators;
                          } ->
+      let emit_class_element item  ctx =
+        match item with
+        | C.Body.Method (_loc, {
+            kind;
+            key;
+            value;
+            static;
+            decorators = _decorators
+          }) ->
+          (** TODO: handle `decorators` *)
+          ctx
+          |> (if static then emit "static " else emit_none)
+          |> (match kind with
+              | C.Method.Constructor -> emit_none
+              | C.Method.Method -> emit_none
+              | C.Method.Get -> emit "get "
+              | C.Method.Set -> emit "set ")
+          |> emit_function ~as_method:true ~emit_id:(emit_object_property_key key) value
+        | C.Body.Property (_loc, { key; value; typeAnnotation; static; variance }) ->
+          ctx
+          |> (if static then emit "static " else emit_none)
+          |> emit_if_some emit_variance variance
+          |> emit_object_property_key key
+          |> emit_if_some emit_type_annotation typeAnnotation
+          |> emit " = "
+          |> emit_if_some emit_expression value
+          |> emit_semicolon
+      in
       (** TODO: handle `classDecorators` *)
       (** TODO: handle `implements` *)
       ctx
@@ -253,36 +290,7 @@ let print program =
       |> emit_if_some emit_type_parameter_instantiation superTypeParameters
       |> emit " {"
       |> indent
-      |> emit_list ~emit_sep:emit_newline (fun item ctx -> match item with
-
-          | C.Body.Method (_loc, {
-              kind;
-              key;
-              value;
-              static;
-              decorators = _decorators
-            }) ->
-            (** TODO: handle `decorators` *)
-            ctx
-            |> (if static then emit "static " else emit_none)
-            |> (match kind with
-                | C.Method.Constructor -> emit_none
-                | C.Method.Method -> emit_none
-                | C.Method.Get -> emit "get "
-                | C.Method.Set -> emit "set ")
-            |> emit_function ~as_method:true ~emit_id:(emit_object_property_key key) value
-
-          | C.Body.Property (_loc, { key; value; typeAnnotation; static; variance }) ->
-            ctx
-            |> (if static then emit "static " else emit_none)
-            |> emit_if_some emit_variance variance
-            |> emit_object_property_key key
-            |> emit_if_some emit_type_annotation typeAnnotation
-            |> emit " = "
-            |> emit_if_some emit_expression value
-            |> emit_semicolon
-
-        ) body
+      |> emit_list ~emit_sep:emit_newline emit_class_element body
       |> dedent
       |> emit "}"
 
@@ -471,7 +479,10 @@ let print program =
         (fun prop ctx -> match prop with
            | P.Object.Property (_,{ key; pattern; shorthand = _shorthand }) ->
              (** TODO: what to do with `shorthand`? *)
-             ctx |> emit_pattern pattern |> emit ": " |> emit_object_pattern_property_key key
+             ctx
+             |> emit_object_pattern_property_key key
+             |> emit ": "
+             |> emit_pattern pattern
            | P.Object.RestProperty (_,{ argument }) ->
              ctx |> emit "..." |> emit_pattern argument
         ) properties
@@ -569,8 +580,20 @@ let print program =
   and emit_identifier ((_loc, identifier) : Spider_monkey_ast.Identifier.t) =
     emit identifier
 
-  and emit_variable_declaration _value ctx =
+  and emit_variable_declaration (_loc, { declarations; kind }) ctx =
     ctx
+    |> emit (match kind with
+        | S.VariableDeclaration.Var  -> "var "
+        | S.VariableDeclaration.Let  -> "let "
+        | S.VariableDeclaration.Const  -> "const ")
+    |> increase_indent
+    |> emit_list ~emit_sep:emit_comma_and_newline emit_variable_declarator declarations
+    |> decrease_indent
+
+  and emit_variable_declarator (_loc, { id; init }) ctx =
+    ctx
+    |> emit_pattern id
+    |> emit_if_some (fun init ctx -> ctx |> emit " = " |> emit_expression init) init
 
   and emit_expression_or_spread item ctx = match item with
     | E.Expression expression -> ctx |> emit_expression expression
@@ -593,24 +616,48 @@ let print program =
     | T.String -> emit "string" ctx
     | T.Boolean -> emit "boolean" ctx
     | T.Nullable typ -> ctx |> emit "?" |> emit_type typ
-    | T.Function { params = _params; returnType = _returnType; typeParameters = _typeParameters} -> ctx
-    | T.Object typ -> emit_object_type (loc, typ) ctx
-    | T.Array _ -> ctx
+    | T.Function typ -> emit_function_type (loc, typ) ctx
+    | T.Object typ ->
+      emit_object_type (loc, typ) ctx
+    | T.Array typ ->
+      ctx |> emit "Array<" |> emit_type typ |> emit ">"
     | T.Generic typ -> emit_generic_type (loc, typ) ctx
     | T.Union (_,_,_) -> ctx
     | T.Intersection (_,_,_) -> ctx
-    | T.Typeof _ -> ctx
-    | T.Tuple _ -> ctx
-    | T.StringLiteral _ -> ctx
-    | T.NumberLiteral _ -> ctx
-    | T.BooleanLiteral _ -> ctx
-    | T.Exists -> ctx
+    | T.Typeof typ ->
+      ctx
+      |> emit "typeof "
+      |> emit_type typ
+    | T.Tuple typs ->
+      ctx
+      |> emit "["
+      |> emit_list ~emit_sep:emit_comma emit_type typs
+      |> emit "]"
+    | T.StringLiteral { value = _; raw } -> emit raw ctx
+    | T.NumberLiteral { value = _; raw } -> emit raw ctx
+    | T.BooleanLiteral { value = _; raw } -> emit raw ctx
+    | T.Exists -> emit "*" ctx
 
-  and emit_object_type (_loc, _value) ctx =
-    ctx
+  and emit_object_type (_loc, _value) _ctx =
+    failwith "emit_object_type: not implemented"
 
-  and emit_generic_type (_loc, _value) ctx =
+  and emit_type_generic_identifier id ctx =
+    match id with
+    | T.Generic.Identifier.Unqualified id ->
+      ctx |> emit_identifier id
+    | T.Generic.Identifier.Qualified (_loc, { qualification; id }) ->
+      ctx
+      |> emit_identifier id
+      |> emit ": "
+      |> emit_type_generic_identifier qualification
+
+  and emit_generic_type (_loc, { id; typeParameters }) ctx =
     ctx
+    |> emit_type_generic_identifier id
+    |> emit_if_some emit_type_parameter_instantiation typeParameters
+
+  and emit_function_type (_loc, _value) _ctx =
+    failwith "emit_function_type: not implemented"
 
   and emit_type_parameter (_loc, value) ctx =
     let { T.ParameterDeclaration.TypeParam. name; bound; variance; default } = value in
@@ -620,11 +667,11 @@ let print program =
     |> emit_if_some (fun (_, bound) ctx -> ctx |> emit ": " |> emit_type bound) bound
     |> emit_if_some (fun default ctx -> ctx |> emit " = " |> emit_type default) default
 
-  and emit_type_parameter_declaration (_loc, { params }) ctx =
+  and emit_type_parameter_declaration (_, { params }) ctx =
     ctx |> emit "<" |> emit_list ~emit_sep:emit_comma emit_type_parameter params |> emit ">"
 
-  and emit_type_parameter_instantiation _value ctx =
-    ctx
+  and emit_type_parameter_instantiation (_, { params }) ctx =
+    ctx |> emit "<" |> emit_list ~emit_sep:emit_comma emit_type params |> emit ">"
 
   and emit_literal (_loc, { raw; value = _value }) ctx =
     emit raw ctx
