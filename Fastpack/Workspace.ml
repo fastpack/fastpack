@@ -46,6 +46,15 @@ let of_string s =
 let patch w p =
   { w with patches = p::w.patches }
 
+let print_patch {offset_start; offset_end; order; _} =
+  Printf.printf "%d:  %d %d\n" order offset_start offset_end
+
+let print_patches patches =
+  print_endline "---";
+  List.iter print_patch patches;
+  print_endline "---";
+  patches
+
 let write out w ctx =
   let fold_patches patches =
     (* The idea behind this key function is:
@@ -64,23 +73,27 @@ let write out w ctx =
       - (if len = 0 then magic else len) * magic
       + order
     in
-    List.sort (fun p1 p2 -> compare (key p1) (key p2)) patches
-    (* TODO: all tests work without folding at the moment
-     * consider adding folding when issues appear
-     * *)
-    (* List.fold_left *)
-    (*   (fun result patch -> *)
-    (*     match result with *)
-    (*     | [] -> [patch] *)
-    (*     | last::_ -> *)
-    (*       match (patch.offset_start < last.offset_end, *)
-    (*              patch.offset_end <= last.offset_end) with *)
-    (*       | true, true -> result *)
-    (*       | true, false -> failwith "bad patch combination" *)
-    (*       | false, _ -> patch :: result *)
-    (*   ) *)
-    (*   [] *)
-    (*   @@ *)
+    let _, folded =
+      List.fold_left
+        (fun (last, patches) patch ->
+          let zero_patch = (patch.offset_end - patch.offset_start) = 0 in
+          if zero_patch
+            then (last, patch::patches)
+            else begin
+              match last with
+              | None  -> (Some patch, patch :: patches)
+              | Some last ->
+                match (patch.offset_start < last.offset_end,
+                       patch.offset_end <= last.offset_end) with
+                | true, true -> (Some last, patches)
+                | true, false -> failwith "bad patch combination"
+                | false, _ -> (Some patch, patch :: patches)
+            end
+        )
+        (None, [])
+      @@ List.sort (fun p1 p2 -> compare (key p1) (key p2)) patches
+    in
+    List.rev folded
   in
 
   let patches = fold_patches w.patches in

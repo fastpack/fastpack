@@ -6,9 +6,8 @@ module L = Spider_monkey_ast.Literal
 module P = Spider_monkey_ast.Pattern
 module F = Spider_monkey_ast.Function
 
-let get_handler handler _ _ { Workspace. remove_loc; _} =
+let get_handler handler _ _ { Workspace. remove_loc;  _} =
 
-  let visit_function _ = Visit.Continue in
   let visit_expression _ = Visit.Continue in
 
   let rec patch_pattern ((_, pattern): P.t) =
@@ -53,6 +52,12 @@ let get_handler handler _ _ { Workspace. remove_loc; _} =
       end;
 
     | P.Expression _ -> ();
+  in
+
+  let visit_function (_, {F. params; _}) =
+    let (params, _) = params in
+    Visit.visit_list handler (fun _ p -> patch_pattern p) params;
+    Visit.Continue;
   in
 
   let visit_statement (_, stmt) =
