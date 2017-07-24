@@ -378,4 +378,5 @@ let get_handler handler transpile_source scope
     visit_statement;
     visit_expression;
     visit_function;
+    visit_pattern = Visit.do_nothing;
   }

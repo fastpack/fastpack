@@ -14,15 +14,17 @@ type visit_handler = {
   visit_statement : Statement.t -> visit_action;
   visit_expression : Expression.t -> visit_action;
   visit_function : (Loc.t * Function.t) -> visit_action;
+  visit_pattern : Pattern.t -> visit_action;
 }
 
+let do_nothing _ = Continue
 
 let default_visit_handler =
-  let do_nothing _ = Continue in
   {
     visit_statement = do_nothing;
     visit_expression = do_nothing;
     visit_function = do_nothing;
+    visit_pattern = do_nothing;
   }
 
 let visit_list (handler : visit_handler) visit list =
@@ -255,37 +257,40 @@ and visit_expression handler ((loc, expression) : Expression.t) =
     | Expression.TypeCast _ -> ()
     | Expression.MetaProperty _ -> ()
 
-and visit_pattern (handler : visit_handler) ((_loc, pattern) : Pattern.t) =
-  match pattern with
+and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Pattern.t) =
+  match handler.visit_pattern p with
+  | Break -> ()
+  | Continue ->
+    match pattern with
 
-  | Pattern.Object { properties; typeAnnotation = _typeAnnotation } ->
-    visit_list
-      handler
-      (fun handler prop -> match prop with
-         | Pattern.Object.Property (_,{ key = _key; pattern; shorthand = _shorthand }) ->
-           visit_pattern handler pattern
-         | Pattern.Object.RestProperty (_,{ argument }) ->
-           visit_pattern handler argument
-      ) properties
+    | Pattern.Object { properties; typeAnnotation = _typeAnnotation } ->
+      visit_list
+        handler
+        (fun handler prop -> match prop with
+           | Pattern.Object.Property (_,{ key = _key; pattern; shorthand = _shorthand }) ->
+             visit_pattern handler pattern
+           | Pattern.Object.RestProperty (_,{ argument }) ->
+             visit_pattern handler argument
+        ) properties
 
-  | Pattern.Array { elements; typeAnnotation = _typeAnnotation } ->
-    visit_list
-      handler
-      (fun handler element -> match element with
-         | None -> ()
-         | Some (Pattern.Array.Element pattern) ->
-           visit_pattern handler pattern
-         | Some (Pattern.Array.RestElement (_,{ argument })) ->
-           visit_pattern handler argument)
-      elements
+    | Pattern.Array { elements; typeAnnotation = _typeAnnotation } ->
+      visit_list
+        handler
+        (fun handler element -> match element with
+           | None -> ()
+           | Some (Pattern.Array.Element pattern) ->
+             visit_pattern handler pattern
+           | Some (Pattern.Array.RestElement (_,{ argument })) ->
+             visit_pattern handler argument)
+        elements
 
-  | Pattern.Assignment { left; right } ->
-    visit_pattern handler left;
-    visit_expression handler right
+    | Pattern.Assignment { left; right } ->
+      visit_pattern handler left;
+      visit_expression handler right
 
-  | Pattern.Identifier { name = _name; typeAnnotation = _typeAnnotation; optional = _optional } -> ()
+    | Pattern.Identifier { name = _name; typeAnnotation = _typeAnnotation; optional = _optional } -> ()
 
-  | Pattern.Expression expr -> visit_expression handler expr
+    | Pattern.Expression expr -> visit_expression handler expr
 
 and visit_object_property handler (_, {
                key;

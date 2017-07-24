@@ -77,4 +77,5 @@ let get_handler handler _ _ { Workspace. remove_loc;  _} =
     visit_statement;
     visit_expression;
     visit_function;
+    visit_pattern=Visit.do_nothing;
   }

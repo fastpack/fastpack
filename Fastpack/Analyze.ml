@@ -69,13 +69,12 @@ let analyze _id filename source =
     in Visit.Continue
   in
 
-  let visit_function _ = Visit.Continue in
-
   let handler = {
     Visit.
     visit_statement;
     visit_expression;
-    visit_function;
+    visit_function = Visit.do_nothing;
+    visit_pattern = Visit.do_nothing;
   } in
 
   Visit.visit handler program;

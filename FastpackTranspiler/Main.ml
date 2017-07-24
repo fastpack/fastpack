@@ -36,8 +36,20 @@ let rec transpile program scope patcher =
         ) Visit.Continue @@ handlers ()
     in
 
+    let visit_pattern pattern =
+      List.fold_left (fun result {Visit. visit_pattern; _} ->
+          and_result (visit_pattern pattern) result
+        ) Visit.Continue @@ handlers ()
+    in
 
-    { Visit. visit_expression; visit_statement; visit_function; }
+
+    {
+      Visit.
+      visit_expression;
+      visit_statement;
+      visit_function;
+      visit_pattern;
+    }
 
   in
   Visit.visit handler program
