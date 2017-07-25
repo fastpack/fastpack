@@ -1,10 +1,10 @@
-module Expression = Spider_monkey_ast.Expression
-module Pattern = Spider_monkey_ast.Pattern
-module Statement = Spider_monkey_ast.Statement
-module Literal = Spider_monkey_ast.Literal
-module Type = Spider_monkey_ast.Type
-module Variance = Spider_monkey_ast.Variance
-module Class = Spider_monkey_ast.Class
+module Expression = Ast.Expression
+module Pattern = Ast.Pattern
+module Statement = Ast.Statement
+module Literal = Ast.Literal
+module Type = Ast.Type
+module Variance = Ast.Variance
+module Class = Ast.Class
 
 (** Printer context *)
 type printer_ctx = {
@@ -309,6 +309,9 @@ let print program =
 
   and emit_expression ((loc, expression) : Expression.t) ctx =
     match expression with
+    | Expression.Import _ ->
+      (** TODO: handle import() *)
+      ctx
     | Expression.This -> ctx |> emit "this"
     | Expression.Super -> ctx |> emit "super"
     | Expression.Array { elements } ->
@@ -514,7 +517,7 @@ let print program =
       ctx |> emit "[" |> emit_expression expr |> emit "]"
 
   and emit_function ?(as_method=false) ?emit_id (_loc, {
-      Spider_monkey_ast.Function.
+      Ast.Function.
       id;
       params;
       body;
@@ -539,15 +542,15 @@ let print program =
       let (params, rest) = params in fun ctx ->
         ctx
         |> emit_list ~emit_sep:emit_comma emit_pattern params
-        |> emit_if_some (fun (_loc, { Spider_monkey_ast.Function.RestElement.  argument }) ctx ->
+        |> emit_if_some (fun (_loc, { Ast.Function.RestElement.  argument }) ctx ->
             ctx |> emit " ..." |> emit_pattern argument) rest
     )
     |> emit ")"
     |> emit_if_some emit_type_annotation returnType
     |> emit_space
     |> (match body with
-        | Spider_monkey_ast.Function.BodyBlock block -> emit_block block
-        | Spider_monkey_ast.Function.BodyExpression expr -> emit_expression expr)
+        | Ast.Function.BodyBlock block -> emit_block block
+        | Ast.Function.BodyExpression expr -> emit_expression expr)
 
   and emit_type_annotation (_loc, typeAnnotation) ctx =
     ctx |> emit ": " |> emit_type typeAnnotation
@@ -565,7 +568,7 @@ let print program =
     |> dedent
     |> emit "}"
 
-  and emit_identifier ((_loc, identifier) : Spider_monkey_ast.Identifier.t) =
+  and emit_identifier ((_loc, identifier) : Ast.Identifier.t) =
     emit identifier
 
   and emit_variable_declaration _value ctx =
@@ -629,7 +632,7 @@ let print program =
     emit raw ctx
   in
 
-  let emit_program ((_, statements, _): Spider_monkey_ast.program) ctx =
+  let emit_program ((_, statements, _): Ast.program) ctx =
     emit_list ~emit_sep:emit_semicolon_and_newline emit_statement statements ctx
   in
 

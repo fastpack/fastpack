@@ -1,11 +1,11 @@
 module Visit = Fastpack.Visit
 module Workspace = Fastpack.Workspace
-module S = Spider_monkey_ast.Statement
-module E = Spider_monkey_ast.Expression
-module L = Spider_monkey_ast.Literal
-module P = Spider_monkey_ast.Pattern
-module F = Spider_monkey_ast.Function
-module C = Spider_monkey_ast.Class
+module S = Ast.Statement
+module E = Ast.Expression
+module L = Ast.Literal
+module P = Ast.Pattern
+module F = Ast.Function
+module C = Ast.Class
 
 let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} =
 
@@ -59,11 +59,11 @@ let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} 
   in
 
   let patch_class {C.
-        implements;
-        body=(_, {body});
-        typeParameters;
-        superTypeParameters; _
-      } =
+                    implements;
+                    body=(_, {body});
+                    typeParameters;
+                    superTypeParameters; _
+                  } =
     begin
       match implements with
       | [] -> ();
@@ -98,8 +98,8 @@ let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} 
 
       let maybe_comma_after (loc : Loc.t) =
         if is_last
-          then loc._end.offset
-          else match Util.find_comma_pos ~direction:Util.GoForward sub loc._end.offset with
+        then loc._end.offset
+        else match Util.find_comma_pos ~direction:Util.GoForward sub loc._end.offset with
           | Some pos -> pos
           | None -> loc._end.offset
       in
@@ -140,7 +140,7 @@ let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} 
       if List.for_all
           (patch_specifier @@ List.length specifiers)
           (List.mapi (fun i s -> (i, s)) specifiers)
-        then remove_loc loc;
+      then remove_loc loc;
   in
 
   let visit_expression (_, expr) =
@@ -173,8 +173,8 @@ let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} 
     | S.VariableDeclaration { declarations; _ } ->
       List.iter
         (fun declarator ->
-          let (_, { S.VariableDeclaration.Declarator. id; _ }) = declarator in
-          patch_pattern id
+           let (_, { S.VariableDeclaration.Declarator. id; _ }) = declarator in
+           patch_pattern id
         )
         declarations;
       Visit.Continue;
