@@ -6,11 +6,17 @@ module L = Spider_monkey_ast.Literal
 module P = Spider_monkey_ast.Pattern
 module F = Spider_monkey_ast.Function
 
-let get_handler handler _ _ { Workspace. remove_loc;  _} =
+let get_handler handler _ _ { Workspace. patch_loc; remove_loc; sub_loc; _} =
 
   let visit_expression _ = Visit.Continue in
 
-  let rec patch_pattern ((_, pattern): P.t) =
+  let removeAnnotation typeAnnotation =
+    match typeAnnotation with
+    | Some (loc, _) -> (); remove_loc loc;
+    | None -> ();
+  in
+
+  let rec patch_pattern ((loc, pattern): P.t) =
     match pattern with
     | P.Object { properties; typeAnnotation; } ->
       Visit.visit_list
@@ -21,13 +27,9 @@ let get_handler handler _ _ { Workspace. remove_loc;  _} =
            | P.Object.RestProperty (_,{ argument }) ->
              patch_pattern argument
         ) properties;
-      begin
-        match typeAnnotation with
-        | Some (loc, _) -> (); remove_loc loc;
-        | None -> ();
-      end;
+      removeAnnotation typeAnnotation;
 
-    | P.Array { elements; typeAnnotation = _typeAnnotation } ->
+    | P.Array { elements; typeAnnotation; } ->
       Visit.visit_list
         handler
         (fun _ element -> match element with
@@ -36,27 +38,32 @@ let get_handler handler _ _ { Workspace. remove_loc;  _} =
              patch_pattern pattern
            | Some (P.Array.RestElement (_,{ argument })) ->
              patch_pattern argument)
-        elements
+        elements;
+      removeAnnotation typeAnnotation;
 
-    | P.Assignment { left; right = _right } ->
+    | P.Assignment { left; _ } ->
       patch_pattern left;
-      (* visit_expression handler right *)
 
-    | P.Identifier { name = _name;
-                     typeAnnotation;
-                     optional = _optional } ->
+    | P.Identifier { name=(_, name); typeAnnotation; optional; _ } ->
       begin
-        match typeAnnotation with
-        | Some _ -> print_endline "annotation!";
-        | None -> ();
+        match typeAnnotation, optional with
+        | Some _, _
+        | _, true -> patch_loc loc name;
+        | _ -> ();
       end;
 
     | P.Expression _ -> ();
   in
 
-  let visit_function (_, {F. params; _}) =
+  let visit_function (_, {F. params; returnType; typeParameters; _}) =
     let (params, _) = params in
     Visit.visit_list handler (fun _ p -> patch_pattern p) params;
+    removeAnnotation returnType;
+    begin
+      match typeParameters with
+      | None -> ();
+      | Some (loc, _) -> print_endline @@ sub_loc loc;
+    end;
     Visit.Continue;
   in
 
