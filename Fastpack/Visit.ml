@@ -130,37 +130,8 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
     | Statement.VariableDeclaration decl ->
       visit_variable_declaration handler (loc, decl)
 
-    | Statement.ClassDeclaration {
-        id = _id;
-        body = (_, { body });
-        superClass;
-        typeParameters = _typeParameters;
-        superTypeParameters = _superTypeParameters;
-        implements = _implements;
-        classDecorators = _classDecorators;
-      } ->
-      (** TODO: handle `classDecorators` *)
-      (** TODO: handle `implements` *)
-      visit_if_some handler visit_expression superClass;
-      visit_list handler (fun handler item -> match item with
-          | Class.Body.Method (_loc, {
-              kind = _kind;
-              key = _key;
-              value;
-              static = _static;
-              decorators = _decorators
-            }) ->
-            visit_function handler value
-          | Class.Body.Property (_loc, {
-              key;
-              value;
-              typeAnnotation = _typeAnnotation;
-              static = _static;
-              variance = _variance;
-            }) ->
-            visit_object_property_key handler key;
-            visit_if_some handler visit_expression value
-        ) body
+    | Statement.ClassDeclaration cls ->
+      visit_class handler cls
 
     | Statement.Debugger -> ()
     | Statement.InterfaceDeclaration _ -> ()
@@ -173,6 +144,30 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
     | Statement.DeclareModule _ -> ()
     | Statement.DeclareModuleExports _ -> ()
     | Statement.DeclareExportDeclaration _ -> ()
+
+and visit_class handler {Class. body = (_, { body }); superClass; _} =
+  (** TODO: handle `classDecorators` *)
+  (** TODO: handle `implements` *)
+  visit_if_some handler visit_expression superClass;
+  visit_list handler (fun handler item -> match item with
+      | Class.Body.Method (_loc, {
+          kind = _kind;
+          key = _key;
+          value;
+          static = _static;
+          decorators = _decorators
+        }) ->
+        visit_function handler value
+      | Class.Body.Property (_loc, {
+          key;
+          value;
+          typeAnnotation = _typeAnnotation;
+          static = _static;
+          variance = _variance;
+        }) ->
+        visit_object_property_key handler key;
+        visit_if_some handler visit_expression value
+    ) body
 
 and visit_expression handler ((loc, expression) : Expression.t) =
   let action = handler.visit_expression (loc, expression) in
@@ -253,7 +248,8 @@ and visit_expression handler ((loc, expression) : Expression.t) =
     | Expression.TemplateLiteral _ -> ()
     | Expression.TaggedTemplate _ -> ()
     | Expression.JSXElement _ -> ()
-    | Expression.Class _ -> ()
+    | Expression.Class cls ->
+      visit_class handler cls
     | Expression.TypeCast _ -> ()
     | Expression.MetaProperty _ -> ()
 

@@ -1,4 +1,1 @@
-class C3 {
-  -p: T
-  +a: T;
-}
+({ xxx: 0, yyy: "hey" }: { xxx: number; yyy: string });

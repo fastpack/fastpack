@@ -97,6 +97,9 @@ let write out w ctx =
   in
 
   let patches = fold_patches w.patches in
+  (* let () = print_endline "----" in *)
+  (* let _ = print_patches patches in *)
+  (* let () = print_endline "----" in *)
   let rec write_patch offset value patches =
     match patches with
     | [] ->
