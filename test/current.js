@@ -1,1 +1,4 @@
-function foo(numVal?) {}
+class C3 {
+  -p: T
+  +a: T;
+}

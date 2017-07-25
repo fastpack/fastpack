@@ -5,14 +5,15 @@ module E = Spider_monkey_ast.Expression
 module L = Spider_monkey_ast.Literal
 module P = Spider_monkey_ast.Pattern
 module F = Spider_monkey_ast.Function
+module C = Spider_monkey_ast.Class
 
-let get_handler handler _ _ { Workspace. patch_loc; remove_loc; sub_loc; _} =
+let get_handler handler _ _ { Workspace. patch_loc; remove_loc; _} =
 
   let visit_expression _ = Visit.Continue in
 
-  let removeAnnotation typeAnnotation =
-    match typeAnnotation with
-    | Some (loc, _) -> (); remove_loc loc;
+  let remove_if_some node =
+    match node with
+    | Some (loc, _) -> remove_loc loc;
     | None -> ();
   in
 
@@ -27,7 +28,7 @@ let get_handler handler _ _ { Workspace. patch_loc; remove_loc; sub_loc; _} =
            | P.Object.RestProperty (_,{ argument }) ->
              patch_pattern argument
         ) properties;
-      removeAnnotation typeAnnotation;
+      remove_if_some typeAnnotation;
 
     | P.Array { elements; typeAnnotation; } ->
       Visit.visit_list
@@ -39,7 +40,7 @@ let get_handler handler _ _ { Workspace. patch_loc; remove_loc; sub_loc; _} =
            | Some (P.Array.RestElement (_,{ argument })) ->
              patch_pattern argument)
         elements;
-      removeAnnotation typeAnnotation;
+      remove_if_some typeAnnotation;
 
     | P.Assignment { left; _ } ->
       patch_pattern left;
@@ -58,16 +59,12 @@ let get_handler handler _ _ { Workspace. patch_loc; remove_loc; sub_loc; _} =
   let visit_function (_, {F. params; returnType; typeParameters; _}) =
     let (params, _) = params in
     Visit.visit_list handler (fun _ p -> patch_pattern p) params;
-    removeAnnotation returnType;
-    begin
-      match typeParameters with
-      | None -> ();
-      | Some (loc, _) -> print_endline @@ sub_loc loc;
-    end;
+    remove_if_some returnType;
+    remove_if_some typeParameters;
     Visit.Continue;
   in
 
-  let visit_statement (_, stmt) =
+  let visit_statement (loc, stmt) =
     match stmt with
     | S.VariableDeclaration { declarations; _ } ->
       List.iter
@@ -77,6 +74,26 @@ let get_handler handler _ _ { Workspace. patch_loc; remove_loc; sub_loc; _} =
         )
         declarations;
       Visit.Continue;
+
+    | S.ClassDeclaration {body=(_, {body}); typeParameters; superTypeParameters; _} ->
+      remove_if_some typeParameters;
+      remove_if_some superTypeParameters;
+      List.iter
+        (fun element ->
+           match element with
+           | C.Body.Property (loc, {value=None; typeAnnotation=Some _; _}) ->
+             remove_loc loc;
+           | _ -> ();
+        )
+        body;
+      Visit.Continue;
+
+    | S.DeclareClass _
+    | S.InterfaceDeclaration _
+    | S.TypeAlias _ ->
+      remove_loc loc;
+      Visit.Continue;
+
     | _ -> Visit.Continue;
   in
   {

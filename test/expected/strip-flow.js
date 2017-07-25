@@ -9,4 +9,23 @@ function foo(numVal) {}
 function foo(numVal = 2) {}
 function foo(numVal = 2) {}
 
-/* Babel */
+/* Babel:  def-site-variance */
+class C1 {}
+function f() {}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// following 2 tests produce wrong output - eating out the last '}'
+// due to bug in flow parser. Fix them when flow parser is updated
+class C2 { 
+class C3 { 
