@@ -25,8 +25,6 @@ declare class I { +p: T }
 declare class I { -p: T }
 declare class I { +[k:K]: V }
 declare class I { -[k:K]: V }
-// BUG: following 2 tests produce wrong output - eating out the last '}'
-// due to bug in flow parser. Fix them when flow parser is updated
 class C2 { +p: T }
 class C3 { -p: T }
 
@@ -64,14 +62,11 @@ declare export default function foo(): void;
 declare export default string
 
 /* Babel: strip-declare-module */
-// BUG: The following tests all didn't have the ';' in the end
-// It looks like flow parser parses that incorrectly as well
-// see if this can be fixed by the update
-declare module A {};
-declare module "./a/b.js" {};
-declare module A { declare var x: number; };
-declare module A { declare function foo(): number; };
-declare module A { declare class B { foo(): number; } };
+declare module A {}
+declare module "./a/b.js" {}
+declare module A { declare var x: number; }
+declare module A { declare function foo(): number; }
+declare module A { declare class B { foo(): number; } }
 
 /* Babel: strip-declare-statements */
 declare var foo
@@ -181,8 +176,7 @@ var a: { subObj: {strVal: string} }
 var a: { subObj: ?{strVal: string} }
 var a: { param1: number; param2: string }
 var a: { param1: number; param2?: string }
-// BUG: the next one raises parse error, check it after flow parser update
-// var a: { ...any; ...{}|{p: void} };
+var a: { ...any; ...{}|{p: void} };
 var a: { [a: number]: string; [b: number]: string; };
 var a: { add(x: number, ...y: Array<string>): void };
 var a: { id<T>(x: T): T; };
@@ -243,9 +237,3 @@ import {typeof V3, V4} from "foo";
 export interface foo5 { p: number }
 export interface foo6<T> { p: T }
 import 'foo';
-
-/* Babel: strip-typecasts */
-(xxx: number);
-({ xxx: 0, yyy: "hey" }: { xxx: number; yyy: string });
-(xxx => xxx + 1: (xxx: number) => number);
-((xxx: number), (yyy: string));

@@ -25,10 +25,8 @@ function f() {}
 
 
 
-// BUG: following 2 tests produce wrong output - eating out the last '}'
-// due to bug in flow parser. Fix them when flow parser is updated
-class C2 { 
-class C3 { 
+class C2 {  }
+class C3 {  }
 
 
 /* Babel: strip-array-types */
@@ -64,9 +62,6 @@ var a;
 
 
 /* Babel: strip-declare-module */
-// BUG: The following tests all didn't have the ';' in the end
-// It looks like flow parser parses that incorrectly as well
-// see if this can be fixed by the update
 
 
 
@@ -175,8 +170,7 @@ var a
 var a
 var a
 var a
-// BUG: the next one raises parse error, check it after flow parser update
-// var a: { ...any; ...{}|{p: void} };
+var a;
 var a;
 var a;
 var a;

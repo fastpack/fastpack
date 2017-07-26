@@ -32,7 +32,7 @@ build-Fastpack:
 bootstrap: install conf-merlin build
 
 install:
-	@opam install -y ocp-indent flow_parser fileutils cmdliner
+	@opam install -y ocp-indent flow_parser=0.47.0 fileutils cmdliner
 	@opam pin add --dev-repo lwt
 	@opam pin add merlin 'https://github.com/ocaml/merlin.git#beta'
 
