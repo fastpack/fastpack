@@ -1,11 +1,11 @@
-module Expression = Spider_monkey_ast.Expression
-module Pattern = Spider_monkey_ast.Pattern
-module Statement = Spider_monkey_ast.Statement
-module Literal = Spider_monkey_ast.Literal
-module Type = Spider_monkey_ast.Type
-module Variance = Spider_monkey_ast.Variance
-module Class = Spider_monkey_ast.Class
-module Function = Spider_monkey_ast.Function
+module Expression = Ast.Expression
+module Pattern = Ast.Pattern
+module Statement = Ast.Statement
+module Literal = Ast.Literal
+module Type = Ast.Type
+module Variance = Ast.Variance
+module Class = Ast.Class
+module Function = Ast.Function
 
 
 type visit_action = Continue | Break
@@ -175,6 +175,7 @@ and visit_expression handler ((loc, expression) : Expression.t) =
   | Break -> ()
   | Continue ->
     match expression with
+    | Expression.Import _ -> ()
     | Expression.This -> ()
     | Expression.Super -> ()
     | Expression.Array { elements } ->
@@ -289,11 +290,11 @@ and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Pattern.t) =
     | Pattern.Expression expr -> visit_expression handler expr
 
 and visit_object_property handler (_, {
-               key;
-               value;
-               _method;
-               shorthand = _shorthand;
-             }) =
+    key;
+    value;
+    _method;
+    shorthand = _shorthand;
+  }) =
   match value with
   | Expression.Object.Property.Init expr ->
     visit_object_property_key handler key;
@@ -350,10 +351,10 @@ and visit_variable_declaration handler (_, { declarations; kind = _kind }) =
     declarations;
 
 and visit_variable_declarator handler (_, { init; id }) =
-   visit_pattern handler id;
-   (match init with
-    | None  -> ();
-    | Some expr -> visit_expression handler expr);
+  visit_pattern handler id;
+  (match init with
+   | None  -> ();
+   | Some expr -> visit_expression handler expr);
 
 and visit_expression_or_spread handler item = match item with
   | Expression.Expression expression -> visit_expression handler expression
@@ -362,7 +363,7 @@ and visit_expression_or_spread handler item = match item with
 
 let visit handler program =
 
-  let visit_program ((_, statements, _): Spider_monkey_ast.program) =
+  let visit_program ((_, statements, _): Ast.program) =
     visit_list handler visit_statement statements
   in
 
