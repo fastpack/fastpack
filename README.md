@@ -23,7 +23,7 @@ To execute toplevel (OCaml REPL):
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [ ] FastpackTraspiler: decorators
 - [ ] FastpackTraspiler: jsx
-- [ ] FastpackTraspiler: flow - remove annotations [zindel, in progress]
+- [x] FastpackTraspiler: flow - remove annotations [zindel]
 - [ ] FastpackTraspiler: class syntax, assignments inside class declaration
 - [ ] FastpackTraspiler: assignments inside the class decalrations ?
 - [ ] Fastpack: complete import statements handling

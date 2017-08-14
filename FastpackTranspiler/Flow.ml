@@ -93,6 +93,7 @@ let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} 
 
   let patch_import_declaration
       (loc, {S.ImportDeclaration. importKind; specifiers; _}) =
+
     let patch_specifier len (i, specifier) =
       let is_last = i = (len - 1) in
 
@@ -132,6 +133,7 @@ let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} 
         end;
       | _ -> false;
     in
+
     match importKind with
     | S.ImportDeclaration.ImportType
     | S.ImportDeclaration.ImportTypeof ->
@@ -144,11 +146,15 @@ let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} 
   in
 
   let visit_expression (_, expr) =
-    match expr with
-    | E.Class cls ->
-      patch_class cls;
-      Visit.Continue;
-    | _ -> Visit.Continue
+    begin
+      match expr with
+      | E.Class cls -> patch_class cls;
+      | E.TypeCast {expression; typeAnnotation=(loc, _)} ->
+        Visit.visit_expression handler expression;
+        remove_loc loc;
+      | _ -> ();
+    end;
+    Visit.Continue;
   in
 
 

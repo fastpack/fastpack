@@ -231,3 +231,10 @@ import { V4} from "foo";
 
 
 import 'foo';
+
+
+/* Babel: strip-type-casts */
+(xxx);
+({ xxx: 0, yyy: "hey" });
+(xxx => xxx + 1);
+((xxx), (yyy));
