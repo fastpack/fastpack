@@ -1,8 +1,8 @@
 let analyze _id filename source =
   let (program, _errors) = Parser_flow.program_file source None in
-  let module S = Spider_monkey_ast.Statement in
-  let module E = Spider_monkey_ast.Expression in
-  let module L = Spider_monkey_ast.Literal in
+  let module S = Ast.Statement in
+  let module E = Ast.Expression in
+  let module L = Ast.Literal in
 
   let dependencies = ref [] in
   let dependency_id = ref 0 in
@@ -12,12 +12,12 @@ let analyze _id filename source =
   let add_patch offset_start offset_end patch =
     (* TODO: refactor to use the make_patcher API *)
     workspace := Workspace.patch !workspace {
-      Workspace.
-      patch;
-      offset_start;
-      offset_end;
-      order=0;
-    }
+        Workspace.
+        patch;
+        offset_start;
+        offset_end;
+        order=0;
+      }
   in
 
   let dependency_to_module_id ctx dep =
@@ -59,23 +59,22 @@ let analyze _id filename source =
         dependency_id := !dependency_id + 1;
         dependencies := dep::!dependencies;
         add_patch loc.start.offset loc._end.offset (fun ctx ->
-          let module_id = dependency_to_module_id ctx dep in
-          Printf.sprintf "__fastpack_require__(/* \"%s\" */ \"%s\")"
-                         dep.request
-                         module_id
-        );
+            let module_id = dependency_to_module_id ctx dep in
+            Printf.sprintf "__fastpack_require__(/* \"%s\" */ \"%s\")"
+              dep.request
+              module_id
+          );
       | _ ->
         ()
     in Visit.Continue
   in
 
-  let visit_function _ = Visit.Continue in
-
   let handler = {
     Visit.
     visit_statement;
     visit_expression;
-    visit_function;
+    visit_function = Visit.do_nothing;
+    visit_pattern = Visit.do_nothing;
   } in
 
   Visit.visit handler program;

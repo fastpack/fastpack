@@ -1,11 +1,11 @@
-module E = Spider_monkey_ast.Expression
-module P = Spider_monkey_ast.Pattern
-module S = Spider_monkey_ast.Statement
-module L = Spider_monkey_ast.Literal
-module T = Spider_monkey_ast.Type
-module V = Spider_monkey_ast.Variance
-module C = Spider_monkey_ast.Class
-module F = Spider_monkey_ast.Function
+module E = Ast.Expression
+module P = Ast.Pattern
+module S = Ast.Statement
+module L = Ast.Literal
+module T = Ast.Type
+module V = Ast.Variance
+module C = Ast.Class
+module F = Ast.Function
 
 (** Printer context *)
 type printer_ctx = {
@@ -329,6 +329,9 @@ let print program =
           | Some element -> emit_expression_or_spread element)
         elements
       |> emit "]"
+    | E.Import _ ->
+      (** TODO: handle import() *)
+      ctx
     | E.Object { properties } ->
       ctx
       |> emit "{"
@@ -577,7 +580,7 @@ let print program =
     |> dedent
     |> emit "}"
 
-  and emit_identifier ((_loc, identifier) : Spider_monkey_ast.Identifier.t) =
+  and emit_identifier ((_loc, identifier) : Ast.Identifier.t) =
     emit identifier
 
   and emit_variable_declaration (_loc, { declarations; kind }) ctx =
@@ -677,7 +680,7 @@ let print program =
     emit raw ctx
   in
 
-  let emit_program ((_, statements, _): Spider_monkey_ast.program) ctx =
+  let emit_program ((_, statements, _): Ast.program) ctx =
     emit_list ~emit_sep:emit_semicolon_and_newline emit_statement statements ctx
   in
 

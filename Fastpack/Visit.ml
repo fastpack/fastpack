@@ -1,11 +1,11 @@
-module Expression = Spider_monkey_ast.Expression
-module Pattern = Spider_monkey_ast.Pattern
-module Statement = Spider_monkey_ast.Statement
-module Literal = Spider_monkey_ast.Literal
-module Type = Spider_monkey_ast.Type
-module Variance = Spider_monkey_ast.Variance
-module Class = Spider_monkey_ast.Class
-module Function = Spider_monkey_ast.Function
+module Expression = Ast.Expression
+module Pattern = Ast.Pattern
+module Statement = Ast.Statement
+module Literal = Ast.Literal
+module Type = Ast.Type
+module Variance = Ast.Variance
+module Class = Ast.Class
+module Function = Ast.Function
 
 
 type visit_action = Continue | Break
@@ -14,15 +14,17 @@ type visit_handler = {
   visit_statement : Statement.t -> visit_action;
   visit_expression : Expression.t -> visit_action;
   visit_function : (Loc.t * Function.t) -> visit_action;
+  visit_pattern : Pattern.t -> visit_action;
 }
 
+let do_nothing _ = Continue
 
 let default_visit_handler =
-  let do_nothing _ = Continue in
   {
     visit_statement = do_nothing;
     visit_expression = do_nothing;
     visit_function = do_nothing;
+    visit_pattern = do_nothing;
   }
 
 let visit_list (handler : visit_handler) visit list =
@@ -128,37 +130,8 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
     | Statement.VariableDeclaration decl ->
       visit_variable_declaration handler (loc, decl)
 
-    | Statement.ClassDeclaration {
-        id = _id;
-        body = (_, { body });
-        superClass;
-        typeParameters = _typeParameters;
-        superTypeParameters = _superTypeParameters;
-        implements = _implements;
-        classDecorators = _classDecorators;
-      } ->
-      (** TODO: handle `classDecorators` *)
-      (** TODO: handle `implements` *)
-      visit_if_some handler visit_expression superClass;
-      visit_list handler (fun handler item -> match item with
-          | Class.Body.Method (_loc, {
-              kind = _kind;
-              key = _key;
-              value;
-              static = _static;
-              decorators = _decorators
-            }) ->
-            visit_function handler value
-          | Class.Body.Property (_loc, {
-              key;
-              value;
-              typeAnnotation = _typeAnnotation;
-              static = _static;
-              variance = _variance;
-            }) ->
-            visit_object_property_key handler key;
-            visit_if_some handler visit_expression value
-        ) body
+    | Statement.ClassDeclaration cls ->
+      visit_class handler cls
 
     | Statement.Debugger -> ()
     | Statement.InterfaceDeclaration _ -> ()
@@ -172,12 +145,37 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
     | Statement.DeclareModuleExports _ -> ()
     | Statement.DeclareExportDeclaration _ -> ()
 
+and visit_class handler {Class. body = (_, { body }); superClass; _} =
+  (** TODO: handle `classDecorators` *)
+  (** TODO: handle `implements` *)
+  visit_if_some handler visit_expression superClass;
+  visit_list handler (fun handler item -> match item with
+      | Class.Body.Method (_loc, {
+          kind = _kind;
+          key = _key;
+          value;
+          static = _static;
+          decorators = _decorators
+        }) ->
+        visit_function handler value
+      | Class.Body.Property (_loc, {
+          key;
+          value;
+          typeAnnotation = _typeAnnotation;
+          static = _static;
+          variance = _variance;
+        }) ->
+        visit_object_property_key handler key;
+        visit_if_some handler visit_expression value
+    ) body
+
 and visit_expression handler ((loc, expression) : Expression.t) =
   let action = handler.visit_expression (loc, expression) in
   match action with
   | Break -> ()
   | Continue ->
     match expression with
+    | Expression.Import _ -> ()
     | Expression.This -> ()
     | Expression.Super -> ()
     | Expression.Array { elements } ->
@@ -251,48 +249,52 @@ and visit_expression handler ((loc, expression) : Expression.t) =
     | Expression.TemplateLiteral _ -> ()
     | Expression.TaggedTemplate _ -> ()
     | Expression.JSXElement _ -> ()
-    | Expression.Class _ -> ()
+    | Expression.Class cls ->
+      visit_class handler cls
     | Expression.TypeCast _ -> ()
     | Expression.MetaProperty _ -> ()
 
-and visit_pattern (handler : visit_handler) ((_loc, pattern) : Pattern.t) =
-  match pattern with
+and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Pattern.t) =
+  match handler.visit_pattern p with
+  | Break -> ()
+  | Continue ->
+    match pattern with
 
-  | Pattern.Object { properties; typeAnnotation = _typeAnnotation } ->
-    visit_list
-      handler
-      (fun handler prop -> match prop with
-         | Pattern.Object.Property (_,{ key = _key; pattern; shorthand = _shorthand }) ->
-           visit_pattern handler pattern
-         | Pattern.Object.RestProperty (_,{ argument }) ->
-           visit_pattern handler argument
-      ) properties
+    | Pattern.Object { properties; typeAnnotation = _typeAnnotation } ->
+      visit_list
+        handler
+        (fun handler prop -> match prop with
+           | Pattern.Object.Property (_,{ key = _key; pattern; shorthand = _shorthand }) ->
+             visit_pattern handler pattern
+           | Pattern.Object.RestProperty (_,{ argument }) ->
+             visit_pattern handler argument
+        ) properties
 
-  | Pattern.Array { elements; typeAnnotation = _typeAnnotation } ->
-    visit_list
-      handler
-      (fun handler element -> match element with
-         | None -> ()
-         | Some (Pattern.Array.Element pattern) ->
-           visit_pattern handler pattern
-         | Some (Pattern.Array.RestElement (_,{ argument })) ->
-           visit_pattern handler argument)
-      elements
+    | Pattern.Array { elements; typeAnnotation = _typeAnnotation } ->
+      visit_list
+        handler
+        (fun handler element -> match element with
+           | None -> ()
+           | Some (Pattern.Array.Element pattern) ->
+             visit_pattern handler pattern
+           | Some (Pattern.Array.RestElement (_,{ argument })) ->
+             visit_pattern handler argument)
+        elements
 
-  | Pattern.Assignment { left; right } ->
-    visit_pattern handler left;
-    visit_expression handler right
+    | Pattern.Assignment { left; right } ->
+      visit_pattern handler left;
+      visit_expression handler right
 
-  | Pattern.Identifier { name = _name; typeAnnotation = _typeAnnotation; optional = _optional } -> ()
+    | Pattern.Identifier { name = _name; typeAnnotation = _typeAnnotation; optional = _optional } -> ()
 
-  | Pattern.Expression expr -> visit_expression handler expr
+    | Pattern.Expression expr -> visit_expression handler expr
 
 and visit_object_property handler (_, {
-               key;
-               value;
-               _method;
-               shorthand = _shorthand;
-             }) =
+    key;
+    value;
+    _method;
+    shorthand = _shorthand;
+  }) =
   match value with
   | Expression.Object.Property.Init expr ->
     visit_object_property_key handler key;
@@ -349,10 +351,10 @@ and visit_variable_declaration handler (_, { declarations; kind = _kind }) =
     declarations;
 
 and visit_variable_declarator handler (_, { init; id }) =
-   visit_pattern handler id;
-   (match init with
-    | None  -> ();
-    | Some expr -> visit_expression handler expr);
+  visit_pattern handler id;
+  (match init with
+   | None  -> ();
+   | Some expr -> visit_expression handler expr);
 
 and visit_expression_or_spread handler item = match item with
   | Expression.Expression expression -> visit_expression handler expression
@@ -361,7 +363,7 @@ and visit_expression_or_spread handler item = match item with
 
 let visit handler program =
 
-  let visit_program ((_, statements, _): Spider_monkey_ast.program) =
+  let visit_program ((_, statements, _): Ast.program) =
     visit_list handler visit_statement statements
   in
 
