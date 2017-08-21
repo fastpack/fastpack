@@ -56,7 +56,7 @@ let emit_semicolon ctx =
 let emit_semicolon_and_newline ctx =
   ctx |> emit ";" |> emit_newline
 
-let  emit_space ctx =
+let emit_space ctx =
   ctx |> emit " "
 
 let rec emit_list ?emit_sep emit_item list ctx =
@@ -203,8 +203,8 @@ let print program =
       |> emit_statement body
       |> dedent
 
-    | S.ForIn { left; right; body; each = _each } ->
-      (* TODO: handle `each` *)
+    | S.ForIn { left; right; body; each } ->
+      assert (not each);
       ctx
       |> emit "for ("
       |> (match left with
@@ -217,10 +217,11 @@ let print program =
       |> emit_statement body
       |> dedent
 
-    | S.ForOf { left; right; body; async = _async } ->
-      (* TODO: handle `async` *)
+    | S.ForOf { left; right; body; async } ->
       ctx
-      |> emit "for ("
+      |> emit "for "
+      |> emit_if async (emit "await ")
+      |> emit "("
       |> (match left with
           | S.ForOf.LeftDeclaration decl -> emit_variable_declaration decl
           | S.ForOf.LeftExpression expression -> emit_expression expression)
@@ -681,7 +682,14 @@ let print program =
   in
 
   let emit_program ((_, statements, _): Ast.program) ctx =
-    emit_list ~emit_sep:emit_semicolon_and_newline emit_statement statements ctx
+    let _ =
+      emit_list
+        ~emit_sep:emit_semicolon_and_newline
+        emit_statement
+        statements
+        ctx
+    in
+    emit_newline ctx;
   in
 
   let ctx = { buf = Buffer.create 1024; indent = 0 } in

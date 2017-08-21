@@ -63,4 +63,12 @@ let x: *;
 let x: [A,B];
 let x: typeof 12;
 let x: Array<string>;
-let x: Array<string>
+let x: Array<string>;
+async function a() {
+  for await (var x of y)
+    {
+      
+    }
+  ;
+  
+}
