@@ -71,4 +71,12 @@ async function a() {
     }
   ;
   
-}
+};
+@(function (f) { return (f); })
+@(function decorator1(s) {
+  return s
+})
+@(decorator2)
+class C {
+  
+};

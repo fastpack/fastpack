@@ -249,9 +249,9 @@ let print program =
                            typeParameters;
                            superTypeParameters;
                            implements = _implements;
-                           classDecorators = _classDecorators;
+                           classDecorators;
                          } ->
-      let emit_class_element item  ctx =
+      let emit_class_element item ctx =
         match item with
         | C.Body.Method (_loc, {
             kind;
@@ -279,9 +279,9 @@ let print program =
           |> emit_if_some emit_expression value
           |> emit_semicolon
       in
-      (** TODO: handle `classDecorators` *)
       (** TODO: handle `implements` *)
       ctx
+      |> emit_list emit_decorator classDecorators
       |> emit "class "
       |> emit_if_some emit_identifier id
       |> emit_if_some emit_type_parameter_declaration typeParameters
@@ -353,7 +353,8 @@ let print program =
       |> emit "}"
     | E.Function func ->
       ctx |> emit_function (loc, func)
-    | E.ArrowFunction _ -> ctx
+    | E.ArrowFunction func ->
+      ctx |> emit_function (loc, func)
     | E.Sequence { expressions } ->
       ctx
       |> emit "("
@@ -529,6 +530,13 @@ let print program =
     | E.Object.Property.Computed expr ->
       ctx |> emit "[" |> emit_expression expr |> emit "]"
 
+  and emit_decorator decorator ctx =
+    ctx
+    |> emit "@("
+    |> emit_expression decorator
+    |> emit ")"
+    |> emit_newline
+
   and emit_function ?(as_method=false) ?emit_id (_loc, {
       F.
       id;
@@ -563,7 +571,13 @@ let print program =
     |> emit_space
     |> (match body with
         | F.BodyBlock block -> emit_block block
-        | F.BodyExpression expr -> emit_expression expr)
+        | F.BodyExpression expr ->
+          fun ctx ->
+            ctx
+            |> emit "{ return ("
+            |> emit_expression expr
+            |> emit "); }"
+      )
 
   and emit_type_annotation (_loc, typeAnnotation) ctx =
     ctx |> emit ": " |> emit_type typeAnnotation
@@ -689,7 +703,7 @@ let print program =
         statements
         ctx
     in
-    emit_newline ctx;
+    emit_semicolon_and_newline ctx;
   in
 
   let ctx = { buf = Buffer.create 1024; indent = 0 } in

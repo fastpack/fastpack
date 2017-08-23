@@ -3,7 +3,15 @@ let transpile () =
   FastpackTranspiler.Main.transpile_source scope
 
 let print source =
-  let (program, _errors) = Parser_flow.program_file source None in
+  let parse_options = Some Parser_env.({
+    esproposal_class_instance_fields = true;
+    esproposal_class_static_fields = true;
+    esproposal_decorators = true;
+    esproposal_export_star_as = true;
+    types = true;
+    use_strict = false;
+  }) in
+  let (program, _errors) = Parser_flow.program source ~parse_options in
   let result = Fastpack.Printer.print program in
   result
 
@@ -11,7 +19,7 @@ let tests = [
   ("object-spread-and-rest-operators.js", transpile ());
   ("strip-flow.js", transpile ());
   ("fastpack-printer.js", print);
-  (* ("current.js", transpile ()); *)
+  (* ("current.js", print); *)
 ]
 
 let () =

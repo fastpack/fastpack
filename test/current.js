@@ -1,1 +1,7 @@
-({ xxx: 0, yyy: "hey" }: { xxx: number; yyy: string });
+/* class decorators */
+@(f => f)
+@(function decorator1(s) {
+  return s
+})
+@decorator2
+class C {}

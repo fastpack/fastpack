@@ -66,3 +66,11 @@ let x: Array<string>;
 async function a() {
   for await (var x of y) {};
 }
+
+/* class decorators */
+@(f => f)
+@(function decorator1(s) {
+  return s
+})
+@decorator2
+class C {}
