@@ -1,3 +1,4 @@
+/** bindings */
 var x = 1;
 let y = 2;
 const z = 3;
@@ -10,9 +11,11 @@ const x = 1,
 var x;
 let y;
 let y: A;
+/** binding with patterns */
 var {x: x} = 12;
 let {y: y} = 12;
 const {z: [a]} = 12;
+/** functions */
 function x() {
   
 };
@@ -47,6 +50,7 @@ function with_type_param<T: X,Y>(a: A): T {
 function with_type_param<A: T<B>>(a: A): T {
   
 };
+/** Types */
 let x: A;
 let x: number;
 let x: string;
@@ -64,6 +68,7 @@ let x: [A,B];
 let x: typeof 12;
 let x: Array<string>;
 let x: Array<string>;
+/* async for of */
 async function a() {
   for await (var x of y)
     {
@@ -72,6 +77,7 @@ async function a() {
   ;
   
 };
+/* class decorators */
 @(function (f) { return (f); })
 @(function decorator1(s) {
   return s

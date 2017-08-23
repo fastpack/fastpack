@@ -15,6 +15,8 @@ type printer_ctx = {
 
   (** Mutable buffer *)
   buf : Buffer.t;
+
+  comments : Ast.Comment.t list;
 }
 
 let emit str ctx =
@@ -81,9 +83,24 @@ let  emit_if_none emit option ctx =
   | Some _ -> ctx
   | None -> emit ctx
 
-let print program =
+let print (_, statements, comments) =
 
-  let rec emit_statement ((loc, statement) : S.t) ctx =
+  let rec emit_comment (_, comment) ctx =
+    match comment with
+    | Ast.Comment.Line s -> ctx |> emit "//" |> emit s |> emit_newline
+    | Ast.Comment.Block s ->
+      ctx |> emit "/*" |> emit s |> emit "*/" |> emit_newline
+
+  and emit_comments (loc: Loc.t) ctx =
+    let (before, after) = List.partition
+        (fun ((c_loc : Loc.t), _) -> c_loc._end.offset < loc.start.offset)
+        ctx.comments
+    in
+    let ctx = emit_list emit_comment before ctx in
+    {ctx with comments = after}
+
+  and emit_statement ((loc, statement) : S.t) ctx =
+    let ctx = emit_comments loc ctx in
     match statement with
     | S.Empty -> ctx
 
@@ -253,7 +270,7 @@ let print program =
                          } ->
       let emit_class_element item ctx =
         match item with
-        | C.Body.Method (_loc, {
+        | C.Body.Method (loc, {
             kind;
             key;
             value;
@@ -262,6 +279,7 @@ let print program =
           }) ->
           (** TODO: handle `decorators` *)
           ctx
+          |> emit_comments loc
           |> (if static then emit "static " else emit_none)
           |> (match kind with
               | C.Method.Constructor -> emit_none
@@ -269,8 +287,9 @@ let print program =
               | C.Method.Get -> emit "get "
               | C.Method.Set -> emit "set ")
           |> emit_function ~as_method:true ~emit_id:(emit_object_property_key key) value
-        | C.Body.Property (_loc, { key; value; typeAnnotation; static; variance }) ->
+        | C.Body.Property (loc, { key; value; typeAnnotation; static; variance }) ->
           ctx
+          |> emit_comments loc
           |> (if static then emit "static " else emit_none)
           |> emit_if_some emit_variance variance
           |> emit_object_property_key key
@@ -318,6 +337,7 @@ let print program =
     | S.DeclareExportDeclaration _ -> ctx
 
   and emit_expression ((loc, expression) : E.t) ctx =
+    let ctx = emit_comments loc ctx in
     match expression with
     | E.This -> ctx |> emit "this"
     | E.Super -> ctx |> emit "super"
@@ -338,7 +358,8 @@ let print program =
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
         (fun prop ctx -> match prop with
-           | E.Object.Property (_, { key; value; _method; shorthand = _shorthand }) ->
+           | E.Object.Property (loc, { key; value; _method; shorthand = _shorthand }) ->
+             let ctx = emit_comments loc ctx in
              (match value with
               | E.Object.Property.Init expr ->
                 ctx |> emit_object_property_key key |> emit ": " |> emit_expression expr
@@ -346,8 +367,8 @@ let print program =
                 ctx |> emit "get " |> emit_function func
               | E.Object.Property.Set func ->
                 ctx |> emit "set " |> emit_function func)
-           | E.Object.SpreadProperty (_, { argument }) ->
-             ctx |> emit "..." |> emit_expression argument
+           | E.Object.SpreadProperty (loc, { argument }) ->
+             ctx |> emit_comments loc |> emit "..." |> emit_expression argument
         )
         properties
       |> emit "}"
@@ -475,7 +496,8 @@ let print program =
     | E.TypeCast _ -> ctx
     | E.MetaProperty _ -> ctx
 
-  and emit_pattern ((_loc, pattern) : P.t) ctx =
+  and emit_pattern ((loc, pattern) : P.t) ctx =
+    let ctx = emit_comments loc ctx in
     match pattern with
     | P.Object { properties; typeAnnotation } ->
       ctx
@@ -537,7 +559,7 @@ let print program =
     |> emit ")"
     |> emit_newline
 
-  and emit_function ?(as_method=false) ?emit_id (_loc, {
+  and emit_function ?(as_method=false) ?emit_id (loc, {
       F.
       id;
       params;
@@ -551,6 +573,7 @@ let print program =
     }) ctx =
     (** TODO: handle `predicate` *)
     ctx
+    |> emit_comments loc
     |> (if async then emit "async " else emit_none)
     |> (if not as_method then emit "function " else emit_none)
     |> (if generator then emit "*" else emit_none)
@@ -579,27 +602,29 @@ let print program =
             |> emit "); }"
       )
 
-  and emit_type_annotation (_loc, typeAnnotation) ctx =
-    ctx |> emit ": " |> emit_type typeAnnotation
+  and emit_type_annotation (loc, typeAnnotation) ctx =
+    ctx |> emit_comments loc |> emit ": " |> emit_type typeAnnotation
 
-  and emit_variance (_loc, variance) =
+  and emit_variance (_, variance) =
     match variance with
     | V.Plus -> emit "+"
     | V.Minus -> emit "-"
 
-  and emit_block ((_loc, block) : (Loc.t * S.Block.t)) ctx =
+  and emit_block ((loc, block) : (Loc.t * S.Block.t)) ctx =
     ctx
+    |> emit_comments loc
     |> emit "{"
     |> indent
     |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement block.body
     |> dedent
     |> emit "}"
 
-  and emit_identifier ((_loc, identifier) : Ast.Identifier.t) =
-    emit identifier
+  and emit_identifier ((loc, identifier) : Ast.Identifier.t) ctx =
+    ctx |> emit_comments loc |> emit identifier
 
-  and emit_variable_declaration (_loc, { declarations; kind }) ctx =
+  and emit_variable_declaration (loc, { declarations; kind }) ctx =
     ctx
+    |> emit_comments loc
     |> emit (match kind with
         | S.VariableDeclaration.Var  -> "var "
         | S.VariableDeclaration.Let  -> "let "
@@ -608,8 +633,9 @@ let print program =
     |> emit_list ~emit_sep:emit_comma_and_newline emit_variable_declarator declarations
     |> decrease_indent
 
-  and emit_variable_declarator (_loc, { id; init }) ctx =
+  and emit_variable_declarator (loc, { id; init }) ctx =
     ctx
+    |> emit_comments loc
     |> emit_pattern id
     |> emit_if_some (fun init ctx -> ctx |> emit " = " |> emit_expression init) init
 
@@ -622,7 +648,9 @@ let print program =
     | E.Member.PropertyIdentifier (_, name) -> emit name ctx
     | E.Member.PropertyExpression expression -> emit_expression expression ctx
 
-  and emit_type (loc, value) ctx = match value with
+  and emit_type (loc, value) ctx =
+    let ctx = emit_comments loc ctx in
+    match value with
     | T.Any -> emit "any" ctx
     | T.Mixed -> emit "mixed" ctx
     | T.Empty ->
@@ -669,42 +697,53 @@ let print program =
       |> emit ": "
       |> emit_type_generic_identifier qualification
 
-  and emit_generic_type (_loc, { id; typeParameters }) ctx =
+  and emit_generic_type (loc, { id; typeParameters }) ctx =
     ctx
+    |> emit_comments loc
     |> emit_type_generic_identifier id
     |> emit_if_some emit_type_parameter_instantiation typeParameters
 
   and emit_function_type (_loc, _value) _ctx =
     failwith "emit_function_type: not implemented"
 
-  and emit_type_parameter (_loc, value) ctx =
+  and emit_type_parameter (loc, value) ctx =
     let { T.ParameterDeclaration.TypeParam. name; bound; variance; default } = value in
     ctx
+    |> emit_comments loc
     |> emit_if_some emit_variance variance
     |> emit name
     |> emit_if_some (fun (_, bound) ctx -> ctx |> emit ": " |> emit_type bound) bound
     |> emit_if_some (fun default ctx -> ctx |> emit " = " |> emit_type default) default
 
-  and emit_type_parameter_declaration (_, { params }) ctx =
-    ctx |> emit "<" |> emit_list ~emit_sep:emit_comma emit_type_parameter params |> emit ">"
+  and emit_type_parameter_declaration (loc, { params }) ctx =
+    ctx
+    |> emit_comments loc
+    |> emit "<"
+    |> emit_list ~emit_sep:emit_comma emit_type_parameter params
+    |> emit ">"
 
-  and emit_type_parameter_instantiation (_, { params }) ctx =
-    ctx |> emit "<" |> emit_list ~emit_sep:emit_comma emit_type params |> emit ">"
+  and emit_type_parameter_instantiation (loc, { params }) ctx =
+    ctx
+    |> emit_comments loc
+    |> emit "<"
+    |> emit_list ~emit_sep:emit_comma emit_type params
+    |> emit ">"
 
-  and emit_literal (_loc, { raw; value = _value }) ctx =
-    emit raw ctx
+  and emit_literal (loc, { raw; value = _value }) ctx =
+    ctx |> emit_comments loc |> emit raw
   in
 
-  let emit_program ((_, statements, _): Ast.program) ctx =
-    let _ =
-      emit_list
-        ~emit_sep:emit_semicolon_and_newline
-        emit_statement
-        statements
-        ctx
+  let emit_statements statements ctx =
+    let ctx =
+      ctx
+      |> emit_list
+          ~emit_sep:emit_semicolon_and_newline
+          emit_statement
+          statements
+      |> emit_semicolon_and_newline
     in
-    emit_semicolon_and_newline ctx;
+    ctx |> emit_list emit_comment ctx.comments
   in
 
-  let ctx = { buf = Buffer.create 1024; indent = 0 } in
-  Buffer.to_bytes (emit_program program ctx).buf
+  let ctx = { buf = Buffer.create 1024; indent = 0; comments = comments } in
+  Buffer.to_bytes (emit_statements statements ctx).buf
