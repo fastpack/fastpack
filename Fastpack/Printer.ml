@@ -489,12 +489,42 @@ let print (_, statements, comments) =
       ctx |> emit name
     | E.Literal lit ->
       ctx |> emit_literal (loc, lit)
-    | E.TemplateLiteral _ -> ctx
-    | E.TaggedTemplate _ -> ctx
+    | E.TemplateLiteral tmpl_lit ->
+      ctx |> emit_template_literal tmpl_lit
+    | E.TaggedTemplate { tag; quasi=(_, tmpl_lit) } ->
+      ctx
+      |> emit_expression tag
+      |> emit_template_literal tmpl_lit
     | E.JSXElement _ -> ctx
     | E.Class _ -> ctx
     | E.TypeCast _ -> ctx
     | E.MetaProperty _ -> ctx
+
+  and emit_template_literal { quasis; expressions; } ctx =
+    let emit_expressions =
+      List.map
+        (fun e -> fun ctx ->
+          ctx
+          |> emit "${"
+          |> emit_expression e
+          |> emit "}")
+        expressions
+      @ [emit_none]
+    in
+    let quasis =
+      List.map
+        (fun (_, {E.TemplateLiteral.Element. value={ raw; _ }; _ }) -> raw)
+        quasis
+    in
+    ctx
+    |> emit "`"
+    |> emit_list
+      (fun (text, emit_expression) ctx ->
+         ctx
+         |> emit text
+         |> emit_expression)
+      (List.combine quasis emit_expressions)
+    |> emit "`"
 
   and emit_pattern ((loc, pattern) : P.t) ctx =
     let ctx = emit_comments loc ctx in

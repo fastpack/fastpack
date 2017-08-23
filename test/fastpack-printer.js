@@ -74,3 +74,11 @@ async function a() {
 })
 @decorator2
 class C {}
+
+/* template literals */
+let t = `test`;
+t = `test ${1} test`;
+t = `test ${x + y}
+xxx
+test ${z}`;
+let tagged = Tag`xxx ${1}`;
