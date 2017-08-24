@@ -36,10 +36,25 @@ let transpile program =
 
     (** Transpile JSX attributes *)
     let transpile_attributes (attributes : Opening.attribute list) =
-      let null_expression = Loc.none, E.Literal { value = Ast.Literal.Null; raw = "null"; } in
+
+      let null_expression =
+        Loc.none, E.Literal { value = Ast.Literal.Null; raw = "null"; }
+      in
+
+      let object_assign arguments =
+        Loc.none, E.Call {
+          callee = Loc.none, E.Member {
+              computed = false;
+              _object = Loc.none, E.Identifier (Loc.none, "Object");
+              property = E.Member.PropertyIdentifier (Loc.none, "assign");
+            };
+          arguments = List.map (fun arg -> E.Expression arg) arguments
+        }
+      in
+
       match attributes with
       (** If no attributes present we pass null *)
-      | [] -> [E.Expression null_expression]
+      | [] -> E.Expression null_expression
       | attributes ->
         let (bucket, expressions) = List.fold_left
             (fun (bucket, expressions) (attr : Opening.attribute) ->
@@ -66,9 +81,9 @@ let transpile program =
                      { key; value = E.Object.Property.Init value; _method = false; shorthand = false }
                    ) in
                  (prop::bucket, expressions)
-               | Opening.SpreadAttribute (loc, { argument }) ->
-                 let expr = E.Expression (Loc.none, E.Object { properties = bucket }) in
-                 let spread = E.Spread (loc, { E.SpreadElement. argument }) in
+               | Opening.SpreadAttribute (_loc, { argument }) ->
+                 let expr = `Expression (Loc.none, E.Object { properties = bucket }) in
+                 let spread = `Spread argument in
                  ([], spread::expr::expressions))
             ([], [])
             attributes
@@ -77,10 +92,19 @@ let transpile program =
           | [] ->
             expressions
           | bucket -> 
-            let expr = E.Expression (Loc.none, E.Object { properties = bucket }) in
+            let expr = `Expression (Loc.none, E.Object { properties = bucket }) in
             expr::expressions
         in
-        expressions
+        match expressions with
+        | [] -> E.Expression null_expression
+        | [`Spread expr] -> E.Expression (object_assign [expr])
+        | [`Expression expr] -> E.Expression expr
+        | items ->
+          let items = List.map (function
+              | `Spread expr -> expr
+              | `Expression expr -> expr
+            ) items in
+          E.Expression (object_assign items)
     in
 
     let node = match node with
@@ -96,7 +120,7 @@ let transpile program =
               _object = Loc.none, E.Identifier (Loc.none, "React");
               property = E.Member.PropertyIdentifier (Loc.none, "createElement");
             };
-          arguments = (E.Expression (transpile_name name))::(transpile_attributes attributes)
+          arguments = (E.Expression (transpile_name name))::(transpile_attributes attributes)::[]
         }
 
       | node -> node
