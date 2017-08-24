@@ -23,13 +23,13 @@ let transpile program =
 
       match name with
       | Identifier (loc, { name }) ->
-        loc, E.Identifier (loc, name)
+        E.Expression (loc, E.Identifier (loc, name))
       | MemberExpression (loc, { _object; property }) ->
-        loc, E.Member {
-          _object = Loc.none, aux_object _object;
-          property = E.Member.PropertyIdentifier (aux_property property);
-          computed = false;
-        }
+        E.Expression (loc, E.Member {
+            _object = Loc.none, aux_object _object;
+            property = E.Member.PropertyIdentifier (aux_property property);
+            computed = false;
+          })
       | NamespacedName _ ->
         failwith "Namespaced tags are not supported. ReactJSX is not XML"
     in
@@ -41,6 +41,10 @@ let transpile program =
         Loc.none, E.Literal { value = Ast.Literal.Null; raw = "null"; }
       in
 
+      let empty_object_literal =
+        Loc.none, E.Object { properties = [] }
+      in
+
       let object_assign arguments =
         Loc.none, E.Call {
           callee = Loc.none, E.Member {
@@ -48,7 +52,7 @@ let transpile program =
               _object = Loc.none, E.Identifier (Loc.none, "Object");
               property = E.Member.PropertyIdentifier (Loc.none, "assign");
             };
-          arguments = List.map (fun arg -> E.Expression arg) arguments
+          arguments = (E.Expression empty_object_literal)::(List.rev arguments)
         }
       in
 
@@ -56,7 +60,14 @@ let transpile program =
       (** If no attributes present we pass null *)
       | [] -> E.Expression null_expression
       | attributes ->
-        let (bucket, expressions) = List.fold_left
+        let add_to_expressions bucket expressions =
+          match bucket with
+          | [] -> expressions
+          | properties ->
+            let expr = (Loc.none, E.Object { properties = List.rev properties }) in
+            (`Expression expr)::expressions
+        in
+        let bucket, expressions = List.fold_left
             (fun (bucket, expressions) (attr : Opening.attribute) ->
                match attr with
                | Opening.Attribute (loc, { name; value }) ->
@@ -82,47 +93,69 @@ let transpile program =
                    ) in
                  (prop::bucket, expressions)
                | Opening.SpreadAttribute (_loc, { argument }) ->
-                 let expr = `Expression (Loc.none, E.Object { properties = bucket }) in
+                 let expressions = add_to_expressions bucket expressions in
                  let spread = `Spread argument in
-                 ([], spread::expr::expressions))
+                 ([], spread::expressions))
             ([], [])
             attributes
         in
-        let expressions = match bucket with
-          | [] ->
-            expressions
-          | bucket -> 
-            let expr = `Expression (Loc.none, E.Object { properties = bucket }) in
-            expr::expressions
-        in
+        let expressions = expressions |> add_to_expressions bucket in
         match expressions with
         | [] -> E.Expression null_expression
-        | [`Spread expr] -> E.Expression (object_assign [expr])
+        | [`Spread expr] -> E.Expression (object_assign [E.Expression expr])
         | [`Expression expr] -> E.Expression expr
         | items ->
-          let items = List.map (function
-              | `Spread expr -> expr
-              | `Expression expr -> expr
-            ) items in
+          let items =
+            items
+            |> List.map (function
+                | `Spread expr -> E.Expression expr
+                | `Expression expr -> E.Expression expr
+              )
+          in
           E.Expression (object_assign items)
     in
 
-    let node = match node with
-      | E.JSXElement {
-          openingElement = (_, openingElement);
-          closingElement = _;
-          children = _
-        } ->
-        let { Opening. name; attributes; _ } = openingElement in
-        E.Call {
-          callee = Loc.none, E.Member {
-              computed = false;
-              _object = Loc.none, E.Identifier (Loc.none, "React");
-              property = E.Member.PropertyIdentifier (Loc.none, "createElement");
-            };
-          arguments = (E.Expression (transpile_name name))::(transpile_attributes attributes)::[]
-        }
+    let rec transpile_children children =
+      let trim_text text =
+        let is_not_empty_line line =
+          String.trim line <> ""
+        in
+        text
+        |> String.split_on_char '\n'
+        |> List.filter is_not_empty_line
+        |> String.concat " "
+      in
+      let transpile_child ((loc, child) : child) =
+        let expr = match child with
+          | Element element ->
+            (loc, transpile_element element)
+          | ExpressionContainer { expression = ExpressionContainer.Expression expression } ->
+            expression
+          | ExpressionContainer { expression = ExpressionContainer.EmptyExpression _ } ->
+            failwith "Found EmptyExpression container"
+          | Text { value; raw } ->
+            let raw = trim_text raw in
+            (loc, E.Literal { value = Ast.Literal.String value; raw = ("'" ^ raw ^ "'"); })
+        in
+        E.Expression expr
+      in
+      List.map transpile_child children
 
+    and transpile_element { openingElement = (_, openingElement); children; _ } =
+      let { Opening. name; attributes; _ } = openingElement in
+      E.Call {
+        callee = Loc.none, E.Member {
+            computed = false;
+            _object = Loc.none, E.Identifier (Loc.none, "React");
+            property = E.Member.PropertyIdentifier (Loc.none, "createElement");
+          };
+        arguments = (transpile_name name)::(transpile_attributes attributes)::(transpile_children children)
+      }
+    in
+
+    let node = match node with
+      | E.JSXElement element ->
+        transpile_element element
       | node -> node
     in
     (loc, node)
