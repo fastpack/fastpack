@@ -260,60 +260,8 @@ let print (_, statements, comments) =
       ctx
       |> emit_variable_declaration (loc, decl)
 
-    | S.ClassDeclaration { id;
-                           body = (_, { body });
-                           superClass;
-                           typeParameters;
-                           superTypeParameters;
-                           implements = _implements;
-                           classDecorators;
-                         } ->
-      let emit_class_element item ctx =
-        match item with
-        | C.Body.Method (loc, {
-            kind;
-            key;
-            value;
-            static;
-            decorators = _decorators
-          }) ->
-          (** TODO: handle `decorators` *)
-          ctx
-          |> emit_comments loc
-          |> (if static then emit "static " else emit_none)
-          |> (match kind with
-              | C.Method.Constructor -> emit_none
-              | C.Method.Method -> emit_none
-              | C.Method.Get -> emit "get "
-              | C.Method.Set -> emit "set ")
-          |> emit_function ~as_method:true ~emit_id:(emit_object_property_key key) value
-        | C.Body.Property (loc, { key; value; typeAnnotation; static; variance }) ->
-          ctx
-          |> emit_comments loc
-          |> (if static then emit "static " else emit_none)
-          |> emit_if_some emit_variance variance
-          |> emit_object_property_key key
-          |> emit_if_some emit_type_annotation typeAnnotation
-          |> emit " = "
-          |> emit_if_some emit_expression value
-          |> emit_semicolon
-      in
-      (** TODO: handle `implements` *)
-      ctx
-      |> emit_list emit_decorator classDecorators
-      |> emit "class "
-      |> emit_if_some emit_identifier id
-      |> emit_if_some emit_type_parameter_declaration typeParameters
-      |> emit_if_some
-        (fun superClass ctx -> ctx |> emit " extends " |> emit_expression superClass)
-        superClass
-      |> emit_if_some emit_type_parameter_instantiation superTypeParameters
-      |> emit " {"
-      |> indent
-      |> emit_list ~emit_sep:emit_newline emit_class_element body
-      |> dedent
-      |> emit "}"
-
+    | S.ClassDeclaration cls ->
+      ctx |> emit_class cls
     | S.InterfaceDeclaration { id; typeParameters; body; extends; mixins = _mixins} ->
       (** TODO: handle `mixins` *)
       ctx
@@ -496,9 +444,62 @@ let print (_, statements, comments) =
       |> emit_expression tag
       |> emit_template_literal tmpl_lit
     | E.JSXElement _ -> ctx
-    | E.Class _ -> ctx
+    | E.Class cls ->
+      ctx |> emit_class cls
     | E.TypeCast _ -> ctx
     | E.MetaProperty _ -> ctx
+
+  and emit_class { id;
+                   body = (_, { body });
+                   superClass; typeParameters;
+                   superTypeParameters;
+                   implements = _implements;
+                   classDecorators; } ctx =
+    let emit_class_element item ctx =
+      match item with
+      | C.Body.Method (loc, {
+          kind;
+          key;
+          value;
+          static;
+          decorators = _decorators
+        }) ->
+        (** TODO: handle `decorators` *)
+        ctx
+        |> emit_comments loc
+        |> (if static then emit "static " else emit_none)
+        |> (match kind with
+            | C.Method.Constructor -> emit_none
+            | C.Method.Method -> emit_none
+            | C.Method.Get -> emit "get "
+            | C.Method.Set -> emit "set ")
+        |> emit_function ~as_method:true ~emit_id:(emit_object_property_key key) value
+      | C.Body.Property (loc, { key; value; typeAnnotation; static; variance }) ->
+        ctx
+        |> emit_comments loc
+        |> (if static then emit "static " else emit_none)
+        |> emit_if_some emit_variance variance
+        |> emit_object_property_key key
+        |> emit_if_some emit_type_annotation typeAnnotation
+        |> emit " = "
+        |> emit_if_some emit_expression value
+        |> emit_semicolon
+    in
+    (** TODO: handle `implements` *)
+    ctx
+    |> emit_list emit_decorator classDecorators
+    |> emit "class "
+    |> emit_if_some emit_identifier id
+    |> emit_if_some emit_type_parameter_declaration typeParameters
+    |> emit_if_some
+      (fun superClass ctx -> ctx |> emit " extends " |> emit_expression superClass)
+      superClass
+    |> emit_if_some emit_type_parameter_instantiation superTypeParameters
+    |> emit " {"
+    |> indent
+    |> emit_list ~emit_sep:emit_newline emit_class_element body
+    |> dedent
+    |> emit "}"
 
   and emit_template_literal { quasis; expressions; } ctx =
     let emit_expressions =

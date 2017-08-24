@@ -82,3 +82,6 @@ t = `test ${x + y}
 xxx
 test ${z}`;
 let tagged = Tag`xxx ${1}`;
+
+/* class expressions */
+let c = class { render() {console.log('hello');} static prop = 1;};
