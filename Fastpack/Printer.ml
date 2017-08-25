@@ -20,6 +20,14 @@ type printer_ctx = {
   comments : Ast.Comment.t list;
 }
 
+let fail_if cond message =
+  if cond then failwith message else ()
+
+let fail_if_some option message =
+  match option with
+  | Some _ -> failwith message
+  | None -> ()
+
 let emit str ctx =
   Buffer.add_string ctx.buf str;
   ctx
@@ -28,7 +36,9 @@ let emit_none ctx =
   ctx
 
 let emit_newline ctx =
-  let indent = if ctx.indent > 0 then String.make (ctx.indent * 2) ' ' else "" in
+  let indent =
+    if ctx.indent > 0 then String.make (ctx.indent * 2) ' ' else ""
+  in
   Buffer.add_string ctx.buf "\n";
   Buffer.add_string ctx.buf indent;
   ctx
@@ -68,8 +78,10 @@ let rec emit_list ?emit_sep emit_item list ctx =
   | Some emit_sep ->
     (match list with
      | [] -> ctx
-     | item::[] -> emit_item item ctx
-     | item::xs -> ctx |> emit_item item |> emit_sep |> emit_list ~emit_sep emit_item xs)
+     | item::[] ->
+       emit_item item ctx
+     | item::xs ->
+       ctx |> emit_item item |> emit_sep |> emit_list ~emit_sep emit_item xs)
 
 let emit_if cond emit ctx =
   if cond then emit ctx else ctx
@@ -88,7 +100,8 @@ let print (_, statements, comments) =
 
   let rec emit_comment (_, comment) ctx =
     match comment with
-    | Ast.Comment.Line s -> ctx |> emit "//" |> emit s |> emit_newline
+    | Ast.Comment.Line s ->
+      ctx |> emit "//" |> emit s |> emit_newline
     | Ast.Comment.Block s ->
       ctx |> emit "/*" |> emit s |> emit "*/" |> emit_newline
 
@@ -136,12 +149,16 @@ let print (_, statements, comments) =
     | S.Break { label } ->
       ctx
       |> emit "break"
-      |> emit_if_some (fun (_loc, name) ctx -> ctx |> emit_space |> emit name) label
+      |> emit_if_some
+          (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
+          label
 
     | S.Continue { label } ->
       ctx
       |> emit "continue"
-      |> emit_if_some (fun (_loc, name) ctx -> ctx |> emit_space |> emit name) label
+      |> emit_if_some
+          (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
+          label
 
     | S.With { _object; body } ->
       ctx
@@ -160,12 +177,20 @@ let print (_, statements, comments) =
       ctx
       |> emit "swicth (" |> emit_expression discriminant |> emit ") {"
       |> indent
-      |> emit_list ~emit_sep:emit_newline (fun (_loc, { S.Switch.Case. test; consequent }) ctx ->
+      |> emit_list
+        ~emit_sep:emit_newline
+        (fun (_loc, { S.Switch.Case. test; consequent }) ctx ->
           ctx
           |> (match test with
-              | None -> emit "default:"
-              | Some test -> fun ctx -> ctx |> emit "case " |> emit_expression test |> emit ":")
-          |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement consequent
+              | None ->
+                emit "default:"
+              | Some test ->
+                fun ctx ->
+                  ctx |> emit "case " |> emit_expression test |> emit ":")
+          |> emit_list
+              ~emit_sep:emit_semicolon_and_newline
+              emit_statement
+              consequent
         ) cases
       |> dedent
       |> emit "}"
@@ -263,8 +288,10 @@ let print (_, statements, comments) =
 
     | S.ClassDeclaration cls ->
       ctx |> emit_class cls
-    | S.InterfaceDeclaration { id; typeParameters; body; extends; mixins = _mixins} ->
-      (** TODO: handle `mixins` *)
+    | S.InterfaceDeclaration { id; typeParameters; body; extends; mixins } ->
+      fail_if
+        (List.length mixins > 0)
+        "InterfaceDeclaration: mixins are not supported";
       ctx
       |> emit "interface "
       |> emit_identifier id
@@ -314,7 +341,10 @@ let print (_, statements, comments) =
                 if shorthand then
                   ctx |> emit_object_property_key key
                 else
-                  ctx |> emit_object_property_key key |> emit ": " |> emit_expression expr
+                  ctx
+                  |> emit_object_property_key key
+                  |> emit ": "
+                  |> emit_expression expr
               | E.Object.Property.Get func ->
                 ctx |> emit "get " |> emit_function func
               | E.Object.Property.Set func ->
@@ -333,8 +363,8 @@ let print (_, statements, comments) =
       |> emit "("
       |> emit_list ~emit_sep:emit_comma emit_expression expressions
       |> emit ")"
-    | E.Unary { operator; prefix = _prefix; argument } ->
-      (* TODO: handle prefix *)
+    | E.Unary { operator; prefix; argument } ->
+      fail_if prefix "Unary: prefix is not supported";
       ctx
       |> (match operator with
           | E.Unary.Minus -> emit "-"
@@ -435,8 +465,10 @@ let print (_, statements, comments) =
       ctx
       |> (if delegate then emit "yield* " else emit "yield ")
       |> emit_if_some emit_expression argument
-    | E.Comprehension _ -> ctx
-    | E.Generator _ -> ctx
+    | E.Comprehension _ ->
+      failwith "Comprehension is not supported"
+    | E.Generator _ ->
+      failwith "Generator is not supported"
     | E.Identifier (_, name) ->
       ctx |> emit name
     | E.Literal lit ->
@@ -451,8 +483,10 @@ let print (_, statements, comments) =
       ctx |> emit_jsx_element element
     | E.Class cls ->
       ctx |> emit_class cls
-    | E.TypeCast _ -> ctx
-    | E.MetaProperty _ -> ctx
+    | E.TypeCast _ ->
+      failwith "TypeCast is not supported"
+    | E.MetaProperty _ ->
+      failwith "MetaProperty is not supported"
 
   and emit_jsx_element {
       openingElement = (_, { J.Opening.  name; selfClosing; attributes; });
@@ -462,7 +496,8 @@ let print (_, statements, comments) =
     let emit_identifier ((_, { name }) : J.Identifier.t) =
       emit name
     in
-    let emit_namespaced_name ((_, { namespace; name }) : J.NamespacedName.t ) ctx =
+    let emit_namespaced_name
+        ((_, { namespace; name }) : J.NamespacedName.t ) ctx =
       ctx
       |> emit_identifier namespace
       |> emit ":"
@@ -551,7 +586,7 @@ let print (_, statements, comments) =
                    body = (_, { body });
                    superClass; typeParameters;
                    superTypeParameters;
-                   implements = _implements;
+                   implements;
                    classDecorators; } ctx =
     let emit_class_element item ctx =
       match item with
@@ -571,8 +606,17 @@ let print (_, statements, comments) =
             | C.Method.Method -> emit_none
             | C.Method.Get -> emit "get "
             | C.Method.Set -> emit "set ")
-        |> emit_function ~as_method:true ~emit_id:(emit_object_property_key key) value
-      | C.Body.Property (loc, { key; value; typeAnnotation; static; variance }) ->
+        |> emit_function
+            ~as_method:true
+            ~emit_id:(emit_object_property_key key)
+            value
+      | C.Body.Property (loc, {
+          key;
+          value;
+          typeAnnotation;
+          static;
+          variance
+        }) ->
         ctx
         |> emit_comments loc
         |> (if static then emit "static " else emit_none)
@@ -583,21 +627,26 @@ let print (_, statements, comments) =
         |> emit_if_some emit_expression value
         |> emit_semicolon
     in
-    (** TODO: handle `implements` *)
-    ctx
-    |> emit_list emit_decorator classDecorators
-    |> emit "class "
-    |> emit_if_some emit_identifier id
-    |> emit_if_some emit_type_parameter_declaration typeParameters
-    |> emit_if_some
-      (fun superClass ctx -> ctx |> emit " extends " |> emit_expression superClass)
-      superClass
-    |> emit_if_some emit_type_parameter_instantiation superTypeParameters
-    |> emit " {"
-    |> indent
-    |> emit_list ~emit_sep:emit_newline emit_class_element body
-    |> dedent
-    |> emit "}"
+    begin
+      fail_if
+        (List.length implements > 0)
+        "ClassDeclaration: implements is not supported";
+      ctx
+      |> emit_list emit_decorator classDecorators
+      |> emit "class "
+      |> emit_if_some emit_identifier id
+      |> emit_if_some emit_type_parameter_declaration typeParameters
+      |> emit_if_some
+        (fun superClass ctx ->
+           ctx |> emit " extends " |> emit_expression superClass)
+        superClass
+      |> emit_if_some emit_type_parameter_instantiation superTypeParameters
+      |> emit " {"
+      |> indent
+      |> emit_list ~emit_sep:emit_newline emit_class_element body
+      |> dedent
+      |> emit "}"
+    end
 
   and emit_template_literal { quasis; expressions; } ctx =
     let emit_expressions =
@@ -668,9 +717,12 @@ let print (_, statements, comments) =
 
   and emit_object_pattern_property_key key ctx =
     match key with
-    | P.Object.Property.Literal lit -> emit_literal lit ctx
-    | P.Object.Property.Identifier id -> emit_identifier id ctx
-    | P.Object.Property.Computed expr -> ctx |> emit "[" |> emit_expression expr |> emit "]"
+    | P.Object.Property.Literal lit ->
+      emit_literal lit ctx
+    | P.Object.Property.Identifier id ->
+      emit_identifier id ctx
+    | P.Object.Property.Computed expr ->
+      ctx |> emit "[" |> emit_expression expr |> emit "]"
 
   and emit_object_property_key key ctx =
     match key with
@@ -700,7 +752,7 @@ let print (_, statements, comments) =
       returnType;
       typeParameters
     }) ctx =
-    (** TODO: handle `predicate` *)
+    (** TODO: handle `predicate`, `expression` ? *)
     ctx
     |> emit_comments loc
     |> (if async then emit "async " else emit_none)
@@ -759,18 +811,25 @@ let print (_, statements, comments) =
         | S.VariableDeclaration.Let  -> "let "
         | S.VariableDeclaration.Const  -> "const ")
     |> increase_indent
-    |> emit_list ~emit_sep:emit_comma_and_newline emit_variable_declarator declarations
+    |> emit_list
+      ~emit_sep:emit_comma_and_newline
+      emit_variable_declarator
+      declarations
     |> decrease_indent
 
   and emit_variable_declarator (loc, { id; init }) ctx =
     ctx
     |> emit_comments loc
     |> emit_pattern id
-    |> emit_if_some (fun init ctx -> ctx |> emit " = " |> emit_expression init) init
+    |> emit_if_some
+      (fun init ctx -> ctx |> emit " = " |> emit_expression init)
+      init
 
   and emit_expression_or_spread item ctx = match item with
-    | E.Expression expression -> ctx |> emit_expression expression
-    | E.Spread (_, { argument }) -> ctx |> emit "..." |> emit_expression argument
+    | E.Expression expression ->
+      ctx |> emit_expression expression
+    | E.Spread (_, { argument }) ->
+      ctx |> emit "..." |> emit_expression argument
 
   and emit_property property ctx =
     match property with
@@ -782,9 +841,7 @@ let print (_, statements, comments) =
     match value with
     | T.Any -> emit "any" ctx
     | T.Mixed -> emit "mixed" ctx
-    | T.Empty ->
-      (* TODO: hm... *)
-      ctx
+    | T.Empty -> ctx
     | T.Void -> emit "void" ctx
     | T.Null -> emit "null" ctx
     | T.Number -> emit "number" ctx
@@ -836,13 +893,22 @@ let print (_, statements, comments) =
     failwith "emit_function_type: not implemented"
 
   and emit_type_parameter (loc, value) ctx =
-    let { T.ParameterDeclaration.TypeParam. name; bound; variance; default } = value in
+    let { T.ParameterDeclaration.TypeParam.
+          name;
+          bound;
+          variance;
+          default } = value
+    in
     ctx
     |> emit_comments loc
     |> emit_if_some emit_variance variance
     |> emit name
-    |> emit_if_some (fun (_, bound) ctx -> ctx |> emit ": " |> emit_type bound) bound
-    |> emit_if_some (fun default ctx -> ctx |> emit " = " |> emit_type default) default
+    |> emit_if_some
+      (fun (_, bound) ctx -> ctx |> emit ": " |> emit_type bound)
+      bound
+    |> emit_if_some
+      (fun default ctx -> ctx |> emit " = " |> emit_type default)
+      default
 
   and emit_type_parameter_declaration (loc, { params }) ctx =
     ctx
