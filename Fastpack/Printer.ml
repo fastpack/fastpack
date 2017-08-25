@@ -48,7 +48,7 @@ let dedent ctx =
   emit_newline ctx
 
 let emit_comma ctx =
-  ctx |> emit ","
+  ctx |> emit ", "
 
 let emit_comma_and_newline ctx =
   ctx |> emit "," |> emit_newline
@@ -307,11 +307,14 @@ let print (_, statements, comments) =
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
         (fun prop ctx -> match prop with
-           | E.Object.Property (loc, { key; value; _method; shorthand = _shorthand }) ->
+           | E.Object.Property (loc, { key; value; _method; shorthand }) ->
              let ctx = emit_comments loc ctx in
              (match value with
               | E.Object.Property.Init expr ->
-                ctx |> emit_object_property_key key |> emit ": " |> emit_expression expr
+                if shorthand then
+                  ctx |> emit_object_property_key key
+                else
+                  ctx |> emit_object_property_key key |> emit ": " |> emit_expression expr
               | E.Object.Property.Get func ->
                 ctx |> emit "get " |> emit_function func
               | E.Object.Property.Set func ->
@@ -584,10 +587,10 @@ let print (_, statements, comments) =
     let emit_expressions =
       List.map
         (fun e -> fun ctx ->
-          ctx
-          |> emit "${"
-          |> emit_expression e
-          |> emit "}")
+           ctx
+           |> emit "${"
+           |> emit_expression e
+           |> emit "}")
         expressions
       @ [emit_none]
     in
@@ -847,9 +850,9 @@ let print (_, statements, comments) =
     let ctx =
       ctx
       |> emit_list
-          ~emit_sep:emit_semicolon_and_newline
-          emit_statement
-          statements
+        ~emit_sep:emit_semicolon_and_newline
+        emit_statement
+        statements
       |> emit_semicolon_and_newline
     in
     ctx |> emit_list emit_comment ctx.comments

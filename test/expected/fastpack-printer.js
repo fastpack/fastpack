@@ -44,7 +44,7 @@ function with_arg_types(a: A): T {
 function with_type_param<T>(a: A): T {
   
 };
-function with_type_param<T: X,Y>(a: A): T {
+function with_type_param<T: X, Y>(a: A): T {
   
 };
 function with_type_param<A: T<B>>(a: A): T {
@@ -64,7 +64,7 @@ let x: null,
 let x: any;
 let x: mixed;
 let x: *;
-let x: [A,B];
+let x: [A, B];
 let x: typeof 12;
 let x: Array<string>;
 let x: Array<string>;
