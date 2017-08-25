@@ -19,7 +19,7 @@ let tests = [
   ("object-spread-and-rest-operators.js", transpile ());
   ("strip-flow.js", transpile ());
   ("fastpack-printer.js", print);
-  ("transpile-jsx.js", FastpackTranspiler.transpile_source [FastpackTranspiler.JSX.transpile]);
+  ("transpile-react-jsx.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ReactJSX.transpile]);
   (* ("current.js", print); *)
 ]
 
