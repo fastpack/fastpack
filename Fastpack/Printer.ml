@@ -47,7 +47,7 @@ let dedent ctx =
   emit_newline ctx
 
 let emit_comma ctx =
-  ctx |> emit ","
+  ctx |> emit ", "
 
 let emit_comma_and_newline ctx =
   ctx |> emit "," |> emit_newline
@@ -505,10 +505,10 @@ let print (_, statements, comments) =
     let emit_expressions =
       List.map
         (fun e -> fun ctx ->
-          ctx
-          |> emit "${"
-          |> emit_expression e
-          |> emit "}")
+           ctx
+           |> emit "${"
+           |> emit_expression e
+           |> emit "}")
         expressions
       @ [emit_none]
     in
@@ -768,9 +768,9 @@ let print (_, statements, comments) =
     let ctx =
       ctx
       |> emit_list
-          ~emit_sep:emit_semicolon_and_newline
-          emit_statement
-          statements
+        ~emit_sep:emit_semicolon_and_newline
+        emit_statement
+        statements
       |> emit_semicolon_and_newline
     in
     ctx |> emit_list emit_comment ctx.comments
