@@ -2,7 +2,7 @@ module Util = Util
 module Main = Main
 module AstMapper = AstMapper
 
-module JSX = JSX
+module ReactJSX = ReactJSX
 
 (** Transpile Ast.program node using a list of transpilers *)
 let transpile transpilers program =
