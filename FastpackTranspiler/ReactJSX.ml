@@ -1,4 +1,4 @@
-let transpile program =
+let transpile _context program =
   let map_expression ((loc, node) : Ast.Expression.t) =
     let module E = Ast.Expression in
     let module I = Ast.Identifier in
