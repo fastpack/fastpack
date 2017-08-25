@@ -85,3 +85,15 @@ let tagged = Tag`xxx ${1}`;
 
 /* class expressions */
 let c = class { render() {console.log('hello');} static prop = 1;};
+
+/* JSX */
+let j = <Simple />;
+let j1 = <Namespace:Name/>
+let j2 = <X.Y.Z/> 
+let j3 = <WithSpread {...props}/>
+let j4 = <WithAttrs
+  x="1"
+  y="2"
+  expr1={cond ? "x": 1}
+  expr2={some_function()}
+  />

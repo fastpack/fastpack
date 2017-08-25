@@ -6,6 +6,7 @@ module T = Ast.Type
 module V = Ast.Variance
 module C = Ast.Class
 module F = Ast.Function
+module J = Ast.JSX
 
 (** Printer context *)
 type printer_ctx = {
@@ -443,7 +444,85 @@ let print (_, statements, comments) =
       ctx
       |> emit_expression tag
       |> emit_template_literal tmpl_lit
-    | E.JSXElement _ -> ctx
+    | E.JSXElement { openingElement = (_, { J.Opening.
+                                            name;
+                                            selfClosing;
+                                            attributes;
+                                          }); _ } ->
+      let emit_identifier ((_, { name }) : J.Identifier.t) =
+        emit name
+      in
+      let emit_namespaced_name ((_, { namespace; name }) : J.NamespacedName.t ) ctx =
+        ctx
+        |> emit_identifier namespace
+        |> emit ":"
+        |> emit_identifier name
+      in
+      let emit_name name =
+        let rec emit_member_expression
+            ((_, { _object; property }) : J.MemberExpression.t) ctx =
+          ctx
+          |> (match _object with
+              | J.MemberExpression.MemberExpression expr ->
+                emit_member_expression expr
+              | J.MemberExpression.Identifier ident ->
+                emit_identifier ident)
+          |> emit "."
+          |> emit_identifier property
+        in
+        match name with
+        | J.Identifier ident ->
+          emit_identifier ident
+        | J.NamespacedName n_name ->
+          emit_namespaced_name n_name
+        | J.MemberExpression expr ->
+          emit_member_expression expr
+      in
+      ctx
+      |> emit "<"
+      |> emit_name name
+      |> emit_newline
+      |> emit_list ~emit_sep:emit_newline
+        (fun attr ctx ->
+           match attr with
+           | J.Opening.Attribute (_, { name; value; }) ->
+             ctx
+             |> (match name with
+                 | J.Attribute.Identifier ident ->
+                   emit_identifier ident
+                 | J.Attribute.NamespacedName n_name ->
+                   emit_namespaced_name n_name
+                )
+             |> emit_if_some
+               (fun value ctx ->
+                 ctx
+                 |> emit "="
+                 |> (match value with
+                     | J.Attribute.Literal (loc, lit) ->
+                       emit_literal (loc, lit)
+                     | J.Attribute.ExpressionContainer (_, expr) ->
+                       fun ctx ->
+                         ctx
+                         |> emit "{"
+                         |> (match expr.expression with
+                             | J.ExpressionContainer.Expression expr ->
+                               emit_expression expr
+                             | J.ExpressionContainer.EmptyExpression _ ->
+                               emit_none
+                            )
+                         |> emit "}"
+                    )
+               )
+               value
+           | J.Opening.SpreadAttribute (_, { argument })->
+             ctx
+             |> emit "{..."
+             |> emit_expression argument
+             |> emit "}"
+        )
+        attributes
+      |> emit_if selfClosing (emit "/")
+      |> emit ">"
     | E.Class cls ->
       ctx |> emit_class cls
     | E.TypeCast _ -> ctx
