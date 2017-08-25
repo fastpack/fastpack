@@ -117,6 +117,7 @@ let transpile program =
 
     let rec transpile_children children =
       let trim_text text =
+        (** TODO: Lookup how babel does this as there are some subtle nuances *)
         let is_not_empty_line line =
           String.trim line <> ""
         in
