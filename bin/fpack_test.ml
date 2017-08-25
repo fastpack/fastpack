@@ -18,7 +18,7 @@ let print source =
 let tests = [
   ("object-spread-and-rest-operators.js", transpile ());
   ("strip-flow.js", transpile ());
-  (* ("fastpack-printer.js", print); *)
+  ("fastpack-printer.js", print);
   ("transpile-react-jsx.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ReactJSX.transpile]);
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
   (* ("current.js", print); *)
@@ -60,7 +60,7 @@ let () =
     let show_diff name actual =
       let temp_file = Filename.temp_file "" ".result.js" in
       let _ = write_file temp_file actual in
-      let cmd = "diff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
+      let cmd = "colordiff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
       let%lwt output = Lwt_process.(pread @@ shell cmd) in
       Lwt.finalize
         (fun () -> print output)

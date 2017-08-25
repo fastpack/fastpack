@@ -97,3 +97,8 @@ let j4 = <WithAttrs
   expr1={cond ? "x": 1}
   expr2={some_function()}
   />
+let j5 = <WithChildren>
+  text
+  {expr}
+  <Data x="1"/>
+  </WithChildren>;

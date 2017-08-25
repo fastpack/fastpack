@@ -100,3 +100,20 @@ let c = class  {
     }
     static prop = 1;
   };
+/* JSX */
+let j = <Simple/>;
+let j1 = <Namespace:Name/>;
+let j2 = <X.Y.Z/>;
+let j3 = <WithSpread
+  {...props}/>;
+let j4 = <WithAttrs
+  x="1"
+  y="2"
+  expr1={cond ? "x" : 1}
+  expr2={some_function()}/>;
+let j5 = <WithChildren>
+  text
+  {expr}
+  <Data
+  x="1"/>
+  </WithChildren>;
