@@ -17,12 +17,13 @@ let print source =
 
 let transpile_ast () =
   FastpackTranspiler.transpile_source [
+    FastpackTranspiler.StripFlow.transpile;
     FastpackTranspiler.ReactJSX.transpile;
   ]
 
 let tests = [
   ("object-spread-and-rest-operators.js", transpile ());
-  ("strip-flow.js", transpile ());
+  ("strip-flow.js", transpile_ast ());
   ("printer.js", print);
   ("transpile-react-jsx.js", transpile_ast ());
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
