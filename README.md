@@ -22,10 +22,9 @@ To execute toplevel (OCaml REPL):
 
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [ ] FastpackTraspiler: decorators
-- [ ] FastpackTraspiler: jsx
+- [x] FastpackTraspiler: jsx [andeypopp]
 - [x] FastpackTraspiler: flow - remove annotations [zindel]
-- [ ] FastpackTraspiler: class syntax, assignments inside class declaration
-- [ ] FastpackTraspiler: assignments inside the class decalrations ?
+- [ ] FastpackTraspiler: class syntax, properties, decorators
 - [ ] Fastpack: complete import statements handling
 - [ ] CSS support in import statements (webpack ICSS)?
 - [ ] Support external command execution for LESS/SASS/other processing
