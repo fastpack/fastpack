@@ -12,8 +12,8 @@ var x;
 let y;
 let y: A;
 /** binding with patterns */
-var {x: x} = 12;
-let {y: y} = 12;
+var {x} = 12;
+let {y} = 12;
 const {z: [a]} = 12;
 /** functions */
 function x() {
@@ -123,7 +123,7 @@ let f1 = (x) =>  {
     x
   };
 let f2 = (x) =>  ({x});
-let f3 = ({x: x, y: y, z: z}) =>  {
+let f3 = ({x, y, z}) =>  {
     x++;
     y++;
     z++;

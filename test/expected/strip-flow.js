@@ -299,10 +299,10 @@ class Array {
 var x = fn;
 var x = Y;
 var x = Y;
-var {x: x} = {x: "hello"};
-var {x: x} = {x: "hello"};
+var {x} = {x: "hello"};
+var {x} = {x: "hello"};
 var [x] = ["hello"];
-function foo({x: x}) {
+function foo({x}) {
   
 };
 function foo([x]) {

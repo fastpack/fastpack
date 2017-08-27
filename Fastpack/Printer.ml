@@ -766,12 +766,12 @@ let print (_, statements, comments) =
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
         (fun prop ctx -> match prop with
-           | P.Object.Property (_,{ key; pattern; shorthand = _shorthand }) ->
-             (** TODO: what to do with `shorthand`? *)
+           | P.Object.Property (_,{ key; pattern; shorthand }) ->
              ctx
              |> emit_object_pattern_property_key key
-             |> emit ": "
-             |> emit_pattern pattern
+             |> emit_if
+                (not shorthand)
+                (fun ctx -> ctx |> emit ": " |> emit_pattern pattern)
            | P.Object.RestProperty (_,{ argument }) ->
              ctx |> emit "..." |> emit_pattern argument
         ) properties
