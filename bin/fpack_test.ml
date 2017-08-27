@@ -27,7 +27,7 @@ let tests = [
   ("printer.js", print);
   ("transpile-react-jsx.js", transpile_ast ());
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
-  (* ("current.js", print); *)
+  (* ("current.js", transpile_ast ()); *)
 ]
 
 let () =

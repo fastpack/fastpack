@@ -1,6 +1,3 @@
-// Initial check of the interoperability with the Spread module
-function foo({a, ...b} : {a: number, b: number}) {}
-
 /* Babel: default parameters */
 function foo(numVal?) {}
 function foo(numVal? = 2) {}
@@ -8,6 +5,12 @@ function foo(numVal: number) {}
 function foo(numVal?: number) {}
 function foo(numVal: number = 2) {}
 function foo(numVal?: number = 2) {}
+
+/* Babel: strip-type-casts */
+(xxx: number);
+({ xxx: 0, yyy: "hey" }: { xxx: number; yyy: string });
+(xxx => xxx + 1: (xxx: number) => number);
+((xxx: number), (yyy: string));
 
 /* Babel:  def-site-variance */
 class C1<+T, -U> {}
@@ -28,6 +31,12 @@ declare class I { -[k:K]: V }
 class C2 { +p: T }
 class C3 { -p: T }
 
+/* Babel: strip-call-properties */
+var a: { (): number };
+var a: { (): number; };
+var a: { (): number; y: string; (x: string): string };
+var a: { <T>(x: T): number; };
+interface A { (): number; }
 
 /* Babel: strip-array-types */
 var a: number[];
@@ -36,13 +45,6 @@ var a: (?number)[];
 var a: () => number[];
 var a: (() => number)[];
 var a: typeof A[];
-
-/* Babel: strip-call-properties */
-var a: { (): number };
-var a: { (): number; };
-var a: { (): number; y: string; (x: string): string };
-var a: { <T>(x: T): number; };
-interface A { (): number; }
 
 /* Babel: strip-declare-exports */
 declare export var foo
@@ -81,7 +83,6 @@ declare class A { static foo(): number; static x : string }
 declare class A { static [ indexer: number]: string }
 declare class A { static () : number }
 declare class A mixins B<T>, C {}
-// BUG: next 4 tests have location issue again, declare remains
 declare type A = string
 declare type T<U> = { [k:string]: U }
 declare interface I { foo: string }
@@ -150,6 +151,7 @@ function foo(): {} {}
 function foo<T>() {}
 function foo<T,S>() {}
 a = function<T,S>() {};
+// BUG: check printer for the next 3 tests
 a = { set fooProp(value: number) {} };
 a = { set fooProp(value: number): void {} };
 a = { get fooProp():number{} };
@@ -237,10 +239,3 @@ import {typeof V3, V4} from "foo";
 export interface foo5 { p: number }
 export interface foo6<T> { p: T }
 import 'foo';
-
-
-/* Babel: strip-type-casts */
-(xxx: number);
-({ xxx: 0, yyy: "hey" }: { xxx: number; yyy: string });
-(xxx => xxx + 1: (xxx: number) => number);
-((xxx: number), (yyy: string));

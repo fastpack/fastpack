@@ -3,6 +3,7 @@ module Main = Main
 module AstMapper = AstMapper
 
 module ReactJSX = ReactJSX
+module StripFlow = StripFlow
 module ObjectSpread = ObjectSpread
 
 (** Transpile Ast.program node using a list of transpilers *)

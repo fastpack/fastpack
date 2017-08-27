@@ -300,11 +300,88 @@ let print (_, statements, comments) =
       |> emit_if_some emit_type_parameter_declaration typeParameters
       |> emit_object_type body
 
-    | S.ExportNamedDeclaration _ -> ctx
-    | S.ExportDefaultDeclaration _ -> ctx
-    | S.ImportDeclaration _ -> ctx
+    | S.ImportDeclaration { importKind; source; specifiers; } ->
+      let emit_kind kind =
+        match kind with
+        | Some S.ImportDeclaration.ImportType -> emit " type "
+        | Some S.ImportDeclaration.ImportTypeof -> emit " typeof "
+        | _ -> emit_none
+      in
+      let take_one message specs =
+        match specs with
+        | [] -> None
+        | [item] -> Some item
+        | _ -> failwith message
+      in
+      let namespace =
+        take_one "Only one namespace specifier is supported"
+        @@ List.filter
+          (fun spec ->
+             match spec with
+             | S.ImportDeclaration.ImportNamespaceSpecifier _ -> true
+             | _ -> false
+          )
+          specifiers
+      in
+      let default =
+        take_one "Only one default specifier is supported"
+        @@ List.filter
+          (fun spec ->
+             match spec with
+             | S.ImportDeclaration.ImportDefaultSpecifier _ -> true
+             | _ -> false
+          )
+          specifiers
+      in
+      let named =
+        List.filter
+          (fun spec ->
+             match spec with
+             | S.ImportDeclaration.ImportNamedSpecifier _ -> true
+             | _ -> false
+          )
+          specifiers
+      in
+      let emit_specifier spec ctx =
+        ctx
+        |> (match spec with
+            | S.ImportDeclaration.ImportDefaultSpecifier ident ->
+              emit_identifier ident
+            | S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, ident)) ->
+              emit @@ "* as " ^ ident
+            | S.ImportDeclaration.ImportNamedSpecifier
+                { kind; local; remote = (_, remote) } ->
+              fun ctx ->
+                ctx
+                |> emit_kind kind
+                |> emit remote
+                |> emit_if_some (fun local -> emit @@ " as " ^ (snd local)) local
+           )
+      in
+      ctx
+      |> emit "import"
+      |> emit_kind (Some importKind)
+      |> emit_if (List.length specifiers > 0) (emit " ")
+      |> emit_if_some emit_specifier default
+      |> emit_if_some emit_specifier namespace
+      |> emit_if
+        ((default != None || namespace != None) && List.length named > 0)
+        emit_comma
+      |> emit_if
+          (List.length named > 0)
+          (fun ctx ->
+             ctx
+             |> emit "{"
+             |> emit_list ~emit_sep:emit_comma emit_specifier named
+             |> emit "}"
+          )
+      |> emit_if (List.length specifiers > 0) (emit " from")
+      |> emit " "
+      |> emit_literal source
 
     (** TODO: implement cases below *)
+    | S.ExportNamedDeclaration _ -> ctx
+    | S.ExportDefaultDeclaration _ -> ctx
     | S.DeclareVariable _ -> ctx
     | S.DeclareFunction _ -> ctx
     | S.DeclareClass _ -> ctx
