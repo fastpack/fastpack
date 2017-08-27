@@ -380,14 +380,22 @@ let print (_, statements, comments) =
       |> emit_literal source
 
     (** TODO: implement cases below *)
-    | S.ExportNamedDeclaration _ -> ctx
-    | S.ExportDefaultDeclaration _ -> ctx
-    | S.DeclareVariable _ -> ctx
-    | S.DeclareFunction _ -> ctx
-    | S.DeclareClass _ -> ctx
-    | S.DeclareModule _ -> ctx
-    | S.DeclareModuleExports _ -> ctx
-    | S.DeclareExportDeclaration _ -> ctx
+    | S.ExportNamedDeclaration _ ->
+      failwith "ExportNamedDeclaration is not supported"
+    | S.ExportDefaultDeclaration _ ->
+      failwith "ExportDefaultDeclaration is not supported"
+    | S.DeclareVariable _ ->
+      failwith "DeclareVariable is not supported"
+    | S.DeclareFunction _ ->
+      failwith "DeclareFunction is not supported"
+    | S.DeclareClass _ ->
+      failwith "DeclareClass is not supported"
+    | S.DeclareModule _ ->
+      failwith "DeclareModule is not supported"
+    | S.DeclareModuleExports _ ->
+      failwith "DeclareModuleExports is not supported"
+    | S.DeclareExportDeclaration _ ->
+      failwith "DeclareExportDeclaration is not supported"
 
   and emit_expression ((loc, expression) : E.t) ctx =
     let ctx = emit_comments loc ctx in
