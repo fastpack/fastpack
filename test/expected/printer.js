@@ -78,7 +78,7 @@ async function a() {
   
 };
 /* class decorators */
-@(function (f) { return (f); })
+@((f) =>  (f))
 @(function decorator1(s) {
   return s
 })
@@ -117,3 +117,15 @@ let j5 = <WithChildren>
   <Data
   x="1"/>
   </WithChildren>;
+/* Arrow functions */
+let f = (f) =>  (f);
+let f1 = (x) =>  {
+    x
+  };
+let f2 = (x) =>  ({x});
+let f3 = ({x: x, y: y, z: z}) =>  {
+    x++;
+    y++;
+    z++;
+    return x + y + z
+  };

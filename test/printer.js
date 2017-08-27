@@ -102,3 +102,9 @@ let j5 = <WithChildren>
   {expr}
   <Data x="1"/>
   </WithChildren>;
+
+/* Arrow functions */
+let f = f => f;
+let f1 = x => {x};
+let f2 = x => ({x});
+let f3 = ({x, y, z}) => {x++; y++; z++; return x + y + z;}

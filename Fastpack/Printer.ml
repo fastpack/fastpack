@@ -379,7 +379,6 @@ let print (_, statements, comments) =
       |> emit " "
       |> emit_literal source
 
-    (** TODO: implement cases below *)
     | S.ExportNamedDeclaration _ ->
       failwith "ExportNamedDeclaration is not supported"
     | S.ExportDefaultDeclaration _ ->
@@ -442,7 +441,7 @@ let print (_, statements, comments) =
     | E.Function func ->
       ctx |> emit_function (loc, func)
     | E.ArrowFunction func ->
-      ctx |> emit_function (loc, func)
+      ctx |> emit_function (loc, func) ~as_arrow:true
     | E.Sequence { expressions } ->
       ctx
       |> emit "("
@@ -825,7 +824,7 @@ let print (_, statements, comments) =
     |> emit ")"
     |> emit_newline
 
-  and emit_function ?(as_method=false) ?emit_id (loc, {
+  and emit_function ?(as_arrow=false) ?(as_method=false) ?emit_id (loc, {
       F.
       id;
       params;
@@ -841,7 +840,7 @@ let print (_, statements, comments) =
     ctx
     |> emit_comments loc
     |> (if async then emit "async " else emit_none)
-    |> (if not as_method then emit "function " else emit_none)
+    |> (if not as_method && not as_arrow then emit "function " else emit_none)
     |> (if generator then emit "*" else emit_none)
     |> (match emit_id with
         | None -> emit_if_some emit_identifier id
@@ -856,6 +855,7 @@ let print (_, statements, comments) =
             ctx |> emit " ..." |> emit_pattern argument) rest
     )
     |> emit ")"
+    |> emit_if as_arrow (emit " => ")
     |> emit_if_some emit_type_annotation returnType
     |> emit_space
     |> (match body with
@@ -863,9 +863,9 @@ let print (_, statements, comments) =
         | F.BodyExpression expr ->
           fun ctx ->
             ctx
-            |> emit "{ return ("
+            |> emit "("
             |> emit_expression expr
-            |> emit "); }"
+            |> emit ")"
       )
 
   and emit_type_annotation (loc, typeAnnotation) ctx =
