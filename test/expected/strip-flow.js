@@ -204,7 +204,7 @@ function foo() {
 a = function () {
   
 };
-// BUG: check printer for the next 3 tests
+// TODO: bug in printer - check printer for the next 3 tests
 a = {set function (value) {
   
 }};

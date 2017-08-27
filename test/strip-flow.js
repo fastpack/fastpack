@@ -151,7 +151,7 @@ function foo(): {} {}
 function foo<T>() {}
 function foo<T,S>() {}
 a = function<T,S>() {};
-// BUG: check printer for the next 3 tests
+// TODO: bug in printer - check printer for the next 3 tests
 a = { set fooProp(value: number) {} };
 a = { set fooProp(value: number): void {} };
 a = { get fooProp():number{} };
