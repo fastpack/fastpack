@@ -43,10 +43,10 @@ function f() {
 ;
 ;
 class C2 {
-  
+  p;
 };
 class C3 {
-  
+  p;
 };
 /* Babel: strip-call-properties */
 var a;
@@ -285,10 +285,12 @@ function foo(requiredParam, optParam) {
   
 };
 class Foo9 {
-  
+  prop1;
+  prop2;
 };
 class Foo10 {
-  
+  static prop1;
+  prop2;
 };
 var x = 4;
 class Array {
