@@ -19,6 +19,7 @@ let transpile_ast () =
   FastpackTranspiler.transpile_source [
     FastpackTranspiler.StripFlow.transpile;
     FastpackTranspiler.ReactJSX.transpile;
+    FastpackTranspiler.Class.transpile;
   ]
 
 let tests = [
