@@ -709,7 +709,7 @@ let print (_, statements, comments) =
         |> emit_if_some emit_variance variance
         |> emit_object_property_key key
         |> emit_if_some emit_type_annotation typeAnnotation
-        |> emit " = "
+        |> emit_if_some (fun _ -> emit " = ") value
         |> emit_if_some emit_expression value
         |> emit_semicolon
     in

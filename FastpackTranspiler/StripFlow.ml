@@ -25,12 +25,16 @@ let transpile _context program =
     let module C = Ast.Class in
     let (body_loc, {C.Body. body}) = cls.body in
     let body =
-      List.filter
+      List.map
         (fun el ->
            match el with
-           | C.Body.Property (_, { value=None; typeAnnotation=Some _; _ }) ->
-              false
-           | _ -> true
+           | C.Body.Property (loc, prop) ->
+             C.Body.Property (loc, {
+                 prop with
+                 typeAnnotation = None;
+                 variance = None;
+             })
+           | node -> node
         )
       body
     in
