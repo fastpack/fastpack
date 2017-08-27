@@ -410,9 +410,11 @@ let print (_, statements, comments) =
           | Some element -> emit_expression_or_spread element)
         elements
       |> emit "]"
-    | E.Import _ ->
-      (** TODO: handle import() *)
+    | E.Import expr ->
       ctx
+      |> emit "import("
+      |> emit_expression expr
+      |> emit ")"
     | E.Object { properties } ->
       ctx
       |> emit "{"

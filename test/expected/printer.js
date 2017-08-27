@@ -129,3 +129,6 @@ let f3 = ({x, y, z}) =>  {
     z++;
     return x + y + z
   };
+/* Import expression */
+let p = import ("a");
+let p1 = import (f());
