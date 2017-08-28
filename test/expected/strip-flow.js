@@ -43,10 +43,14 @@ function f() {
 ;
 ;
 class C2 {
-  p;
+  constructor() {
+    Object.defineProperty(this, "p", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
+  }
 };
 class C3 {
-  p;
+  constructor() {
+    Object.defineProperty(this, "p", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
+  }
 };
 /* Babel: strip-call-properties */
 var a;
@@ -285,12 +289,16 @@ function foo(requiredParam, optParam) {
   
 };
 class Foo9 {
-  prop1;
-  prop2;
+  constructor() {
+    Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
+    Object.defineProperty(this, "prop2", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
+  }
 };
 class Foo10 {
+  constructor() {
+    Object.defineProperty(this, "prop2", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
+  }
   static prop1;
-  prop2;
 };
 var x = 4;
 class Array {

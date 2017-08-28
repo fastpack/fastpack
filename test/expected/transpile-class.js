@@ -1,3 +1,5 @@
 class C2 {
-  state = 1;
+  constructor() {
+    Object.defineProperty(this, "state", {"configurable": true, "enumerable": true, "writable": true, "value": 1})
+  }
 };

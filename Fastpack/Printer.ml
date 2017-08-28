@@ -443,8 +443,8 @@ let print (_, statements, comments) =
       |> emit "("
       |> emit_list ~emit_sep:emit_comma emit_expression expressions
       |> emit ")"
-    | E.Unary { operator; prefix; argument } ->
-      fail_if prefix "Unary: prefix is not supported";
+    | E.Unary { operator; prefix=_prefix; argument } ->
+      (* fail_if prefix "Unary: prefix is not supported"; *)
       ctx
       |> (match operator with
           | E.Unary.Minus -> emit "-"
