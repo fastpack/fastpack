@@ -307,14 +307,8 @@ let print (_, statements, comments) =
         | Some S.ImportDeclaration.ImportTypeof -> emit " typeof "
         | _ -> emit_none
       in
-      let take_one message specs =
-        match specs with
-        | [] -> None
-        | [item] -> Some item
-        | _ -> failwith message
-      in
       let namespace =
-        take_one "Only one namespace specifier is supported"
+        List.head_opt
         @@ List.filter
           (fun spec ->
              match spec with
@@ -324,7 +318,7 @@ let print (_, statements, comments) =
           specifiers
       in
       let default =
-        take_one "Only one default specifier is supported"
+        List.head_opt
         @@ List.filter
           (fun spec ->
              match spec with

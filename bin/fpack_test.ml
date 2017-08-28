@@ -27,6 +27,7 @@ let tests = [
   ("strip-flow.js", transpile_ast ());
   ("printer.js", print);
   ("transpile-react-jsx.js", transpile_ast ());
+  ("transpile-class.js", transpile_ast ());
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
   (* ("current.js", transpile_ast ()); *)
 ]

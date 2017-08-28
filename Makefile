@@ -33,6 +33,7 @@ bootstrap: install conf-merlin build
 
 install:
 	@opam install -y          \
+		containers=1.3         \
 		ocp-indent=1.6.1        \
 		flow_parser=0.47.0      \
 		fileutils=0.5.2         \
