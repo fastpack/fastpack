@@ -2,10 +2,34 @@ let transpile () =
   let scope = FastpackTranspiler.Util.make_scope () in
   FastpackTranspiler.Main.transpile_source scope
 
+let print source =
+  let parse_options = Some Parser_env.({
+      esproposal_class_instance_fields = true;
+      esproposal_class_static_fields = true;
+      esproposal_decorators = true;
+      esproposal_export_star_as = true;
+      types = true;
+      use_strict = false;
+    }) in
+  let (program, _errors) = Parser_flow.program source ~parse_options in
+  let result = Fastpack.Printer.print program in
+  result
+
+let transpile_ast () =
+  FastpackTranspiler.transpile_source [
+    FastpackTranspiler.StripFlow.transpile;
+    FastpackTranspiler.ReactJSX.transpile;
+    FastpackTranspiler.Class.transpile;
+  ]
+
 let tests = [
   ("object-spread-and-rest-operators.js", transpile ());
-  ("strip-flow.js", transpile ());
-  (* ("current.js", transpile ()); *)
+  ("strip-flow.js", transpile_ast ());
+  ("printer.js", print);
+  ("transpile-react-jsx.js", transpile_ast ());
+  ("transpile-class.js", transpile_ast ());
+  (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
+  (* ("current.js", transpile_ast ()); *)
 ]
 
 let () =
@@ -17,21 +41,21 @@ let () =
 
   let test_all path train =
 
-  let get_contents name =
+    let get_contents name =
       try%lwt
         Lwt_io.(with_file ~mode:Input (path ^ "/" ^ name) read)
         >>= Lwt.return_some
       with Unix.Unix_error _ ->
-         print ("Error, while reading: " ^ name) >> Lwt.return_none
+        print ("Error, while reading: " ^ name) >> Lwt.return_none
     in
 
     let write_file name data =
-        Lwt_io.(with_file
-          ~mode:Output
-          ~perm:0o640
-          ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
-          name
-          (fun ch -> write ch data))
+      Lwt_io.(with_file
+                ~mode:Output
+                ~perm:0o640
+                ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+                name
+                (fun ch -> write ch data))
     in
 
     let save_or_reject filename data answer =
@@ -44,7 +68,7 @@ let () =
     let show_diff name actual =
       let temp_file = Filename.temp_file "" ".result.js" in
       let _ = write_file temp_file actual in
-      let cmd = "diff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
+      let cmd = "colordiff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
       let%lwt output = Lwt_process.(pread @@ shell cmd) in
       Lwt.finalize
         (fun () -> print output)
@@ -61,10 +85,10 @@ let () =
       let%lwt some_expected = get_contents expect_fname in
       match some_expected with
       | Some expected -> (
-        let result = f actual in
-        match result = expected with
-        | true -> Lwt.return_some true
-        | false -> show_diff expect_fname result >> Lwt.return_some false)
+          let result = f actual in
+          match result = expected with
+          | true -> Lwt.return_some true
+          | false -> show_diff expect_fname result >> Lwt.return_some false)
       | None -> Lwt.return_some false
     in
 
@@ -73,14 +97,14 @@ let () =
       let result = f actual in
       match some_expected with
       | Some expected ->
-         if result = expected
-           then Lwt.return_some true
-           else show_diff expect_fname result
-                >> save_data "Replace old expectation" expect_fname result
+        if result = expected
+        then Lwt.return_some true
+        else show_diff expect_fname result
+          >> save_data "Replace old expectation" expect_fname result
       | None ->
-         print "New output:"
-         >> print result
-         >> save_data "Save new output" expect_fname result
+        print "New output:"
+        >> print result
+        >> save_data "Save new output" expect_fname result
     in
 
     let test_or_train_one title f actual expect_fname =

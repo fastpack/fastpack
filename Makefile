@@ -32,9 +32,14 @@ build-Fastpack:
 bootstrap: install conf-merlin build
 
 install:
-	@opam install -y ocp-indent flow_parser=0.47.0 fileutils cmdliner
-	@opam pin add --dev-repo lwt
-	@opam pin add merlin 'https://github.com/ocaml/merlin.git#beta'
+	@opam install -y          \
+		containers=1.3         \
+		ocp-indent=1.6.1        \
+		flow_parser=0.47.0      \
+		fileutils=0.5.2         \
+		cmdliner=1.0.0          \
+		jbuilder=1.0+beta12     \
+		merlin=3.0.2 lwt=3.1.0
 
 conf-merlin:
 	@jbuilder build bin/.merlin FastpackResolver/.merlin Fastpack/.merlin

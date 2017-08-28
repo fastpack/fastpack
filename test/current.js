@@ -1,1 +1,3 @@
-({ xxx: 0, yyy: "hey" }: { xxx: number; yyy: string });
+class C2 {
+  static state = 1;
+}
