@@ -100,6 +100,23 @@ let transpile _context program =
           in
           List.map define_property_stmt props
         in
+        let insert_after_super stmts =
+          let take, drop =
+            List.take_drop_while
+              (fun stmt ->
+                 match stmt with
+                 | (_, S.Expression {
+                     expression=(_, E.Call { callee = (_, E.Super); _ }); _
+                   }) ->
+                   false
+                 | _ -> true
+              )
+            stmts
+          in
+          match drop with
+          | [] -> prop_stmts @ take
+          | super :: rest -> take @ (super :: prop_stmts) @ rest
+        in
         let constructor =
           List.head_opt
           @@ List.filter
@@ -115,20 +132,22 @@ let transpile _context program =
           | Some (i, C.Body.Method (c_loc, ({
               value = (value_loc, value); _
             } as constructor))) ->
-            let body =
+            let body_loc, body =
               match value.body with
               | F.BodyBlock (body_loc, { body }) ->
-                F.BodyBlock (body_loc, { body = prop_stmts @ body })
+                body_loc, body
               | F.BodyExpression expr ->
-                F.BodyBlock (Loc.none, {
-                  body = prop_stmts
-                         @ [(Loc.none, S.Return {argument = Some expr})]
-                })
+                Loc.none, [(Loc.none, S.Return {argument = Some expr})]
             in
             (i, i + 1, C.Body.Method (
                 c_loc,
                 { constructor with
-                  value = (value_loc, { value with body })
+                  value = (value_loc, {
+                      value with
+                      body = F.BodyBlock (body_loc, {
+                          body = insert_after_super body
+                      })
+                    })
                 }
             ))
           | None ->
