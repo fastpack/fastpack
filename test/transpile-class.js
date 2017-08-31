@@ -74,6 +74,7 @@ class C6 extends C5 {
   prop_no_value;
   prop_int = 1;
   prop_func = x => x + 1;
+  static static_prop;
 
   method1() {}
 

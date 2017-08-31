@@ -66,3 +66,24 @@ let C5 = $fpack.defineClass(class  {
       Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
     }
   }, [{"name": "prop2", "value": void 0}], [], []);
+/* all of the above */
+let C6 = $fpack.defineClass(class C6 extends C5 {
+    method1() {
+      
+    }
+    methodDecorated2() {
+      
+    }
+    constructor() {
+      before_super1();
+      before_super2();
+      super();
+      Object.defineProperty(this, "prop_no_value", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
+      Object.defineProperty(this, "prop_int", {"configurable": true, "enumerable": true, "writable": true, "value": 1});
+      Object.defineProperty(this, "prop_func", {"configurable": true, "enumerable": true, "writable": true, "value": (x) =>  (x + 1)});
+      after_super_and_props()
+    }
+    methodDecorated3() {
+      
+    }
+  }, [{"name": "static_prop", "value": void 0}], [cls, (cls) =>  (cls)], [{"method": "methodDecorated2", "decorators": [(m) =>  (m)]}, {"method": "methodDecorated3", "decorators": [mDec1, mDec2]}]);
