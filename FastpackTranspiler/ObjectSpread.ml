@@ -46,7 +46,6 @@ module Helper = struct
         })
     | P.Object.Property.Computed expr ->
       expr
-
 end
 
 module TranspileObjectSpread = struct
@@ -63,7 +62,7 @@ module TranspileObjectSpread = struct
       match bucket with
       | [] ->
         arguments
-      | properties -> 
+      | properties ->
         let arg = E.Expression (Loc.none, E.Object { properties = List.rev properties }) in
         arg::arguments
     in

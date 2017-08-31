@@ -1,4 +1,5 @@
 module Util = Util
+module AstHelper = AstHelper
 module Main = Main
 module AstMapper = AstMapper
 

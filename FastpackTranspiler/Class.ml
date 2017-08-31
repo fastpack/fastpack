@@ -1,108 +1,75 @@
-let transpile _context program =
-  let module S = Ast.Statement in
-  let module E = Ast.Expression in
-  let module C = Ast.Class in
-  let module F = Ast.Function in
-  let module L = Ast.Literal in
+module S = Ast.Statement
+module E = Ast.Expression
+module C = Ast.Class
+module F = Ast.Function
+module L = Ast.Literal
+open AstHelper
 
-  let transpile_class cls =
+module Helper = struct
+
+  let op_key_to_literal key =
+    match key with
+    | E.Object.Property.Identifier (_, name) ->
+      literal_str name
+    | E.Object.Property.Literal (_, lit) ->
+      lit
+    | E.Object.Property.Computed _ ->
+      failwith "Computed properties are not supported here"
+
+  let op_value_to_expr value =
+    match value with
+    | Some (_, value) -> Loc.none, value
+    | None -> void_0
+
+end
+
+module Transform = struct
+
+  let transform_class cls =
     let {C. id; body = (_, { body }); _ } = cls in
     let props, rest =
       List.partition
         (fun element ->
            match element with
-           | C.Body.Property (_, { static = false; _ }) -> true
+           | C.Body.Property _ -> true
            | _ -> false
         )
         body
     in
-    let props =
-      List.flatten
-      @@ List.map
+    let props, statics =
+      List.partition_map
         (fun element ->
            match element with
-           | C.Body.Property (_, { static = false; key; value; _ }) ->
-             [(key, value)]
+           | C.Body.Property (_, { static; key; value; _ }) ->
+             if static
+             then `Right (key, value)
+             else `Left (key, value)
            | _ ->
-             []
+             `Drop
         )
         props
     in
+
     let move_props_to_constructor props =
       match props with
       | [] -> cls
       | props ->
         let prop_stmts =
-          let define_property_stmt (key, value) =
-            let key =
-              match key with
-              | E.Object.Property.Identifier (_, name) ->
-                let raw = "\"" ^ name ^ "\"" in
-                {L. value = L.String raw; raw }
-              | E.Object.Property.Literal (_, lit) ->
-                lit
-              | E.Object.Property.Computed _ ->
-                failwith "Computed properties are not supported here"
-            in
-            let value =
-              match value with
-              | Some (_, value) -> value
-              | None -> E.Unary {
-                  operator = E.Unary.Void;
-                  prefix = true;
-                  argument = (Loc.none,
-                              E.Literal {L. value = Number 0.0; raw = "0"})
-                }
-            in
-            let callee =
-              (Loc.none,
-               E.Member {
-                 _object = (Loc.none, E.Identifier (Loc.none, "Object"));
-                 property = E.Member.PropertyIdentifier (Loc.none,
-                                                         "defineProperty");
-                 computed = false;
-               }
-              )
-            in
-            let prop name lit =
-              let raw = "\"" ^ name ^ "\"" in
-              E.Object.Property (Loc.none, {
-                key = E.Object.Property.Literal (
-                    Loc.none, {L. value = L.String raw; raw }
-                );
-                value = E.Object.Property.Init (Loc.none, lit);
-                _method = false;
-                shorthand = false
-              });
-            in
-            let true_prop name =
-              prop name (E.Literal {L. value = L.Boolean true; raw = "true"})
-            in
-            let arguments = [
-              E.Expression (Loc.none, E.This);
-              E.Expression (Loc.none, E.Literal key);
-              E.Expression (Loc.none, E.Object {
-                properties=[
-                  true_prop "configurable";
-                  true_prop "enumerable";
-                  true_prop "writable";
-                  prop "value" value;
-                ]
-              })
-            ]
-            in
-            (Loc.none,
-             S.Expression {
-               expression = ( Loc.none, E.Call { callee; arguments; });
+          props
+          |> List.map
+            (fun (key, value) ->
+              (Loc.none, S.Expression {
+                 expression = object_define_property
+                     (Helper.op_key_to_literal key)
+                     (Helper.op_value_to_expr value);
                directive = None;
-             }
+              })
             )
-          in
-          List.map define_property_stmt props
         in
         let insert_after_super stmts =
           let take, drop =
-            List.take_drop_while
+            stmts
+            |> List.take_drop_while
               (fun stmt ->
                  match stmt with
                  | (_, S.Expression {
@@ -111,7 +78,6 @@ let transpile _context program =
                    false
                  | _ -> true
               )
-            stmts
           in
           match drop with
           | [] -> prop_stmts @ take
@@ -134,10 +100,8 @@ let transpile _context program =
             } as constructor))) ->
             let body_loc, body =
               match value.body with
-              | F.BodyBlock (body_loc, { body }) ->
-                body_loc, body
-              | F.BodyExpression expr ->
-                Loc.none, [(Loc.none, S.Return {argument = Some expr})]
+              | F.BodyBlock (body_loc, { body }) -> body_loc, body
+              | F.BodyExpression expr -> Loc.none, [return expr]
             in
             (i, i + 1, C.Body.Method (
                 c_loc,
@@ -178,8 +142,25 @@ let transpile _context program =
           body = (body_loc, { body })
         }
     in
-    (move_props_to_constructor props, id, [], [])
-  in
+    (move_props_to_constructor props, id, statics, [])
+
+  let wrap_class cls statics =
+    let statics =
+      statics
+      |> to_array
+        (fun (key, value) ->
+           object_ [
+             object_property "name"
+               (Loc.none, E.Literal (Helper.op_key_to_literal key));
+             object_property "value" (Helper.op_value_to_expr value)
+           ]
+        )
+    in
+    fpack_define_class cls statics
+
+end
+
+let transpile _context program =
 
   let map_expression ((loc, node) : E.t) =
     (loc, node)
@@ -188,8 +169,14 @@ let transpile _context program =
   let map_statement ((loc, stmt) : S.t) =
     match stmt with
     | S.ClassDeclaration cls ->
-      let cls, _, _, _ = transpile_class cls in
-      (loc, S.ClassDeclaration cls)
+      begin
+        match Transform.transform_class cls with
+        | cls, _, [], [] ->
+          (loc, S.ClassDeclaration cls)
+        | cls, Some (_, name), statics, _ ->
+          let_stmt loc name (Transform.wrap_class cls statics)
+        | _ -> failwith "should not happen"
+      end
     | _ -> (loc, stmt)
   in
 
