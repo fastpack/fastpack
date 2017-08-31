@@ -127,7 +127,8 @@ let print (_, statements, comments) =
       |> emit "}"
 
     | S.Expression { expression; directive = _directive } ->
-      emit_expression expression ctx
+      ctx
+      |> emit_expression expression
 
     | S.If { test; consequent; alternate } ->
       ctx
@@ -675,11 +676,11 @@ let print (_, statements, comments) =
           key;
           value;
           static;
-          decorators = _decorators
+          decorators
         }) ->
-        (** TODO: handle `decorators` *)
         ctx
         |> emit_comments loc
+        |> emit_list emit_decorator decorators
         |> (if static then emit "static " else emit_none)
         |> (match kind with
             | C.Method.Constructor -> emit_none

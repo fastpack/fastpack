@@ -63,10 +63,12 @@ let to_array convertor list : E.t =
       |> List.map (fun el -> Some (E.Expression el))
   }
 
-let fpack_define_class cls statics =
+let fpack_define_class cls statics classDecorators decorators =
   call (member "$fpack" "defineClass") [
     (Loc.none, E.Class cls);
-    statics
+    statics;
+    classDecorators;
+    decorators;
   ]
 
 let let_stmt loc name value =

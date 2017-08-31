@@ -25,9 +25,25 @@ end
 
 module Transform = struct
 
+  let undecorate_methods ({C. body = (body_loc, { body }); _ } as cls) =
+    let methods =
+      body
+      |> List.filter_map
+        (fun m ->
+           match m with
+           | C.Body.Method (loc, m) ->
+             Some (C.Body.Method (loc, { m with decorators = []}))
+           | _ -> None
+        )
+    in
+    { cls with
+      body = (body_loc, { body = methods })
+    }
+
   let transform_class cls =
-    let {C. id; body = (_, { body }); _ } = cls in
-    let props, rest =
+    let {C. id; classDecorators; body = (_, { body }); _ } = cls in
+
+    let props, methods =
       List.partition
         (fun element ->
            match element with
@@ -36,6 +52,7 @@ module Transform = struct
         )
         body
     in
+
     let props, statics =
       List.partition_map
         (fun element ->
@@ -50,7 +67,19 @@ module Transform = struct
         props
     in
 
-    let move_props_to_constructor props =
+    let decorators =
+      List.filter_map
+        (fun m ->
+           match m with
+           | C.Body.Method (_, {
+               C.Method. key; decorators = _::_ as decorators; _}) ->
+             Some (key, decorators)
+           | _ -> None
+        )
+        methods
+    in
+
+    let move_props_to_constructor (cls : C.t) =
       match props with
       | [] -> cls
       | props ->
@@ -91,7 +120,7 @@ module Transform = struct
                | C.Body.Method (_, { kind = C.Method.Constructor; _}) -> true
                | _ -> false
             )
-          @@ List.mapi (fun index el -> (index, el)) rest
+          @@ List.mapi (fun index el -> (index, el)) methods
         in
         let (take, drop, constructor) =
           match constructor with
@@ -137,14 +166,29 @@ module Transform = struct
           | _ -> failwith "Only constructor is expected here"
         in
         let (body_loc, _) = cls.body in
-        let body = List.take take rest @ [constructor] @ List.drop drop rest in
+        let body =
+          List.take take methods @ [constructor] @ List.drop drop methods
+        in
         { cls with
           body = (body_loc, { body })
         }
     in
-    (move_props_to_constructor props, id, statics, [])
 
-  let wrap_class cls statics =
+
+    let cls = {
+      (cls
+       |> move_props_to_constructor
+       |> undecorate_methods
+      )
+      with classDecorators = []
+    }
+    in
+
+    (cls, id, statics, classDecorators, decorators)
+
+  let wrap_class cls statics classDecorators decorators =
+    let to_expr_array = to_array (fun el -> el) in
+
     let statics =
       statics
       |> to_array
@@ -156,14 +200,38 @@ module Transform = struct
            ]
         )
     in
-    fpack_define_class cls statics
 
+    let decorators =
+      decorators
+      |> to_array
+        (fun (key, decorators) ->
+          object_ [
+            object_property "method"
+              (Loc.none, E.Literal (Helper.op_key_to_literal key));
+            object_property "decorators" (to_expr_array decorators)
+          ]
+        )
+    in
+    fpack_define_class
+      cls
+      statics
+      (to_expr_array classDecorators)
+      decorators
 end
 
-let transpile _context program =
 
+let transpile _context program =
   let map_expression ((loc, node) : E.t) =
-    (loc, node)
+    match node with
+    | E.Class cls ->
+      begin
+        match Transform.transform_class cls with
+        | cls, _, [], [], [] ->
+          (loc, E.Class cls)
+        | cls, _, statics, classDecorators, decorators ->
+          Transform.wrap_class cls statics classDecorators decorators
+      end
+    | _ -> (loc, node)
   in
 
   let map_statement ((loc, stmt) : S.t) =
@@ -171,10 +239,11 @@ let transpile _context program =
     | S.ClassDeclaration cls ->
       begin
         match Transform.transform_class cls with
-        | cls, _, [], [] ->
+        | cls, _, [], [], [] ->
           (loc, S.ClassDeclaration cls)
-        | cls, Some (_, name), statics, _ ->
-          let_stmt loc name (Transform.wrap_class cls statics)
+        | cls, Some (_, name), statics, classDecorators, decorators ->
+          let_stmt loc name
+          @@ Transform.wrap_class cls statics classDecorators decorators
         | _ -> failwith "should not happen"
       end
     | _ -> (loc, stmt)

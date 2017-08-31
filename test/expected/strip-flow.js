@@ -298,7 +298,7 @@ let Foo10 = $fpack.defineClass(class Foo10 {
     constructor() {
       Object.defineProperty(this, "prop2", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
     }
-  }, [{"name": "prop1", "value": void 0}]);
+  }, [{"name": "prop1", "value": void 0}], [], []);
 var x = 4;
 class Array {
   concat(items) {
