@@ -20,11 +20,13 @@ To execute toplevel (OCaml REPL):
 
 ### MVP
 
-- [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [x] FastpackTraspiler: jsx [andeypopp]
 - [x] FastpackTraspiler: flow - remove annotations [zindel]
 - [x] FastpackTraspiler: class syntax, properties, decorators [zindel]
+- [ ] FastpackTraspiler: object spread, rest operators [andreypopp]
 - [ ] Fastpack: complete import statements handling
+- [ ] Fastpack: Verify printer correctness (use babel-generator)
+- [ ] Fastpack: JavaScript runtime
 - [ ] CSS support in import statements (webpack ICSS)?
 - [ ] Support external command execution for LESS/SASS/other processing
 - [ ] Watch mode (watchman?)
