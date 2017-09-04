@@ -17,8 +17,73 @@ type printer_ctx = {
   (** Mutable buffer *)
   buf : Buffer.t;
 
+  (** List of comments *)
   comments : Ast.Comment.t list;
+
+  (** Last expression *)
+  parent_expr : E.t' option;
+
+  (** Last statement *)
+  parent_stmt : S.t';
 }
+
+module Parens = struct
+
+  let precedence_logical (op: E.Logical.operator) =
+    match op with
+    | E.Logical.Or -> 0
+    | E.Logical.And -> 1
+
+  let precedence_binary (op : E.Binary.operator) =
+    match op with
+    | E.Binary.Equal -> 5
+    | E.Binary.NotEqual -> 5
+    | E.Binary.StrictEqual -> 5
+    | E.Binary.StrictNotEqual -> 5
+    | E.Binary.LessThan -> 6
+    | E.Binary.LessThanEqual -> 6
+    | E.Binary.GreaterThan -> 6
+    | E.Binary.GreaterThanEqual -> 6
+    | E.Binary.LShift -> 7
+    | E.Binary.RShift -> 7
+    | E.Binary.RShift3 -> 7
+    | E.Binary.Plus -> 8
+    | E.Binary.Minus -> 8
+    | E.Binary.Mult -> 9
+    | E.Binary.Exp -> 10
+    | E.Binary.Div -> 9
+    | E.Binary.Mod -> 9
+    | E.Binary.BitOr -> 2
+    | E.Binary.Xor -> 3
+    | E.Binary.BitAnd -> 4
+    | E.Binary.In -> 6
+    | E.Binary.Instanceof -> 6
+
+  let is_required ((loc, node) : E.t)
+      { comments; parent_expr; parent_stmt;  _ } =
+    let has_comments =
+      List.exists
+        (fun ((c_loc : Loc.t), _) -> c_loc._end.offset < loc.start.offset)
+        comments
+    in
+    if has_comments
+    then true
+    else
+      match parent_stmt, parent_expr, node with
+      | S.Expression _, None, E.Class _ ->
+        true
+      | _, Some (E.Logical { operator = parent_op; _ }), E.Logical { operator; _ }  ->
+        precedence_logical operator < precedence_logical parent_op
+      | _, Some (E.Binary { operator = parent_op; _ }), E.Logical { operator; _ } ->
+        precedence_logical operator < precedence_binary parent_op
+      | _, Some (E.Logical { operator = parent_op; _ }), E.Binary { operator; _ } ->
+        precedence_binary operator < precedence_logical parent_op
+      | _, Some (E.Binary { operator = parent_op; _ }), E.Binary { operator; _ } ->
+        precedence_binary operator < precedence_binary parent_op
+      | _ ->
+        false
+
+end
 
 let fail_if cond message =
   if cond then failwith message else ()
@@ -27,6 +92,12 @@ let fail_if_some option message =
   match option with
   | Some _ -> failwith message
   | None -> ()
+
+let set_parent_expr some_expr ctx =
+  { ctx with parent_expr = some_expr }
+
+let set_parent_stmt stmt ctx =
+  { ctx with parent_stmt = stmt }
 
 let emit str ctx =
   Buffer.add_string ctx.buf str;
@@ -114,460 +185,476 @@ let print (_, statements, comments) =
     {ctx with comments = after}
 
   and emit_statement ((loc, statement) : S.t) ctx =
-    let ctx = emit_comments loc ctx in
-    match statement with
-    | S.Empty -> ctx
+    let prev_parent_stmt = ctx.parent_stmt in
+    let ctx = ctx |> emit_comments loc |> set_parent_stmt statement in
+    let ctx =
+      match statement with
+      | S.Empty -> ctx
 
-    | S.Block { body } ->
-      ctx
-      |> emit "{"
-      |> indent
-      |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
-      |> dedent
-      |> emit "}"
-
-    | S.Expression { expression; directive = _directive } ->
-      ctx
-      |> emit_expression expression
-
-    | S.If { test; consequent; alternate } ->
-      ctx
-      |> emit "if (" |> emit_expression test |> emit ") "
-      |> emit_statement consequent
-      |> emit_if_some (fun alternate ctx ->
-          ctx
-          |> emit " else "
-          |> emit_statement alternate) alternate
-
-    | S.Labeled { label = (_loc, label); body } ->
-      ctx
-      |> emit label
-      |> emit ":"
-      |> indent
-      |> emit_statement body
-      |> dedent
-
-    | S.Break { label } ->
-      ctx
-      |> emit "break"
-      |> emit_if_some
-          (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
-          label
-
-    | S.Continue { label } ->
-      ctx
-      |> emit "continue"
-      |> emit_if_some
-          (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
-          label
-
-    | S.With { _object; body } ->
-      ctx
-      |> emit "with (" |> emit_expression _object |> emit ") "
-      |> emit_statement body
-
-    | S.TypeAlias { id = (_, id); typeParameters; right } ->
-      ctx
-      |> emit "type "
-      |> emit id
-      |> emit_if_some emit_type_parameter_declaration typeParameters
-      |> emit " = "
-      |> emit_type right
-
-    | S.Switch { discriminant; cases } ->
-      ctx
-      |> emit "swicth (" |> emit_expression discriminant |> emit ") {"
-      |> indent
-      |> emit_list
-        ~emit_sep:emit_newline
-        (fun (_loc, { S.Switch.Case. test; consequent }) ctx ->
-          ctx
-          |> (match test with
-              | None ->
-                emit "default:"
-              | Some test ->
-                fun ctx ->
-                  ctx |> emit "case " |> emit_expression test |> emit ":")
-          |> emit_list
-              ~emit_sep:emit_semicolon_and_newline
-              emit_statement
-              consequent
-        ) cases
-      |> dedent
-      |> emit "}"
-
-    | S.Return { argument } ->
-      ctx |> emit "return " |> emit_if_some emit_expression argument
-
-    | S.Throw { argument } ->
-      ctx |> emit "throw " |> emit_expression argument
-
-    | S.Try { block; handler; finalizer } ->
-      ctx
-      |> emit "try "
-      |> emit_block block
-      |> emit_if_some (fun (_loc, { S.Try.CatchClause. param; body }) ctx ->
-          ctx
-          |> emit " catch (" |> emit_pattern param |> emit ") "
-          |> emit_block body
-        ) handler
-      |> emit_if_some (fun finalizer ctx ->
-          ctx
-          |> emit " finally "
-          |> emit_block finalizer
-        ) finalizer
-
-    | S.While { test; body } ->
-      ctx
-      |> emit "while ("
-      |> emit_expression test
-      |> emit ") "
-      |> emit_statement body
-
-    | S.DoWhile { body; test } ->
-      ctx
-      |> emit "do "
-      |> emit_statement body
-      |> emit "while ("
-      |> emit_expression test
-      |> emit "("
-
-    | S.For { init; test; update; body } ->
-      ctx
-      |> emit "for ("
-      |> emit_if_some (fun init -> match init with
-          | S.For.InitDeclaration decl -> emit_variable_declaration decl
-          | S.For.InitExpression expression -> emit_expression expression) init
-      |> emit_semicolon
-      |> emit_if_some emit_expression test
-      |> emit_semicolon
-      |> emit_if_some emit_expression update
-      |> emit ")"
-      |> indent
-      |> emit_statement body
-      |> dedent
-
-    | S.ForIn { left; right; body; each } ->
-      assert (not each);
-      ctx
-      |> emit "for ("
-      |> (match left with
-          | S.ForIn.LeftDeclaration decl -> emit_variable_declaration decl
-          | S.ForIn.LeftExpression expression -> emit_expression expression)
-      |> emit " in "
-      |> emit_expression right
-      |> emit ")"
-      |> indent
-      |> emit_statement body
-      |> dedent
-
-    | S.ForOf { left; right; body; async } ->
-      ctx
-      |> emit "for "
-      |> emit_if async (emit "await ")
-      |> emit "("
-      |> (match left with
-          | S.ForOf.LeftDeclaration decl -> emit_variable_declaration decl
-          | S.ForOf.LeftExpression expression -> emit_expression expression)
-      |> emit " of "
-      |> emit_expression right
-      |> emit ")"
-      |> indent
-      |> emit_statement body
-      |> dedent
-
-    | S.Debugger ->
-      ctx
-      |> emit "debugger"
-
-    | S.FunctionDeclaration func ->
-      emit_function (loc, func) ctx
-
-    | S.VariableDeclaration decl ->
-      ctx
-      |> emit_variable_declaration (loc, decl)
-
-    | S.ClassDeclaration cls ->
-      ctx |> emit_class cls
-    | S.InterfaceDeclaration { id; typeParameters; body; extends; mixins } ->
-      fail_if
-        (List.length mixins > 0)
-        "InterfaceDeclaration: mixins are not supported";
-      ctx
-      |> emit "interface "
-      |> emit_identifier id
-      |> emit_if (List.length extends > 0) (emit " extends ")
-      |> emit_list ~emit_sep:emit_comma emit_generic_type extends
-      |> emit_if_some emit_type_parameter_declaration typeParameters
-      |> emit_object_type body
-
-    | S.ImportDeclaration { importKind; source; specifiers; } ->
-      let emit_kind kind =
-        match kind with
-        | Some S.ImportDeclaration.ImportType -> emit " type "
-        | Some S.ImportDeclaration.ImportTypeof -> emit " typeof "
-        | _ -> emit_none
-      in
-      let namespace =
-        List.head_opt
-        @@ List.filter
-          (fun spec ->
-             match spec with
-             | S.ImportDeclaration.ImportNamespaceSpecifier _ -> true
-             | _ -> false
-          )
-          specifiers
-      in
-      let default =
-        List.head_opt
-        @@ List.filter
-          (fun spec ->
-             match spec with
-             | S.ImportDeclaration.ImportDefaultSpecifier _ -> true
-             | _ -> false
-          )
-          specifiers
-      in
-      let named =
-        List.filter
-          (fun spec ->
-             match spec with
-             | S.ImportDeclaration.ImportNamedSpecifier _ -> true
-             | _ -> false
-          )
-          specifiers
-      in
-      let emit_specifier spec ctx =
+      | S.Block { body } ->
         ctx
-        |> (match spec with
-            | S.ImportDeclaration.ImportDefaultSpecifier ident ->
-              emit_identifier ident
-            | S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, ident)) ->
-              emit @@ "* as " ^ ident
-            | S.ImportDeclaration.ImportNamedSpecifier
-                { kind; local; remote = (_, remote) } ->
-              fun ctx ->
-                ctx
-                |> emit_kind kind
-                |> emit remote
-                |> emit_if_some (fun local -> emit @@ " as " ^ (snd local)) local
-           )
-      in
-      ctx
-      |> emit "import"
-      |> emit_kind (Some importKind)
-      |> emit_if (List.length specifiers > 0) (emit " ")
-      |> emit_if_some emit_specifier default
-      |> emit_if_some emit_specifier namespace
-      |> emit_if
-        ((default != None || namespace != None) && List.length named > 0)
-        emit_comma
-      |> emit_if
-          (List.length named > 0)
-          (fun ctx ->
-             ctx
-             |> emit "{"
-             |> emit_list ~emit_sep:emit_comma emit_specifier named
-             |> emit "}"
-          )
-      |> emit_if (List.length specifiers > 0) (emit " from")
-      |> emit " "
-      |> emit_literal source
+        |> emit "{"
+        |> indent
+        |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
+        |> dedent
+        |> emit "}"
 
-    | S.ExportNamedDeclaration _ ->
-      failwith "ExportNamedDeclaration is not supported"
-    | S.ExportDefaultDeclaration _ ->
-      failwith "ExportDefaultDeclaration is not supported"
-    | S.DeclareVariable _ ->
-      failwith "DeclareVariable is not supported"
-    | S.DeclareFunction _ ->
-      failwith "DeclareFunction is not supported"
-    | S.DeclareClass _ ->
-      failwith "DeclareClass is not supported"
-    | S.DeclareModule _ ->
-      failwith "DeclareModule is not supported"
-    | S.DeclareModuleExports _ ->
-      failwith "DeclareModuleExports is not supported"
-    | S.DeclareExportDeclaration _ ->
-      failwith "DeclareExportDeclaration is not supported"
+      | S.Expression { expression; directive = _directive } ->
+        ctx
+        |> emit_expression expression
+
+      | S.If { test; consequent; alternate } ->
+        ctx
+        |> emit "if (" |> emit_expression test |> emit ") "
+        |> emit_statement consequent
+        |> emit_if_some (fun alternate ctx ->
+            ctx
+            |> emit " else "
+            |> emit_statement alternate) alternate
+
+      | S.Labeled { label = (_loc, label); body } ->
+        ctx
+        |> emit label
+        |> emit ":"
+        |> indent
+        |> emit_statement body
+        |> dedent
+
+      | S.Break { label } ->
+        ctx
+        |> emit "break"
+        |> emit_if_some
+            (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
+            label
+
+      | S.Continue { label } ->
+        ctx
+        |> emit "continue"
+        |> emit_if_some
+            (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
+            label
+
+      | S.With { _object; body } ->
+        ctx
+        |> emit "with (" |> emit_expression _object |> emit ") "
+        |> emit_statement body
+
+      | S.TypeAlias { id = (_, id); typeParameters; right } ->
+        ctx
+        |> emit "type "
+        |> emit id
+        |> emit_if_some emit_type_parameter_declaration typeParameters
+        |> emit " = "
+        |> emit_type right
+
+      | S.Switch { discriminant; cases } ->
+        ctx
+        |> emit "swicth (" |> emit_expression discriminant |> emit ") {"
+        |> indent
+        |> emit_list
+          ~emit_sep:emit_newline
+          (fun (_loc, { S.Switch.Case. test; consequent }) ctx ->
+            ctx
+            |> (match test with
+                | None ->
+                  emit "default:"
+                | Some test ->
+                  fun ctx ->
+                    ctx |> emit "case " |> emit_expression test |> emit ":")
+            |> emit_list
+                ~emit_sep:emit_semicolon_and_newline
+                emit_statement
+                consequent
+          ) cases
+        |> dedent
+        |> emit "}"
+
+      | S.Return { argument } ->
+        ctx |> emit "return " |> emit_if_some emit_expression argument
+
+      | S.Throw { argument } ->
+        ctx |> emit "throw " |> emit_expression argument
+
+      | S.Try { block; handler; finalizer } ->
+        ctx
+        |> emit "try "
+        |> emit_block block
+        |> emit_if_some (fun (_loc, { S.Try.CatchClause. param; body }) ctx ->
+            ctx
+            |> emit " catch (" |> emit_pattern param |> emit ") "
+            |> emit_block body
+          ) handler
+        |> emit_if_some (fun finalizer ctx ->
+            ctx
+            |> emit " finally "
+            |> emit_block finalizer
+          ) finalizer
+
+      | S.While { test; body } ->
+        ctx
+        |> emit "while ("
+        |> emit_expression test
+        |> emit ") "
+        |> emit_statement body
+
+      | S.DoWhile { body; test } ->
+        ctx
+        |> emit "do "
+        |> emit_statement body
+        |> emit "while ("
+        |> emit_expression test
+        |> emit "("
+
+      | S.For { init; test; update; body } ->
+        ctx
+        |> emit "for ("
+        |> emit_if_some (fun init -> match init with
+            | S.For.InitDeclaration decl -> emit_variable_declaration decl
+            | S.For.InitExpression expression -> emit_expression expression) init
+        |> emit_semicolon
+        |> emit_if_some emit_expression test
+        |> emit_semicolon
+        |> emit_if_some emit_expression update
+        |> emit ")"
+        |> indent
+        |> emit_statement body
+        |> dedent
+
+      | S.ForIn { left; right; body; each } ->
+        assert (not each);
+        ctx
+        |> emit "for ("
+        |> (match left with
+            | S.ForIn.LeftDeclaration decl -> emit_variable_declaration decl
+            | S.ForIn.LeftExpression expression -> emit_expression expression)
+        |> emit " in "
+        |> emit_expression right
+        |> emit ")"
+        |> indent
+        |> emit_statement body
+        |> dedent
+
+      | S.ForOf { left; right; body; async } ->
+        ctx
+        |> emit "for "
+        |> emit_if async (emit "await ")
+        |> emit "("
+        |> (match left with
+            | S.ForOf.LeftDeclaration decl -> emit_variable_declaration decl
+            | S.ForOf.LeftExpression expression -> emit_expression expression)
+        |> emit " of "
+        |> emit_expression right
+        |> emit ")"
+        |> indent
+        |> emit_statement body
+        |> dedent
+
+      | S.Debugger ->
+        ctx
+        |> emit "debugger"
+
+      | S.FunctionDeclaration func ->
+        emit_function (loc, func) ctx
+
+      | S.VariableDeclaration decl ->
+        ctx
+        |> emit_variable_declaration (loc, decl)
+
+      | S.ClassDeclaration cls ->
+        ctx |> emit_class cls
+      | S.InterfaceDeclaration { id; typeParameters; body; extends; mixins } ->
+        fail_if
+          (List.length mixins > 0)
+          "InterfaceDeclaration: mixins are not supported";
+        ctx
+        |> emit "interface "
+        |> emit_identifier id
+        |> emit_if (List.length extends > 0) (emit " extends ")
+        |> emit_list ~emit_sep:emit_comma emit_generic_type extends
+        |> emit_if_some emit_type_parameter_declaration typeParameters
+        |> emit_object_type body
+
+      | S.ImportDeclaration { importKind; source; specifiers; } ->
+        let emit_kind kind =
+          match kind with
+          | Some S.ImportDeclaration.ImportType -> emit " type "
+          | Some S.ImportDeclaration.ImportTypeof -> emit " typeof "
+          | _ -> emit_none
+        in
+        let namespace =
+          List.head_opt
+          @@ List.filter
+            (fun spec ->
+               match spec with
+               | S.ImportDeclaration.ImportNamespaceSpecifier _ -> true
+               | _ -> false
+            )
+            specifiers
+        in
+        let default =
+          List.head_opt
+          @@ List.filter
+            (fun spec ->
+               match spec with
+               | S.ImportDeclaration.ImportDefaultSpecifier _ -> true
+               | _ -> false
+            )
+            specifiers
+        in
+        let named =
+          List.filter
+            (fun spec ->
+               match spec with
+               | S.ImportDeclaration.ImportNamedSpecifier _ -> true
+               | _ -> false
+            )
+            specifiers
+        in
+        let emit_specifier spec ctx =
+          ctx
+          |> (match spec with
+              | S.ImportDeclaration.ImportDefaultSpecifier ident ->
+                emit_identifier ident
+              | S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, ident)) ->
+                emit @@ "* as " ^ ident
+              | S.ImportDeclaration.ImportNamedSpecifier
+                  { kind; local; remote = (_, remote) } ->
+                fun ctx ->
+                  ctx
+                  |> emit_kind kind
+                  |> emit remote
+                  |> emit_if_some (fun local -> emit @@ " as " ^ (snd local)) local
+             )
+        in
+        ctx
+        |> emit "import"
+        |> emit_kind (Some importKind)
+        |> emit_if (List.length specifiers > 0) (emit " ")
+        |> emit_if_some emit_specifier default
+        |> emit_if_some emit_specifier namespace
+        |> emit_if
+          ((default != None || namespace != None) && List.length named > 0)
+          emit_comma
+        |> emit_if
+            (List.length named > 0)
+            (fun ctx ->
+               ctx
+               |> emit "{"
+               |> emit_list ~emit_sep:emit_comma emit_specifier named
+               |> emit "}"
+            )
+        |> emit_if (List.length specifiers > 0) (emit " from")
+        |> emit " "
+        |> emit_literal source
+
+      | S.ExportNamedDeclaration _ ->
+        failwith "ExportNamedDeclaration is not supported"
+      | S.ExportDefaultDeclaration _ ->
+        failwith "ExportDefaultDeclaration is not supported"
+      | S.DeclareVariable _ ->
+        failwith "DeclareVariable is not supported"
+      | S.DeclareFunction _ ->
+        failwith "DeclareFunction is not supported"
+      | S.DeclareClass _ ->
+        failwith "DeclareClass is not supported"
+      | S.DeclareModule _ ->
+        failwith "DeclareModule is not supported"
+      | S.DeclareModuleExports _ ->
+        failwith "DeclareModuleExports is not supported"
+      | S.DeclareExportDeclaration _ ->
+        failwith "DeclareExportDeclaration is not supported"
+    in
+    ctx |> set_parent_stmt prev_parent_stmt
 
   and emit_expression ((loc, expression) : E.t) ctx =
-    let ctx = emit_comments loc ctx in
-    match expression with
-    | E.This -> ctx |> emit "this"
-    | E.Super -> ctx |> emit "super"
-    | E.Array { elements } ->
+    let parens = Parens.is_required (loc, expression) ctx in
+    let prev_parent_expr = ctx.parent_expr in
+    let ctx =
       ctx
-      |> emit "["
-      |> emit_list ~emit_sep:emit_comma
-        (function
-          | None -> emit_none
-          | Some element -> emit_expression_or_spread element)
-        elements
-      |> emit "]"
-    | E.Import expr ->
-      ctx
-      |> emit "import("
-      |> emit_expression expr
-      |> emit ")"
-    | E.Object { properties } ->
-      ctx
-      |> emit "{"
-      |> emit_list ~emit_sep:emit_comma
-        (fun prop ctx -> match prop with
-           | E.Object.Property (loc, { key; value; _method; shorthand }) ->
-             let ctx = emit_comments loc ctx in
-             (match value with
-              | E.Object.Property.Init expr ->
-                if shorthand then
-                  ctx |> emit_object_property_key key
-                else
-                  ctx
-                  |> emit_object_property_key key
-                  |> emit ": "
-                  |> emit_expression expr
-              | E.Object.Property.Get func ->
-                ctx |> emit "get " |> emit_function func
-              | E.Object.Property.Set func ->
-                ctx |> emit "set " |> emit_function func)
-           | E.Object.SpreadProperty (loc, { argument }) ->
-             ctx |> emit_comments loc |> emit "..." |> emit_expression argument
-        )
-        properties
-      |> emit "}"
-    | E.Function func ->
-      ctx |> emit_function (loc, func)
-    | E.ArrowFunction func ->
-      ctx |> emit_function (loc, func) ~as_arrow:true
-    | E.Sequence { expressions } ->
-      ctx
-      |> emit "("
-      |> emit_list ~emit_sep:emit_comma emit_expression expressions
-      |> emit ")"
-    | E.Unary { operator; prefix=_prefix; argument } ->
-      (* fail_if prefix "Unary: prefix is not supported"; *)
-      ctx
-      |> (match operator with
-          | E.Unary.Minus -> emit "-"
-          | E.Unary.Plus -> emit "+"
-          | E.Unary.Not -> emit "!"
-          | E.Unary.BitNot -> emit "~"
-          | E.Unary.Typeof -> emit "typeof "
-          | E.Unary.Void -> emit "void "
-          | E.Unary.Delete -> emit "delete "
-          | E.Unary.Await -> emit "await ")
-      |> emit_expression argument
-    | E.Binary { operator; left; right } ->
-      ctx
-      |> emit_expression left
-      |> (match operator with
-          | E.Binary.Equal -> emit " == "
-          | E.Binary.NotEqual -> emit " != "
-          | E.Binary.StrictEqual -> emit " === "
-          | E.Binary.StrictNotEqual -> emit " !== "
-          | E.Binary.LessThan -> emit " < "
-          | E.Binary.LessThanEqual -> emit " <= "
-          | E.Binary.GreaterThan -> emit " > "
-          | E.Binary.GreaterThanEqual -> emit " >= "
-          | E.Binary.LShift -> emit " << "
-          | E.Binary.RShift -> emit " >> "
-          | E.Binary.RShift3 -> emit " >>> "
-          | E.Binary.Plus -> emit " + "
-          | E.Binary.Minus -> emit " - "
-          | E.Binary.Mult -> emit " * "
-          | E.Binary.Exp -> emit " ** "
-          | E.Binary.Div -> emit " / "
-          | E.Binary.Mod -> emit " % "
-          | E.Binary.BitOr -> emit " | "
-          | E.Binary.Xor -> emit " ^ "
-          | E.Binary.BitAnd -> emit " & "
-          | E.Binary.In -> emit " in "
-          | E.Binary.Instanceof -> emit " instanceof ")
-      |> emit_expression right
-    | E.Assignment { operator; left; right } ->
-      ctx
-      |> emit_pattern left
-      |> (match operator with
-          | E.Assignment.Assign -> emit " = "
-          | E.Assignment.PlusAssign -> emit " += "
-          | E.Assignment.MinusAssign -> emit " -= "
-          | E.Assignment.MultAssign -> emit " *= "
-          | E.Assignment.ExpAssign -> emit " **= "
-          | E.Assignment.DivAssign -> emit " /= "
-          | E.Assignment.ModAssign -> emit " %= "
-          | E.Assignment.LShiftAssign -> emit " <<= "
-          | E.Assignment.RShiftAssign -> emit " >>= "
-          | E.Assignment.RShift3Assign -> emit " >>>= "
-          | E.Assignment.BitOrAssign -> emit " |= "
-          | E.Assignment.BitXorAssign -> emit " ^= "
-          | E.Assignment.BitAndAssign -> emit " &= ")
-      |> emit_expression right
-    | E.Update { operator; argument; prefix } ->
-      let emit_operator ctx =
-        ctx |> (match operator with
-            | E.Update.Increment -> emit "++"
-            | E.Update.Decrement -> emit "--") in
-      if prefix
-      then ctx |> emit_operator |> emit_expression argument
-      else ctx |> emit_expression argument |> emit_operator
-    | E.Logical { operator; left; right } ->
-      ctx
-      |> emit_expression left
-      |> (match operator with
-          | E.Logical.Or -> emit " || "
-          | E.Logical.And -> emit " && ")
-      |> emit_expression right
-    | E.Conditional { test; consequent; alternate } ->
-      ctx
-      |> emit_expression test
-      |> emit " ? "
-      |> emit_expression consequent
-      |> emit " : "
-      |> emit_expression alternate
-    | E.New { callee; arguments } ->
-      ctx
-      |> emit "new "
-      |> emit_expression callee
-      |> emit "("
-      |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
-      |> emit ")"
-    | E.Call { callee; arguments } ->
-      ctx
-      |> emit_expression callee
-      |> emit "("
-      |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
-      |> emit ")"
-    | E.Member { _object; property; computed } ->
-      ctx |> emit_expression _object |> (fun ctx ->
-          if computed
-          then (ctx |> emit "[" |> emit_property property |> emit "]")
-          else (ctx |> emit "." |> emit_property property))
-    | E.Yield { argument; delegate } ->
-      ctx
-      |> (if delegate then emit "yield* " else emit "yield ")
-      |> emit_if_some emit_expression argument
-    | E.Comprehension _ ->
-      failwith "Comprehension is not supported"
-    | E.Generator _ ->
-      failwith "Generator is not supported"
-    | E.Identifier (_, name) ->
-      ctx |> emit name
-    | E.Literal lit ->
-      ctx |> emit_literal (loc, lit)
-    | E.TemplateLiteral tmpl_lit ->
-      ctx |> emit_template_literal tmpl_lit
-    | E.TaggedTemplate { tag; quasi=(_, tmpl_lit) } ->
-      ctx
-      |> emit_expression tag
-      |> emit_template_literal tmpl_lit
-    | E.JSXElement element ->
-      ctx |> emit_jsx_element element
-    | E.Class cls ->
-      ctx |> emit_class cls
-    | E.TypeCast _ ->
-      failwith "TypeCast is not supported"
-    | E.MetaProperty _ ->
-      failwith "MetaProperty is not supported"
+      |> emit_if parens (emit "(")
+      |> emit_comments loc
+      |> set_parent_expr (Some expression)
+    in
+    let ctx =
+      match expression with
+      | E.This -> ctx |> emit "this"
+      | E.Super -> ctx |> emit "super"
+      | E.Array { elements } ->
+        ctx
+        |> emit "["
+        |> emit_list ~emit_sep:emit_comma
+          (function
+            | None -> emit_none
+            | Some element -> emit_expression_or_spread element)
+          elements
+        |> emit "]"
+      | E.Import expr ->
+        ctx
+        |> emit "import("
+        |> emit_expression expr
+        |> emit ")"
+      | E.Object { properties } ->
+        ctx
+        |> emit "{"
+        |> emit_list ~emit_sep:emit_comma
+          (fun prop ctx -> match prop with
+             | E.Object.Property (loc, { key; value; _method; shorthand }) ->
+               let ctx = emit_comments loc ctx in
+               (match value with
+                | E.Object.Property.Init expr ->
+                  if shorthand then
+                    ctx |> emit_object_property_key key
+                  else
+                    ctx
+                    |> emit_object_property_key key
+                    |> emit ": "
+                    |> emit_expression expr
+                | E.Object.Property.Get func ->
+                  ctx |> emit "get " |> emit_function func
+                | E.Object.Property.Set func ->
+                  ctx |> emit "set " |> emit_function func)
+             | E.Object.SpreadProperty (loc, { argument }) ->
+               ctx |> emit_comments loc |> emit "..." |> emit_expression argument
+          )
+          properties
+        |> emit "}"
+      | E.Function func ->
+        ctx |> emit_function (loc, func)
+      | E.ArrowFunction func ->
+        ctx |> emit_function (loc, func) ~as_arrow:true
+      | E.Sequence { expressions } ->
+        ctx
+        |> emit "("
+        |> emit_list ~emit_sep:emit_comma emit_expression expressions
+        |> emit ")"
+      | E.Unary { operator; prefix=_prefix; argument } ->
+        (* fail_if prefix "Unary: prefix is not supported"; *)
+        ctx
+        |> (match operator with
+            | E.Unary.Minus -> emit "-"
+            | E.Unary.Plus -> emit "+"
+            | E.Unary.Not -> emit "!"
+            | E.Unary.BitNot -> emit "~"
+            | E.Unary.Typeof -> emit "typeof "
+            | E.Unary.Void -> emit "void "
+            | E.Unary.Delete -> emit "delete "
+            | E.Unary.Await -> emit "await ")
+        |> emit_expression argument
+      | E.Binary { operator; left; right } ->
+        ctx
+        |> emit_expression left
+        |> (match operator with
+            | E.Binary.Equal -> emit " == "
+            | E.Binary.NotEqual -> emit " != "
+            | E.Binary.StrictEqual -> emit " === "
+            | E.Binary.StrictNotEqual -> emit " !== "
+            | E.Binary.LessThan -> emit " < "
+            | E.Binary.LessThanEqual -> emit " <= "
+            | E.Binary.GreaterThan -> emit " > "
+            | E.Binary.GreaterThanEqual -> emit " >= "
+            | E.Binary.LShift -> emit " << "
+            | E.Binary.RShift -> emit " >> "
+            | E.Binary.RShift3 -> emit " >>> "
+            | E.Binary.Plus -> emit " + "
+            | E.Binary.Minus -> emit " - "
+            | E.Binary.Mult -> emit " * "
+            | E.Binary.Exp -> emit " ** "
+            | E.Binary.Div -> emit " / "
+            | E.Binary.Mod -> emit " % "
+            | E.Binary.BitOr -> emit " | "
+            | E.Binary.Xor -> emit " ^ "
+            | E.Binary.BitAnd -> emit " & "
+            | E.Binary.In -> emit " in "
+            | E.Binary.Instanceof -> emit " instanceof ")
+        |> emit_expression right
+      | E.Assignment { operator; left; right } ->
+        ctx
+        |> emit_pattern left
+        |> (match operator with
+            | E.Assignment.Assign -> emit " = "
+            | E.Assignment.PlusAssign -> emit " += "
+            | E.Assignment.MinusAssign -> emit " -= "
+            | E.Assignment.MultAssign -> emit " *= "
+            | E.Assignment.ExpAssign -> emit " **= "
+            | E.Assignment.DivAssign -> emit " /= "
+            | E.Assignment.ModAssign -> emit " %= "
+            | E.Assignment.LShiftAssign -> emit " <<= "
+            | E.Assignment.RShiftAssign -> emit " >>= "
+            | E.Assignment.RShift3Assign -> emit " >>>= "
+            | E.Assignment.BitOrAssign -> emit " |= "
+            | E.Assignment.BitXorAssign -> emit " ^= "
+            | E.Assignment.BitAndAssign -> emit " &= ")
+        |> emit_expression right
+      | E.Update { operator; argument; prefix } ->
+        let emit_operator ctx =
+          ctx |> (match operator with
+              | E.Update.Increment -> emit "++"
+              | E.Update.Decrement -> emit "--") in
+        if prefix
+        then ctx |> emit_operator |> emit_expression argument
+        else ctx |> emit_expression argument |> emit_operator
+      | E.Logical { operator; left; right } ->
+        ctx
+        |> emit_expression left
+        |> (match operator with
+            | E.Logical.Or -> emit " || "
+            | E.Logical.And -> emit " && ")
+        |> emit_expression right
+      | E.Conditional { test; consequent; alternate } ->
+        ctx
+        |> emit_expression test
+        |> emit " ? "
+        |> emit_expression consequent
+        |> emit " : "
+        |> emit_expression alternate
+      | E.New { callee; arguments } ->
+        ctx
+        |> emit "new "
+        |> emit_expression callee
+        |> emit "("
+        |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
+        |> emit ")"
+      | E.Call { callee; arguments } ->
+        ctx
+        |> emit_expression callee
+        |> emit "("
+        |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
+        |> emit ")"
+      | E.Member { _object; property; computed } ->
+        ctx |> emit_expression _object |> (fun ctx ->
+            if computed
+            then (ctx |> emit "[" |> emit_property property |> emit "]")
+            else (ctx |> emit "." |> emit_property property))
+      | E.Yield { argument; delegate } ->
+        ctx
+        |> (if delegate then emit "yield* " else emit "yield ")
+        |> emit_if_some emit_expression argument
+      | E.Comprehension _ ->
+        failwith "Comprehension is not supported"
+      | E.Generator _ ->
+        failwith "Generator is not supported"
+      | E.Identifier (_, name) ->
+        ctx |> emit name
+      | E.Literal lit ->
+        ctx |> emit_literal (loc, lit)
+      | E.TemplateLiteral tmpl_lit ->
+        ctx |> emit_template_literal tmpl_lit
+      | E.TaggedTemplate { tag; quasi=(_, tmpl_lit) } ->
+        ctx
+        |> emit_expression tag
+        |> emit_template_literal tmpl_lit
+      | E.JSXElement element ->
+        ctx |> emit_jsx_element element
+      | E.Class cls ->
+        ctx |> emit_class cls
+      | E.TypeCast _ ->
+        failwith "TypeCast is not supported"
+      | E.MetaProperty _ ->
+        failwith "MetaProperty is not supported"
+    in
+    ctx
+    |> emit_if parens (emit ")")
+    |> set_parent_expr prev_parent_expr
 
   and emit_jsx_element {
       openingElement = (_, { J.Opening.  name; selfClosing; attributes; });
@@ -1022,5 +1109,11 @@ let print (_, statements, comments) =
     ctx |> emit_list emit_comment ctx.comments
   in
 
-  let ctx = { buf = Buffer.create 1024; indent = 0; comments = comments } in
+  let ctx = {
+    buf = Buffer.create 1024;
+    indent = 0;
+    comments = comments;
+    parent_expr = None;
+    parent_stmt = S.Empty;
+  } in
   Buffer.to_bytes (emit_statements statements ctx).buf

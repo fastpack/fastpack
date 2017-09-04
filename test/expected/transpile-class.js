@@ -56,11 +56,11 @@ let C4 = $fpack.defineClass(class C4 {
     }
   }, [], [], [{"method": "method1", "decorators": [dec]}, {"method": "method2", "decorators": [(m) =>  (m), dec2]}]);
 /* class expressions */
-class  {
+(class  {
   constructor() {
     Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
   }
-};
+});
 let C5 = $fpack.defineClass(class  {
     constructor() {
       Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})

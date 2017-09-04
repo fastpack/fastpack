@@ -132,3 +132,22 @@ let f3 = ({x, y, z}) =>  {
 /* Import expression */
 let p = import("a");
 let p1 = import(f());
+/* Parentheses */
+/* Logical & Binary precedence */
+let e1 = 1 * 2 + 2 * 3;
+let e2 = (1 + 2) / (2 - 3);
+let e3 = true && false || true && true;
+let e4 = (true || false) && (true || true);
+let e5 = (true || false) + (true && false);
+let e6 = 1 + 1 && 2 + 2;
+/* make sure the comment doesn't break the expression */
+function e7() {
+  return (// xxx
+  "test")
+};
+/* Statement.Expression with the unnamed class should be wrapped */
+(class  {
+  constructor() {
+    
+  }
+});

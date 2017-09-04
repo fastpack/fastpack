@@ -1,24 +1,14 @@
-@cls
-@(cls => cls)
-class C6 extends C5 {
+let e1 = 1 * 2 + 2 * 3;
+let e2 = (1 + 2) / (2 - 3);
+let e3 = true && false || true && true;
+let e4 = (true || false) && (true || true);
+let e5 = (true || false) + (true && false);
+let e6 = (1 + 1) && (2 + 2);
 
-  prop_no_value;
-  prop_int = 1;
-  prop_func = x => x + 1;
-
-  method1() {}
-
-  @(m => m)
-  methodDecorated2() {}
-
-  constructor() {
-    before_super1();
-    before_super2();
-    super();
-    after_super_and_props();
-  }
-
-  @mDec1
-  @mDec2
-  methodDecorated3() {}
+function e7() {
+  return ( // xxx
+    "test"
+  )
 }
+
+(class { constructor() {}})
