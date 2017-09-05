@@ -537,19 +537,31 @@ let print (_, statements, comments) =
           (fun prop ctx -> match prop with
              | E.Object.Property (loc, { key; value; _method; shorthand }) ->
                let ctx = emit_comments loc ctx in
-               (match value with
-                | E.Object.Property.Init expr ->
-                  if shorthand then
-                    ctx |> emit_object_property_key key
-                  else
+               begin
+                 match value with
+                  | E.Object.Property.Init expr ->
+                    if shorthand then
+                      ctx |> emit_object_property_key key
+                    else
+                      ctx
+                      |> emit_object_property_key key
+                      |> emit ": "
+                      |> emit_expression ~parens:false expr
+                  | E.Object.Property.Get func ->
                     ctx
-                    |> emit_object_property_key key
-                    |> emit ": "
-                    |> emit_expression ~parens:false expr
-                | E.Object.Property.Get func ->
-                  ctx |> emit "get " |> emit_function func
-                | E.Object.Property.Set func ->
-                  ctx |> emit "set " |> emit_function func)
+                    |> emit "get "
+                    |> emit_function
+                      ~emit_id:(emit_object_property_key key)
+                      ~as_method:true
+                      func
+                  | E.Object.Property.Set func ->
+                    ctx
+                    |> emit "set "
+                    |> emit_function
+                      ~emit_id:(emit_object_property_key key)
+                      ~as_method:true
+                      func
+               end
              | E.Object.SpreadProperty (loc, { argument }) ->
                ctx
                |> emit_comments loc

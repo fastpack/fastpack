@@ -209,13 +209,13 @@ a = function () {
   
 };
 // TODO: bug in printer - check printer for the next 3 tests
-a = {set function (value) {
+a = {set fooProp(value) {
   
 }};
-a = {set function (value) {
+a = {set fooProp(value) {
   
 }};
-a = {get function () {
+a = {get fooProp() {
   
 }};
 a = {id: function (x) {
