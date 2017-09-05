@@ -987,9 +987,9 @@ let print (_, statements, comments) =
     }) ctx =
     (** TODO: handle `predicate`, `expression` ? *)
     let omit_parameter_parens =
-      match as_arrow, fst params with
-      | true, [(_, P.Object _)] -> false
-      | true, [_] -> true
+      match as_arrow, fst params, snd params with
+      | true, [(_, P.Object _)], _ -> false
+      | true, [_], None -> true
       | _ -> false
     in
     ctx
