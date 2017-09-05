@@ -108,6 +108,7 @@ let f = f => f;
 let f1 = x => {x};
 let f2 = x => ({x});
 let f3 = ({x, y, z}) => {x++; y++; z++; return x + y + z;}
+let f4 = (x, y) => ({[x]: y})
 
 /* Import expression */
 let p = import("a");
@@ -132,3 +133,20 @@ function e7() {
 
 /* Statement.Expression with the unnamed class should be wrapped */
 (class { constructor() {}})
+
+/* never use parentheses with the spread operator */
+let e8 = {... x || z };
+let e9 = [1,2,3, ...[5,6,7]];
+
+/* arrow functions are handled conservatively:
+ * always inside parentheses within the expressions */
+
+let e10 = (x => x + 1) + (y => y + 1);
+let e11 = (x => x + 1) || (y => y + 1);
+let e12 = true ? x => x + 1 : y => y + 1;
+let e13 = x => y => x + y;
+let e14 = x => x
+
+/* for cycle handled conservatively */
+
+for (i = 1, l = list.length; i < l, l > 100; i++, l --) {};

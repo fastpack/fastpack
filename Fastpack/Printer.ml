@@ -29,35 +29,81 @@ type printer_ctx = {
 
 module Parens = struct
 
-  let precedence_logical (op: E.Logical.operator) =
-    match op with
-    | E.Logical.Or -> 0
-    | E.Logical.And -> 1
+  (*
+   * This function uses slighly modified table from here:
+   * https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
+   * Modifications:
+   * - ArrowFunction precedence made to be lower than anything else
+   * - Sequence is always wrapped with parens when printing
+   * - Spread argument is never wrapped since it has the lowest precedence
+   * - new w/o the argument list is never emitted by the printer
+   *   (precedence 18 in the table). I.e. we emit new Date().getTime() instead
+   *   of (new Date).getTime()
+   * *)
+  let precedence (node : E.t') =
+    match node with
+    | E.ArrowFunction _ -> 1
+    | E.Yield _ -> 2
+    | E.Assignment _ -> 3
+    | E.Conditional _ -> 4
+    | E.Logical { operator = E.Logical.Or; _ } -> 5
+    | E.Logical { operator = E.Logical.And; _ } -> 6
+    | E.Binary { operator = E.Binary.BitOr; _ } -> 7
+    | E.Binary { operator = E.Binary.Xor; _ } -> 8
+    | E.Binary { operator = E.Binary.BitAnd; _ } -> 9
 
-  let precedence_binary (op : E.Binary.operator) =
-    match op with
-    | E.Binary.Equal -> 5
-    | E.Binary.NotEqual -> 5
-    | E.Binary.StrictEqual -> 5
-    | E.Binary.StrictNotEqual -> 5
-    | E.Binary.LessThan -> 6
-    | E.Binary.LessThanEqual -> 6
-    | E.Binary.GreaterThan -> 6
-    | E.Binary.GreaterThanEqual -> 6
-    | E.Binary.LShift -> 7
-    | E.Binary.RShift -> 7
-    | E.Binary.RShift3 -> 7
-    | E.Binary.Plus -> 8
-    | E.Binary.Minus -> 8
-    | E.Binary.Mult -> 9
-    | E.Binary.Exp -> 10
-    | E.Binary.Div -> 9
-    | E.Binary.Mod -> 9
-    | E.Binary.BitOr -> 2
-    | E.Binary.Xor -> 3
-    | E.Binary.BitAnd -> 4
-    | E.Binary.In -> 6
-    | E.Binary.Instanceof -> 6
+    | E.Binary { operator = E.Binary.Equal; _ }
+    | E.Binary { operator = E.Binary.NotEqual; _ }
+    | E.Binary { operator = E.Binary.StrictEqual; _ }
+    | E.Binary { operator = E.Binary.StrictNotEqual; _ } -> 10
+
+    | E.Binary { operator = E.Binary.LessThan; _ }
+    | E.Binary { operator = E.Binary.LessThanEqual; _ }
+    | E.Binary { operator = E.Binary.GreaterThan; _ }
+    | E.Binary { operator = E.Binary.GreaterThanEqual; _ }
+    | E.Binary { operator = E.Binary.In; _ }
+    | E.Binary { operator = E.Binary.Instanceof; _ } -> 11
+
+    | E.Binary { operator = E.Binary.LShift; _ }
+    | E.Binary { operator = E.Binary.RShift; _ }
+    | E.Binary { operator = E.Binary.RShift3; _ } -> 12
+
+    | E.Binary { operator = E.Binary.Plus; _ }
+    | E.Binary { operator = E.Binary.Minus; _ } -> 13
+
+    | E.Binary { operator = E.Binary.Mult; _ }
+    | E.Binary { operator = E.Binary.Div; _ }
+    | E.Binary { operator = E.Binary.Mod; _ } -> 14
+
+    | E.Binary { operator = E.Binary.Exp; _ } -> 15
+
+    | E.Unary _
+    | E.Update { prefix = true; _ } -> 16
+
+    | E.Update { prefix = false; _ } -> 17
+
+    | E.Call _
+    | E.Class _
+    | E.Import _
+    | E.JSXElement _
+    | E.Member _
+    | E.New _ -> 19
+
+    | E.Array _
+    | E.Function _
+    | E.Identifier _
+    | E.Literal _
+    | E.Object _
+    | E.Sequence _
+    | E.Super
+    | E.TaggedTemplate _
+    | E.TemplateLiteral _
+    | E.This -> 100
+
+    | E.TypeCast _ -> failwith "Precedence: TypeCast is not supported"
+    | E.Generator _ -> failwith "Precedence: Generator is not supported"
+    | E.Comprehension _ -> failwith "Precedence: Comprehension is not supported"
+    | E.MetaProperty _ -> failwith "Precedence: MetaProperty is not supported"
 
   let is_required ((loc, node) : E.t)
       { comments; parent_expr; parent_stmt;  _ } =
@@ -66,23 +112,14 @@ module Parens = struct
         (fun ((c_loc : Loc.t), _) -> c_loc._end.offset < loc.start.offset)
         comments
     in
-    if has_comments
-    then true
-    else
+    has_comments ||
       match parent_stmt, parent_expr, node with
       | S.Expression _, None, E.Class _ ->
         true
-      | _, Some (E.Logical { operator = parent_op; _ }), E.Logical { operator; _ }  ->
-        precedence_logical operator < precedence_logical parent_op
-      | _, Some (E.Binary { operator = parent_op; _ }), E.Logical { operator; _ } ->
-        precedence_logical operator < precedence_binary parent_op
-      | _, Some (E.Logical { operator = parent_op; _ }), E.Binary { operator; _ } ->
-        precedence_binary operator < precedence_logical parent_op
-      | _, Some (E.Binary { operator = parent_op; _ }), E.Binary { operator; _ } ->
-        precedence_binary operator < precedence_binary parent_op
+      | _, Some parent, node ->
+        precedence node < precedence parent
       | _ ->
         false
-
 end
 
 let fail_if cond message =
@@ -466,8 +503,8 @@ let print (_, statements, comments) =
     in
     ctx |> set_parent_stmt prev_parent_stmt
 
-  and emit_expression ((loc, expression) : E.t) ctx =
-    let parens = Parens.is_required (loc, expression) ctx in
+  and emit_expression ?(parens=true) ((loc, expression) : E.t) ctx =
+    let parens = parens && Parens.is_required (loc, expression) ctx in
     let prev_parent_expr = ctx.parent_expr in
     let ctx =
       ctx
@@ -491,7 +528,7 @@ let print (_, statements, comments) =
       | E.Import expr ->
         ctx
         |> emit "import("
-        |> emit_expression expr
+        |> emit_expression ~parens:false expr
         |> emit ")"
       | E.Object { properties } ->
         ctx
@@ -508,13 +545,16 @@ let print (_, statements, comments) =
                     ctx
                     |> emit_object_property_key key
                     |> emit ": "
-                    |> emit_expression expr
+                    |> emit_expression ~parens:false expr
                 | E.Object.Property.Get func ->
                   ctx |> emit "get " |> emit_function func
                 | E.Object.Property.Set func ->
                   ctx |> emit "set " |> emit_function func)
              | E.Object.SpreadProperty (loc, { argument }) ->
-               ctx |> emit_comments loc |> emit "..." |> emit_expression argument
+               ctx
+               |> emit_comments loc
+               |> emit "..."
+               |> emit_expression ~parens:false argument
           )
           properties
         |> emit "}"
@@ -525,7 +565,7 @@ let print (_, statements, comments) =
       | E.Sequence { expressions } ->
         ctx
         |> emit "("
-        |> emit_list ~emit_sep:emit_comma emit_expression expressions
+        |> emit_list ~emit_sep:emit_comma (emit_expression ~parens:false) expressions
         |> emit ")"
       | E.Unary { operator; prefix=_prefix; argument } ->
         (* fail_if prefix "Unary: prefix is not supported"; *)
@@ -621,7 +661,16 @@ let print (_, statements, comments) =
         |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
         |> emit ")"
       | E.Member { _object; property; computed } ->
-        ctx |> emit_expression _object |> (fun ctx ->
+        let emit_property property =
+          match property with
+          | E.Member.PropertyIdentifier (_, name) ->
+            emit name
+          | E.Member.PropertyExpression expression ->
+            emit_expression ~parens:false expression
+        in
+        ctx
+        |> emit_expression _object
+        |> (fun ctx ->
             if computed
             then (ctx |> emit "[" |> emit_property property |> emit "]")
             else (ctx |> emit "." |> emit_property property))
@@ -696,7 +745,7 @@ let print (_, statements, comments) =
       |> emit "{"
       |> (match expression with
           | J.ExpressionContainer.Expression expr ->
-            emit_expression expr
+            emit_expression ~parens:false expr
           | J.ExpressionContainer.EmptyExpression _ ->
             emit_none
          )
@@ -732,7 +781,7 @@ let print (_, statements, comments) =
          | J.Opening.SpreadAttribute (_, { argument })->
            ctx
            |> emit "{..."
-           |> emit_expression argument
+           |> emit_expression argument (* TODO: do we need parens here? *)
            |> emit "}"
       )
       attributes
@@ -822,7 +871,7 @@ let print (_, statements, comments) =
         (fun e -> fun ctx ->
            ctx
            |> emit "${"
-           |> emit_expression e
+           |> emit_expression ~parens:false e
            |> emit "}")
         expressions
       @ [emit_none]
@@ -899,7 +948,7 @@ let print (_, statements, comments) =
     | E.Object.Property.Identifier id ->
       ctx |> emit_identifier id
     | E.Object.Property.Computed expr ->
-      ctx |> emit "[" |> emit_expression expr |> emit "]"
+      ctx |> emit "[" |> emit_expression ~parens:false expr |> emit "]"
 
   and emit_decorator decorator ctx =
     ctx
@@ -996,14 +1045,9 @@ let print (_, statements, comments) =
 
   and emit_expression_or_spread item ctx = match item with
     | E.Expression expression ->
-      ctx |> emit_expression expression
+      ctx |> emit_expression ~parens:false expression
     | E.Spread (_, { argument }) ->
-      ctx |> emit "..." |> emit_expression argument
-
-  and emit_property property ctx =
-    match property with
-    | E.Member.PropertyIdentifier (_, name) -> emit name ctx
-    | E.Member.PropertyExpression expression -> emit_expression expression ctx
+      ctx |> emit "..." |> emit_expression ~parens:false argument
 
   and emit_type (loc, value) ctx =
     let ctx = emit_comments loc ctx in
