@@ -986,6 +986,12 @@ let print (_, statements, comments) =
       typeParameters
     }) ctx =
     (** TODO: handle `predicate`, `expression` ? *)
+    let omit_parameter_parens =
+      match as_arrow, fst params with
+      | true, [(_, P.Object _)] -> false
+      | true, [_] -> true
+      | _ -> false
+    in
     ctx
     |> emit_comments loc
     |> (if async then emit "async " else emit_none)
@@ -995,7 +1001,7 @@ let print (_, statements, comments) =
         | None -> emit_if_some emit_identifier id
         | Some emit_id -> emit_id)
     |> emit_if_some emit_type_parameter_declaration typeParameters
-    |> emit "("
+    |> emit_if (not omit_parameter_parens) (emit "(")
     |> (
       let (params, rest) = params in fun ctx ->
         ctx
@@ -1003,7 +1009,7 @@ let print (_, statements, comments) =
         |> emit_if_some (fun (_loc, { F.RestElement.  argument }) ctx ->
             ctx |> emit " ..." |> emit_pattern argument) rest
     )
-    |> emit ")"
+    |> emit_if (not omit_parameter_parens) (emit ")")
     |> emit_if as_arrow (emit " => ")
     |> emit_if_some emit_type_annotation returnType
     |> emit_space

@@ -20,7 +20,7 @@ function foo(numVal = 2) {
 /* Babel: strip-type-casts */
 xxx;
 {xxx: 0, yyy: "hey"};
-(xxx) =>  (xxx + 1);
+xxx =>  xxx + 1;
 (xxx, yyy);
 /* Babel:  def-site-variance */
 class C1 {
@@ -320,10 +320,10 @@ function foo([x]) {
 function foo( ...rest) {
   
 };
-function ( ...rest) {
+(function ( ...rest) {
   
-};
-( ...rest) =>  (rest);
+});
+( ...rest) =>  rest;
 var a;
 var a;
 var a;
