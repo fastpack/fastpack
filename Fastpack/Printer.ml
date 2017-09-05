@@ -39,6 +39,8 @@ module Parens = struct
    * - new w/o the argument list is never emitted by the printer
    *   (precedence 18 in the table). I.e. we emit new Date().getTime() instead
    *   of (new Date).getTime()
+   * - Function precedence is made to be 18 since it needs to be lower than
+   *   Call to allow IIF
    * *)
   let precedence (node : E.t') =
     match node with
@@ -82,6 +84,8 @@ module Parens = struct
 
     | E.Update { prefix = false; _ } -> 17
 
+    | E.Function _ -> 18
+
     | E.Call _
     | E.Class _
     | E.Import _
@@ -90,7 +94,6 @@ module Parens = struct
     | E.New _ -> 19
 
     | E.Array _
-    | E.Function _
     | E.Identifier _
     | E.Literal _
     | E.Object _
@@ -115,7 +118,8 @@ module Parens = struct
     has_comments ||
       match parent_stmt, parent_expr, node with
       | S.Expression _, None, E.Class _
-      | S.Expression _, None, E.Function _ -> true
+      | S.Expression _, None, E.Function _ ->
+        true
       | _, Some parent, node ->
         precedence node < precedence parent
       | _ ->
@@ -1007,11 +1011,16 @@ let print (_, statements, comments) =
         | F.BodyBlock block -> emit_block block
         | F.BodyExpression expr ->
           fun ctx ->
+            let parens =
+              match expr with
+              | _, E.Object _ -> true
+              | _ -> false
+            in
             ctx
-            |> emit "("
-            |> emit_expression expr
-            |> emit ")"
-      )
+            |> emit_if parens (emit "(")
+            |> emit_expression ~parens:false expr
+            |> emit_if parens (emit ")")
+       )
 
   and emit_type_annotation (loc, typeAnnotation) ctx =
     ctx |> emit_comments loc |> emit ": " |> emit_type typeAnnotation

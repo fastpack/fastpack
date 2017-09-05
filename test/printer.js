@@ -156,3 +156,7 @@ for (i = 1, l = list.length; i < l, l > 100; i++, l --) {};
 (function() {});
 (x => x);
 function e15 () {}
+
+
+/* Immediately invoked functions */
+(function (x) {console.log(x);return x;})(1);
