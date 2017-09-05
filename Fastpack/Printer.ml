@@ -114,8 +114,8 @@ module Parens = struct
     in
     has_comments ||
       match parent_stmt, parent_expr, node with
-      | S.Expression _, None, E.Class _ ->
-        true
+      | S.Expression _, None, E.Class _
+      | S.Expression _, None, E.Function _ -> true
       | _, Some parent, node ->
         precedence node < precedence parent
       | _ ->

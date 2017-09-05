@@ -131,9 +131,6 @@ function e7() {
   )
 }
 
-/* Statement.Expression with the unnamed class should be wrapped */
-(class { constructor() {}})
-
 /* never use parentheses with the spread operator */
 let e8 = {... x || z };
 let e9 = [1,2,3, ...[5,6,7]];
@@ -150,3 +147,12 @@ let e14 = x => x
 /* for cycle handled conservatively */
 
 for (i = 1, l = list.length; i < l, l > 100; i++, l --) {};
+
+/*  Statement.Expression should be wrapped when the argument is:
+  * - class
+  * - function
+  * */
+(class { constructor() {}});
+(function() {});
+(x => x);
+function e15 () {}
