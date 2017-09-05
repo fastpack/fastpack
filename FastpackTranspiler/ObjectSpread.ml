@@ -121,7 +121,8 @@ module TranspileObjectSpreadRest = struct
 
   module VariableDeclaration = struct
 
-    let gen_omit_declarator omit_keys init decls (loc, id) =
+    (** Generate a declarator with $fpack.objectOmit(...) init *)
+    let gen_omit_declarator omit_keys (loc, id) init decls =
       let omit_keys =
         List.map
           (fun key -> Helper.object_pattern_key_to_expr key.P.Object.Property.key)
@@ -135,6 +136,7 @@ module TranspileObjectSpreadRest = struct
       } in
       (loc, decl)::decls
 
+    (** Generate a declarator with {...keys} pattern *)
     let gen_declarator keys init decls =
       match keys with
       | [] -> decls
@@ -182,11 +184,11 @@ module TranspileObjectSpreadRest = struct
             let fold_property (keys_before, decls, init) = function
               | P.Object.RestProperty (loc, prop) ->
                 let init, decls = gen_init init decls in
-                let decls = gen_omit_declarator keys_before init decls (loc, prop.argument) in
+                let decls = gen_omit_declarator keys_before (loc, prop.argument) init decls in
                 [], decls, init
               | P.Object.Property (_, prop) ->
                 prop::keys_before, decls, init
-            in 
+            in
             let remaining_keys, decls, _init = List.fold_left fold_property ([], decls, init) properties in 
             let decls = gen_declarator remaining_keys init decls in
             decls

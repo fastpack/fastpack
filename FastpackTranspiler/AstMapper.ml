@@ -7,14 +7,16 @@ module Variance = Ast.Variance
 module Class = Ast.Class
 module Function = Ast.Function
 
+type scope = ScopeBuilder.t
+
 type mapper = {
-  map_statement : Statement.t -> Statement.t;
-  map_expression : Expression.t -> Expression.t;
-  map_function : (Loc.t * Function.t) -> (Loc.t * Function.t);
-  map_pattern : Pattern.t -> Pattern.t;
+  map_statement : scope -> Statement.t -> Statement.t;
+  map_expression : scope -> Expression.t -> Expression.t;
+  map_function : scope -> (Loc.t * Function.t) -> (Loc.t * Function.t);
+  map_pattern : scope -> Pattern.t -> Pattern.t;
 }
 
-let do_nothing node =
+let do_nothing _scope node =
   node
 
 let default_mapper =
@@ -25,26 +27,26 @@ let default_mapper =
     map_pattern = do_nothing;
   }
 
-let map_list (handler : mapper) map list =
-  List.map (map handler) list
+let map_list scope handler map_with list =
+  List.map (map_with scope handler) list
 
-let map_if_some handler map_with = function
+let map_if_some scope handler map_with = function
   | None -> None
   | Some item -> Some (map_with handler item)
 
-let rec map_statement handler ((loc, statement) : Statement.t) =
+let rec map_statement scope handler ((loc, statement) : Statement.t) =
   let statement = match statement with
     | Statement.Block { body } ->
-      Statement.Block { body = map_list handler map_statement body }
+      Statement.Block { body = map_list scope handler map_statement body }
 
     | Statement.Expression ({ expression; directive = _directive } as n) ->
       Statement.Expression { n with expression = map_expression handler expression; }
 
     | Statement.If { test; consequent; alternate }->
       Statement.If {
-        test = map_expression handler test;
-        consequent = map_statement handler consequent;
-        alternate = map_if_some handler map_statement alternate;
+        test = map_expression scope handler test;
+        consequent = map_statement scope handler consequent;
+        alternate = map_if_some scope handler map_statement alternate;
       }
 
     | Statement.Labeled ({ body; _ } as n) ->
@@ -52,7 +54,7 @@ let rec map_statement handler ((loc, statement) : Statement.t) =
 
     | Statement.With { _object; body } ->
       Statement.With {
-        _object = map_expression handler _object; 
+        _object = map_expression handler _object;
         body = map_statement handler body
       }
 
@@ -184,7 +186,7 @@ and map_class handler ({Class. body = (body_loc, { body }); superClass; _} as n)
       })
   }
 
-and map_expression handler ((loc, expression) : Expression.t) =
+and map_expression scope handler ((loc, expression) : Expression.t) =
   let expression = match expression with
     | Expression.Array { elements } ->
       Expression.Array { 
@@ -399,10 +401,10 @@ and map_expression_or_spread handler item = match item with
     let argument = map_expression handler argument in
     Expression.Spread (loc, { argument })
 
-let map handler program =
+let map ?(scope=ScopeBuilder.empty) handler program =
 
   let map_program ((loc, statements, comments): Ast.program) =
-    let statements = map_list handler map_statement statements in
+    let statements = map_list scope handler map_statement statements in
     (loc, statements, comments)
   in
 
