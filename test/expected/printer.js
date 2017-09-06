@@ -157,7 +157,7 @@ let e12 = true ? (x =>  x + 1) : (y =>  y + 1);
 let e13 = x =>  y =>  x + y;
 let e14 = x =>  x;
 /* for cycle handled conservatively */
-for ((i = 1, l = list.length);(i < l, l > 100);(i++, l--))
+for (i = 1, l = list.length; i < l, l > 100; i++, l--)
   {
     
   }

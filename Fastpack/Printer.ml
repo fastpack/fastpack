@@ -120,6 +120,10 @@ module Parens = struct
       | S.Expression _, None, E.Class _
       | S.Expression _, None, E.Function _ ->
         true
+      | S.For _, None, E.Sequence _ ->
+        false
+      | _, _, E.Sequence _ ->
+        true
       | _, Some parent, node ->
         precedence node < precedence parent
       | _ ->
@@ -353,8 +357,10 @@ let print (_, statements, comments) =
             | S.For.InitDeclaration decl -> emit_variable_declaration decl
             | S.For.InitExpression expression -> emit_expression expression) init
         |> emit_semicolon
+        |> emit " "
         |> emit_if_some emit_expression test
         |> emit_semicolon
+        |> emit " "
         |> emit_if_some emit_expression update
         |> emit ")"
         |> indent
@@ -580,9 +586,10 @@ let print (_, statements, comments) =
         ctx |> emit_function (loc, func) ~as_arrow:true
       | E.Sequence { expressions } ->
         ctx
-        |> emit "("
-        |> emit_list ~emit_sep:emit_comma (emit_expression ~parens:false) expressions
-        |> emit ")"
+        |> emit_list
+          ~emit_sep:emit_comma
+          (emit_expression ~parens:false)
+          expressions
       | E.Unary { operator; prefix=_prefix; argument } ->
         (* fail_if prefix "Unary: prefix is not supported"; *)
         ctx
