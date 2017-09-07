@@ -1,24 +1,8 @@
-(**
- * Abstract scope type.
- **)
+(** Abstract scope type. *)
 type t
 
-(**
- * An empty top level scope.
- **)
+(** An empty top level scope. *)
 val empty : t
 
-(** Build a new scope given a node *)
-val build : t -> Ast.Statement.t -> t
-
-(**
- * Hook on visit Ast.Statement.t which produces the next scope which is going to
- * be used by the next statement within the statement list.
- **)
-val visit_statement_h : t -> Ast.Statement.t -> t
-
-(**
- * Hook on visit Ast.Statement.t which is produces the next scope which is
- * going to be used by the children of the statement
- **)
-val visit_statement_v : t -> Ast.Statement.t -> t
+(** Grow scope given a statement. *)
+val grow : t -> Ast.Statement.t -> t

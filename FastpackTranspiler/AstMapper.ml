@@ -35,6 +35,7 @@ let map_if_some scope handler map_with = function
   | Some item -> Some (map_with scope handler item)
 
 let rec map_statement scope handler ((loc, statement) : Statement.t) =
+  let scope = ScopeBuilder.grow scope (loc, statement) in
   let statement = match statement with
     | Statement.Block { body } ->
       Statement.Block { body = map_list scope handler map_statement body }

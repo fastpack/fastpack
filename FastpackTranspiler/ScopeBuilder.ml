@@ -24,7 +24,7 @@ let new_block_scope scope = {
   bindings = StringSet.empty;
 }
 
-let new_funct_scope scope = {
+let new_func_scope scope = {
   kind = FunctionScope;
   parent = Some scope;
   bindings = StringSet.empty;
@@ -88,80 +88,114 @@ let names_of_pattern node =
       names
   in names_of_pattern' [] node
 
-let build scope ((_, node) : Statement.t) =
+let grow scope ((_, node) as whole_node) =
+
+  let update_scope_with scope (_, node) =
+    match node with
+    (* Populate scope with bindings *)
+    | Statement.ClassDeclaration { id = Some id; _ } ->
+      add_block_binding scope (name_of_identifier id)
+
+    | Statement.FunctionDeclaration { id = Some id; _ } ->
+      add_block_binding scope (name_of_identifier id)
+
+    | Statement.ImportDeclaration { importKind = Statement.ImportDeclaration.ImportValue; specifiers; _ } ->
+      let on_specifier scope = function
+        | Statement.ImportDeclaration.ImportDefaultSpecifier id
+        | Statement.ImportDeclaration.ImportNamespaceSpecifier (_, id)
+        | Statement.ImportDeclaration.ImportNamedSpecifier {
+            kind = None;
+            local = Some id;
+            _
+          }
+        | Statement.ImportDeclaration.ImportNamedSpecifier {
+            kind = Some (Statement.ImportDeclaration.ImportValue);
+            local = Some id;
+            _
+          } ->
+          add_block_binding scope (name_of_identifier id)
+        | _ -> scope
+      in
+      List.fold_left on_specifier scope specifiers
+
+    | Statement.VariableDeclaration { declarations; kind } ->
+      let on_declaration add_binding scope node =
+        let (_, { Statement.VariableDeclaration.Declarator. id; _ }) = node in
+        let names = names_of_pattern id in
+        List.fold_left add_binding scope names
+      in begin
+        match kind with
+        | Statement.VariableDeclaration.Var ->
+          List.fold_left (on_declaration add_func_binding) scope declarations
+        | Statement.VariableDeclaration.Let
+        | Statement.VariableDeclaration.Const ->
+          List.fold_left (on_declaration add_block_binding) scope declarations
+      end
+
+    | _ ->
+      scope
+  in
+
+  let block_scope_boundary (_, node) = 
+    match node with
+    | Statement.Block _
+    | Statement.For _
+    | Statement.ForIn _
+    | Statement.ForOf _
+    | Statement.ClassDeclaration _
+    | Statement.FunctionDeclaration _ ->
+      true
+    | _ ->
+      false
+  in
+
+  let func_scope_boundary (_, node) =
+    match node with
+    | Statement.ClassDeclaration _
+    | Statement.FunctionDeclaration _ ->
+      true
+    | _ ->
+      false
+  in
+
+  let populate_scope ~break_on scope root_node =
+    let scope = ref scope in
+    let visit_statement node = 
+      scope := update_scope_with !scope node;
+      if node <> root_node && break_on node
+      then Fastpack.Visit.Break
+      else Fastpack.Visit.Continue
+    in
+    let handler = {
+      Fastpack.Visit.default_visit_handler with
+      visit_statement = visit_statement
+    } in
+    Fastpack.Visit.visit_statement handler root_node;
+    !scope
+  in
+
+  (* check if we need to create & populate a new scope *)
   match node with
   | Statement.Block _ ->
     let scope = new_block_scope scope in
-    scope
+    populate_scope ~break_on:block_scope_boundary scope whole_node
+
   | Statement.ForIn _ ->
     let scope = new_block_scope scope in
-    scope
+    populate_scope ~break_on:block_scope_boundary scope whole_node
+
   | Statement.ForOf _ ->
     let scope = new_block_scope scope in
-    scope
+    populate_scope ~break_on:block_scope_boundary scope whole_node
+
   | Statement.FunctionDeclaration _ ->
-    let scope = new_funct_scope scope in
-    scope
+    let scope = new_func_scope scope in
+    populate_scope ~break_on:func_scope_boundary scope whole_node
+
+  (* XXX: This is the case where we can't statically analyze the scope *)
   | Statement.With _ ->
-    (* XXX: This is the case where we can't statically analyze the scope *)
-    scope
-  | _ ->
-    (* Return an existing scope *)
     scope
 
-let visit_statement_v scope (_, node) =
-  match node with
-  | Statement.Block _ ->
-    new_block_scope scope
-  | Statement.ForIn _ ->
-    new_block_scope scope
-  | Statement.ForOf _ ->
-    new_block_scope scope
-  | Statement.FunctionDeclaration _ ->
-    new_funct_scope scope
-  | Statement.With _ ->
-    (** XXX: This is the case where we can't statically analyze the scope *)
-    scope
-  | _ ->
-    scope
-
-let rec visit_statement_h scope (_, node) =
-  match node with
-  | Statement.ClassDeclaration { id = Some id; _ } ->
-    add_block_binding scope (name_of_identifier id)
-  | Statement.FunctionDeclaration { id = Some id; _ } ->
-    add_block_binding scope (name_of_identifier id)
-  | Statement.ExportNamedDeclaration { declaration = Some node; exportKind = Statement.ExportValue; _ } ->
-    visit_statement_h scope node
-  | Statement.ImportDeclaration { importKind = Statement.ImportDeclaration.ImportValue; specifiers; _ } ->
-    let on_specifier scope = function
-      | Statement.ImportDeclaration.ImportDefaultSpecifier id
-      | Statement.ImportDeclaration.ImportNamespaceSpecifier (_, id)
-      | Statement.ImportDeclaration.ImportNamedSpecifier {
-          kind = None;
-          local = Some id;
-          _
-        }
-      | Statement.ImportDeclaration.ImportNamedSpecifier {
-          kind = Some (Statement.ImportDeclaration.ImportValue);
-          local = Some id;
-          _
-        } ->
-        add_block_binding scope (name_of_identifier id)
-      | _ -> scope
-    in
-    List.fold_left on_specifier scope specifiers
-  | Statement.VariableDeclaration { declarations; kind } ->
-    let on_declaration add_binding scope node =
-      let (_, { Statement.VariableDeclaration.Declarator. id; _ }) = node in
-      let names = names_of_pattern id in
-      List.fold_left add_binding scope names
-    in
-    (match kind with
-     | Statement.VariableDeclaration.Var ->
-       List.fold_left (on_declaration add_func_binding) scope declarations
-     | Statement.VariableDeclaration.Let
-     | Statement.VariableDeclaration.Const ->
-       List.fold_left (on_declaration add_block_binding) scope declarations)
+  (* Return an existing scope *)
   | _ ->
     scope
