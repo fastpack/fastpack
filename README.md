@@ -24,9 +24,10 @@ To execute toplevel (OCaml REPL):
 - [x] FastpackTraspiler: flow - remove annotations [zindel]
 - [x] FastpackTraspiler: class syntax, properties, decorators [zindel]
 - [x] Fastpack: Verify printer correctness (use babel-generator) [zindel]
+- [x] Fastpack: JavaScript runtime - add require statement [zindel]
 - [ ] FastpackTraspiler: object spread, rest operators [andreypopp]
-- [ ] Fastpack: complete import statements handling
-- [ ] Fastpack: JavaScript runtime [zindel, in progress]
+- [ ] Fastpack: import statements handling
+- [ ] FastpackTranspiler: export statements
 - [ ] CSS support in import statements (webpack ICSS)?
 - [ ] Support external command execution for LESS/SASS/other processing
 - [ ] Watch mode (watchman?)

@@ -1,3 +1,4 @@
+const $__fpack__ = require("__fastpack_runtime__");
 /* nothing to transform */
 class CC {
   method1() {
@@ -43,11 +44,11 @@ class C2 extends C1 {
   }
 };
 /* class decorators */
-let C3 = $fpack.defineClass(class C3 {
+let C3 = $__fpack__.defineClass(class C3 {
     
   }, [], [c =>  c, dec], []);
 /* method decorators */
-let C4 = $fpack.defineClass(class C4 {
+let C4 = $__fpack__.defineClass(class C4 {
     method1() {
       
     }
@@ -61,13 +62,13 @@ let C4 = $fpack.defineClass(class C4 {
     Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
   }
 });
-let C5 = $fpack.defineClass(class  {
+let C5 = $__fpack__.defineClass(class  {
     constructor() {
       Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
     }
   }, [{"name": "prop2", "value": void 0}], [], []);
 /* all of the above */
-let C6 = $fpack.defineClass(class C6 extends C5 {
+let C6 = $__fpack__.defineClass(class C6 extends C5 {
     method1() {
       
     }

@@ -16,7 +16,13 @@ let transpile transpilers program =
       program
       transpilers
   in
-  program
+  if not (context.is_runtime_required ())
+  then
+    program
+  else
+    let loc, stmts, comments = program in
+    (loc, AstHelper.require_runtime :: stmts, comments)
+
 
 (** Transpile source code using a list of transpilers *)
 let transpile_source transpilers source =

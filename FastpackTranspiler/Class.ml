@@ -220,7 +220,7 @@ module Transform = struct
 end
 
 
-let transpile _context program =
+let transpile {Context. require_runtime; _ } program =
   let map_expression ((loc, node) : E.t) =
     match node with
     | E.Class cls ->
@@ -229,6 +229,7 @@ let transpile _context program =
         | cls, _, [], [], [] ->
           (loc, E.Class cls)
         | cls, _, statics, classDecorators, decorators ->
+          require_runtime ();
           Transform.wrap_class cls statics classDecorators decorators
       end
     | _ -> (loc, node)
@@ -242,8 +243,9 @@ let transpile _context program =
         | cls, _, [], [], [] ->
           (loc, S.ClassDeclaration cls)
         | cls, Some (_, name), statics, classDecorators, decorators ->
-          let_stmt loc name
-          @@ Transform.wrap_class cls statics classDecorators decorators
+          require_runtime ();
+          let_stmt ~loc name
+            @@ Transform.wrap_class cls statics classDecorators decorators
         | _ -> failwith "should not happen"
       end
     | _ -> (loc, stmt)

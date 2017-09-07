@@ -1,3 +1,4 @@
+const $__fpack__ = require("__fastpack_runtime__");
 /* Babel: default parameters */
 function foo(numVal) {
   
@@ -294,7 +295,7 @@ class Foo9 {
     Object.defineProperty(this, "prop2", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
   }
 };
-let Foo10 = $fpack.defineClass(class Foo10 {
+let Foo10 = $__fpack__.defineClass(class Foo10 {
     constructor() {
       Object.defineProperty(this, "prop2", {"configurable": true, "enumerable": true, "writable": true, "value": void 0})
     }
