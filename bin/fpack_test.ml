@@ -2,7 +2,7 @@ let transpile () =
   let scope = FastpackTranspiler.Util.make_scope () in
   FastpackTranspiler.Main.transpile_source scope
 
-let print source =
+let print ?(emit_scope_info=false) source =
   let parse_options = Some Parser_env.({
       esproposal_class_instance_fields = true;
       esproposal_class_static_fields = true;
@@ -12,7 +12,7 @@ let print source =
       use_strict = false;
     }) in
   let (program, _errors) = Parser_flow.program source ~parse_options in
-  let result = Fastpack.Printer.print program in
+  let result = Fastpack.Printer.print ~emit_scope_info program in
   result
 
 let transpile_ast () =
@@ -25,7 +25,8 @@ let transpile_ast () =
 let tests = [
   ("object-spread-and-rest-operators.js", transpile ());
   ("strip-flow.js", transpile_ast ());
-  ("printer.js", print);
+  ("printer.js", print ~emit_scope_info:false);
+  ("scope.js", print ~emit_scope_info:true);
   ("transpile-react-jsx.js", transpile_ast ());
   ("transpile-class.js", transpile_ast ());
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)

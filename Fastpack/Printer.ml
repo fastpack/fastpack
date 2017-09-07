@@ -11,6 +11,11 @@ module J = Ast.JSX
 (** Printer context *)
 type printer_ctx = {
 
+  emit_after_newline : (printer_ctx -> printer_ctx) list;
+
+  (** Current scope *)
+  scope : Scope.t;
+
   (** Current indentation level *)
   indent : int;
 
@@ -41,7 +46,9 @@ let emit_newline ctx =
   in
   Buffer.add_string ctx.buf "\n";
   Buffer.add_string ctx.buf indent;
-  ctx
+  let emit_after_newline = ctx.emit_after_newline in
+  let ctx = { ctx with emit_after_newline = [] } in
+  List.fold_left (fun ctx emit -> emit ctx) ctx emit_after_newline
 
 let increase_indent ctx =
   { ctx with indent = ctx.indent + 1 }
@@ -96,7 +103,24 @@ let  emit_if_none emit option ctx =
   | Some _ -> ctx
   | None -> emit ctx
 
-let print (_, statements, comments) =
+
+let schedule_emit_after_newline emit ctx =
+  { ctx with emit_after_newline = emit::ctx.emit_after_newline }
+
+let emit_scope scope ctx =
+  let scope, _ = Scope.peek_func_scope scope in
+  let bindings = Scope.bindings scope in
+  let emit_name name ctx =
+    ctx |> emit "// * " |> emit name
+  in
+  ctx
+  |> emit "// SCOPE:"
+  |> emit_newline
+  |> emit_list ~emit_sep:emit_newline emit_name bindings
+  |> emit_newline
+
+let print ?(emit_scope_info=false) program =
+  let (_, statements, comments) = program in
 
   let rec emit_comment (_, comment) ctx =
     match comment with
@@ -113,8 +137,16 @@ let print (_, statements, comments) =
     let ctx = emit_list emit_comment before ctx in
     {ctx with comments = after}
 
-  and emit_statement ((loc, statement) : S.t) ctx =
+  and emit_statement (node : S.t) ctx =
+    let (loc, statement) = node in
+    let ctx = { ctx with scope = Scope.on_statement ctx.scope node; } in
     let ctx = emit_comments loc ctx in
+
+    let ctx = if Scope.func_scope_boundary node && emit_scope_info
+      then schedule_emit_after_newline (emit_scope ctx.scope) ctx
+      else ctx
+    in
+
     match statement with
     | S.Empty -> ctx
 
@@ -151,15 +183,15 @@ let print (_, statements, comments) =
       ctx
       |> emit "break"
       |> emit_if_some
-          (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
-          label
+        (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
+        label
 
     | S.Continue { label } ->
       ctx
       |> emit "continue"
       |> emit_if_some
-          (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
-          label
+        (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
+        label
 
     | S.With { _object; body } ->
       ctx
@@ -181,17 +213,17 @@ let print (_, statements, comments) =
       |> emit_list
         ~emit_sep:emit_newline
         (fun (_loc, { S.Switch.Case. test; consequent }) ctx ->
-          ctx
-          |> (match test with
-              | None ->
-                emit "default:"
-              | Some test ->
-                fun ctx ->
-                  ctx |> emit "case " |> emit_expression test |> emit ":")
-          |> emit_list
-              ~emit_sep:emit_semicolon_and_newline
-              emit_statement
-              consequent
+           ctx
+           |> (match test with
+               | None ->
+                 emit "default:"
+               | Some test ->
+                 fun ctx ->
+                   ctx |> emit "case " |> emit_expression test |> emit ":")
+           |> emit_list
+             ~emit_sep:emit_semicolon_and_newline
+             emit_statement
+             consequent
         ) cases
       |> dedent
       |> emit "}"
@@ -351,7 +383,7 @@ let print (_, statements, comments) =
                 |> emit_kind kind
                 |> emit remote
                 |> emit_if_some (fun local -> emit @@ " as " ^ (snd local)) local
-           )
+          )
       in
       ctx
       |> emit "import"
@@ -363,13 +395,13 @@ let print (_, statements, comments) =
         ((default != None || namespace != None) && List.length named > 0)
         emit_comma
       |> emit_if
-          (List.length named > 0)
-          (fun ctx ->
-             ctx
-             |> emit "{"
-             |> emit_list ~emit_sep:emit_comma emit_specifier named
-             |> emit "}"
-          )
+        (List.length named > 0)
+        (fun ctx ->
+           ctx
+           |> emit "{"
+           |> emit_list ~emit_sep:emit_comma emit_specifier named
+           |> emit "}"
+        )
       |> emit_if (List.length specifiers > 0) (emit " from")
       |> emit " "
       |> emit_literal source
@@ -573,7 +605,7 @@ let print (_, statements, comments) =
       openingElement = (_, { J.Opening.  name; selfClosing; attributes; });
       children;
       closingElement;
-      } ctx =
+    } ctx =
     let emit_identifier ((_, { name }) : J.Identifier.t) =
       emit name
     in
@@ -612,7 +644,7 @@ let print (_, statements, comments) =
             emit_expression expr
           | J.ExpressionContainer.EmptyExpression _ ->
             emit_none
-         )
+        )
       |> emit "}"
     in
     ctx
@@ -629,16 +661,16 @@ let print (_, statements, comments) =
                  emit_identifier ident
                | J.Attribute.NamespacedName n_name ->
                  emit_namespaced_name n_name
-              )
+             )
            |> emit_if_some
              (fun value ctx ->
-               ctx
-               |> emit "="
-               |> (match value with
-                   | J.Attribute.Literal (loc, lit) ->
-                     emit_literal (loc, lit)
-                   | J.Attribute.ExpressionContainer (_, expr) ->
-                     emit_expression_container expr
+                ctx
+                |> emit "="
+                |> (match value with
+                    | J.Attribute.Literal (loc, lit) ->
+                      emit_literal (loc, lit)
+                    | J.Attribute.ExpressionContainer (_, expr) ->
+                      emit_expression_container expr
                   )
              )
              value
@@ -688,9 +720,9 @@ let print (_, statements, comments) =
             | C.Method.Get -> emit "get "
             | C.Method.Set -> emit "set ")
         |> emit_function
-            ~as_method:true
-            ~emit_id:(emit_object_property_key key)
-            value
+          ~as_method:true
+          ~emit_id:(emit_object_property_key key)
+          value
       | C.Body.Property (loc, {
           key;
           value;
@@ -767,8 +799,8 @@ let print (_, statements, comments) =
              ctx
              |> emit_object_pattern_property_key key
              |> emit_if
-                (not shorthand)
-                (fun ctx -> ctx |> emit ": " |> emit_pattern pattern)
+               (not shorthand)
+               (fun ctx -> ctx |> emit ": " |> emit_pattern pattern)
            | P.Object.RestProperty (_,{ argument }) ->
              ctx |> emit "..." |> emit_pattern argument
         ) properties
@@ -1022,5 +1054,17 @@ let print (_, statements, comments) =
     ctx |> emit_list emit_comment ctx.comments
   in
 
-  let ctx = { buf = Buffer.create 1024; indent = 0; comments = comments } in
+  let ctx = {
+    emit_after_newline = [];
+    buf = Buffer.create 1024;
+    indent = 0;
+    scope = Scope.on_program Scope.empty program;
+    comments = comments
+  } in
+
+  let ctx = if emit_scope_info
+    then emit_scope ctx.scope ctx
+    else ctx 
+  in
+
   Buffer.to_bytes (emit_statements statements ctx).buf

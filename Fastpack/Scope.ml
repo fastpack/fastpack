@@ -30,18 +30,21 @@ let new_func_scope scope = {
   bindings = StringSet.empty;
 }
 
+let peek_func_scope scope =
+  let rec peek_func_scope' scope trace =
+    match scope with
+    | { parent = Some parent; kind = BlockScope; _ } -> peek_func_scope' parent (scope::trace)
+    | _ -> scope, trace
+  in
+  peek_func_scope' scope []
+
 let add_block_binding scope name = {
   scope with
   bindings = StringSet.add name scope.bindings
 }
 
 let add_func_binding scope name =
-  let rec find_func_scope scope trace =
-    match scope with
-    | { parent = Some parent; kind = BlockScope; _ } -> find_func_scope parent (scope::trace)
-    | _ -> scope, trace
-  in
-  let func_scope, trace = find_func_scope scope [] in
+  let func_scope, trace = peek_func_scope scope in
   let func_scope = {
     func_scope
     with bindings = StringSet.add name func_scope.bindings
@@ -50,6 +53,29 @@ let add_func_binding scope name =
     (fun parent scope -> { scope with parent = Some parent; })
     func_scope
     trace
+
+let bindings scope =
+  StringSet.to_list scope.bindings
+
+let block_scope_boundary (_, node) = 
+  match node with
+  | Statement.Block _
+  | Statement.For _
+  | Statement.ForIn _
+  | Statement.ForOf _
+  | Statement.ClassDeclaration _
+  | Statement.FunctionDeclaration _ ->
+    true
+  | _ ->
+    false
+
+let func_scope_boundary (_, node) =
+  match node with
+  | Statement.ClassDeclaration _
+  | Statement.FunctionDeclaration _ ->
+    true
+  | _ ->
+    false
 
 let name_of_identifier (_, name) =
   name
@@ -88,7 +114,11 @@ let names_of_pattern node =
       names
   in names_of_pattern' [] node
 
-let grow scope ((_, node) as whole_node) =
+let rec on_program scope program = 
+  let (_, statements, _) = program in
+  List.fold_left on_statement scope statements
+
+and on_statement scope ((_, node) as whole_node) =
 
   let update_scope_with scope (_, node) =
     match node with
@@ -136,41 +166,19 @@ let grow scope ((_, node) as whole_node) =
       scope
   in
 
-  let block_scope_boundary (_, node) = 
-    match node with
-    | Statement.Block _
-    | Statement.For _
-    | Statement.ForIn _
-    | Statement.ForOf _
-    | Statement.ClassDeclaration _
-    | Statement.FunctionDeclaration _ ->
-      true
-    | _ ->
-      false
-  in
-
-  let func_scope_boundary (_, node) =
-    match node with
-    | Statement.ClassDeclaration _
-    | Statement.FunctionDeclaration _ ->
-      true
-    | _ ->
-      false
-  in
-
   let populate_scope ~break_on scope root_node =
     let scope = ref scope in
     let visit_statement node = 
       scope := update_scope_with !scope node;
       if node <> root_node && break_on node
-      then Fastpack.Visit.Break
-      else Fastpack.Visit.Continue
+      then Visit.Break
+      else Visit.Continue
     in
     let handler = {
-      Fastpack.Visit.default_visit_handler with
+      Visit.default_visit_handler with
       visit_statement = visit_statement
     } in
-    Fastpack.Visit.visit_statement handler root_node;
+    Visit.visit_statement handler root_node;
     !scope
   in
 

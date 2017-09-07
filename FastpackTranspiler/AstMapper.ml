@@ -7,7 +7,9 @@ module Variance = Ast.Variance
 module Class = Ast.Class
 module Function = Ast.Function
 
-type scope = ScopeBuilder.t
+module Scope = Fastpack.Scope
+
+type scope = Scope.t
 
 type mapper = {
   map_statement : scope -> Statement.t -> Statement.t;
@@ -35,7 +37,7 @@ let map_if_some scope handler map_with = function
   | Some item -> Some (map_with scope handler item)
 
 let rec map_statement scope handler ((loc, statement) : Statement.t) =
-  let scope = ScopeBuilder.grow scope (loc, statement) in
+  let scope = Scope.on_statement scope (loc, statement) in
   let statement = match statement with
     | Statement.Block { body } ->
       Statement.Block { body = map_list scope handler map_statement body }
@@ -402,7 +404,7 @@ and map_expression_or_spread scope handler item = match item with
     let argument = map_expression scope handler argument in
     Expression.Spread (loc, { argument })
 
-let map ?(scope=ScopeBuilder.empty) handler program =
+let map ?(scope=Scope.empty) handler program =
 
   let map_program ((loc, statements, comments): Ast.program) =
     let statements = map_list scope handler map_statement statements in
