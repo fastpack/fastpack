@@ -8,6 +8,9 @@ type t
  **)
 val empty : t
 
+(** Build a new scope given a node *)
+val build : t -> Ast.Statement.t -> t
+
 (**
  * Hook on visit Ast.Statement.t which produces the next scope which is going to
  * be used by the next statement within the statement list.

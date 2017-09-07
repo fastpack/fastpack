@@ -1,5 +1,5 @@
 let transpile _context program =
-  let map_function (loc, func) : (Loc.t * Ast.Function.t) =
+  let map_function _scope (loc, func) : (Loc.t * Ast.Function.t) =
     (loc,
      { func with
        predicate = None;
@@ -8,7 +8,7 @@ let transpile _context program =
      })
   in
 
-  let map_pattern (loc, pattern) : Ast.Pattern.t =
+  let map_pattern _scope (loc, pattern) : Ast.Pattern.t =
     let module P = Ast.Pattern in
     let pattern =
       match pattern with
@@ -21,7 +21,7 @@ let transpile _context program =
     (loc, pattern)
   in
 
-  let map_class (cls : Ast.Class.t) =
+  let map_class _scope (cls : Ast.Class.t) =
     let module C = Ast.Class in
     let (body_loc, {C.Body. body}) = cls.body in
     let body =
@@ -33,10 +33,10 @@ let transpile _context program =
                  prop with
                  typeAnnotation = None;
                  variance = None;
-             })
+               })
            | node -> node
         )
-      body
+        body
     in
     { cls with
       typeParameters = None;
@@ -46,23 +46,23 @@ let transpile _context program =
     }
   in
 
-  let map_expression ((loc, node) : Ast.Expression.t) =
+  let map_expression scope ((loc, node) : Ast.Expression.t) =
     let module E = Ast.Expression in
     let node =
       match node with
       | E.TypeCast { expression = (_, expression); _ } -> expression
-      | E.Class cls -> E.Class (map_class cls)
+      | E.Class cls -> E.Class (map_class scope cls)
       | _ -> node
     in
     (loc, node)
   in
 
-  let map_statement ((loc, stmt) : Ast.Statement.t) =
+  let map_statement scope ((loc, stmt) : Ast.Statement.t) =
     let module S = Ast.Statement in
     let stmt =
       match stmt with
       | S.ClassDeclaration cls ->
-        S.ClassDeclaration (map_class cls)
+        S.ClassDeclaration (map_class scope cls)
       | S.ImportDeclaration ({
           importKind = S.ImportDeclaration.ImportValue;
           specifiers = (_ :: _) as specifiers; _

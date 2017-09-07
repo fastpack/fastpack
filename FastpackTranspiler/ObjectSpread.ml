@@ -210,7 +210,7 @@ end
 
 let transpile context program =
 
-  let map_statement ((loc, node) : S.t) =
+  let map_statement _scope ((loc, node) : S.t) =
     let module T = TranspileObjectSpreadRest in
     let node = match node with
       | S.VariableDeclaration d ->
@@ -223,7 +223,7 @@ let transpile context program =
     loc, node
   in
 
-  let map_expression ((loc, node) : E.t) =
+  let map_expression _scope ((loc, node) : E.t) =
     let node = match node with
       | E.Object obj when TranspileObjectSpread.test obj ->
         let _, node = TranspileObjectSpread.transpile obj in node

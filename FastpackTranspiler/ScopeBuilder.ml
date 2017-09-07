@@ -88,6 +88,27 @@ let names_of_pattern node =
       names
   in names_of_pattern' [] node
 
+let build scope ((_, node) : Statement.t) =
+  match node with
+  | Statement.Block _ ->
+    let scope = new_block_scope scope in
+    scope
+  | Statement.ForIn _ ->
+    let scope = new_block_scope scope in
+    scope
+  | Statement.ForOf _ ->
+    let scope = new_block_scope scope in
+    scope
+  | Statement.FunctionDeclaration _ ->
+    let scope = new_funct_scope scope in
+    scope
+  | Statement.With _ ->
+    (* XXX: This is the case where we can't statically analyze the scope *)
+    scope
+  | _ ->
+    (* Return an existing scope *)
+    scope
+
 let visit_statement_v scope (_, node) =
   match node with
   | Statement.Block _ ->
