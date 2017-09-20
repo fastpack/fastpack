@@ -403,9 +403,11 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit " "
         |> emit_if_some emit_expression update
         |> emit ")"
+        |> emit_scope ~sep:", " ~emit_newline_after:false (Scope.block_scope statement)
         |> indent
         |> emit_statement body
         |> dedent
+        |> remove_scope
 
       | S.ForIn { left; right; body; each } ->
         assert (not each);

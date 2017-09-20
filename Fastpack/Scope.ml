@@ -77,7 +77,6 @@ let collect_variable_declarations add =
        List.iter add (names_of_pattern id)
     )
 
-
 let block_scope stmt scope =
   let bindings = ref (M.empty) in
   let add_binding typ name =
@@ -86,6 +85,9 @@ let block_scope stmt scope =
   let () =
     match stmt with
     (* TODO: For, FonIn, ForOf *)
+    | S.For { init = Some (S.For.InitDeclaration (_, {declarations; _})); _ } ->
+      collect_variable_declarations (add_binding Variable) declarations;
+      ()
     | S.Block { body } ->
       List.iter
         (fun (_, stmt) ->
@@ -126,6 +128,7 @@ let func_scope args stmts scope =
   let visit_statement ((_, stmt) : S.t) =
     match stmt with
     (* TODO: Import *)
+    (* TODO: For, FonIn, ForOf where declaration is kind=Var*)
     | S.ClassDeclaration { id; _} ->
       let () =
         match id, !level with
@@ -151,8 +154,11 @@ let func_scope args stmts scope =
   in
 
   let handler = {
-    Visit.default_visit_handler with
+    Visit.
     visit_statement;
+    visit_expression = (fun _ -> Visit.Break);
+    visit_pattern = (fun _ -> Visit.Break);
+    visit_function = (fun _ -> Visit.Break);
     enter_statement;
     leave_statement;
   } in

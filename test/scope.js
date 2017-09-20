@@ -13,5 +13,14 @@ if (true) {
   // should not be in program scope
   let b1 = 2;
 
-  class C {}
+  class C {
+    constructor(props) {
+      super();
+      var a2 = 1;
+    }
+  }
 }
+
+for(let i = 0, l = 10; i < l; i++)
+  console.log(i);
+
