@@ -1,3 +1,7 @@
+import X from "defaultTest";
+import * as Y from "namespaceTest";
+import {A, B as C} from "namedTest";
+
 var a = 1;
 let b = 2;
 function F(a, b, c) {
@@ -14,13 +18,14 @@ if (true) {
   let b1 = 2;
 
   class C {
-    constructor(props) {
+    constructor(prop1, ...props) {
       super();
       var a2 = 1;
     }
   }
 }
 
-for(let i = 0, l = 10; i < l; i++)
+for(let i = 0, l = 10; i < l; i++) {
   console.log(i);
-
+  let j = 1;
+}

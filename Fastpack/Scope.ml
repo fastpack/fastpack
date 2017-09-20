@@ -6,11 +6,15 @@ type t = {
   parent : t option;
   bindings : binding M.t;
 }
-and binding = Imported
+and binding = Import of import
             | Function
             | Argument
             | Class
             | Variable
+and import = {
+  source : string;
+  remote: string option;
+}
 
 let empty = { bindings = M.empty; parent = None; }
 
@@ -19,9 +23,11 @@ let scope_to_str ?(sep="\n") scope =
   |> M.bindings
   |> List.map
     (fun (name, typ) ->
-       name ^ " : " ^
+       name ^ " -> " ^
        (match typ with
-        | Imported -> "Imported"
+        | Import { source; remote } ->
+          let remote = (match remote with | None -> "*" | Some n -> n) in
+          Printf.sprintf "Import %s from '%s'" remote source
         | Function -> "Function"
         | Class -> "Class"
         | Argument -> "Argument"
@@ -84,10 +90,18 @@ let block_scope stmt scope =
   in
   let () =
     match stmt with
-    (* TODO: For, FonIn, ForOf *)
-    | S.For { init = Some (S.For.InitDeclaration (_, {declarations; _})); _ } ->
+    | S.For { init = Some (S.For.InitDeclaration (_, { declarations; kind })); _ }
+      when kind = S.VariableDeclaration.Let
+        || kind = S.VariableDeclaration.Const ->
       collect_variable_declarations (add_binding Variable) declarations;
-      ()
+    | S.ForIn { left = S.ForIn.LeftDeclaration (_, { declarations; kind }); _ }
+      when kind = S.VariableDeclaration.Let
+        || kind = S.VariableDeclaration.Const ->
+      collect_variable_declarations (add_binding Variable) declarations;
+    | S.ForOf { left = S.ForOf.LeftDeclaration (_, { declarations; kind }); _ }
+      when kind = S.VariableDeclaration.Let
+        || kind = S.VariableDeclaration.Const ->
+      collect_variable_declarations (add_binding Variable) declarations;
     | S.Block { body } ->
       List.iter
         (fun (_, stmt) ->
@@ -103,7 +117,9 @@ let block_scope stmt scope =
         body
     | _ -> ()
   in
-  { bindings = !bindings; parent = Some scope; }
+  if !bindings != M.empty
+  then { bindings = !bindings; parent = Some scope; }
+  else scope
 
 
 let func_scope args stmts scope =
@@ -127,8 +143,32 @@ let func_scope args stmts scope =
 
   let visit_statement ((_, stmt) : S.t) =
     match stmt with
-    (* TODO: Import *)
-    (* TODO: For, FonIn, ForOf where declaration is kind=Var*)
+    | S.ImportDeclaration {
+        importKind = S.ImportDeclaration.ImportValue;
+        source = (_, { raw = source; _ });
+        specifiers
+      } ->
+      (* TODO: replace 'raw' above with the String literal value *)
+      List.iter
+        (fun spec ->
+           match spec with
+           | S.ImportDeclaration.ImportNamedSpecifier { local; remote; _ } ->
+             let local =
+               match local with
+               | Some name -> name
+               | None -> remote
+             in add_binding
+               (Import {remote = Some (name_of_identifier remote); source})
+               (name_of_identifier local)
+           | S.ImportDeclaration.ImportDefaultSpecifier (_, name) ->
+             add_binding (Import { remote = Some "default"; source }) name
+           | S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name)) ->
+             add_binding (Import { remote = None; source }) name
+
+        )
+        specifiers;
+      Visit.Break;
+
     | S.ClassDeclaration { id; _} ->
       let () =
         match id, !level with
@@ -150,6 +190,24 @@ let func_scope args stmts scope =
           collect_variable_declarations (add_binding Variable) declarations
         | _ -> ()
       in Visit.Break
+    | S.For { init = Some (S.For.InitDeclaration (_, {
+        declarations;
+        kind = S.VariableDeclaration.Var
+      })); _ } ->
+      collect_variable_declarations (add_binding Variable) declarations;
+      Visit.Continue
+    | S.ForIn { left = S.ForIn.LeftDeclaration (_, {
+        declarations;
+        kind = S.VariableDeclaration.Var;
+      }); _ } ->
+      collect_variable_declarations (add_binding Variable) declarations;
+      Visit.Continue
+    | S.ForOf { left = S.ForOf.LeftDeclaration (_, {
+        declarations;
+        kind = S.VariableDeclaration.Var;
+      }); _ } ->
+      collect_variable_declarations (add_binding Variable) declarations;
+      Visit.Continue
     | _ -> Visit.Continue
   in
 

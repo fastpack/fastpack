@@ -393,9 +393,15 @@ let print ?(with_scope=false) (_, statements, comments) =
       | S.For { init; test; update; body } ->
         ctx
         |> emit "for ("
-        |> emit_if_some (fun init -> match init with
-            | S.For.InitDeclaration decl -> emit_variable_declaration decl
-            | S.For.InitExpression expression -> emit_expression expression) init
+        |> emit_if_some
+          (fun init ->
+             match init with
+             | S.For.InitDeclaration decl ->
+               emit_variable_declaration ~emit_sep:emit_comma decl
+             | S.For.InitExpression expression ->
+               emit_expression expression
+          )
+          init
         |> emit_semicolon
         |> emit " "
         |> emit_if_some emit_expression test
@@ -403,7 +409,10 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit " "
         |> emit_if_some emit_expression update
         |> emit ")"
-        |> emit_scope ~sep:", " ~emit_newline_after:false (Scope.block_scope statement)
+        |> emit_scope
+          ~sep:", "
+          ~emit_newline_after:false
+          (Scope.block_scope statement)
         |> indent
         |> emit_statement body
         |> dedent
@@ -1123,7 +1132,9 @@ let print ?(with_scope=false) (_, statements, comments) =
   and emit_identifier ((loc, identifier) : Ast.Identifier.t) ctx =
     ctx |> emit_comments loc |> emit identifier
 
-  and emit_variable_declaration (loc, { declarations; kind }) ctx =
+  and emit_variable_declaration
+      ?(emit_sep=emit_comma_and_newline)
+      (loc, { declarations; kind }) ctx =
     ctx
     |> emit_comments loc
     |> emit (match kind with
@@ -1132,7 +1143,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         | S.VariableDeclaration.Const  -> "const ")
     |> increase_indent
     |> emit_list
-      ~emit_sep:emit_comma_and_newline
+      ~emit_sep
       emit_variable_declarator
       declarations
     |> decrease_indent
