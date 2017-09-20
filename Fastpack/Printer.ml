@@ -25,6 +25,9 @@ type printer_ctx = {
 
   (** Last statement *)
   parent_stmt : S.t';
+
+  (** Current scope *)
+  scope: Scope.t;
 }
 
 module Parens = struct
@@ -212,9 +215,44 @@ let  emit_if_none emit option ctx =
   | Some _ -> ctx
   | None -> emit ctx
 
-let print (_, statements, comments) =
+let print ?(with_scope=false) (_, statements, comments) =
 
-  let rec emit_comment (_, comment) ctx =
+  let rec emit_scope ?(sep="\n") ?(emit_newline_after=true) get_scope ctx =
+    if with_scope
+    then
+      let ctx = { ctx with scope = get_scope ctx.scope } in
+      let scope_str = Scope.scope_to_str ~sep ctx.scope in
+      let lines = String.lines scope_str in
+      let emit_scope_str =
+        if List.length lines > 1
+        then
+          fun ctx ->
+            let ctx = emit_newline ctx in
+            List.fold_left
+              (fun ctx s -> ctx |> emit s |> emit_newline)
+              ctx
+              lines
+        else
+          emit scope_str
+      in
+      ctx
+      |> emit "/* SCOPE: "
+      |> emit_scope_str
+      |> emit " */"
+      |> emit_if emit_newline_after emit_newline
+    else
+      ctx
+
+  and remove_scope ctx =
+    if with_scope
+    then
+      match ctx.scope.parent with
+      | Some scope -> { ctx with scope }
+      | None -> failwith "Should not happen"
+    else
+      ctx
+
+  and emit_comment (_, comment) ctx =
     match comment with
     | Ast.Comment.Line s ->
       ctx |> emit "//" |> emit s |> emit_newline
@@ -240,7 +278,9 @@ let print (_, statements, comments) =
         ctx
         |> emit "{"
         |> indent
+        |> emit_scope (Scope.block_scope statement)
         |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
+        |> remove_scope
         |> dedent
         |> emit "}"
 
@@ -993,6 +1033,20 @@ let print (_, statements, comments) =
       typeParameters
     }) ctx =
     (** TODO: handle `predicate`, `expression` ? *)
+    let get_scope statements =
+      let params, rest = params in
+      let arguments =
+        List.flatten
+        @@ List.append
+          (List.map Scope.names_of_pattern params)
+          (match rest with
+           | Some (_, { F.RestElement.  argument }) ->
+             [Scope.names_of_pattern argument]
+           | None -> []
+          )
+      in
+      Scope.func_scope arguments statements
+    in
     let omit_parameter_parens =
       match as_arrow, fst params, snd params with
       | true, [(_, P.Object _)], _ -> false
@@ -1021,7 +1075,17 @@ let print (_, statements, comments) =
     |> emit_if_some emit_type_annotation returnType
     |> emit_space
     |> (match body with
-        | F.BodyBlock block -> emit_block block
+        | F.BodyBlock (loc, { body; }) ->
+          fun ctx ->
+            ctx
+            |> emit_comments loc
+            |> emit "{"
+            |> indent
+            |> emit_scope (get_scope body)
+            |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
+            |> remove_scope
+            |> dedent
+            |> emit "}"
         | F.BodyExpression expr ->
           fun ctx ->
             let parens =
@@ -1030,9 +1094,11 @@ let print (_, statements, comments) =
               | _ -> false
             in
             ctx
+            |> emit_scope ~sep:", " ~emit_newline_after:false (get_scope [])
             |> emit_if parens (emit "(")
             |> emit_expression ~parens:false expr
             |> emit_if parens (emit ")")
+            |> remove_scope
        )
 
   and emit_type_annotation (loc, typeAnnotation) ctx =
@@ -1187,11 +1253,16 @@ let print (_, statements, comments) =
     ctx |> emit_list emit_comment ctx.comments
   in
 
-  let ctx = {
+  let get_initial_scope =
+    Scope.func_scope [] statements
+  in
+
+  let ctx = emit_scope get_initial_scope {
     buf = Buffer.create 1024;
     indent = 0;
     comments = comments;
     parent_expr = None;
     parent_stmt = S.Empty;
+    scope = Scope.empty;
   } in
   Buffer.to_bytes (emit_statements statements ctx).buf

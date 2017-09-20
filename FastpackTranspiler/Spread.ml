@@ -374,7 +374,7 @@ let get_handler handler transpile_source scope
       Visit.Break
     | _ -> Visit.Continue
   in {
-    Visit.
+    Visit.default_visit_handler with
     visit_statement;
     visit_expression;
     visit_function;

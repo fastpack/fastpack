@@ -205,7 +205,7 @@ let get_handler handler _ _ { Workspace. sub; patch_loc; remove_loc; remove; _} 
     | _ -> Visit.Continue;
   in
   {
-    Visit.
+    Visit.default_visit_handler with
     visit_statement;
     visit_expression;
     visit_function;

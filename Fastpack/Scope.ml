@@ -1,10 +1,34 @@
 module S = Ast.Statement
 module P = Ast.Pattern
+module M = Map.Make(String)
 
-type name = Imported
-          | Function
-          | Class
-          | Variable
+type t = {
+  parent : t option;
+  bindings : binding M.t;
+}
+and binding = Imported
+            | Function
+            | Argument
+            | Class
+            | Variable
+
+let empty = { bindings = M.empty; parent = None; }
+
+let scope_to_str ?(sep="\n") scope =
+  scope.bindings
+  |> M.bindings
+  |> List.map
+    (fun (name, typ) ->
+       name ^ " : " ^
+       (match typ with
+        | Imported -> "Imported"
+        | Function -> "Function"
+        | Class -> "Class"
+        | Argument -> "Argument"
+        | Variable -> "Variable"
+       )
+    )
+  |> String.concat sep
 
 let name_of_identifier (_, name) =
   name
@@ -43,36 +67,98 @@ let names_of_pattern node =
       names
   in names_of_pattern' [] node
 
-let update_scope _type _name =
-  failwith "not implemented"
+let update_bindings name typ bindings =
+  (* TODO: implement Variable priority over everything else *)
+  M.add name typ bindings
 
-let func_scope stmts =
+let collect_variable_declarations add =
+  List.iter
+    (fun (_, {S.VariableDeclaration.Declarator. id; _ }) ->
+       List.iter add (names_of_pattern id)
+    )
+
+
+let block_scope stmt scope =
+  let bindings = ref (M.empty) in
+  let add_binding typ name =
+    bindings := update_bindings name typ !bindings
+  in
+  let () =
+    match stmt with
+    (* TODO: For, FonIn, ForOf *)
+    | S.Block { body } ->
+      List.iter
+        (fun (_, stmt) ->
+           match stmt with
+           | S.ClassDeclaration { id = Some (_, name); _} ->
+             add_binding Class name
+           | S.VariableDeclaration { kind; declarations }
+             when kind = S.VariableDeclaration.Let
+               || kind = S.VariableDeclaration.Const ->
+             collect_variable_declarations (add_binding Variable) declarations
+           | _ -> ()
+        )
+        body
+    | _ -> ()
+  in
+  { bindings = !bindings; parent = Some scope; }
+
+
+let func_scope args stmts scope =
+  let bindings =
+    ref @@ List.fold_left (fun m key -> M.add key Argument m) M.empty args
+  in
+
+  let add_binding typ name =
+    bindings := update_bindings name typ !bindings
+  in
+
+  let level = ref 0 in
+
+  let enter_statement _ =
+    level := !level + 1
+  in
+
+  let leave_statement _ =
+    level := !level - 1
+  in
+
   let visit_statement ((_, stmt) : S.t) =
     match stmt with
+    (* TODO: Import *)
     | S.ClassDeclaration { id; _} ->
       let () =
-        match id with
-        | Some (_, name) -> update_scope Class name
-        | None -> ()
+        match id, !level with
+        | Some (_, name), 1 -> add_binding Class name
+        | _ -> ()
       in Visit.Break
     | S.FunctionDeclaration { id; _ } ->
       let () =
         match id with
-        | Some (_, name) -> update_scope Function name
+        | Some (_, name) -> add_binding Function name
         | None -> ()
       in Visit.Break
-    | S.VariableDeclaration { kind = S.VariableDeclaration.Var; declarations } ->
+    | S.VariableDeclaration { kind; declarations } ->
       let () =
-        List.iter
-          (fun (_, {S.VariableDeclaration.Declarator. id; _ }) ->
-             List.iter (update_scope Variable) @@ names_of_pattern id
-          )
-          declarations
+        match kind, !level with
+        | S.VariableDeclaration.Let, 1
+        | S.VariableDeclaration.Const, 1
+        | S.VariableDeclaration.Var, _ ->
+          collect_variable_declarations (add_binding Variable) declarations
+        | _ -> ()
       in Visit.Break
     | _ -> Visit.Continue
   in
+
   let handler = {
     Visit.default_visit_handler with
-    visit_statement = visit_statement
+    visit_statement;
+    enter_statement;
+    leave_statement;
   } in
-  Visit.visit_list handler Visit.visit_statement stmts
+  let () =
+    Visit.visit_list handler Visit.visit_statement stmts
+  in {
+    bindings = !bindings;
+    parent = Some scope;
+  }
