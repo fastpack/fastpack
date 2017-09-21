@@ -1,4 +1,5 @@
 module S = Ast.Statement
+module F = Ast.Function
 module P = Ast.Pattern
 module M = Map.Make(String)
 
@@ -10,7 +11,9 @@ and binding = Import of import
             | Function
             | Argument
             | Class
-            | Variable
+            | Var
+            | Let
+            | Const
 and import = {
   source : string;
   remote: string option;
@@ -31,7 +34,9 @@ let scope_to_str ?(sep="\n") scope =
         | Function -> "Function"
         | Class -> "Class"
         | Argument -> "Argument"
-        | Variable -> "Variable"
+        | Var -> "Var"
+        | Let -> "Let"
+        | Const -> "Const"
        )
     )
   |> String.concat sep
@@ -77,13 +82,19 @@ let update_bindings name typ bindings =
   (* TODO: implement Variable priority over everything else *)
   M.add name typ bindings
 
-let collect_variable_declarations add =
+let collect_declarations kind add =
+  let typ =
+    match kind with
+    | S.VariableDeclaration.Let -> Let
+    | S.VariableDeclaration.Const -> Const
+    | S.VariableDeclaration.Var -> Var
+  in
   List.iter
     (fun (_, {S.VariableDeclaration.Declarator. id; _ }) ->
-       List.iter add (names_of_pattern id)
+       List.iter (add typ) (names_of_pattern id)
     )
 
-let block_scope stmt scope =
+let of_statement stmt scope =
   let bindings = ref (M.empty) in
   let add_binding typ name =
     bindings := update_bindings name typ !bindings
@@ -93,15 +104,15 @@ let block_scope stmt scope =
     | S.For { init = Some (S.For.InitDeclaration (_, { declarations; kind })); _ }
       when kind = S.VariableDeclaration.Let
         || kind = S.VariableDeclaration.Const ->
-      collect_variable_declarations (add_binding Variable) declarations;
+      collect_declarations kind add_binding declarations;
     | S.ForIn { left = S.ForIn.LeftDeclaration (_, { declarations; kind }); _ }
       when kind = S.VariableDeclaration.Let
         || kind = S.VariableDeclaration.Const ->
-      collect_variable_declarations (add_binding Variable) declarations;
+      collect_declarations kind add_binding declarations;
     | S.ForOf { left = S.ForOf.LeftDeclaration (_, { declarations; kind }); _ }
       when kind = S.VariableDeclaration.Let
         || kind = S.VariableDeclaration.Const ->
-      collect_variable_declarations (add_binding Variable) declarations;
+      collect_declarations kind add_binding declarations;
     | S.Block { body } ->
       List.iter
         (fun (_, stmt) ->
@@ -111,7 +122,7 @@ let block_scope stmt scope =
            | S.VariableDeclaration { kind; declarations }
              when kind = S.VariableDeclaration.Let
                || kind = S.VariableDeclaration.Const ->
-             collect_variable_declarations (add_binding Variable) declarations
+             collect_declarations kind add_binding declarations
            | _ -> ()
         )
         body
@@ -122,7 +133,7 @@ let block_scope stmt scope =
   else scope
 
 
-let func_scope args stmts scope =
+let of_function_body args stmts scope =
   let bindings =
     ref @@ List.fold_left (fun m key -> M.add key Argument m) M.empty args
   in
@@ -187,26 +198,26 @@ let func_scope args stmts scope =
         | S.VariableDeclaration.Let, 1
         | S.VariableDeclaration.Const, 1
         | S.VariableDeclaration.Var, _ ->
-          collect_variable_declarations (add_binding Variable) declarations
+          collect_declarations kind add_binding declarations
         | _ -> ()
       in Visit.Break
     | S.For { init = Some (S.For.InitDeclaration (_, {
         declarations;
         kind = S.VariableDeclaration.Var
       })); _ } ->
-      collect_variable_declarations (add_binding Variable) declarations;
+      collect_declarations S.VariableDeclaration.Var add_binding declarations;
       Visit.Continue
     | S.ForIn { left = S.ForIn.LeftDeclaration (_, {
         declarations;
         kind = S.VariableDeclaration.Var;
       }); _ } ->
-      collect_variable_declarations (add_binding Variable) declarations;
+      collect_declarations S.VariableDeclaration.Var add_binding declarations;
       Visit.Continue
     | S.ForOf { left = S.ForOf.LeftDeclaration (_, {
         declarations;
         kind = S.VariableDeclaration.Var;
       }); _ } ->
-      collect_variable_declarations (add_binding Variable) declarations;
+      collect_declarations S.VariableDeclaration.Var add_binding declarations;
       Visit.Continue
     | _ -> Visit.Continue
   in
@@ -226,3 +237,21 @@ let func_scope args stmts scope =
     bindings = !bindings;
     parent = Some scope;
   }
+
+let of_function (_, {F. params; body; _}) =
+  let params, rest = params in
+  let arguments =
+    List.flatten
+    @@ List.append
+      (List.map names_of_pattern params)
+      (match rest with
+       | Some (_, { F.RestElement.  argument }) ->
+         [names_of_pattern argument]
+       | None -> []
+      )
+  in
+  match body with
+  | F.BodyBlock (_, { body; }) -> of_function_body arguments body
+  | F.BodyExpression _ -> of_function_body arguments []
+
+let of_program = of_function_body []

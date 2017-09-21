@@ -278,7 +278,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         ctx
         |> emit "{"
         |> indent
-        |> emit_scope (Scope.block_scope statement)
+        |> emit_scope (Scope.of_statement statement)
         |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
         |> remove_scope
         |> dedent
@@ -412,7 +412,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_scope
           ~sep:", "
           ~emit_newline_after:false
-          (Scope.block_scope statement)
+          (Scope.of_statement statement)
         |> indent
         |> emit_statement body
         |> dedent
@@ -1031,7 +1031,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     |> emit ")"
     |> emit_newline
 
-  and emit_function ?(as_arrow=false) ?(as_method=false) ?emit_id (loc, {
+  and emit_function ?(as_arrow=false) ?(as_method=false) ?emit_id ((loc, {
       F.
       id;
       params;
@@ -1042,22 +1042,8 @@ let print ?(with_scope=false) (_, statements, comments) =
       expression = _expression;
       returnType;
       typeParameters
-    }) ctx =
+    }) as f) ctx =
     (** TODO: handle `predicate`, `expression` ? *)
-    let get_scope statements =
-      let params, rest = params in
-      let arguments =
-        List.flatten
-        @@ List.append
-          (List.map Scope.names_of_pattern params)
-          (match rest with
-           | Some (_, { F.RestElement.  argument }) ->
-             [Scope.names_of_pattern argument]
-           | None -> []
-          )
-      in
-      Scope.func_scope arguments statements
-    in
     let omit_parameter_parens =
       match as_arrow, fst params, snd params with
       | true, [(_, P.Object _)], _ -> false
@@ -1092,7 +1078,7 @@ let print ?(with_scope=false) (_, statements, comments) =
             |> emit_comments loc
             |> emit "{"
             |> indent
-            |> emit_scope (get_scope body)
+            |> emit_scope (Scope.of_function f)
             |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
             |> remove_scope
             |> dedent
@@ -1105,7 +1091,7 @@ let print ?(with_scope=false) (_, statements, comments) =
               | _ -> false
             in
             ctx
-            |> emit_scope ~sep:", " ~emit_newline_after:false (get_scope [])
+            |> emit_scope ~sep:", " ~emit_newline_after:false (Scope.of_function f)
             |> emit_if parens (emit "(")
             |> emit_expression ~parens:false expr
             |> emit_if parens (emit ")")
@@ -1266,11 +1252,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     ctx |> emit_list emit_comment ctx.comments
   in
 
-  let get_initial_scope =
-    Scope.func_scope [] statements
-  in
-
-  let ctx = emit_scope get_initial_scope {
+  let ctx = emit_scope (Scope.of_program statements) {
     buf = Buffer.create 1024;
     indent = 0;
     comments = comments;
