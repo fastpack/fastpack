@@ -38,7 +38,7 @@ install:
 		flow_parser=0.47.0      \
 		fileutils=0.5.2         \
 		cmdliner=1.0.0          \
-		jbuilder=1.0+beta12     \
+		jbuilder=1.0+beta13     \
 		merlin=3.0.2 lwt=3.1.0
 
 conf-merlin:
