@@ -2,32 +2,10 @@ let transpile () =
   let scope = FastpackTranspiler.Util.make_scope () in
   FastpackTranspiler.Main.transpile_source scope
 
-let print source =
-  let parse_options = Some Parser_env.({
-      esproposal_class_instance_fields = true;
-      esproposal_class_static_fields = true;
-      esproposal_decorators = true;
-      esproposal_export_star_as = true;
-      types = true;
-      use_strict = false;
-    }) in
-  let (program, _errors) = Parser_flow.program source ~parse_options in
-  let result = Fastpack.Printer.print program in
+let print ?(with_scope=false) source =
+  let program, _ = Fastpack.Parser.parse_source source in
+  let result = Fastpack.Printer.print ~with_scope program in
   result
-
-let print_with_scope source =
-  let parse_options = Some Parser_env.({
-      esproposal_class_instance_fields = true;
-      esproposal_class_static_fields = true;
-      esproposal_decorators = true;
-      esproposal_export_star_as = true;
-      types = true;
-      use_strict = false;
-    }) in
-  let (program, _errors) = Parser_flow.program source ~parse_options in
-  let result = Fastpack.Printer.print ~with_scope:true program in
-  result
-
 
 let transpile_ast () =
   FastpackTranspiler.transpile_source [
@@ -38,11 +16,11 @@ let transpile_ast () =
 
 let tests = [
   ("object-spread-and-rest-operators.js", transpile ());
-  ("strip-flow.js", transpile_ast ());
-  ("printer.js", print);
-  ("transpile-react-jsx.js", transpile_ast ());
   ("transpile-class.js", transpile_ast ());
-  ("scope.js", print_with_scope);
+  ("transpile-react-jsx.js", transpile_ast ());
+  ("transpile-strip-flow.js", transpile_ast ());
+  ("print.js", print ~with_scope:false);
+  ("print-with-scope.js", print ~with_scope:true);
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
   (* ("current.js", print); *)
 ]

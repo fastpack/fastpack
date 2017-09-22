@@ -56,7 +56,7 @@ let rec transpile program scope patcher =
 
 and transpile_source scope source =
   let module Workspace = Fastpack.Workspace in
-  let (program, _errors) = Parser_flow.program_file source None in
+  let program, _ = Fastpack.Parser.parse_source source in
   let workspace = ref (Workspace.of_string source) in
   let to_string workspace =
     let ctx = Fastpack.Module.DependencyMap.empty in

@@ -26,15 +26,5 @@ let transpile transpilers program =
 
 (** Transpile source code using a list of transpilers *)
 let transpile_source transpilers source =
-  let parse_options = Some Parser_env.({
-      esproposal_class_instance_fields = true;
-      esproposal_class_static_fields = true;
-      esproposal_decorators = true;
-      esproposal_export_star_as = true;
-      types = true;
-      use_strict = false;
-    })
-  in
-  let (program, _errors) = Parser_flow.program source ~parse_options in
-  let program = transpile transpilers program in
-  Fastpack.Printer.print program
+  let program, _ = Fastpack.Parser.parse_source source in
+  Fastpack.Printer.print (transpile transpilers program)

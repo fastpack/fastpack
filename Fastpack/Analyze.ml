@@ -1,5 +1,6 @@
 let analyze _id filename source =
-  let (program, _errors) = Parser_flow.program_file source None in
+  let program, _ = Parser.parse_source source in
+
   let module S = Ast.Statement in
   let module E = Ast.Expression in
   let module L = Ast.Literal in
