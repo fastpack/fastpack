@@ -79,8 +79,18 @@ let names_of_pattern node =
   in names_of_pattern' [] node
 
 let update_bindings name typ bindings =
-  (* TODO: implement Variable priority over everything else *)
-  M.add name typ bindings
+  match M.get name bindings, typ with
+  | None, _
+  | Some Argument, _
+  | Some Function, Var
+  | Some Function, Function
+  | Some Var, Var ->
+    M.add name typ bindings
+  | Some Var, Function ->
+    bindings
+  | _ -> (* TODO: track the Loc.t of bindings and raise the nice error *)
+    failwith ("Naming collision: " ^ name)
+
 
 let collect_declarations kind add =
   let typ =
@@ -255,3 +265,12 @@ let of_function (_, {F. params; body; _}) =
   | F.BodyExpression _ -> of_function_body arguments []
 
 let of_program = of_function_body []
+
+let rec get_binding name {bindings; parent} =
+  let binding = M.get name bindings in
+  match binding, parent with
+  | None, Some parent -> get_binding name parent
+  | _ -> binding
+
+let has_binding name scope =
+  (get_binding name scope) != None
