@@ -12,6 +12,8 @@ type visit_action = Continue | Break
 
 type visit_handler = {
   visit_statement : Statement.t -> visit_action;
+  enter_statement : Statement.t -> unit;
+  leave_statement : Statement.t -> unit;
   visit_expression : Expression.t -> visit_action;
   visit_function : (Loc.t * Function.t) -> visit_action;
   visit_pattern : Pattern.t -> visit_action;
@@ -21,6 +23,8 @@ let do_nothing _ = Continue
 
 let default_visit_handler =
   {
+    enter_statement = (fun _ -> ());
+    leave_statement = (fun _ -> ());
     visit_statement = do_nothing;
     visit_expression = do_nothing;
     visit_function = do_nothing;
@@ -35,115 +39,119 @@ let visit_if_some handler visit = function
   | Some item -> visit handler item
 
 let rec visit_statement handler ((loc, statement) : Statement.t) =
+  let () = handler.enter_statement (loc, statement) in
   let action = handler.visit_statement (loc, statement) in
-  match action with
-  | Break -> ()
-  | Continue ->
-    match statement with
-    | Statement.Empty ->
-      ()
+  let () =
+    match action with
+    | Break -> ()
+    | Continue ->
+      match statement with
+      | Statement.Empty ->
+        ()
 
-    | Statement.Block { body } ->
-      visit_list handler visit_statement body
+      | Statement.Block { body } ->
+        visit_list handler visit_statement body
 
-    | Statement.Expression { expression; directive = _directive } ->
-      visit_expression handler expression
+      | Statement.Expression { expression; directive = _directive } ->
+        visit_expression handler expression
 
-    | Statement.If { test; consequent; alternate } ->
-      visit_expression handler test;
-      visit_statement handler consequent;
-      visit_if_some handler visit_statement alternate
+      | Statement.If { test; consequent; alternate } ->
+        visit_expression handler test;
+        visit_statement handler consequent;
+        visit_if_some handler visit_statement alternate
 
-    | Statement.Labeled { label = (_loc, _label); body } ->
-      visit_statement handler body
+      | Statement.Labeled { label = (_loc, _label); body } ->
+        visit_statement handler body
 
-    | Statement.Break { label = _label } ->
-      ()
+      | Statement.Break { label = _label } ->
+        ()
 
-    | Statement.Continue { label = _label } ->
-      ()
+      | Statement.Continue { label = _label } ->
+        ()
 
-    | Statement.With { _object; body } ->
-      visit_statement handler body
+      | Statement.With { _object; body } ->
+        visit_statement handler body
 
-    | Statement.TypeAlias {
-        id = _id;
-        typeParameters = _typeParameters;
-        right = _right
-      } ->
-      ()
+      | Statement.TypeAlias {
+          id = _id;
+          typeParameters = _typeParameters;
+          right = _right
+        } ->
+        ()
 
-    | Statement.Switch { discriminant; cases } ->
-      visit_expression handler discriminant;
-      visit_list handler (fun handler (_loc, { Statement.Switch.Case. test; consequent }) ->
-          visit_if_some handler visit_expression test;
-          visit_list handler visit_statement consequent
-        ) cases
+      | Statement.Switch { discriminant; cases } ->
+        visit_expression handler discriminant;
+        visit_list handler (fun handler (_loc, { Statement.Switch.Case. test; consequent }) ->
+            visit_if_some handler visit_expression test;
+            visit_list handler visit_statement consequent
+          ) cases
 
-    | Statement.Return { argument } ->
-      visit_if_some handler visit_expression argument
+      | Statement.Return { argument } ->
+        visit_if_some handler visit_expression argument
 
-    | Statement.Throw { argument } ->
-      visit_expression handler argument
+      | Statement.Throw { argument } ->
+        visit_expression handler argument
 
-    | Statement.Try { block; handler = _handler; finalizer } ->
-      visit_block handler block;
-      visit_if_some handler (fun handler (_loc, { Statement.Try.CatchClause. param; body }) ->
-          visit_pattern handler param;
-          visit_block handler body
-        ) _handler;
-      visit_if_some handler visit_block finalizer
+      | Statement.Try { block; handler = _handler; finalizer } ->
+        visit_block handler block;
+        visit_if_some handler (fun handler (_loc, { Statement.Try.CatchClause. param; body }) ->
+            visit_pattern handler param;
+            visit_block handler body
+          ) _handler;
+        visit_if_some handler visit_block finalizer
 
-    | Statement.While { test; body } ->
-      visit_expression handler test;
-      visit_statement handler body
+      | Statement.While { test; body } ->
+        visit_expression handler test;
+        visit_statement handler body
 
-    | Statement.DoWhile { body; test } ->
-      visit_statement handler body;
-      visit_expression handler test;
+      | Statement.DoWhile { body; test } ->
+        visit_statement handler body;
+        visit_expression handler test;
 
-    | Statement.For { init; test; update; body } ->
-      visit_if_some handler(fun handler init -> match init with
-          | Statement.For.InitDeclaration decl -> visit_variable_declaration handler decl
-          | Statement.For.InitExpression expression -> visit_expression handler expression) init;
-      visit_if_some handler visit_expression test;
-      visit_if_some handler visit_expression update;
-      visit_statement handler body;
+      | Statement.For { init; test; update; body } ->
+        visit_if_some handler(fun handler init -> match init with
+            | Statement.For.InitDeclaration decl -> visit_variable_declaration handler decl
+            | Statement.For.InitExpression expression -> visit_expression handler expression) init;
+        visit_if_some handler visit_expression test;
+        visit_if_some handler visit_expression update;
+        visit_statement handler body;
 
-    | Statement.ForIn { left; right; body; each = _each } ->
-      (match left with
-       | Statement.ForIn.LeftDeclaration decl -> visit_variable_declaration handler decl
-       | Statement.ForIn.LeftExpression expression -> visit_expression handler expression);
-      visit_expression handler right;
-      visit_statement handler body
+      | Statement.ForIn { left; right; body; each = _each } ->
+        (match left with
+         | Statement.ForIn.LeftDeclaration decl -> visit_variable_declaration handler decl
+         | Statement.ForIn.LeftExpression expression -> visit_expression handler expression);
+        visit_expression handler right;
+        visit_statement handler body
 
-    | Statement.ForOf { left; right; body; async = _async } ->
-      (match left with
-       | Statement.ForOf.LeftDeclaration decl -> visit_variable_declaration handler decl
-       | Statement.ForOf.LeftExpression expression -> visit_expression handler expression);
-      visit_expression handler right;
-      visit_statement handler body
+      | Statement.ForOf { left; right; body; async = _async } ->
+        (match left with
+         | Statement.ForOf.LeftDeclaration decl -> visit_variable_declaration handler decl
+         | Statement.ForOf.LeftExpression expression -> visit_expression handler expression);
+        visit_expression handler right;
+        visit_statement handler body
 
-    | Statement.FunctionDeclaration func ->
-      visit_function handler (loc, func)
+      | Statement.FunctionDeclaration func ->
+        visit_function handler (loc, func)
 
-    | Statement.VariableDeclaration decl ->
-      visit_variable_declaration handler (loc, decl)
+      | Statement.VariableDeclaration decl ->
+        visit_variable_declaration handler (loc, decl)
 
-    | Statement.ClassDeclaration cls ->
-      visit_class handler cls
+      | Statement.ClassDeclaration cls ->
+        visit_class handler cls
 
-    | Statement.Debugger -> ()
-    | Statement.InterfaceDeclaration _ -> ()
-    | Statement.ExportNamedDeclaration _ -> ()
-    | Statement.ExportDefaultDeclaration _ -> ()
-    | Statement.ImportDeclaration _ -> ()
-    | Statement.DeclareVariable _ -> ()
-    | Statement.DeclareFunction _ -> ()
-    | Statement.DeclareClass _ -> ()
-    | Statement.DeclareModule _ -> ()
-    | Statement.DeclareModuleExports _ -> ()
-    | Statement.DeclareExportDeclaration _ -> ()
+      | Statement.Debugger -> ()
+      | Statement.InterfaceDeclaration _ -> ()
+      | Statement.ExportNamedDeclaration _ -> ()
+      | Statement.ExportDefaultDeclaration _ -> ()
+      | Statement.ImportDeclaration _ -> ()
+      | Statement.DeclareVariable _ -> ()
+      | Statement.DeclareFunction _ -> ()
+      | Statement.DeclareClass _ -> ()
+      | Statement.DeclareModule _ -> ()
+      | Statement.DeclareModuleExports _ -> ()
+      | Statement.DeclareExportDeclaration _ -> ()
+  in
+  handler.leave_statement (loc, statement)
 
 and visit_class handler {Class. body = (_, { body }); superClass; _} =
   (** TODO: handle `classDecorators` *)

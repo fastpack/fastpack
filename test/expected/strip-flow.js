@@ -231,17 +231,17 @@ a = {id: async function (x) {
 a = {123: function (x) {
   
 }};
-class Foo {
+class Foo11 {
   set fooProp(value) {
     
   }
 };
-class Foo2 {
+class Foo22 {
   set fooProp(value) {
     
   }
 };
-class Foo3 {
+class Foo33 {
   get fooProp() {
     
   }
@@ -267,7 +267,7 @@ a = class Foo {
 a = class Foo extends Bar {
   
 };
-class Foo4 {
+class Foo44 {
   
 };
 class Foo5 extends Bar {

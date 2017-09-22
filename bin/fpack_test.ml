@@ -15,6 +15,20 @@ let print source =
   let result = Fastpack.Printer.print program in
   result
 
+let print_with_scope source =
+  let parse_options = Some Parser_env.({
+      esproposal_class_instance_fields = true;
+      esproposal_class_static_fields = true;
+      esproposal_decorators = true;
+      esproposal_export_star_as = true;
+      types = true;
+      use_strict = false;
+    }) in
+  let (program, _errors) = Parser_flow.program source ~parse_options in
+  let result = Fastpack.Printer.print ~with_scope:true program in
+  result
+
+
 let transpile_ast () =
   FastpackTranspiler.transpile_source [
     FastpackTranspiler.StripFlow.transpile;
@@ -28,6 +42,7 @@ let tests = [
   ("printer.js", print);
   ("transpile-react-jsx.js", transpile_ast ());
   ("transpile-class.js", transpile_ast ());
+  ("scope.js", print_with_scope);
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
   (* ("current.js", print); *)
 ]

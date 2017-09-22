@@ -221,7 +221,7 @@ end
 
 
 let transpile {Context. require_runtime; _ } program =
-  let map_expression ((loc, node) : E.t) =
+  let map_expression _scope ((loc, node) : E.t) =
     match node with
     | E.Class cls ->
       begin
@@ -235,7 +235,7 @@ let transpile {Context. require_runtime; _ } program =
     | _ -> (loc, node)
   in
 
-  let map_statement ((loc, stmt) : S.t) =
+  let map_statement _scope ((loc, stmt) : S.t) =
     match stmt with
     | S.ClassDeclaration cls ->
       begin

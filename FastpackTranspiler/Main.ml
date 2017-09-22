@@ -44,7 +44,7 @@ let rec transpile program scope patcher =
 
 
     {
-      Visit.
+      Visit.default_visit_handler with
       visit_expression;
       visit_statement;
       visit_function;

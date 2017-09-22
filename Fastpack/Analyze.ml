@@ -70,7 +70,7 @@ let analyze _id filename source =
   in
 
   let handler = {
-    Visit.
+    Visit.default_visit_handler with
     visit_statement;
     visit_expression;
     visit_function = Visit.do_nothing;

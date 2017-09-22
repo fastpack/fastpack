@@ -159,13 +159,13 @@ a = { id<T>(x: T): T {} };
 a = { *id<T>(x: T): T {} };
 a = { async id<T>(x: T): T {} };
 a = { 123<T>(x: T): T {} };
-class Foo {
+class Foo11 {
   set fooProp(value: number) {}
 }
-class Foo2 {
+class Foo22 {
   set fooProp(value: number): void {}
 }
-class Foo3 {
+class Foo33 {
   get fooProp(): number {}
 }
 var numVal: number = otherNumVal;
@@ -185,7 +185,7 @@ var a: { id<T>(x: T): T; };
 var a:Array<number> = [1, 2, 3]
 a = class Foo<T> {}
 a = class Foo<T> extends Bar<T> {}
-class Foo4<T> {}
+class Foo44<T> {}
 class Foo5<T> extends Bar<T> {}
 class Foo6<T> extends mixin(Bar) {}
 class Foo7<T> {
