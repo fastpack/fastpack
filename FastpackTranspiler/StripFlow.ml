@@ -1,5 +1,5 @@
 let transpile _context program =
-  let map_function (loc, func) : (Loc.t * Ast.Function.t) =
+  let map_function _scope (loc, func) : (Loc.t * Ast.Function.t) =
     (loc,
      { func with
        predicate = None;
@@ -8,7 +8,7 @@ let transpile _context program =
      })
   in
 
-  let map_pattern (loc, pattern) : Ast.Pattern.t =
+  let map_pattern _scope (loc, pattern) : Ast.Pattern.t =
     let module P = Ast.Pattern in
     let pattern =
       match pattern with
@@ -46,7 +46,7 @@ let transpile _context program =
     }
   in
 
-  let map_expression ((loc, node) : Ast.Expression.t) =
+  let map_expression _scope ((loc, node) : Ast.Expression.t) =
     let module E = Ast.Expression in
     let node =
       match node with
@@ -57,7 +57,7 @@ let transpile _context program =
     (loc, node)
   in
 
-  let map_statement ((loc, stmt) : Ast.Statement.t) =
+  let map_statement _scope ((loc, stmt) : Ast.Statement.t) =
     let module S = Ast.Statement in
     let stmt =
       match stmt with
