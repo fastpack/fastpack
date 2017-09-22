@@ -96,7 +96,7 @@ let emit_runtime out entry_id =
 })
 " entry_id)
 
-let emit out graph entry =
+let emit ?(with_runtime=true) out graph entry =
   let emit bytes = Lwt_io.write out bytes in
   let rec emit_module ?(seen=StringSet.empty) m =
     if StringSet.mem m.Module.id seen
@@ -125,10 +125,14 @@ let emit out graph entry =
       Lwt.return seen
   in
 
-  let%lwt () = emit_runtime out entry.Module.id in
+  let%lwt () =
+    if with_runtime
+    then emit_runtime out entry.Module.id
+    else emit @@ "/* Entry point: " ^ entry.Module.id ^ " */\n"
+  in
   let%lwt () = emit "({\n" in
   let%lwt _ = emit_module entry in
-  let%lwt () = emit "\n})" in
+  let%lwt () = emit "\n})\n" in
   Lwt.return_unit
 
 
@@ -156,12 +160,12 @@ let rec process graph (m : Module.t) =
     ) dependencies in
   Lwt.return m
 
-let pack entry_filename =
+let pack ?(with_runtime=true) channel entry_filename =
   let graph = DependencyGraph.empty () in
   let%lwt entry = read_entry_module entry_filename in
   let%lwt entry = process graph entry in
-  let%lwt () = emit Lwt_io.stdout graph entry in
+  let%lwt () = emit ~with_runtime channel graph entry in
   Lwt.return_unit
 
 let pack_main entry =
-  Lwt_main.run (pack entry)
+  Lwt_main.run (pack Lwt_io.stdout entry)

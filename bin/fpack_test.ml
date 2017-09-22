@@ -14,13 +14,27 @@ let transpile _ =
     FastpackTranspiler.Class.transpile;
   ]
 
+let pack fname _ =
+  let pack' () =
+    let bytes = ref @@ Lwt_bytes.create 65535 in
+    let _, ch = Lwt_io.pipe ~out_buffer:(!bytes) () in
+    Fastpack.Packer.pack ~with_runtime:false ch fname
+    >> Lwt.return
+       @@ Lwt_bytes.to_string
+       @@ Lwt_bytes.extract !bytes 0
+       @@ Int64.to_int
+       @@ Lwt_io.position ch
+  in Lwt_main.run (pack' ())
+
+
 let tests = [
-  ("object-spread-and-rest-operators.js", transpile_old);
-  ("transpile-class.js", transpile);
-  ("transpile-react-jsx.js", transpile);
-  ("transpile-strip-flow.js", transpile);
-  ("print.js", print ~with_scope:false);
-  ("print-with-scope.js", print ~with_scope:true);
+  ("object-spread-and-rest-operators.js", "", transpile_old);
+  ("transpile-class.js", "", transpile);
+  ("transpile-react-jsx.js", "", transpile);
+  ("transpile-strip-flow.js", "", transpile);
+  ("print.js", "", print ~with_scope:false);
+  ("print-with-scope.js", "", print ~with_scope:true);
+  ("pack/index.js", "pack.js", pack);
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
   (* ("current.js", print); *)
 ]
@@ -52,7 +66,7 @@ let () =
 
     let save_or_reject filename data answer =
       match answer with
-      | "y" -> write_file (path ^ "/" ^ filename) data >> Lwt.return_some true
+      | "y" -> write_file filename data >> Lwt.return_some true
       | "n" -> Lwt.return_some false
       | _ -> Lwt.return_none
     in
@@ -60,7 +74,7 @@ let () =
     let show_diff name actual =
       let temp_file = Filename.temp_file "" ".result.js" in
       let _ = write_file temp_file actual in
-      let cmd = "colordiff " ^ (path ^ "/" ^ name) ^ " " ^ temp_file in
+      let cmd = "colordiff " ^ name ^ " " ^ temp_file in
       let%lwt output = Lwt_process.(pread @@ shell cmd) in
       Lwt.finalize
         (fun () -> print output)
@@ -107,9 +121,13 @@ let () =
       run f content actual_fname expect_fname
     in
 
-    let run_one (fname, f) =
+    let run_one (fname, expect_fname, f) =
       let actual_fname = path ^ "/" ^ fname in
-      let expect_fname = path ^ "/expected/" ^ fname in
+      let expect_fname =
+        if expect_fname = ""
+        then path ^ "/expected/" ^ fname
+        else path ^ "/expected/" ^ expect_fname
+      in
       let%lwt actual = get_contents actual_fname in
       match actual with
       | Some c -> test_or_train_one fname f c actual_fname expect_fname
