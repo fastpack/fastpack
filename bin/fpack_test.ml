@@ -1,13 +1,13 @@
-let transpile () =
+let transpile_old _ =
   let scope = FastpackTranspiler.Util.make_scope () in
   FastpackTranspiler.Main.transpile_source scope
 
-let print ?(with_scope=false) source =
+let print ?(with_scope=false) _ source =
   let program, _ = Fastpack.Parser.parse_source source in
   let result = Fastpack.Printer.print ~with_scope program in
   result
 
-let transpile_ast () =
+let transpile _ =
   FastpackTranspiler.transpile_source [
     FastpackTranspiler.StripFlow.transpile;
     FastpackTranspiler.ReactJSX.transpile;
@@ -15,10 +15,10 @@ let transpile_ast () =
   ]
 
 let tests = [
-  ("object-spread-and-rest-operators.js", transpile ());
-  ("transpile-class.js", transpile_ast ());
-  ("transpile-react-jsx.js", transpile_ast ());
-  ("transpile-strip-flow.js", transpile_ast ());
+  ("object-spread-and-rest-operators.js", transpile_old);
+  ("transpile-class.js", transpile);
+  ("transpile-react-jsx.js", transpile);
+  ("transpile-strip-flow.js", transpile);
   ("print.js", print ~with_scope:false);
   ("print-with-scope.js", print ~with_scope:true);
   (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
@@ -36,8 +36,7 @@ let () =
 
     let get_contents name =
       try%lwt
-        Lwt_io.(with_file ~mode:Input (path ^ "/" ^ name) read)
-        >>= Lwt.return_some
+        Lwt_io.(with_file ~mode:Input name read) >>= Lwt.return_some
       with Unix.Unix_error _ ->
         print ("Error, while reading: " ^ name) >> Lwt.return_none
     in
@@ -74,20 +73,22 @@ let () =
       >>= save_or_reject filename data
     in
 
-    let test_one f actual expect_fname =
+    let test_one f content actual_fname expect_fname =
       let%lwt some_expected = get_contents expect_fname in
       match some_expected with
-      | Some expected -> (
-          let result = f actual in
+      | Some expected ->
+        begin
+          let result = f actual_fname content in
           match result = expected with
           | true -> Lwt.return_some true
-          | false -> show_diff expect_fname result >> Lwt.return_some false)
+          | false -> show_diff expect_fname result >> Lwt.return_some false
+        end
       | None -> Lwt.return_some false
     in
 
-    let train_one f actual expect_fname =
+    let train_one f content actual_fname expect_fname =
       let%lwt some_expected = get_contents expect_fname in
-      let result = f actual in
+      let result = f actual_fname content in
       match some_expected with
       | Some expected ->
         if result = expected
@@ -100,17 +101,18 @@ let () =
         >> save_data "Save new output" expect_fname result
     in
 
-    let test_or_train_one title f actual expect_fname =
+    let test_or_train_one title f content actual_fname expect_fname =
       let _ = Lwt_main.run (print @@ title ^ "\n-------------------") in
       let run = if train then train_one else test_one in
-      run f actual expect_fname
+      run f content actual_fname expect_fname
     in
 
     let run_one (fname, f) =
-      let%lwt actual = get_contents fname in
-      let expect_fname = "expected/" ^ fname in
+      let actual_fname = path ^ "/" ^ fname in
+      let expect_fname = path ^ "/expected/" ^ fname in
+      let%lwt actual = get_contents actual_fname in
       match actual with
-      | Some c -> test_or_train_one fname f c expect_fname
+      | Some c -> test_or_train_one fname f c actual_fname expect_fname
       | None -> Lwt.return_some false
     in
 
