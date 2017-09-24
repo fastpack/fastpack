@@ -233,7 +233,7 @@ let of_function_body args stmts scope =
   in
 
   let handler = {
-    Visit.
+    Visit.default_visit_handler with
     visit_statement;
     visit_expression = (fun _ -> Visit.Break);
     visit_pattern = (fun _ -> Visit.Break);

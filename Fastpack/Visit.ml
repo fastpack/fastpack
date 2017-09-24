@@ -16,6 +16,8 @@ type visit_handler = {
   leave_statement : Statement.t -> unit;
   visit_expression : Expression.t -> visit_action;
   visit_function : (Loc.t * Function.t) -> visit_action;
+  enter_function : (Loc.t * Function.t) -> unit;
+  leave_function : (Loc.t * Function.t) -> unit;
   visit_pattern : Pattern.t -> visit_action;
 }
 
@@ -25,6 +27,8 @@ let default_visit_handler =
   {
     enter_statement = (fun _ -> ());
     leave_statement = (fun _ -> ());
+    enter_function = (fun _ -> ());
+    leave_function = (fun _ -> ());
     visit_statement = do_nothing;
     visit_expression = do_nothing;
     visit_function = do_nothing;
@@ -244,9 +248,14 @@ and visit_expression handler ((loc, expression) : Expression.t) =
       visit_expression handler callee;
       visit_list handler visit_expression_or_spread arguments
 
-    | Expression.Member { _object; property = _property; computed = _computed } ->
-      visit_expression handler _object
-
+    | Expression.Member { _object; property; computed = _computed } ->
+      visit_expression handler _object;
+      begin
+      match property with
+      | Expression.Member.PropertyExpression expr ->
+        visit_expression handler expr
+      | Expression.Member.PropertyIdentifier _ -> ()
+      end;
     | Expression.Yield { argument; delegate = _delegate } ->
       visit_if_some handler visit_expression argument
 
@@ -332,18 +341,22 @@ and visit_function handler (_, {
     returnType = _returnType;
     typeParameters = _typeParameters;
   } as func) =
+  let () = handler.enter_function func in
   let action = handler.visit_function func in
-  match action with
-  | Break -> ()
-  | Continue ->
-    (** TODO: handle `predicate` *)
-    (
-      let (params, rest) = params in
-      visit_list handler visit_pattern params;
-      visit_if_some handler (fun handler (_loc, { Function.RestElement. argument }) ->
-          visit_pattern handler argument) rest
-    );
-    visit_function_body handler body
+  let () =
+    match action with
+    | Break -> ()
+    | Continue ->
+      (** TODO: handle `predicate` *)
+      (
+        let (params, rest) = params in
+        visit_list handler visit_pattern params;
+        visit_if_some handler (fun handler (_loc, { Function.RestElement. argument }) ->
+            visit_pattern handler argument) rest
+      );
+      visit_function_body handler body
+  in
+  handler.leave_function func
 
 and visit_function_body handler body =
   match body with
