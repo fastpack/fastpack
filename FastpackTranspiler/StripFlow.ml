@@ -86,6 +86,8 @@ let transpile _context program =
         end
       | S.ImportDeclaration { importKind = S.ImportDeclaration.ImportType; _ }
       | S.ImportDeclaration { importKind = S.ImportDeclaration.ImportTypeof; _ }
+      | S.ExportNamedDeclaration { exportKind = S.ExportType; _ }
+      | S.ExportDefaultDeclaration { exportKind = S.ExportType; _ }
       | S.DeclareModule _
       | S.DeclareExportDeclaration _
       | S.DeclareVariable _
@@ -93,8 +95,6 @@ let transpile _context program =
       | S.DeclareClass _
       | S.InterfaceDeclaration _
       | S.DeclareModuleExports _
-      | S.ExportNamedDeclaration _
-      | S.ExportDefaultDeclaration _
       | S.TypeAlias _ ->
         S.Empty
       | node -> node

@@ -160,3 +160,16 @@ function e15 () {}
 
 /* Immediately invoked functions */
 (function (x) {console.log(x);return x;})(1);
+
+/* Export */
+export class CLS {};
+export function f() {};
+export var C1, C2;
+export let ya = 1, yo = function() {};
+
+export { e11, e12, e13 };
+export {n1, n2 as newName, n3} from "x";
+export * from "y";
+export * as test from "y";
+
+export default function F() {};

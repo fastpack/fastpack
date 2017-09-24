@@ -545,10 +545,57 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit " "
         |> emit_literal source
 
-      | S.ExportNamedDeclaration _ ->
-        failwith "ExportNamedDeclaration is not supported"
-      | S.ExportDefaultDeclaration _ ->
-        failwith "ExportDefaultDeclaration is not supported"
+      | S.ExportNamedDeclaration {
+          declaration;
+          specifiers;
+          source;
+          exportKind } ->
+        let emit_specifiers spec ctx =
+          match spec with
+          | S.ExportNamedDeclaration.ExportSpecifiers specifiers ->
+            ctx
+            |> emit "{ "
+            |> emit_list ~emit_sep:emit_comma
+              (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
+                        local; exported }) ctx ->
+                ctx
+                |> emit_identifier local
+                |> emit_if_some
+                  (fun exported ctx ->
+                     ctx
+                     |> emit " as "
+                     |> emit_identifier exported
+                  )
+                  exported
+              )
+              specifiers
+            |> emit " }"
+          | S.ExportNamedDeclaration.ExportBatchSpecifier (_, exported) ->
+            ctx
+            |> emit "*"
+            |> emit_if_some
+              (fun exported ctx ->
+                 ctx |> emit " as " |> emit_identifier exported
+              )
+              exported
+        in
+        ctx
+        |> emit "export "
+        |> emit_if (exportKind = S.ExportType) (emit "type ")
+        |> emit_if_some emit_statement declaration
+        |> emit_if_some emit_specifiers specifiers
+        |> emit_if_some
+          (fun source ctx -> ctx |> emit " from " |> emit_literal source)
+          source
+      | S.ExportDefaultDeclaration { declaration; exportKind } ->
+        ctx
+        |> emit "export default "
+        |> emit_if (exportKind = S.ExportType) (emit "type ")
+        |> (match declaration with
+            | S.ExportDefaultDeclaration.Declaration stmt ->
+              emit_statement stmt
+            | S.ExportDefaultDeclaration.Expression expr ->
+              emit_expression expr)
       | S.DeclareVariable _ ->
         failwith "DeclareVariable is not supported"
       | S.DeclareFunction _ ->

@@ -348,3 +348,4 @@ import {V4} from "foo";
 ;
 ;
 import 'foo';
+export { x };
