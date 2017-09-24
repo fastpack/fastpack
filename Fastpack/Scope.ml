@@ -1,6 +1,7 @@
 module S = Ast.Statement
 module F = Ast.Function
 module P = Ast.Pattern
+module L = Ast.Literal
 module M = Map.Make(String)
 
 type t = {
@@ -166,10 +167,9 @@ let of_function_body args stmts scope =
     match stmt with
     | S.ImportDeclaration {
         importKind = S.ImportDeclaration.ImportValue;
-        source = (_, { raw = source; _ });
+        source = (_, { value = L.String source; _ });
         specifiers
       } ->
-      (* TODO: replace 'raw' above with the String literal value *)
       List.iter
         (fun spec ->
            match spec with
@@ -266,7 +266,7 @@ let of_function (_, {F. params; body; _}) =
 
 let of_program = of_function_body []
 
-let rec get_binding name {bindings; parent} =
+let rec get_binding name { bindings; parent } =
   let binding = M.get name bindings in
   match binding, parent with
   | None, Some parent -> get_binding name parent

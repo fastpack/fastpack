@@ -1,4 +1,5 @@
 module StringSet = Set.Make(String)
+let (>>=) = Lwt.(>>=)
 
 type pack_error_reason =
   | CannotReadModule of string
@@ -119,21 +120,19 @@ let emit ?(with_runtime=true) out graph entry =
           (ctx, seen)
           dependencies
       in
-      let%lwt () = emit (Printf.sprintf "\"%s\": function(module, exports, __fastpack_require__) {\n" m.id) in
-      let%lwt () = Workspace.write out workspace ctx in
-      let%lwt () = emit "},\n" in
-      Lwt.return seen
+      emit (Printf.sprintf "\"%s\": function(module, exports, __fastpack_require__) {\n" m.id)
+      >> Workspace.write out workspace ctx
+      >> emit "},\n"
+      >> Lwt.return seen
   in
 
-  let%lwt () =
-    if with_runtime
-    then emit_runtime out entry.Module.id
-    else emit @@ "/* Entry point: " ^ entry.Module.id ^ " */\n"
-  in
-  let%lwt () = emit "({\n" in
-  let%lwt _ = emit_module entry in
-  let%lwt () = emit "\n})\n" in
-  Lwt.return_unit
+  if with_runtime
+   then emit_runtime out entry.Module.id
+   else emit @@ "/* Entry point: " ^ entry.Module.id ^ " */\n"
+  >> emit "({\n"
+  >> emit_module entry
+  >>= (fun _ -> emit "\n})\n")
+  >> Lwt.return_unit
 
 
 let rec process graph (m : Module.t) =

@@ -1,9 +1,9 @@
 /* SCOPE: 
-A -> Import A from '"namedTest"'
-C -> Import B from '"namedTest"'
+A -> Import A from 'namedTest'
+C -> Import B from 'namedTest'
 F -> Function
-X -> Import default from '"defaultTest"'
-Y -> Import * from '"namespaceTest"'
+X -> Import default from 'defaultTest'
+Y -> Import * from 'namespaceTest'
 a -> Var
 a1 -> Var
 b -> Let
