@@ -76,6 +76,20 @@ let analyze _id filename source =
     end
   in
 
+  let exports_from_specifiers =
+    List.map
+      (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
+                local = (_, local);
+                exported }) ->
+         let exported =
+           match exported with
+           | Some (_, name) -> name
+           | None -> local
+         in
+         exported, local
+      )
+  in
+
   let define_binding = Printf.sprintf "const %s = %s;" in
 
   let fastpack_require id filename =
@@ -146,6 +160,56 @@ let analyze _id filename source =
                 (add_module_binding dep.request)
                 (fastpack_require module_id dep.request)
             | _ -> failwith "Unexpected several namespace specifiers"
+          );
+
+      | S.ExportNamedDeclaration {
+          exportKind = S.ExportValue;
+          declaration = Some ((stmt_loc, _) as declaration);
+          _
+        } ->
+        let exports =
+          List.map (fun (name, _) -> (name, name))
+          @@ Scope.names_of_node declaration
+        in
+        begin
+          patch_loc loc @@ sub_loc stmt_loc;
+          patch loc._end.offset 0 @@ "\n" ^ update_exports exports ^ "\n";
+        end;
+
+      | S.ExportNamedDeclaration {
+          exportKind = S.ExportValue;
+          declaration = None;
+          specifiers = Some (S.ExportNamedDeclaration.ExportSpecifiers specifiers);
+          source = None;
+        } ->
+        patch_loc loc @@ update_exports @@ exports_from_specifiers specifiers
+
+      | S.ExportNamedDeclaration {
+          exportKind = S.ExportValue;
+          declaration = None;
+          specifiers = Some (S.ExportNamedDeclaration.ExportSpecifiers specifiers);
+          source = Some (_, { value = L.String request; _ });
+        } ->
+        let dep = add_dependency request in
+        let exports_from binding =
+          exports_from_specifiers specifiers
+          |> List.map (fun (exported, local) -> exported, binding ^ "." ^ local)
+          |> update_exports
+        in
+        patch_loc_with
+          loc
+          (fun ctx ->
+            let module_id = dependency_to_module_id ctx dep in
+            match get_module_binding dep.request with
+            | Some binding ->
+              exports_from binding
+            | None ->
+              let binding = add_module_binding dep.request in
+              define_binding
+                binding
+                (fastpack_require module_id dep.request)
+              ^ "\n"
+              ^ exports_from binding
           );
 
       | S.ExportDefaultDeclaration {

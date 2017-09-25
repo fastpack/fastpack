@@ -282,7 +282,8 @@ let of_function_body args stmts scope =
       }
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
-        declaration = Some declaration; _
+        declaration = Some declaration;
+        source = None; _
       } ->
       let names =
         List.map (fun (name, _) -> (name, name)) @@ names_of_node declaration
@@ -296,6 +297,7 @@ let of_function_body args stmts scope =
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
         specifiers = Some S.ExportNamedDeclaration.ExportSpecifiers specifiers;
+        source = None;
         _
       } ->
       let names =
