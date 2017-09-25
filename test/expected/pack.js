@@ -15,6 +15,9 @@ function updateA (newA) {
 }
 Object.defineProperty(exports, "updateA", {get: () => updateA});
 
+
+const $lib1 = __fastpack_require__(/* "./z" */ "9ac1a10900aa3f1c9a41b85a77459bd8");
+Object.defineProperty(exports, "Z", {get: () => $lib1});
 },
 "e575b1ec1676ae03493e1f7e4fcfec56": function(module, exports, __fastpack_require__) {
 const ZModule = __fastpack_require__(/* "./z" */ "9ac1a10900aa3f1c9a41b85a77459bd8");

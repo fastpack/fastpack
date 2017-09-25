@@ -217,6 +217,30 @@ let analyze _id filename source =
               ^ exports_from binding
           );
 
+      | S.ExportNamedDeclaration {
+          exportKind = S.ExportValue;
+          declaration = None;
+          specifiers = Some (
+              S.ExportNamedDeclaration.ExportBatchSpecifier (_, Some (_, spec)));
+          source = Some (_, { value = L.String request; _ });
+        } ->
+        let dep = add_dependency request in
+        patch_loc_with
+          loc
+          (fun ctx ->
+            let module_id = dependency_to_module_id ctx dep in
+            match get_module_binding dep.request with
+            | Some binding ->
+              update_exports [(spec, binding)]
+            | None ->
+              let binding = add_module_binding dep.request in
+              define_binding
+                binding
+                (fastpack_require module_id dep.request)
+              ^ "\n"
+              ^ update_exports [(spec, binding)]
+          );
+
       | S.ExportDefaultDeclaration {
           exportKind = S.ExportValue;
           declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _)
