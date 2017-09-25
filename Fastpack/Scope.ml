@@ -276,6 +276,10 @@ let of_function_body args stmts scope =
       add_bindings node;
       Visit.Continue
 
+    | S.ExportDefaultDeclaration {
+        exportKind = S.ExportValue;
+        declaration = S.ExportDefaultDeclaration.Declaration declaration;
+      }
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
         declaration = Some declaration; _

@@ -34,3 +34,5 @@ export function exportF() {};
 export class exportC {};
 export let exportVar = 25;
 export {a, a1 as A1};
+
+export default function doSomethingUseful() {};
