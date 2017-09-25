@@ -587,6 +587,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_if_some
           (fun source ctx -> ctx |> emit " from " |> emit_literal source)
           source
+
       | S.ExportDefaultDeclaration { declaration; exportKind } ->
         ctx
         |> emit "export default "

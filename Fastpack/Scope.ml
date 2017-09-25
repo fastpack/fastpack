@@ -89,21 +89,9 @@ let update_bindings name typ bindings =
     M.add name typ bindings
   | Some Var, Function ->
     bindings
-  | _ -> (* TODO: track the Loc.t of bindings and raise the nice error *)
+  | _ ->
+    (* TODO: track the Loc.t of bindings and raise the nice error *)
     failwith ("Naming collision: " ^ name)
-
-
-let collect_declarations kind add =
-  let typ =
-    match kind with
-    | S.VariableDeclaration.Let -> Let
-    | S.VariableDeclaration.Const -> Const
-    | S.VariableDeclaration.Var -> Var
-  in
-  List.iter
-    (fun (_, {S.VariableDeclaration.Declarator. id; _ }) ->
-       List.iter (add typ) (names_of_pattern id)
-    )
 
 let names_of_node ((_, node) : S.t) =
   let type_of_kind kind =

@@ -143,10 +143,19 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
       | Statement.ClassDeclaration cls ->
         visit_class handler cls
 
+      | Statement.ExportDefaultDeclaration { declaration; _ } ->
+        (match declaration with
+         | Statement.ExportDefaultDeclaration.Declaration stmt ->
+           visit_statement handler stmt
+         | Statement.ExportDefaultDeclaration.Expression expr ->
+           visit_expression handler expr
+        )
+
+      | Statement.ExportNamedDeclaration { declaration; _ } ->
+        visit_if_some handler visit_statement declaration;
+
       | Statement.Debugger -> ()
       | Statement.InterfaceDeclaration _ -> ()
-      | Statement.ExportNamedDeclaration _ -> ()
-      | Statement.ExportDefaultDeclaration _ -> ()
       | Statement.ImportDeclaration _ -> ()
       | Statement.DeclareVariable _ -> ()
       | Statement.DeclareFunction _ -> ()
