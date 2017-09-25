@@ -12,6 +12,9 @@ type t = {
 
   (** Module source along with transformations applied *)
   workspace : t DependencyMap.t Workspace.t;
+
+  (** Module scope *)
+  scope: Scope.t;
 }
 
 let make_id filename =

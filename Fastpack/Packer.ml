@@ -18,6 +18,7 @@ let read_module filename =
     id = Module.make_id filename;
     filename = filename;
     workspace = Workspace.of_string source;
+    scope = Scope.empty;
   }
 
 let read_entry_module filename =
@@ -137,8 +138,8 @@ let emit ?(with_runtime=true) out graph entry =
 
 let rec process graph (m : Module.t) =
   let source = m.Module.workspace.Workspace.value in
-  let (workspace, dependencies) = Analyze.analyze m.id m.filename source in
-  let m = { m with workspace = workspace } in
+  let (workspace, dependencies, scope) = Analyze.analyze m.id m.filename source in
+  let m = { m with workspace; scope; } in
   DependencyGraph.add_module graph m;
   let%lwt () = Lwt_list.iter_p (
       fun ({ Dependency. request; _ } as req) ->

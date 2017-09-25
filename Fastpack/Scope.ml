@@ -364,3 +364,8 @@ let rec get_binding name { bindings; parent } =
 
 let has_binding name scope =
   (get_binding name scope) != None
+
+let get_exports scope =
+  scope.bindings
+  |> M.bindings
+  |> List.filter_map (fun (_, value) -> fst value)

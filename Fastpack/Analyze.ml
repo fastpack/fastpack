@@ -19,7 +19,8 @@ let analyze _id filename source =
       } = Workspace.make_patcher workspace
   in
 
-  let scopes = ref [Scope.of_program stmts Scope.empty] in
+  let program_scope = Scope.of_program stmts Scope.empty in
+  let scopes = ref [program_scope] in
   let top_scope () = List.hd !scopes in
   let push_scope scope =
     scopes := scope :: !scopes
@@ -55,12 +56,10 @@ let analyze _id filename source =
     end
   in
 
-  let dependency_to_module_id ctx dep =
-    try
-      let m = Module.DependencyMap.find dep ctx in
-      m.Module.id
-    with |
-      Not_found -> "fastpack/not_found"
+  let get_module dep ctx =
+    match Module.DependencyMap.get dep ctx with
+    | Some m -> m
+    | None -> failwith ("Module node found: " ^ dep.request)
   in
 
   let add_dependency request =
@@ -137,7 +136,7 @@ let analyze _id filename source =
         patch_loc_with
           loc
           (fun ctx ->
-            let module_id = dependency_to_module_id ctx dep in
+            let {Module. id = module_id; _} = get_module dep ctx in
             let namespace =
               List.filter_map
                 (fun spec ->
@@ -204,7 +203,7 @@ let analyze _id filename source =
         patch_loc_with
           loc
           (fun ctx ->
-            let module_id = dependency_to_module_id ctx dep in
+            let {Module. id = module_id; _} = get_module dep ctx in
             match get_module_binding dep.request with
             | Some binding ->
               exports_from binding
@@ -228,7 +227,7 @@ let analyze _id filename source =
         patch_loc_with
           loc
           (fun ctx ->
-            let module_id = dependency_to_module_id ctx dep in
+            let {Module. id = module_id; _} = get_module dep ctx in
             match get_module_binding dep.request with
             | Some binding ->
               update_exports [(spec, binding)]
@@ -239,7 +238,36 @@ let analyze _id filename source =
                 (fastpack_require module_id dep.request)
               ^ "\n"
               ^ update_exports [(spec, binding)]
-          );
+          )
+
+      | S.ExportNamedDeclaration {
+          exportKind = S.ExportValue;
+          declaration = None;
+          specifiers = Some (
+              S.ExportNamedDeclaration.ExportBatchSpecifier (_, None));
+          source = Some (_, { value = L.String request; _ });
+        } ->
+        let dep = add_dependency request in
+        patch_loc_with
+          loc
+          (fun ctx ->
+            let {Module. id = module_id; scope; _} = get_module dep ctx in
+            let exports_from binding =
+              Scope.get_exports scope
+              |> List.map (fun name -> name, binding ^ "." ^ name)
+            in
+            match get_module_binding dep.request with
+            | Some binding ->
+              update_exports @@ exports_from binding
+            | None ->
+              let binding = add_module_binding dep.request in
+              define_binding
+                binding
+                (fastpack_require module_id dep.request)
+              ^ "\n"
+              ^ update_exports @@ exports_from binding
+
+          )
 
       | S.ExportDefaultDeclaration {
           exportKind = S.ExportValue;
@@ -288,6 +316,7 @@ let analyze _id filename source =
   in
 
   let visit_expression ((loc: Loc.t), expr) =
+    (* TODO: E.Import *)
     match expr with
     | E.Call {
         callee = (_, E.Identifier (_, "require"));
@@ -295,7 +324,7 @@ let analyze _id filename source =
       } ->
       let dep = add_dependency request in
       patch_loc_with loc (fun ctx ->
-          let module_id = dependency_to_module_id ctx dep in
+          let {Module. id = module_id; _} = get_module dep ctx in
           fastpack_require module_id dep.request
         );
       Visit.Break
@@ -331,5 +360,5 @@ let analyze _id filename source =
 
   Visit.visit handler program;
 
-  (!workspace, !dependencies)
+  (!workspace, !dependencies, program_scope)
 

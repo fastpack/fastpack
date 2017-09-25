@@ -2,6 +2,7 @@ import {x} from "./x";
 import {updateX} from './x';
 import initX from "./x";
 import * as allX from "./x";
+import * as YZ from "./yz";
 
 function xShouldRemain() {
   let x = "this is not updated";
