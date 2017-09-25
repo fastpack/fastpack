@@ -278,7 +278,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         ctx
         |> emit "{"
         |> indent
-        |> emit_scope (Scope.of_statement statement)
+        |> emit_scope (Scope.of_statement (loc, statement))
         |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
         |> remove_scope
         |> dedent
@@ -412,7 +412,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_scope
           ~sep:", "
           ~emit_newline_after:false
-          (Scope.of_statement statement)
+          (Scope.of_statement (loc, statement))
         |> indent
         |> emit_statement body
         |> dedent

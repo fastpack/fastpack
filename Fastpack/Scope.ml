@@ -105,35 +105,104 @@ let collect_declarations kind add =
        List.iter (add typ) (names_of_pattern id)
     )
 
-let of_statement stmt scope =
-  let bindings = ref (M.empty) in
-  let add_binding typ name =
-    bindings := update_bindings name typ !bindings
+let names_of_node ((_, node) : S.t) =
+  let type_of_kind kind =
+    match kind with
+    | S.VariableDeclaration.Let -> Let
+    | S.VariableDeclaration.Const -> Const
+    | S.VariableDeclaration.Var -> Var
   in
+  let names_of_declarations kind declarations =
+    let typ = type_of_kind kind in
+    List.flatten
+    @@ List.map
+      (fun (_, {S.VariableDeclaration.Declarator. id; _ }) ->
+         List.map (fun name -> (name, typ)) (names_of_pattern id)
+      )
+      declarations
+  in
+  match node with
+  | S.ImportDeclaration {
+      importKind = S.ImportDeclaration.ImportValue;
+      source = (_, { value = L.String source; _ });
+      specifiers
+    } ->
+    List.map
+      (fun spec ->
+         match spec with
+         | S.ImportDeclaration.ImportNamedSpecifier { local; remote; _ } ->
+           let local =
+             match local with
+             | Some name -> name
+             | None -> remote
+           in (name_of_identifier local,
+               Import {remote = Some (name_of_identifier remote); source})
+         | S.ImportDeclaration.ImportDefaultSpecifier (_, name) ->
+           name, Import { remote = Some "default"; source }
+         | S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name)) ->
+           name, Import { remote = None; source }
+      )
+      specifiers;
+  | S.ClassDeclaration { id = Some name; _} ->
+    [(name_of_identifier name, Class)]
+  | S.FunctionDeclaration { id = Some name; _ } ->
+    [(name_of_identifier name, Function)]
+  | S.VariableDeclaration { kind; declarations } ->
+    names_of_declarations kind declarations
+  | S.For {
+      init = Some (S.For.InitDeclaration (_, { declarations; kind })); _
+    } ->
+    names_of_declarations kind declarations
+  | S.ForIn {
+      left = S.ForIn.LeftDeclaration (_, { declarations; kind }); _
+    } ->
+    names_of_declarations kind declarations
+  | S.ForOf {
+      left = S.ForOf.LeftDeclaration (_, { declarations; kind }); _
+    } ->
+    names_of_declarations kind declarations
+  | _ -> []
+
+
+let of_statement ((_, stmt) as node) scope =
+  let bindings = ref (M.empty) in
+  let add_bindings node =
+    List.iter
+      (fun (name, typ) ->
+        bindings := update_bindings name typ !bindings
+      )
+      @@ names_of_node node
+  in
+
   let () =
     match stmt with
-    | S.For { init = Some (S.For.InitDeclaration (_, { declarations; kind })); _ }
-      when kind = S.VariableDeclaration.Let
-        || kind = S.VariableDeclaration.Const ->
-      collect_declarations kind add_binding declarations;
-    | S.ForIn { left = S.ForIn.LeftDeclaration (_, { declarations; kind }); _ }
-      when kind = S.VariableDeclaration.Let
-        || kind = S.VariableDeclaration.Const ->
-      collect_declarations kind add_binding declarations;
-    | S.ForOf { left = S.ForOf.LeftDeclaration (_, { declarations; kind }); _ }
-      when kind = S.VariableDeclaration.Let
-        || kind = S.VariableDeclaration.Const ->
-      collect_declarations kind add_binding declarations;
+    | S.For { init = Some (S.For.InitDeclaration (_, {
+        kind = S.VariableDeclaration.Let; _
+      })); _ }
+    | S.For { init = Some (S.For.InitDeclaration (_, {
+        kind = S.VariableDeclaration.Const; _
+      })); _ }
+    | S.ForIn { left = S.ForIn.LeftDeclaration (_, {
+        kind = S.VariableDeclaration.Let; _
+      }); _ }
+    | S.ForIn { left = S.ForIn.LeftDeclaration (_, {
+        kind = S.VariableDeclaration.Const; _
+      }); _ }
+    | S.ForOf { left = S.ForOf.LeftDeclaration (_, {
+        kind = S.VariableDeclaration.Let; _
+      }); _ }
+    | S.ForOf { left = S.ForOf.LeftDeclaration (_, {
+        kind = S.VariableDeclaration.Const; _
+      }); _ } ->
+      add_bindings node
     | S.Block { body } ->
       List.iter
-        (fun (_, stmt) ->
+        (fun ((_, stmt) as node) ->
            match stmt with
-           | S.ClassDeclaration { id = Some (_, name); _} ->
-             add_binding Class name
-           | S.VariableDeclaration { kind; declarations }
-             when kind = S.VariableDeclaration.Let
-               || kind = S.VariableDeclaration.Const ->
-             collect_declarations kind add_binding declarations
+           | S.ClassDeclaration _
+           | S.VariableDeclaration { kind = S.VariableDeclaration.Let; _ }
+           | S.VariableDeclaration { kind = S.VariableDeclaration.Const; _ } ->
+             add_bindings node
            | _ -> ()
         )
         body
@@ -149,8 +218,12 @@ let of_function_body args stmts scope =
     ref @@ List.fold_left (fun m key -> M.add key Argument m) M.empty args
   in
 
-  let add_binding typ name =
-    bindings := update_bindings name typ !bindings
+  let add_bindings node =
+    List.iter
+      (fun (name, typ) ->
+        bindings := update_bindings name typ !bindings
+      )
+      @@ names_of_node node
   in
 
   let level = ref 0 in
@@ -163,71 +236,40 @@ let of_function_body args stmts scope =
     level := !level - 1
   in
 
-  let visit_statement ((_, stmt) : S.t) =
+  let visit_statement ((_, stmt) as node) =
     match stmt with
-    | S.ImportDeclaration {
-        importKind = S.ImportDeclaration.ImportValue;
-        source = (_, { value = L.String source; _ });
-        specifiers
-      } ->
-      List.iter
-        (fun spec ->
-           match spec with
-           | S.ImportDeclaration.ImportNamedSpecifier { local; remote; _ } ->
-             let local =
-               match local with
-               | Some name -> name
-               | None -> remote
-             in add_binding
-               (Import {remote = Some (name_of_identifier remote); source})
-               (name_of_identifier local)
-           | S.ImportDeclaration.ImportDefaultSpecifier (_, name) ->
-             add_binding (Import { remote = Some "default"; source }) name
-           | S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name)) ->
-             add_binding (Import { remote = None; source }) name
+    | S.ImportDeclaration { importKind = S.ImportDeclaration.ImportValue; _} ->
+      add_bindings node;
+      Visit.Break
 
-        )
-        specifiers;
+    | S.ClassDeclaration _ ->
+      if !level = 1 then add_bindings node;
       Visit.Break;
 
-    | S.ClassDeclaration { id; _} ->
-      let () =
-        match id, !level with
-        | Some (_, name), 1 -> add_binding Class name
-        | _ -> ()
-      in Visit.Break
-    | S.FunctionDeclaration { id; _ } ->
-      let () =
-        match id with
-        | Some (_, name) -> add_binding Function name
-        | None -> ()
-      in Visit.Break
-    | S.VariableDeclaration { kind; declarations } ->
+    | S.FunctionDeclaration _ ->
+      add_bindings node;
+      Visit.Break
+
+    | S.VariableDeclaration { kind; _ } ->
       let () =
         match kind, !level with
         | S.VariableDeclaration.Let, 1
         | S.VariableDeclaration.Const, 1
         | S.VariableDeclaration.Var, _ ->
-          collect_declarations kind add_binding declarations
-        | _ -> ()
+          add_bindings node
+        | _ ->
+          ()
       in Visit.Break
     | S.For { init = Some (S.For.InitDeclaration (_, {
-        declarations;
-        kind = S.VariableDeclaration.Var
-      })); _ } ->
-      collect_declarations S.VariableDeclaration.Var add_binding declarations;
-      Visit.Continue
+        kind = S.VariableDeclaration.Var; _
+      })); _ }
     | S.ForIn { left = S.ForIn.LeftDeclaration (_, {
-        declarations;
-        kind = S.VariableDeclaration.Var;
-      }); _ } ->
-      collect_declarations S.VariableDeclaration.Var add_binding declarations;
-      Visit.Continue
+        kind = S.VariableDeclaration.Var; _
+      }); _ }
     | S.ForOf { left = S.ForOf.LeftDeclaration (_, {
-        declarations;
-        kind = S.VariableDeclaration.Var;
+        kind = S.VariableDeclaration.Var; _
       }); _ } ->
-      collect_declarations S.VariableDeclaration.Var add_binding declarations;
+      add_bindings node;
       Visit.Continue
     | _ -> Visit.Continue
   in

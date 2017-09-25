@@ -37,7 +37,7 @@ let rec map_statement scope handler ((loc, statement) : Statement.t) =
   let statement = match statement with
     | Statement.Block { body } ->
       Statement.Block {
-        body = map_list (Scope.of_statement statement scope) handler map_statement body
+        body = map_list (Scope.of_statement (loc, statement) scope) handler map_statement body
       }
 
     | Statement.Expression ({ expression; directive = _directive } as expr) ->
@@ -117,7 +117,7 @@ let rec map_statement scope handler ((loc, statement) : Statement.t) =
       }
 
     | Statement.For { init; test; update; body } ->
-      let scope = Scope.of_statement statement scope in
+      let scope = Scope.of_statement (loc, statement) scope in
       Statement.For {
         init = map_if_some (fun _ -> scope) handler
             (fun scope handler init -> match init with
@@ -133,7 +133,7 @@ let rec map_statement scope handler ((loc, statement) : Statement.t) =
       }
 
     | Statement.ForIn ({ left; right; body; _ } as n) ->
-      let scope = Scope.of_statement statement scope in
+      let scope = Scope.of_statement (loc, statement) scope in
       Statement.ForIn {
         n with
         left = (match left with
@@ -148,7 +148,7 @@ let rec map_statement scope handler ((loc, statement) : Statement.t) =
       }
 
     | Statement.ForOf ({ left; right; body; async = _async } as n) ->
-      let scope = Scope.of_statement statement scope in
+      let scope = Scope.of_statement (loc, statement) scope in
       Statement.ForOf {
         n with
         left = (match left with

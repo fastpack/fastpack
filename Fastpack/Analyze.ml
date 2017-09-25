@@ -85,7 +85,7 @@ let analyze _id filename source =
     pop_scope ()
   in
 
-  let enter_statement (_, stmt) =
+  let enter_statement stmt =
     push_scope (Scope.of_statement stmt (top_scope ()))
   in
 
