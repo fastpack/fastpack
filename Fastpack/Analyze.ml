@@ -100,9 +100,14 @@ let analyze _id filename source =
 
   let update_exports exports =
     exports
-    |> List.map (fun (name, value) -> name ^ ": " ^ value)
-    |> String.concat ", "
-    |> Printf.sprintf "Object.assign(exports, {%s});"
+    |> List.map
+      (fun (name, value) ->
+         Printf.sprintf
+           "Object.defineProperty(exports, \"%s\", {get: () => %s});"
+           name
+           value
+      )
+    |> String.concat " "
   in
 
   let enter_function f =

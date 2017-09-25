@@ -1,19 +1,19 @@
 /* Entry point: d31116a79821b0cf41ac93abe249fc4d */
 ({
 "9ac1a10900aa3f1c9a41b85a77459bd8": function(module, exports, __fastpack_require__) {
-Object.assign(exports, {default: 1});
+Object.defineProperty(exports, "default", {get: () => 1});
 },
 "236e9c0761015ee1871421a78316fb8e": function(module, exports, __fastpack_require__) {
-Object.assign(exports, {default: 1});
+Object.defineProperty(exports, "default", {get: () => 1});
 
 let a = 1;
-Object.assign(exports, {a: a});
+Object.defineProperty(exports, "a", {get: () => a});
 
 
 function updateA (newA) {
   a = newA;
 }
-Object.assign(exports, {updateA: updateA});
+Object.defineProperty(exports, "updateA", {get: () => updateA});
 
 },
 "e575b1ec1676ae03493e1f7e4fcfec56": function(module, exports, __fastpack_require__) {
@@ -21,10 +21,10 @@ const ZModule = __fastpack_require__(/* "./z" */ "9ac1a10900aa3f1c9a41b85a77459b
 
 
 let z = 1, zz = 1;
-Object.assign(exports, {z: z, Z: zz});
+Object.defineProperty(exports, "z", {get: () => z}); Object.defineProperty(exports, "Z", {get: () => zz});
 
 let x = 1, y = 2;
-Object.assign(exports, {x: x, y: y});
+Object.defineProperty(exports, "x", {get: () => x}); Object.defineProperty(exports, "y", {get: () => y});
 
 
 // export default function () {
@@ -32,19 +32,19 @@ Object.assign(exports, {x: x, y: y});
 // };
 // export default class {};
 class F {}
-Object.assign(exports, {default: F});
+Object.defineProperty(exports, "default", {get: () => F});
 ;
 
 function updateX() {
   x++;
   console.log('updated X', x);
 }
-Object.assign(exports, {updateX: updateX});
+Object.defineProperty(exports, "updateX", {get: () => updateX});
 
 
 const $lib1 = __fastpack_require__(/* "./y" */ "236e9c0761015ee1871421a78316fb8e");
-Object.assign(exports, {X: $lib1.default, xA: $lib1.a, updateA: $lib1.updateA});
-Object.assign(exports, {ZM: ZModule.default});
+Object.defineProperty(exports, "X", {get: () => $lib1.default}); Object.defineProperty(exports, "xA", {get: () => $lib1.a}); Object.defineProperty(exports, "updateA", {get: () => $lib1.updateA});
+Object.defineProperty(exports, "ZM", {get: () => ZModule.default});
 },
 "8a3f3828d61694d58796e8412f7d4141": function(module, exports, __fastpack_require__) {
 const $lib2 = __fastpack_require__(/* "./x" */ "e575b1ec1676ae03493e1f7e4fcfec56");
