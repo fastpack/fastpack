@@ -4,9 +4,12 @@ C -> Import B from 'namedTest'
 F -> Function
 X -> Import default from 'defaultTest'
 Y -> Import * from 'namespaceTest'
-a -> Var
-a1 -> Var
+a -> Var [exported as a]
+a1 -> Var [exported as A1]
 b -> Let
+exportC -> Class [exported as exportC]
+exportF -> Function [exported as exportF]
+exportVar -> Let [exported as exportVar]
 f -> Let
 f1 -> Let
  */
@@ -61,3 +64,14 @@ for (let i = 0, l = 10; i < l; i++)/* SCOPE: i -> Let, l -> Let */
     let j = 1
   }
 ;
+export function exportF() {
+  /* SCOPE:  */
+  
+};
+;
+export class exportC {
+  
+};
+;
+export let exportVar = 25;
+export { a, a1 as A1 };

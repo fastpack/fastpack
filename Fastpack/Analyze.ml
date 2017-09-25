@@ -150,7 +150,7 @@ let analyze _id filename source =
     | E.Identifier (loc, name) ->
       let () =
         match get_binding name with
-        | Some (Scope.Import { source; remote = Some remote}) ->
+        | Some (_, Scope.Import { source; remote = Some remote}) ->
           patch_loc_with
             loc
             (fun _ ->

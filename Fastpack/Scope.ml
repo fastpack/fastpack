@@ -6,8 +6,9 @@ module M = Map.Make(String)
 
 type t = {
   parent : t option;
-  bindings : binding M.t;
+  bindings : (exported * binding) M.t;
 }
+and exported = string option
 and binding = Import of import
             | Function
             | Argument
@@ -26,7 +27,7 @@ let scope_to_str ?(sep="\n") scope =
   scope.bindings
   |> M.bindings
   |> List.map
-    (fun (name, typ) ->
+    (fun (name, (exported, typ)) ->
        name ^ " -> " ^
        (match typ with
         | Import { source; remote } ->
@@ -39,6 +40,9 @@ let scope_to_str ?(sep="\n") scope =
         | Let -> "Let"
         | Const -> "Const"
        )
+       ^ (match exported with
+          | None -> ""
+          | Some name -> Printf.sprintf " [exported as %s]" name)
     )
   |> String.concat sep
 
@@ -79,15 +83,22 @@ let names_of_pattern node =
       names
   in names_of_pattern' [] node
 
+let export_binding name remote bindings =
+  match M.get name bindings with
+  | Some (None, Argument) -> failwith ("Cannot export Argument: " ^ name)
+  | Some (None, typ) -> M.add name (Some remote, typ) bindings
+  | Some (Some _, _) -> failwith ("Cannot export twice: " ^ name)
+  | None -> failwith ("Cannot export previously undefined name: " ^ name)
+
 let update_bindings name typ bindings =
   match M.get name bindings, typ with
   | None, _
-  | Some Argument, _
-  | Some Function, Var
-  | Some Function, Function
-  | Some Var, Var ->
-    M.add name typ bindings
-  | Some Var, Function ->
+  | Some (_, Argument), _
+  | Some (_, Function), Var
+  | Some (_, Function), Function
+  | Some (_, Var), Var ->
+    M.add name (None, typ) bindings
+  | Some (_, Var), Function ->
     bindings
   | _ ->
     (* TODO: track the Loc.t of bindings and raise the nice error *)
@@ -203,7 +214,7 @@ let of_statement ((_, stmt) as node) scope =
 
 let of_function_body args stmts scope =
   let bindings =
-    ref @@ List.fold_left (fun m key -> M.add key Argument m) M.empty args
+    ref @@ List.fold_left (fun m key -> M.add key (None, Argument) m) M.empty args
   in
 
   let add_bindings node =
@@ -212,6 +223,10 @@ let of_function_body args stmts scope =
         bindings := update_bindings name typ !bindings
       )
       @@ names_of_node node
+  in
+
+  let export_bindings =
+    List.iter (fun (name, remote) -> bindings := export_binding name remote !bindings)
   in
 
   let level = ref 0 in
@@ -248,6 +263,7 @@ let of_function_body args stmts scope =
         | _ ->
           ()
       in Visit.Break
+
     | S.For { init = Some (S.For.InitDeclaration (_, {
         kind = S.VariableDeclaration.Var; _
       })); _ }
@@ -259,6 +275,44 @@ let of_function_body args stmts scope =
       }); _ } ->
       add_bindings node;
       Visit.Continue
+
+    | S.ExportNamedDeclaration {
+        exportKind = S.ExportValue;
+        declaration = Some declaration; _
+      } ->
+      let names =
+        List.map (fun (name, _) -> (name, name)) @@ names_of_node declaration
+      in
+      begin
+        add_bindings declaration;
+        export_bindings names;
+        Visit.Break
+      end
+
+    | S.ExportNamedDeclaration {
+        exportKind = S.ExportValue;
+        specifiers = Some S.ExportNamedDeclaration.ExportSpecifiers specifiers;
+        _
+      } ->
+      let names =
+        List.map
+          (fun (_, {
+               S.ExportNamedDeclaration.ExportSpecifier.
+               local = (_, local);
+               exported
+             }) ->
+             local,
+             match exported with
+             | Some (_, name) -> name
+             | _ -> local
+          )
+          specifiers
+      in
+      begin
+        export_bindings names;
+        Visit.Break
+      end
+
     | _ -> Visit.Continue
   in
 

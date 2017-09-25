@@ -29,3 +29,8 @@ for(let i = 0, l = 10; i < l; i++) {
   console.log(i);
   let j = 1;
 }
+
+export function exportF() {};
+export class exportC {};
+export let exportVar = 25;
+export {a, a1 as A1};
