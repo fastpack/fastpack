@@ -109,7 +109,7 @@ let analyze _id filename source =
               List.filter_map
                 (fun spec ->
                    match spec with
-                   | S.ImportDeclaration.ImportNamespaceSpecifier (_,(_,name)) ->
+                   | S.ImportDeclaration.ImportNamespaceSpecifier (_,(_, name)) ->
                      Some name
                    | _ ->
                      None

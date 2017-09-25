@@ -7,6 +7,7 @@ Y -> Import * from 'namespaceTest'
 a -> Var [exported as a]
 a1 -> Var [exported as A1]
 b -> Let
+doSomethingUseful -> Function [exported as doSomethingUseful]
 exportC -> Class [exported as exportC]
 exportF -> Function [exported as exportF]
 exportVar -> Let [exported as exportVar]
@@ -75,3 +76,8 @@ export class exportC {
 ;
 export let exportVar = 25;
 export { a, a1 as A1 };
+export default function doSomethingUseful() {
+  /* SCOPE:  */
+  
+};
+;
