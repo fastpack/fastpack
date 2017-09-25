@@ -10,7 +10,14 @@ let analyze _id filename source =
   let dependencies = ref [] in
   let dependency_id = ref 0 in
   let workspace = ref (Workspace.of_string source) in
-  let {Workspace. patch_loc_with; _ } = Workspace.make_patcher workspace in
+  let {Workspace.
+        patch;
+        patch_loc_with;
+        patch_loc;
+        sub_loc;
+        _
+      } = Workspace.make_patcher workspace
+  in
 
   let scopes = ref [Scope.of_program stmts Scope.empty] in
   let top_scope () = List.hd !scopes in
@@ -77,6 +84,13 @@ let analyze _id filename source =
       id
   in
 
+  let update_exports exports =
+    exports
+    |> List.map (fun (name, value) -> name ^ ": " ^ value)
+    |> String.concat ", "
+    |> Printf.sprintf "Object.assign(exports, {%s});"
+  in
+
   let enter_function f =
     push_scope (Scope.of_function f (top_scope ()))
   in
@@ -133,6 +147,49 @@ let analyze _id filename source =
                 (fastpack_require module_id dep.request)
             | _ -> failwith "Unexpected several namespace specifiers"
           );
+
+      | S.ExportDefaultDeclaration {
+          exportKind = S.ExportValue;
+          declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _)
+        }
+      | S.ExportDefaultDeclaration {
+          exportKind = S.ExportValue;
+          declaration = S.ExportDefaultDeclaration.Declaration (
+              expr_loc,
+              S.FunctionDeclaration { id=None; _ }
+            )
+        }
+      | S.ExportDefaultDeclaration {
+          exportKind = S.ExportValue;
+          declaration = S.ExportDefaultDeclaration.Declaration (
+              expr_loc,
+              S.ClassDeclaration { id=None; _ }
+            )
+        } ->
+        let expr = sub_loc expr_loc in
+        patch_loc loc @@ update_exports [("default", expr)]
+
+      | S.ExportDefaultDeclaration {
+          exportKind = S.ExportValue;
+          declaration = S.ExportDefaultDeclaration.Declaration (
+              expr_loc,
+              S.FunctionDeclaration { id = Some (_, id); _ }
+            )
+        }
+      | S.ExportDefaultDeclaration {
+          exportKind = S.ExportValue;
+          declaration = S.ExportDefaultDeclaration.Declaration (
+              expr_loc,
+              S.ClassDeclaration { id = Some (_, id); _ }
+            )
+        } ->
+        let expr = sub_loc expr_loc in
+        begin
+          patch_loc loc expr;
+          patch loc._end.offset 0
+          @@ "\n" ^ update_exports [("default", id)] ^ "\n";
+        end;
+
       | _ -> ()
     in Visit.Continue
   in

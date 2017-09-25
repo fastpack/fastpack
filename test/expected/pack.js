@@ -5,9 +5,13 @@
 
 export let x = 1;
 
-export default function () {
-  x = 1;
-};
+// export default function () {
+//   x = 1;
+// };
+// export default class {};
+class F {}
+Object.assign(exports, {default: F});
+;
 
 export function updateX() {
   x++;
