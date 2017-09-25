@@ -116,16 +116,18 @@ let analyze _id filename source =
                 )
                 specifiers
             in
-            match get_module_binding dep.request, namespace with
-            | Some binding, spec :: [] ->
+            match specifiers, get_module_binding dep.request, namespace with
+            | [], _, _ ->
+              (fastpack_require module_id dep.request) ^ ";\n"
+            | _, Some binding, spec :: [] ->
               define_binding spec binding
-            | None, spec::[] ->
+            | _, None, spec::[] ->
               define_binding
                 (add_module_binding ~binding:(Some spec) dep.request)
                 (fastpack_require module_id dep.request)
-            | Some _, [] ->
+            | _, Some _, [] ->
               ""
-            | None, [] ->
+            | _, None, [] ->
               define_binding
                 (add_module_binding dep.request)
                 (fastpack_require module_id dep.request)
