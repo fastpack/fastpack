@@ -130,7 +130,7 @@ let analyze _id filename source =
     let _ = match stmt with
       | S.ImportDeclaration {
           source = (_, { value = L.String request; _ });
-          specifiers = [];
+          specifiers;
           _;
         } ->
         let is_skipped =
@@ -147,45 +147,34 @@ let analyze _id filename source =
             loc
             (fun ctx ->
               let {Module. id = module_id; _} = get_module dep ctx in
-              (fastpack_require module_id dep.request) ^ ";\n"
-            )
-
-      | S.ImportDeclaration {
-          source = (_, { value = L.String request; _ });
-          specifiers;
-          _;
-        } ->
-        let dep = add_dependency request in
-        patch_loc_with
-          loc
-          (fun ctx ->
-            let {Module. id = module_id; _} = get_module dep ctx in
-            let namespace =
-              List.filter_map
-                (fun spec ->
-                   match spec with
-                   | S.ImportDeclaration.ImportNamespaceSpecifier (_,(_, name)) ->
-                     Some name
-                   | _ ->
-                     None
-                )
-                specifiers
-            in
-            match get_module_binding dep.request, namespace with
-            | Some binding, spec :: [] ->
-              define_binding spec binding
-            | None, spec::[] ->
-              define_binding
-                (add_module_binding ~binding:(Some spec) dep.request)
-                (fastpack_require module_id dep.request)
-            | Some _, [] ->
-              ""
-            | None, [] ->
-              define_binding
-                (add_module_binding dep.request)
-                (fastpack_require module_id dep.request)
-            | _ -> failwith "Unexpected several namespace specifiers"
-          );
+              let namespace =
+                List.filter_map
+                  (fun spec ->
+                     match spec with
+                     | S.ImportDeclaration.ImportNamespaceSpecifier (_,(_, name)) ->
+                       Some name
+                     | _ ->
+                       None
+                  )
+                  specifiers
+              in
+              match specifiers, get_module_binding dep.request, namespace with
+              | [], _, _ ->
+                fastpack_require module_id dep.request ^ ";\n"
+              | _, Some binding, spec :: [] ->
+                define_binding spec binding
+              | _, None, spec::[] ->
+                define_binding
+                  (add_module_binding ~binding:(Some spec) dep.request)
+                  (fastpack_require module_id dep.request)
+              | _, Some _, [] ->
+                ""
+              | _, None, [] ->
+                define_binding
+                  (add_module_binding dep.request)
+                  (fastpack_require module_id dep.request)
+              | _ -> failwith "Unexpected several namespace specifiers"
+            );
 
       | S.ExportNamedDeclaration {
           exportKind = S.ExportValue;
