@@ -15,6 +15,7 @@ let analyze _id filename source =
         patch_loc_with;
         patch_loc;
         sub_loc;
+        remove_loc;
         _
       } = Workspace.make_patcher workspace
   in
@@ -126,8 +127,29 @@ let analyze _id filename source =
   in
 
   let visit_statement ((loc: Loc.t), stmt) =
-    (* TODO: strip away import statements with css and other statics *)
     let _ = match stmt with
+      | S.ImportDeclaration {
+          source = (_, { value = L.String request; _ });
+          specifiers = [];
+          _;
+        } ->
+        let is_skipped =
+          List.exists
+            (fun e -> String.suffix ~suf:("." ^ e) request)
+            ["css"; "less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg";
+             "gif"; "ttf"]
+        in
+        if is_skipped
+        then remove_loc loc
+        else
+          let dep = add_dependency request in
+          patch_loc_with
+            loc
+            (fun ctx ->
+              let {Module. id = module_id; _} = get_module dep ctx in
+              (fastpack_require module_id dep.request) ^ ";\n"
+            )
+
       | S.ImportDeclaration {
           source = (_, { value = L.String request; _ });
           specifiers;
@@ -149,18 +171,16 @@ let analyze _id filename source =
                 )
                 specifiers
             in
-            match specifiers, get_module_binding dep.request, namespace with
-            | [], _, _ ->
-              (fastpack_require module_id dep.request) ^ ";\n"
-            | _, Some binding, spec :: [] ->
+            match get_module_binding dep.request, namespace with
+            | Some binding, spec :: [] ->
               define_binding spec binding
-            | _, None, spec::[] ->
+            | None, spec::[] ->
               define_binding
                 (add_module_binding ~binding:(Some spec) dep.request)
                 (fastpack_require module_id dep.request)
-            | _, Some _, [] ->
+            | Some _, [] ->
               ""
-            | _, None, [] ->
+            | None, [] ->
               define_binding
                 (add_module_binding dep.request)
                 (fastpack_require module_id dep.request)
