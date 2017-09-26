@@ -1,9 +1,9 @@
-/* Entry point: d31116a79821b0cf41ac93abe249fc4d */
+/* Entry point: index.js-d31116a79821b0cf41ac93abe249fc4d */
 ({
-"9ac1a10900aa3f1c9a41b85a77459bd8": function(module, exports, __fastpack_require__) {
+"z.js-9ac1a10900aa3f1c9a41b85a77459bd8": function(module, exports, __fastpack_require__) {
 Object.defineProperty(exports, "default", {get: () => 1});
 },
-"236e9c0761015ee1871421a78316fb8e": function(module, exports, __fastpack_require__) {
+"y.js-236e9c0761015ee1871421a78316fb8e": function(module, exports, __fastpack_require__) {
 Object.defineProperty(exports, "default", {get: () => 1});
 
 let a = 1;
@@ -16,8 +16,8 @@ function updateA (newA) {
 Object.defineProperty(exports, "updateA", {get: () => updateA});
 
 },
-"e575b1ec1676ae03493e1f7e4fcfec56": function(module, exports, __fastpack_require__) {
-const ZModule = __fastpack_require__(/* "./z" */ "9ac1a10900aa3f1c9a41b85a77459bd8");
+"x.js-e575b1ec1676ae03493e1f7e4fcfec56": function(module, exports, __fastpack_require__) {
+const ZModule = __fastpack_require__(/* "./z" */ "z.js-9ac1a10900aa3f1c9a41b85a77459bd8");
 
 
 let z = 1, zz = 1;
@@ -42,23 +42,23 @@ function updateX() {
 Object.defineProperty(exports, "updateX", {get: () => updateX});
 
 
-const $lib1 = __fastpack_require__(/* "./y" */ "236e9c0761015ee1871421a78316fb8e");
+const $lib1 = __fastpack_require__(/* "./y" */ "y.js-236e9c0761015ee1871421a78316fb8e");
 Object.defineProperty(exports, "X", {get: () => $lib1.default}); Object.defineProperty(exports, "xA", {get: () => $lib1.a}); Object.defineProperty(exports, "updateA", {get: () => $lib1.updateA});
 Object.defineProperty(exports, "ZM", {get: () => ZModule.default});
 },
-"de84e93847b6569f34aa614a3ce78835": function(module, exports, __fastpack_require__) {
+"yz.js-de84e93847b6569f34aa614a3ce78835": function(module, exports, __fastpack_require__) {
 
-const $lib1 = __fastpack_require__(/* "./z" */ "9ac1a10900aa3f1c9a41b85a77459bd8");
+const $lib1 = __fastpack_require__(/* "./z" */ "z.js-9ac1a10900aa3f1c9a41b85a77459bd8");
 Object.defineProperty(exports, "Z", {get: () => $lib1});
-const $lib2 = __fastpack_require__(/* "./y" */ "236e9c0761015ee1871421a78316fb8e");
+const $lib2 = __fastpack_require__(/* "./y" */ "y.js-236e9c0761015ee1871421a78316fb8e");
 Object.defineProperty(exports, "a", {get: () => $lib2.a}); Object.defineProperty(exports, "updateA", {get: () => $lib2.updateA});
 },
-"8a3f3828d61694d58796e8412f7d4141": function(module, exports, __fastpack_require__) {
-const $lib2 = __fastpack_require__(/* "./x" */ "e575b1ec1676ae03493e1f7e4fcfec56");
+"util.js-8a3f3828d61694d58796e8412f7d4141": function(module, exports, __fastpack_require__) {
+const $lib2 = __fastpack_require__(/* "./x" */ "x.js-e575b1ec1676ae03493e1f7e4fcfec56");
 
 
 const allX = $lib2;
-const YZ = __fastpack_require__(/* "./yz" */ "de84e93847b6569f34aa614a3ce78835");
+const YZ = __fastpack_require__(/* "./yz" */ "yz.js-de84e93847b6569f34aa614a3ce78835");
 
 function xShouldRemain() {
   let x = "this is not updated";
@@ -81,8 +81,8 @@ module.exports.sayHello = function() {
   console.log("x after update:", $lib2.x);
 };
 },
-"d31116a79821b0cf41ac93abe249fc4d": function(module, exports, __fastpack_require__) {
-const util = __fastpack_require__(/* "./util" */ "8a3f3828d61694d58796e8412f7d4141");
+"index.js-d31116a79821b0cf41ac93abe249fc4d": function(module, exports, __fastpack_require__) {
+const util = __fastpack_require__(/* "./util" */ "util.js-8a3f3828d61694d58796e8412f7d4141");
 },
 
 })

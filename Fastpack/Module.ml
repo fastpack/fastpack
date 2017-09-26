@@ -17,7 +17,7 @@ type t = {
   scope: Scope.t;
 }
 
-let make_id filename =
+let make_id prefix filename =
   let digest = Digest.string filename in
-  Digest.to_hex digest
+  prefix ^ "-" ^ Digest.to_hex digest
 

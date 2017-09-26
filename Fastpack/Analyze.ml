@@ -126,6 +126,7 @@ let analyze _id filename source =
   in
 
   let visit_statement ((loc: Loc.t), stmt) =
+    (* TODO: strip away import statements with css and other statics *)
     let _ = match stmt with
       | S.ImportDeclaration {
           source = (_, { value = L.String request; _ });
