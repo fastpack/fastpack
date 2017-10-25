@@ -22,7 +22,7 @@ To run tests:
 
 Prepend any command with `esy` to execute it in package's sandboxed environment:
 
-    % esy ./
+    % esy ./_build/default/bin/fpack.exe
 
 As merlin and others live inside sandboxed environment you'd want to execute
 your editor from inside it:
