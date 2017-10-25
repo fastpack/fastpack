@@ -1,6 +1,8 @@
 node_modules/
 _build
 _install
+_esybuild
+_esyinstall
 yarn-error.log
 .merlin
 tags

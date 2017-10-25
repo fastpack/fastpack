@@ -4,7 +4,11 @@ Pack JS code into a single bundle fast & easy.
 
 ## Development
 
-Make sure you have opam environment activated and run:
+Make sure you have `esy` installed:
+
+    % npm install -g esy
+
+Now install dependencies & build everything:
 
     % make bootstrap
 
@@ -12,9 +16,27 @@ Then to produce the executable:
 
     % make build
 
-To execute toplevel (OCaml REPL):
+To run tests:
 
-    % make top
+    % make test
+
+Prepend any command with `esy` to execute it in package's sandboxed environment:
+
+    % esy ./
+
+As merlin and others live inside sandboxed environment you'd want to execute
+your editor from inside it:
+
+    % esy vim
+    % esy nvim
+    % esy vscode
+    % esy sublime
+
+Alternatively you can enter into sandboxed shell:
+
+    % esy shell
+
+And execute commands from there.
 
 ## TODO
 
