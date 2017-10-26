@@ -12,6 +12,7 @@ let transpile _ =
     FastpackTranspiler.StripFlow.transpile;
     FastpackTranspiler.ReactJSX.transpile;
     FastpackTranspiler.Class.transpile;
+    FastpackTranspiler.ObjectSpread.transpile;
   ]
 
 let pack fname _ =
@@ -35,8 +36,8 @@ let tests = [
   ("print.js", "", print ~with_scope:false);
   ("print-with-scope.js", "", print ~with_scope:true);
   ("pack/index.js", "pack.js", pack);
-  (* ("transpile-object-spread.js", FastpackTranspiler.transpile_source [FastpackTranspiler.ObjectSpread.transpile]); *)
-  (* ("current.js", print); *)
+  ("transpile-object-spread.js", "", transpile);
+  (* ("current.js", "", transpile); *)
 ]
 
 let () =

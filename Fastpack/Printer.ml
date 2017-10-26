@@ -1021,12 +1021,12 @@ let print ?(with_scope=false) (_, statements, comments) =
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
         (fun prop ctx -> match prop with
-           | P.Object.Property (_,{ key; pattern; shorthand }) ->
+           | P.Object.Property (_,{ key; pattern; shorthand; }) ->
              ctx
-             |> emit_object_pattern_property_key key
              |> emit_if
-                (not shorthand)
-                (fun ctx -> ctx |> emit ": " |> emit_pattern pattern)
+               (not shorthand)
+               (fun ctx -> ctx |> emit_object_pattern_property_key key |> emit ": ")
+             |> emit_pattern pattern
            | P.Object.RestProperty (_,{ argument }) ->
              ctx |> emit "..." |> emit_pattern argument
         ) properties
@@ -1052,7 +1052,8 @@ let print ?(with_scope=false) (_, statements, comments) =
       |> emit_identifier name
       |> (if optional then emit "?" else emit_none)
       |> emit_if_some emit_type_annotation typeAnnotation
-    | P.Expression expr -> emit_expression expr ctx
+    | P.Expression expr ->
+      emit_expression expr ctx
 
   and emit_object_pattern_property_key key ctx =
     match key with

@@ -8,6 +8,43 @@ module S = Ast.Statement
 module P = Ast.Pattern
 module L = Ast.Literal
 
+(**
+ * Folds over Ast.
+ *
+ * TODO: Decide if we need to move this to a top level module.
+ **)
+module AstFolder = struct
+
+  let rec fold_pattern f v ((_loc, node) : P.t) =
+    let v = match node with
+
+      | P.Object { properties; _ } ->
+        let aux v = function
+          | P.Object.Property (_, p) ->
+            fold_pattern f v p.pattern
+          | P.Object.RestProperty (_, p) ->
+            fold_pattern f v p.argument
+        in
+        List.fold_left aux v properties
+
+      | P.Array { elements; _ } ->
+        let aux v = function
+          | Some (P.Array.Element p) ->
+            fold_pattern f v p
+          | Some (P.Array.RestElement (_, p)) ->
+            fold_pattern f v p.argument
+          | None ->
+            v
+        in
+        List.fold_left aux v elements
+
+      | P.Assignment _ -> v
+      | P.Identifier _ -> v
+      | P.Expression _ -> v
+    in
+    f v node
+end
+
 module Helper = struct
 
   let empty_object_literal =
@@ -46,6 +83,20 @@ module Helper = struct
         })
     | P.Object.Property.Computed expr ->
       expr
+
+  let has_spread p =
+    let test result node =
+      match result, node with
+      | true, _ -> true
+      | _, P.Object {P.Object. properties; _} ->
+        begin
+          match List.rev properties with
+          | (P.Object.RestProperty _) :: _ -> true
+          | _ -> false
+        end
+      | _ -> false
+    in
+    AstFolder.fold_pattern test false p
 end
 
 module TranspileObjectSpread = struct
@@ -80,139 +131,186 @@ module TranspileObjectSpread = struct
 
 end
 
-(**
- * Folds over Ast.
- *
- * TODO: Decide if we need to move this to a top level module.
- **)
-module AstFolder = struct
-
-  let rec fold_pattern f v ((_loc, node) : P.t) =
-    let v = match node with
-
-      | P.Object { properties; _ } ->
-        let aux v = function
-          | P.Object.Property (_, p) ->
-            fold_pattern f v p.pattern
-          | P.Object.RestProperty (_, p) ->
-            fold_pattern f v p.argument
-        in
-        List.fold_left aux v properties
-
-      | P.Array { elements; _ } ->
-        let aux v = function
-          | Some (P.Array.Element p) ->
-            fold_pattern f v p
-          | Some (P.Array.RestElement (_, p)) ->
-            fold_pattern f v p.argument
-          | None ->
-            v
-        in
-        List.fold_left aux v elements
-
-      | P.Assignment _ -> v
-      | P.Identifier _ -> v
-      | P.Expression _ -> v
-    in
-    f v node
-end
 
 module TranspileObjectSpreadRest = struct
 
+  module Pattern = struct
+
+    type item = Assign of P.t' * E.t
+              | Omit of (P.t' * E.t * (E.t list))
+
+    let transpile {Context. gen_binding; _} scope left right =
+      let before = ref [] in
+      let after = ref [] in
+      let compute_before expr =
+        match (snd expr) with
+        | E.Identifier (_, name) ->
+          name
+        | _ ->
+          let name = gen_binding scope in
+          begin
+            before := (Assign (AstHelper.p_identifier name, expr)) :: !before;
+            name
+          end
+      in
+      let compute_key key =
+        match key with
+        | P.Object.Property.Computed expr ->
+          let name = compute_before expr in
+          P.Object.Property.Computed (AstHelper.e_identifier name)
+        | _ -> key
+      in
+      let get_object_property obj key =
+        match key with
+        | P.Object.Property.Literal (_, lit) ->
+          AstHelper.member_expr obj (AstHelper.e_literal lit)
+        | P.Object.Property.Identifier (_, name) ->
+          AstHelper.member obj name
+        | P.Object.Property.Computed expr ->
+          AstHelper.member_expr obj expr
+      in
+      let rec strip_rest pattern obj =
+          match pattern with
+          | P.Object ({properties; _} as props) ->
+            let properties, spread = strip_properties properties obj in
+            let () =
+              match spread with
+              | Some (spread, omit) ->
+                after := (Omit (AstHelper.p_identifier spread, obj, omit)) :: !after
+              | _ -> ()
+            in
+            begin
+              match properties with
+              | [] -> None
+              | _ -> Some (P.Object { props with properties })
+            end
+          | _ -> Some pattern
+      and strip_properties properties obj =
+        let omit_keys = ref [] in
+        let omit key =
+          let expr =
+            match key with
+            | P.Object.Property.Literal (_, lit) ->
+              AstHelper.e_literal lit
+            | P.Object.Property.Identifier (_, name) ->
+              AstHelper.e_literal_str name
+            | P.Object.Property.Computed (_, E.Identifier (_, name)) ->
+              AstHelper.e_identifier name
+            | _ -> failwith "should not happen"
+          in
+          omit_keys := expr :: !omit_keys
+        in
+        let properties, spread =
+          properties
+          |> List.partition_map
+            (fun p ->
+               match p with
+               | P.Object.Property (_, ({
+                   pattern = (_, pattern);
+                   key; _
+                 } as prop)) ->
+                 let key = compute_key key in
+                 let pattern = strip_rest pattern (get_object_property obj key) in
+                 begin
+                   omit key;
+                   match pattern with
+                   | Some pattern ->
+                     `Left (P.Object.Property (Loc.none, {
+                         prop with
+                         key;
+                         pattern = (Loc.none, pattern);
+                     }))
+                   | None -> `Drop
+                 end
+               | P.Object.RestProperty (_, {
+                   argument = (_, P.Identifier { name = (_, name); _ })
+                 }) ->
+                 `Right name
+               | P.Object.RestProperty (_, { argument = (_, pattern)}) ->
+                 let obj =
+                   AstHelper.fpack_omit_props
+                    obj
+                    (AstHelper.to_array (fun x -> x) !omit_keys)
+                 in
+                 let () =
+                   match strip_rest pattern obj with
+                   | Some self ->
+                     after := !after @ [Assign (self, obj)]
+                   | None -> ()
+
+                 in
+                 `Drop
+            )
+        in
+        (
+          properties,
+          match spread with
+          | [spread] -> Some (spread, List.rev !omit_keys)
+          | _ -> None
+        )
+      in
+      let right = AstHelper.e_identifier (compute_before right) in
+      let self =
+        match strip_rest left right with
+        | Some self -> [Assign (self, right)]
+        | None -> []
+      in
+      (List.rev !before) @ self @ (List.rev !after)
+
+    let to_variable_declaration = function
+      | Assign (left, right) ->
+        Loc.none, { S.VariableDeclaration.Declarator.
+          id = Loc.none, left;
+          init = Some right;
+        }
+      (* | Omit (left, right, []) -> *)
+      (*   to_variable_declaration (Assign (left, right)) *)
+      | Omit (left, right, omit) ->
+        Loc.none, { S.VariableDeclaration.Declarator.
+          id = Loc.none, left;
+          init = Some (
+              AstHelper.fpack_omit_props
+                right
+                (AstHelper.to_array (fun x -> x) omit)
+            );
+        }
+  end
+
   module VariableDeclaration = struct
 
-    let gen_omit_declarator omit_keys init decls (loc, id) =
-      let omit_keys =
-        List.map
-          (fun key -> Helper.object_pattern_key_to_expr key.P.Object.Property.key)
-          omit_keys
+    let test ({ declarations; _ } : S.VariableDeclaration.t) =
+      let test_declaration (_, {S.VariableDeclaration.Declarator. id; init }) = 
+        match id, init with
+        | id, Some _ -> Helper.has_spread id
+        | _ -> false
       in
-      let init = Helper.object_omit init omit_keys in
-      let decl = {
-        S.VariableDeclaration.Declarator.
-        init = Some init;
-        id
-      } in
-      (loc, decl)::decls
+      List.exists test_declaration declarations
 
-    let gen_declarator keys init decls =
-      match keys with
-      | [] -> decls
-      | keys ->
-        let decl = {
-          S.VariableDeclaration.Declarator.
-          init = Some init;
-          id = Loc.none, P.Object {
-              properties =
-                List.map
-                  (fun key -> P.Object.Property (Loc.none, key))
-                  keys;
-              typeAnnotation = None;
-            }
-        } in
-        (Loc.none, decl)::decls
-
-    let explode_declarator (context : Context.t) ((_loc, {S.VariableDeclaration.Declarator. id; init}) as decl) =
-
-      let gen_init init decls =
-        let name = context.gen_id "decl" () in
-        let decl =
-          Loc.none,
-          {
-            S.VariableDeclaration.Declarator.
-            id =
-              Loc.none,
-              P.Identifier {
-                name = Loc.none, name;
-                typeAnnotation = None;
-                optional = false
-              };
-            init = Some init;
-          } in
-        let init = Loc.none, E.Identifier (Loc.none, name) in
-        init, decl::decls
-      in
-
+    let transpile_declaration context scope
+        (loc, ({S.VariableDeclaration.Declarator. id=(_, id); init } as decl))  =
       match init with
-      | None -> [decl]
+      | None -> [(loc, decl)]
       | Some init ->
-        let fold_pattern decls (p : P.t') =
-          match p with
-          | P.Object { properties; _ } ->
-            let fold_property (keys_before, decls, init) = function
-              | P.Object.RestProperty (loc, prop) ->
-                let init, decls = gen_init init decls in
-                let decls = gen_omit_declarator keys_before init decls (loc, prop.argument) in
-                [], decls, init
-              | P.Object.Property (_, prop) ->
-                prop::keys_before, decls, init
-            in 
-            let remaining_keys, decls, _init = List.fold_left fold_property ([], decls, init) properties in 
-            let decls = gen_declarator remaining_keys init decls in
-            decls
-          | _ ->
-            decls
-        in
-        AstFolder.fold_pattern fold_pattern [] id
+        Pattern.transpile context scope id init
+        |> List.map Pattern.to_variable_declaration
 
-    let transpile context (node : S.VariableDeclaration.t) =
-      let declarations =
-        node.declarations
-        |> List.map (explode_declarator context)
-        |> List.flatten
-      in
-      S.VariableDeclaration { node with declarations }
+    let transpile context scope ({S.VariableDeclaration. declarations; _ } as node) =
+      S.VariableDeclaration { node with
+        declarations =
+          List.flatten
+          @@ List.map (transpile_declaration context scope) declarations
+      }
   end
 
 end
 
 let transpile context program =
 
-  let map_statement _scope ((loc, node) : S.t) =
+  let map_statement scope ((loc, node) : S.t) =
     let module T = TranspileObjectSpreadRest in
     let node = match node with
-      | S.VariableDeclaration d ->
-        T.VariableDeclaration.transpile context d
+      | S.VariableDeclaration d when T.VariableDeclaration.test d ->
+        T.VariableDeclaration.transpile context scope d
       | S.ForIn _ -> node
       | S.ForOf _ -> node
       | S.FunctionDeclaration _ -> node
