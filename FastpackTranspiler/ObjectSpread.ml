@@ -84,19 +84,6 @@ module Helper = struct
     | P.Object.Property.Computed expr ->
       expr
 
-  let has_spread p =
-    let test result node =
-      match result, node with
-      | true, _ -> true
-      | _, P.Object {P.Object. properties; _} ->
-        begin
-          match List.rev properties with
-          | (P.Object.RestProperty _) :: _ -> true
-          | _ -> false
-        end
-      | _ -> false
-    in
-    AstFolder.fold_pattern test false p
 end
 
 module TranspileObjectSpread = struct
@@ -139,6 +126,20 @@ module TranspileObjectSpreadRest = struct
     type item = Assign of P.t' * E.t
               | Omit of (P.t' * E.t * (E.t list))
 
+    let test =
+      let check_pattern result node =
+        match result, node with
+        | true, _ -> true
+        | _, P.Object {P.Object. properties; _} ->
+          begin
+            match List.rev properties with
+            | (P.Object.RestProperty _) :: _ -> true
+            | _ -> false
+          end
+        | _ -> false
+      in
+      AstFolder.fold_pattern check_pattern false
+
     let transpile {Context. gen_binding; _} scope left right =
       let before = ref [] in
       let after = ref [] in
@@ -171,7 +172,7 @@ module TranspileObjectSpreadRest = struct
       in
       let rec strip_rest pattern obj =
           match pattern with
-          | P.Object ({properties; _} as props) ->
+          | P.Object ({properties; _} as pattern) ->
             let properties, spread = strip_properties properties obj in
             let () =
               match spread with
@@ -182,8 +183,40 @@ module TranspileObjectSpreadRest = struct
             begin
               match properties with
               | [] -> None
-              | _ -> Some (P.Object { props with properties })
+              | _ -> Some (P.Object { pattern with properties })
             end
+          | P.Array ({elements; _} as pattern) ->
+            let elements =
+              elements
+              |> List.mapi
+                (fun i el ->
+                   let index =
+                     P.Object.Property.Computed (
+                       AstHelper.e_literal (AstHelper.literal_num i)
+                     )
+                   in
+                   let obj = get_object_property obj index in
+                   match el with
+                   | Some (P.Array.Element (_, pattern)) ->
+                     begin
+                       match strip_rest pattern obj with
+                       | Some pattern -> Some (P.Array.Element (Loc.none, pattern))
+                       | None -> None
+                     end
+                   | Some(P.Array.RestElement (_, {argument = (_, pattern); _})) ->
+                     begin
+                       match strip_rest pattern obj with
+                       | Some pattern ->
+                         Some (P.Array.RestElement (Loc.none, {
+                             argument = (Loc.none, pattern)
+                         }))
+                       | None -> None
+                     end
+                   | _ ->
+                     None
+                )
+            in
+            Some (P.Array ({pattern with elements}))
           | _ -> Some pattern
       and strip_properties properties obj =
         let omit_keys = ref [] in
@@ -203,43 +236,42 @@ module TranspileObjectSpreadRest = struct
         let properties, spread =
           properties
           |> List.partition_map
-            (fun p ->
-               match p with
-               | P.Object.Property (_, ({
-                   pattern = (_, pattern);
-                   key; _
-                 } as prop)) ->
-                 let key = compute_key key in
-                 let pattern = strip_rest pattern (get_object_property obj key) in
-                 begin
-                   omit key;
-                   match pattern with
-                   | Some pattern ->
-                     `Left (P.Object.Property (Loc.none, {
-                         prop with
-                         key;
-                         pattern = (Loc.none, pattern);
-                     }))
-                   | None -> `Drop
-                 end
-               | P.Object.RestProperty (_, {
-                   argument = (_, P.Identifier { name = (_, name); _ })
-                 }) ->
-                 `Right name
-               | P.Object.RestProperty (_, { argument = (_, pattern)}) ->
-                 let obj =
-                   AstHelper.fpack_omit_props
-                    obj
-                    (AstHelper.to_array (fun x -> x) !omit_keys)
-                 in
-                 let () =
-                   match strip_rest pattern obj with
-                   | Some self ->
-                     after := !after @ [Assign (self, obj)]
-                   | None -> ()
+            (function
+             | P.Object.Property (_, ({
+                 pattern = (_, pattern);
+                 key; _
+               } as prop)) ->
+               let key = compute_key key in
+               let pattern = strip_rest pattern (get_object_property obj key) in
+               begin
+                 omit key;
+                 match pattern with
+                 | Some pattern ->
+                   `Left (P.Object.Property (Loc.none, {
+                       prop with
+                       key;
+                       pattern = (Loc.none, pattern);
+                   }))
+                 | None -> `Drop
+               end
+             | P.Object.RestProperty (_, {
+                 argument = (_, P.Identifier { name = (_, name); _ })
+               }) ->
+               `Right name
+             | P.Object.RestProperty (_, { argument = (_, pattern)}) ->
+               let obj =
+                 AstHelper.fpack_omit_props
+                  obj
+                  (AstHelper.to_array (fun x -> x) !omit_keys)
+               in
+               let () =
+                 match strip_rest pattern obj with
+                 | Some self ->
+                   after := !after @ [Assign (self, obj)]
+                 | None -> ()
 
-                 in
-                 `Drop
+               in
+               `Drop
             )
         in
         (
@@ -281,7 +313,7 @@ module TranspileObjectSpreadRest = struct
     let test ({ declarations; _ } : S.VariableDeclaration.t) =
       let test_declaration (_, {S.VariableDeclaration.Declarator. id; init }) = 
         match id, init with
-        | id, Some _ -> Helper.has_spread id
+        | id, Some _ -> Pattern.test id
         | _ -> false
       in
       List.exists test_declaration declarations

@@ -14,6 +14,9 @@ let literal_str s =
   let raw = "\"" ^ s ^ "\"" in
   {L. value = L.String raw; raw }
 
+let literal_num num =
+  {L. value = L.Number (float_of_int num); raw = string_of_int num}
+
 let literal_true =
   {L. value = L.Boolean true; raw = "true"}
 
