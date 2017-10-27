@@ -123,6 +123,12 @@ module Parens = struct
       | S.Expression _, None, E.Class _
       | S.Expression _, None, E.Function _ ->
         true
+      | S.Expression _, _, E.Assignment {
+          operator = E.Assignment.Assign; left = (_, P.Object _); _ } ->
+        true
+      | S.Expression _, _, E.Assignment {
+          operator = E.Assignment.Assign; left = (_, P.Array _); _ } ->
+        true
       | S.For _, None, E.Sequence _ ->
         false
       | _, _, E.Sequence _ ->

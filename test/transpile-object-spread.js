@@ -76,3 +76,17 @@ var {...x} = (function(){
 // Computed property handling
 var {[(function() {return "a";})()]:{...b}} = {a: {b: 2, c: 3}};
 var {[(function() {return "a";})()]:{b, ...cc}} = {a: {b: 2, c: 3}};
+
+/*
+ * *********************** Assignment Expressions ***********************
+ */
+
+/* Babel */
+({ a1 } = c1);
+({ a2, ...b2 } = c2);
+
+console.log({ a3, ...b3 } = c3);
+
+/* Own  - Babel fails on this */
+
+console.log({ a, ["c" + ""]:{...xx}, ...b } = {a: 1, b: 2, c: {x: 1}});

@@ -4,6 +4,7 @@
  **)
 
 module E = Ast.Expression
+module F = Ast.Function
 module S = Ast.Statement
 module P = Ast.Pattern
 module L = Ast.Literal
@@ -125,6 +126,13 @@ module TranspileObjectSpreadRest = struct
 
     type item = Assign of P.t' * E.t
               | Omit of (P.t' * E.t * (E.t list))
+
+    type t = {
+      before : item list;
+      self : item option;
+      after : item list;
+      result : E.t;
+    }
 
     let test =
       let check_pattern result node =
@@ -284,10 +292,15 @@ module TranspileObjectSpreadRest = struct
       let right = AstHelper.e_identifier (compute_before right) in
       let self =
         match strip_rest left right with
-        | Some self -> [Assign (self, right)]
-        | None -> []
+        | Some self -> Some (Assign (self, right))
+        | None -> None
       in
-      (List.rev !before) @ self @ (List.rev !after)
+      {
+        before = List.rev !before;
+        self;
+        after = List.rev !after;
+        result = right;
+      }
 
     let to_variable_declaration = function
       | Assign (left, right) ->
@@ -295,8 +308,6 @@ module TranspileObjectSpreadRest = struct
           id = Loc.none, left;
           init = Some right;
         }
-      (* | Omit (left, right, []) -> *)
-      (*   to_variable_declaration (Assign (left, right)) *)
       | Omit (left, right, omit) ->
         Loc.none, { S.VariableDeclaration.Declarator.
           id = Loc.none, left;
@@ -306,6 +317,80 @@ module TranspileObjectSpreadRest = struct
                 (AstHelper.to_array (fun x -> x) omit)
             );
         }
+
+    let to_assignment = function
+      | Assign (left, right) ->
+        Loc.none, S.Expression {
+          expression = (Loc.none, E.Assignment {
+            operator = E.Assignment.Assign;
+            left = Loc.none, left;
+            right;
+          });
+          directive = None;
+        }
+      | Omit (left, right, omit) ->
+        Loc.none, S.Expression {
+          expression = (Loc.none, E.Assignment {
+            operator = E.Assignment.Assign;
+            left = Loc.none, left;
+            right = (
+              AstHelper.fpack_omit_props
+                right
+                (AstHelper.to_array (fun x -> x) omit)
+            );
+          });
+          directive = None;
+        }
+
+
+  end
+
+  module Assignment = struct
+
+    let test {E.Assignment. left; _} =
+      Pattern.test left
+
+    let transpile context scope {E.Assignment. left = (_, left); right; _ } =
+      let {Pattern. before; self; after; result } =
+        Pattern.transpile context scope left right
+      in
+      let declarations =
+        List.map Pattern.to_variable_declaration before
+      in
+      let variables =
+        if List.length declarations > 0
+        then
+          [
+            Loc.none, S.VariableDeclaration {
+              kind = S.VariableDeclaration.Let;
+              declarations;
+            }
+          ]
+        else
+          []
+      in
+      let assignments =
+        (match self with | Some item -> [item] | None -> []) @ after
+        |> List.map Pattern.to_assignment
+      in
+      let func =
+        Loc.none, E.ArrowFunction {
+          id = None;
+          params = ([], None);
+          async = false;
+          generator = false;
+          predicate = None;
+          expression = false;
+          typeParameters = None;
+          returnType = None;
+          body = F.BodyBlock (Loc.none, {
+            body = variables @ assignments @ [
+                  Loc.none, S.Return {argument = Some result}
+            ]
+          })
+        }
+      in
+      AstHelper.call func []
   end
 
   module VariableDeclaration = struct
@@ -323,8 +408,14 @@ module TranspileObjectSpreadRest = struct
       match init with
       | None -> [(loc, decl)]
       | Some init ->
-        Pattern.transpile context scope id init
-        |> List.map Pattern.to_variable_declaration
+        let {Pattern. before; self; after; _} =
+          Pattern.transpile context scope id init
+        in
+        List.map
+          Pattern.to_variable_declaration
+          (before @ (match self with | Some item -> [item] | None -> []) @ after)
+
+
 
     let transpile context scope ({S.VariableDeclaration. declarations; _ } as node) =
       S.VariableDeclaration { node with
@@ -351,10 +442,13 @@ let transpile context program =
     loc, node
   in
 
-  let map_expression _scope ((loc, node) : E.t) =
+  let map_expression scope ((loc, node) : E.t) =
     let node = match node with
       | E.Object obj when TranspileObjectSpread.test obj ->
-        let _, node = TranspileObjectSpread.transpile obj in node
+        snd (TranspileObjectSpread.transpile obj)
+      | E.Assignment ({ operator = E.Assignment.Assign; _ } as obj)
+        when TranspileObjectSpreadRest.Assignment.test obj ->
+        snd (TranspileObjectSpreadRest.Assignment.transpile context scope obj)
       | node -> node
     in
     loc, node
