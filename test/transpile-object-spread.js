@@ -42,3 +42,37 @@ var { ...{ x = 5 } } = { x : 1 };
 var [x, {y, ...p}] = [1, {y: 100, z: 1, zz:10}];
 var [x, {...p}] = [1, {y: 100, z: 1, zz:10}];
 
+var { outer: { inner: { three, ...other } } } = defunct
+var test = {
+  foo: {
+    bar: {
+      baz: {
+        a: {
+          x: 1,
+          y: 2,
+          z: 3,
+        },
+      },
+    },
+  },
+};
+
+var { foo: { bar: { baz: { a: { x, ...other } } } } } = test;
+
+/* Own */
+
+// Produce tmp_name for the expression
+var {a, ...b} = {a: 1, b: 2, c: 3};
+
+// Drop pattern entirely
+var {x: {...xx}, y: {...yy}, ...zz} = z;
+
+// Make sure to transpile inside the expression using the same scope
+var {...x} = (function(){
+  let {a, ...b} = {a: 1, b:2, c: 3};
+  return b;
+})();
+
+// Computed property handling
+var {[(function() {return "a";})()]:{...b}} = {a: {b: 2, c: 3}};
+var {[(function() {return "a";})()]:{b, ...cc}} = {a: {b: 2, c: 3}};

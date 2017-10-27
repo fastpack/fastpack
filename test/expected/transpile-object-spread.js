@@ -41,3 +41,43 @@ var __fpack__4 = {z: 1},
   {z} = $__fpack__.omitProps(__fpack__4, []);
 var __fpack__5 = {x: 1},
   {x = 5} = $__fpack__.omitProps(__fpack__5, []);
+var __fpack__6 = [1, {y: 100, z: 1, zz: 10}],
+  [x, {y}] = __fpack__6,
+  p = $__fpack__.omitProps(__fpack__6[1], ["y"]);
+var __fpack__7 = [1, {y: 100, z: 1, zz: 10}],
+  [x, ] = __fpack__7,
+  p = $__fpack__.omitProps(__fpack__7[1], []);
+var {outer: {inner: {three}}} = defunct,
+  other = $__fpack__.omitProps(defunct.outer.inner, ["three"]);
+var test = {foo: {bar: {baz: {a: {x: 1, y: 2, z: 3}}}}};
+var {foo: {bar: {baz: {a: {x}}}}} = test,
+  other = $__fpack__.omitProps(test.foo.bar.baz.a, ["x"]);
+/* Own */
+// Produce tmp_name for the expression
+var __fpack__8 = {a: 1, b: 2, c: 3},
+  {a} = __fpack__8,
+  b = $__fpack__.omitProps(__fpack__8, ["a"]);
+// Drop pattern entirely
+var xx = $__fpack__.omitProps(z.x, []),
+  yy = $__fpack__.omitProps(z.y, []),
+  zz = $__fpack__.omitProps(z, ["x", "y"]);
+// Make sure to transpile inside the expression using the same scope
+var __fpack__10 = (function () {
+    let __fpack__9 = {a: 1, b: 2, c: 3},
+      {a} = __fpack__9,
+      b = $__fpack__.omitProps(__fpack__9, ["a"]);
+    return b
+  })(),
+  x = $__fpack__.omitProps(__fpack__10, []);
+// Computed property handling
+var __fpack__11 = {a: {b: 2, c: 3}},
+  __fpack__12 = (function () {
+    return "a"
+  })(),
+  b = $__fpack__.omitProps(__fpack__11[__fpack__12], []);
+var __fpack__13 = {a: {b: 2, c: 3}},
+  __fpack__14 = (function () {
+    return "a"
+  })(),
+  {[__fpack__14]: {b}} = __fpack__13,
+  cc = $__fpack__.omitProps(__fpack__13[__fpack__14], ["b"]);
