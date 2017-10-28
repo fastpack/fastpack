@@ -1119,6 +1119,7 @@ let print ?(with_scope=false) (_, statements, comments) =
       let (params, rest) = params in fun ctx ->
         ctx
         |> emit_list ~emit_sep:emit_comma emit_pattern params
+        |> emit_if (List.length params > 0 && rest <> None) (emit ",")
         |> emit_if_some (fun (_loc, { F.RestElement.  argument }) ctx ->
             ctx |> emit " ..." |> emit_pattern argument) rest
     )

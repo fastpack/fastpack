@@ -22,7 +22,7 @@ function x() {
 function y(a) {
   
 };
-function z(a ...b) {
+function z(a, ...b) {
   
 };
 function a() {

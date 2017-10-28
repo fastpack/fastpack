@@ -393,6 +393,83 @@ module TranspileObjectSpreadRest = struct
       AstHelper.call func []
   end
 
+  module Function = struct
+    let test {F. params = (params, rest); _} =
+      List.exists Pattern.test params
+      || (match rest with
+          | Some (_, {F.RestElement. argument}) -> Pattern.test argument
+          | None -> false)
+
+    let transpile
+        context
+        scope
+        ({F. params = (params, rest); body; _} as func) =
+      let vars = ref [] in
+      let gen_binding pattern =
+        let binding = context.Context.gen_binding scope in
+        let () =
+          vars := (snd pattern, AstHelper.e_identifier binding) :: !vars
+        in
+        Loc.none, AstHelper.p_identifier binding
+      in
+      let params =
+        List.map
+          (fun param ->
+             if Pattern.test param
+             then
+               gen_binding param
+             else
+               param
+          )
+          params
+      in
+      let rest =
+        match rest with
+        | None -> None
+        | Some (_, { argument }) as rest ->
+          if Pattern.test argument
+          then Some (Loc.none, {
+              F.RestElement.  argument = gen_binding argument
+            })
+          else
+            rest
+      in
+      let declarations =
+        !vars
+        |> List.rev
+        |> List.map
+          (fun (left, right) ->
+             let {Pattern. before; self; after; _ } =
+               Pattern.transpile context scope left right
+             in
+             before
+             @ (match self with Some self -> [self] | None -> [])
+             @ after
+          )
+        |> List.flatten
+        |> List.map Pattern.to_variable_declaration
+      in
+      let decl =
+        Loc.none,
+        S.VariableDeclaration {
+          kind = S.VariableDeclaration.Let;
+          declarations;
+        }
+      in
+      let body =
+        match body with
+        | F.BodyBlock (_, { body }) ->
+          F.BodyBlock (Loc.none, { body =  decl :: body })
+        | F.BodyExpression expr ->
+          F.BodyBlock (Loc.none, {
+              body = decl :: (Loc.none, S.Return {argument = Some expr}) :: []
+            })
+      in
+      { func with params = (params, rest); body }
+
+
+  end
+
   module VariableDeclaration = struct
 
     let test ({ declarations; _ } : S.VariableDeclaration.t) =
@@ -454,10 +531,17 @@ let transpile context program =
     loc, node
   in
 
+  let map_function scope (loc, func) =
+    if TranspileObjectSpreadRest.Function.test func
+    then (loc, TranspileObjectSpreadRest.Function.transpile context scope func)
+    else (loc, func)
+  in
+
   let mapper = {
     AstMapper.default_mapper with
     map_expression;
     map_statement;
+    map_function;
   } in
 
   AstMapper.map mapper program

@@ -81,3 +81,73 @@ var __fpack__13 = {a: {b: 2, c: 3}},
   })(),
   {[__fpack__14]: {b}} = __fpack__13,
   cc = $__fpack__.omitProps(__fpack__13[__fpack__14], ["b"]);
+/*
+ * *********************** Assignment Expressions ***********************
+ */
+/* Babel */
+({a1} = c1);
+(() =>  {
+  ({a2} = c2);
+  b2 = $__fpack__.omitProps(c2, ["a2"]);
+  return c2
+})();
+console.log((() =>  {
+  ({a3} = c3);
+  b3 = $__fpack__.omitProps(c3, ["a3"]);
+  return c3
+})());
+/* Own  - Babel fails on this */
+console.log((() =>  {
+  let __fpack__15 = {a: 1, b: 2, c: {x: 1}},
+    __fpack__16 = "c" + "";
+  ({a} = __fpack__15);
+  xx = $__fpack__.omitProps(__fpack__15[__fpack__16], []);
+  b = $__fpack__.omitProps(__fpack__15, ["a", __fpack__16]);
+  return __fpack__15
+})());
+/*
+ * *********************** Functions ***********************
+ */
+/* Own */
+function ff(__fpack__17) {
+  let a = $__fpack__.omitProps(__fpack__17, [])
+};
+;
+let f1 = function (__fpack__18) {
+    let b = $__fpack__.omitProps(__fpack__18, [])
+  };
+let f2 = __fpack__19 =>  {
+    let c = $__fpack__.omitProps(__fpack__19, []);
+    return c
+  };
+let f3 = __fpack__20 =>  {
+    let c = $__fpack__.omitProps(__fpack__20, []);
+    return c
+  };
+// many parameters
+function f5(a, __fpack__21, __fpack__22) {
+  let c = $__fpack__.omitProps(__fpack__21.b, []),
+    g = $__fpack__.omitProps(__fpack__22.d.e.f, [])
+};
+;
+let f6 = (__fpack__23, c, __fpack__24) =>  {
+    let {a} = __fpack__23,
+      b = $__fpack__.omitProps(__fpack__23, ["a"]),
+      f = $__fpack__.omitProps(__fpack__24.d.e, []);
+    return {}
+  };
+// could rest pattern be a part of the rest element at all?
+function f7(a, ...b) {
+  
+};
+;
+function f8(a, ...__fpack__25) {
+  let {b} = __fpack__25,
+    c = $__fpack__.omitProps(__fpack__25, ["b"])
+};
+;
+function f9(a, __fpack__26, ...__fpack__27) {
+  let c = $__fpack__.omitProps(__fpack__26.b, []),
+    d = $__fpack__.omitProps(__fpack__27, [])
+};
+;

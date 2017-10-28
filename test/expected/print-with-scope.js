@@ -47,7 +47,7 @@ if (true) {
   // should not be in program scope
   let b1 = 2;
   class C {
-    constructor(prop1 ...props) {
+    constructor(prop1, ...props) {
       /* SCOPE: 
       a2 -> Var
       prop1 -> Argument
