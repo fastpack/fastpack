@@ -495,7 +495,7 @@ module TranspileObjectSpreadRest = struct
 
 
     let transpile context scope ({S.VariableDeclaration. declarations; _ } as node) =
-      S.VariableDeclaration { node with
+      { node with
         declarations =
           List.flatten
           @@ List.map (transpile_declaration context scope) declarations
@@ -510,7 +510,13 @@ let transpile context program =
     let module T = TranspileObjectSpreadRest in
     let node = match node with
       | S.VariableDeclaration d when T.VariableDeclaration.test d ->
-        T.VariableDeclaration.transpile context scope d
+        S.VariableDeclaration (T.VariableDeclaration.transpile context scope d)
+      | S.For ({init = Some (S.For.InitDeclaration (_, decl)); _} as node)
+        when T.VariableDeclaration.test decl ->
+        S.For {node with init = Some( S.For.InitDeclaration(
+            Loc.none, T.VariableDeclaration.transpile context scope decl
+          ))}
+
       | S.ForIn _ -> node
       | S.ForOf _ -> node
       | S.FunctionDeclaration _ -> node

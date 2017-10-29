@@ -110,3 +110,7 @@ let f6 = ({a, ...b}, c, {d: {e: {...f}}}) => ({});
 function f7(a, ...b) {};
 function f8(a, ...{b, ...c}) {};
 function f9(a, {b:{...c}}, ...{...d}) {};
+
+// basic for loop
+for (p = {x, ...y} = {x: 1, a: 2}; false; ) {}
+for (var {x, ...y} = {x: 1, a: 2}; false; ) {}

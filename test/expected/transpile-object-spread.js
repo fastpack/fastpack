@@ -151,3 +151,19 @@ function f9(a, __fpack__26, ...__fpack__27) {
     d = $__fpack__.omitProps(__fpack__27, [])
 };
 ;
+// basic for loop
+for (p = (() =>  {
+  let __fpack__28 = {x: 1, a: 2};
+  ({x} = __fpack__28);
+  y = $__fpack__.omitProps(__fpack__28, ["x"]);
+  return __fpack__28
+})(); false; )
+  {
+    
+  }
+;
+for (var __fpack__29 = {x: 1, a: 2}, {x} = __fpack__29, y = $__fpack__.omitProps(__fpack__29, ["x"]); false; )
+  {
+    
+  }
+;
