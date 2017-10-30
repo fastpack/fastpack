@@ -95,7 +95,11 @@ let transpile _context program =
       | S.DeclareClass _
       | S.InterfaceDeclaration _
       | S.DeclareModuleExports _
-      | S.TypeAlias _ ->
+      | S.TypeAlias _
+      | S.DeclareInterface _
+      | S.DeclareTypeAlias _
+      | S.DeclareOpaqueType _
+      | S.OpaqueType _ ->
         S.Empty
       | node -> node
     in

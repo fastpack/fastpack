@@ -163,6 +163,10 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
       | Statement.DeclareModule _ -> ()
       | Statement.DeclareModuleExports _ -> ()
       | Statement.DeclareExportDeclaration _ -> ()
+      | Statement.DeclareInterface _ -> ()
+      | Statement.DeclareTypeAlias _ -> ()
+      | Statement.DeclareOpaqueType _ -> ()
+      | Statement.OpaqueType _ -> ()
   in
   handler.leave_statement (loc, statement)
 

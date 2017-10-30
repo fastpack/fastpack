@@ -114,3 +114,7 @@ function f9(a, {b:{...c}}, ...{...d}) {};
 // basic for loop
 for (p = {x, ...y} = {x: 1, a: 2}; false; ) {}
 for (var {x, ...y} = {x: 1, a: 2}; false; ) {}
+
+// for in
+for ({x, ...y} in iterator) {}
+for (var {x, ...y} in iterator) {}

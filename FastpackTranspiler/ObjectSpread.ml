@@ -481,7 +481,7 @@ module TranspileObjectSpreadRest = struct
       List.exists test_declaration declarations
 
     let transpile_declaration context scope
-        (loc, ({S.VariableDeclaration.Declarator. id=(_, id); init } as decl))  =
+        (loc, ({S.VariableDeclaration.Declarator. id=(_, id); init} as decl))  =
       match init with
       | None -> [(loc, decl)]
       | Some init ->
@@ -492,14 +492,35 @@ module TranspileObjectSpreadRest = struct
           Pattern.to_variable_declaration
           (before @ (match self with | Some item -> [item] | None -> []) @ after)
 
-
-
     let transpile context scope ({S.VariableDeclaration. declarations; _ } as node) =
       { node with
         declarations =
           List.flatten
           @@ List.map (transpile_declaration context scope) declarations
       }
+  end
+
+  module ForIn = struct
+
+    let test {S.ForIn. left; _ } =
+      match left with
+      | S.ForIn.LeftDeclaration (_, decl) ->
+        VariableDeclaration.test decl
+      | S.ForIn.LeftExpression (_, E.Object obj) ->
+        TranspileObjectSpread.test obj
+      | _ -> false
+
+    (* let transpile *)
+    (*     {Context. gen_binding; _} *)
+    (*     scope *)
+    (*     ({S.ForIn. left; body; } as for_) = *)
+    (*   let binding = gen_binding scope in *)
+    (*   let pattern = *)
+    (*     match left with *)
+    (*     | S.ForIn.LeftDeclaration (_, { declarations = []; _ }) -> (??) *)
+    (*     | S.ForIn.LeftExpression _ -> (??) *)
+    (*   in *)
+
   end
 
 end
@@ -511,15 +532,19 @@ let transpile context program =
     let node = match node with
       | S.VariableDeclaration d when T.VariableDeclaration.test d ->
         S.VariableDeclaration (T.VariableDeclaration.transpile context scope d)
+
+      (* Only consider initdeclaration here
+       * expression is handled in `map_expression`*)
       | S.For ({init = Some (S.For.InitDeclaration (_, decl)); _} as node)
         when T.VariableDeclaration.test decl ->
         S.For {node with init = Some( S.For.InitDeclaration(
             Loc.none, T.VariableDeclaration.transpile context scope decl
           ))}
 
-      | S.ForIn _ -> node
+      (* | S.ForIn for_ when T.ForIn.test for_ -> *)
+      (*   T.ForIn.transpile context scope for_ *)
+
       | S.ForOf _ -> node
-      | S.FunctionDeclaration _ -> node
       | _ -> node
     in
     loc, node

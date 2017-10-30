@@ -172,9 +172,9 @@
   peerDependencies:
     ocaml "*"
 
-"@opam/flow_parser@0.47.0":
-  version "0.47.0"
-  resolved "@opam/flow_parser@0.47.0"
+"@opam/flow_parser@0.52.0":
+  version "0.52.0"
+  resolved "@opam/flow_parser@0.52.0"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"

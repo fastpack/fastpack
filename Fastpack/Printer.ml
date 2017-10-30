@@ -615,6 +615,10 @@ let print ?(with_scope=false) (_, statements, comments) =
         failwith "DeclareModuleExports is not supported"
       | S.DeclareExportDeclaration _ ->
         failwith "DeclareExportDeclaration is not supported"
+      | S.DeclareInterface _ -> failwith "DeclareInterface not supported"
+      | S.DeclareTypeAlias _ -> failwith "DeclareTypeAlias not supported"
+      | S.DeclareOpaqueType _ -> failwith "DeclareOpaqueType not supported"
+      | S.OpaqueType _ -> failwith "OpaqueType not supported"
     in
     ctx |> set_parent_stmt prev_parent_stmt
 
