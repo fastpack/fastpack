@@ -11,10 +11,13 @@ let () =
       try
         `Ok (Fastpack.Packer.pack_main entry)
       with
-      | Fastpack.Packer.PackError (CannotReadModule filename) ->
+      | Fastpack.Packer.PackError (ctx, error) ->
         `Error (
           false,
-          Printf.sprintf "Cannot find entry point %s" filename
+          "\n"
+          ^ Fastpack.Packer.ctx_to_string ctx
+          ^ "\n"
+          ^ Fastpack.Error.to_string error
         )
     in
 

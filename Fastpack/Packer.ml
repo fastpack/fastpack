@@ -1,39 +1,40 @@
 module StringSet = Set.Make(String)
-let (>>=) = Lwt.(>>=)
+open Lwt.Infix
 
-type pack_error_reason =
-  | CannotReadModule of string
-  | CannotLeavePackageDir of string
+type ctx = {
+  package_dir : string;
+  stack : Dependency.t list;
+}
 
-exception PackError of pack_error_reason
+let ctx_to_string {package_dir; _} =
+  Printf.sprintf "Working directory: %s\n" package_dir
 
-let read_module package_dir filename =
-  let length = String.length package_dir in
-  if String.sub filename 0 length <> package_dir
-  then raise (PackError (CannotLeavePackageDir filename));
+exception PackError of ctx * Error.reason
+
+let read_module ctx filename =
+  if not (FilePath.is_subdir filename ctx.package_dir)
+  then raise (PackError (ctx, CannotLeavePackageDir filename));
   let%lwt source =
     try%lwt
       Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
     with Unix.Unix_error _ ->
-      raise (PackError (CannotReadModule filename))
+      raise (PackError (ctx, CannotReadModule filename))
   in
   Lwt.return {
     Module.
-    id = Module.make_id
-        (String.sub filename (length + 1) (String.length filename - length - 1))
-        filename;
+    id = Module.make_id (FilePath.basename filename) filename;
     filename = filename;
     workspace = Workspace.of_string source;
     scope = Scope.empty;
   }
 
 let read_entry_module filename =
-  let pwd = FileUtil.pwd () in
-  let filename = FilePath.make_absolute pwd filename in
-  (* TODO: how to identify the package dir? closest parent with package.json? *)
+  let filename = FilePath.make_absolute (FileUtil.pwd ()) filename in
+  (* TODO: how to identify the package dir? closest parent with package.json? Yes! *)
   let package_dir = FilePath.dirname filename in
-  let%lwt content = read_module package_dir filename in
-  Lwt.return (package_dir, content)
+  let ctx = { package_dir; stack = []; } in
+  let%lwt m = read_module ctx filename in
+  Lwt.return (ctx, m)
 
 let emit_runtime out entry_id =
   (**
@@ -130,7 +131,9 @@ let emit ?(with_runtime=true) out graph entry =
           (ctx, seen)
           dependencies
       in
-      emit (Printf.sprintf "\"%s\": function(module, exports, __fastpack_require__) {\n" m.id)
+      emit (Printf.sprintf
+              "\"%s\": function(module, exports, __fastpack_require__) {\n"
+              m.id)
       >> Workspace.write out workspace ctx
       >> emit "},\n"
       >> Lwt.return seen
@@ -145,7 +148,7 @@ let emit ?(with_runtime=true) out graph entry =
   >> Lwt.return_unit
 
 
-let rec process graph package_dir (m : Module.t) =
+let rec process graph ctx (m : Module.t) =
   let source = m.Module.workspace.Workspace.value in
   let (workspace, dependencies, scope) = Analyze.analyze m.id m.filename source in
   let m = { m with workspace; scope; } in
@@ -158,8 +161,8 @@ let rec process graph package_dir (m : Module.t) =
          | Some resolved ->
            let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
              | None ->
-               let%lwt m = read_module package_dir resolved in
-               process graph package_dir m
+               let%lwt m = read_module ctx resolved in
+               process graph { ctx with stack = req :: ctx.stack } m
              | Some m ->
                Lwt.return m
            in
@@ -171,8 +174,13 @@ let rec process graph package_dir (m : Module.t) =
 
 let pack ?(with_runtime=true) channel entry_filename =
   let graph = DependencyGraph.empty () in
-  let%lwt (base_dir, entry) = read_entry_module entry_filename in
-  let%lwt entry = process graph base_dir entry in
+  let%lwt (ctx, entry) = read_entry_module entry_filename in
+  let%lwt entry =
+    try%lwt
+      process graph ctx entry
+    with
+    | Parse_error.Error args -> raise (PackError (ctx, ParserError (entry.filename, args)))
+  in
   let%lwt () = emit ~with_runtime channel graph entry in
   Lwt.return_unit
 
