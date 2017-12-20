@@ -149,38 +149,36 @@ let emit ?(with_runtime=true) out graph entry =
 
 
 let rec process graph ctx (m : Module.t) =
-  let source = m.Module.workspace.Workspace.value in
-  let (workspace, dependencies, scope) = Analyze.analyze m.id m.filename source in
-  let m = { m with workspace; scope; } in
-  DependencyGraph.add_module graph m;
-  let%lwt () = Lwt_list.iter_p (
-      fun ({ Dependency. request; _ } as req) ->
-        (match%lwt Dependency.resolve req with
-         | None ->
-           Lwt_io.write Lwt_io.stderr ("ERROR: cannot resolve: " ^ request ^ "\n");
-         | Some resolved ->
-           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
-             | None ->
-               let%lwt m = read_module ctx resolved in
-               process graph { ctx with stack = req :: ctx.stack } m
-             | Some m ->
-               Lwt.return m
-           in
-           DependencyGraph.add_dependency graph m (req, Some dep_module);
-           Lwt.return_unit
-        )
-    ) dependencies in
-  Lwt.return m
+  try%lwt
+    let source = m.Module.workspace.Workspace.value in
+    let (workspace, dependencies, scope) = Analyze.analyze m.id m.filename source in
+    let m = { m with workspace; scope; } in
+    DependencyGraph.add_module graph m;
+    let%lwt () = Lwt_list.iter_p (
+        fun ({ Dependency. request; _ } as req) ->
+          (match%lwt Dependency.resolve req with
+           | None ->
+             Lwt_io.write Lwt_io.stderr ("ERROR: cannot resolve: " ^ request ^ "\n");
+           | Some resolved ->
+             let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
+               | None ->
+                 let%lwt m = read_module ctx resolved in
+                 process graph { ctx with stack = req :: ctx.stack } m
+               | Some m ->
+                 Lwt.return m
+             in
+             DependencyGraph.add_dependency graph m (req, Some dep_module);
+             Lwt.return_unit
+          )
+      ) dependencies in
+    Lwt.return m
+  with
+  | Parse_error.Error args -> raise (PackError (ctx, ParserError (m.filename, args)))
 
 let pack ?(with_runtime=true) channel entry_filename =
   let graph = DependencyGraph.empty () in
   let%lwt (ctx, entry) = read_entry_module entry_filename in
-  let%lwt entry =
-    try%lwt
-      process graph ctx entry
-    with
-    | Parse_error.Error args -> raise (PackError (ctx, ParserError (entry.filename, args)))
-  in
+  let%lwt entry = process graph ctx entry in
   let%lwt () = emit ~with_runtime channel graph entry in
   Lwt.return_unit
 
