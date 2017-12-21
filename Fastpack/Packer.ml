@@ -6,19 +6,27 @@ type ctx = {
   stack : Dependency.t list;
 }
 
-let ctx_to_string {package_dir; _} =
+let ctx_to_string { package_dir; stack } =
   Printf.sprintf "Working directory: %s\n" package_dir
+  ^ "\nCall stack:\n"
+  ^ String.concat "\t\n" @@ List.map Dependency.to_string stack
+
 
 exception PackError of ctx * Error.reason
 
 let read_module ctx filename =
-  if not (FilePath.is_subdir filename ctx.package_dir)
-  then raise (PackError (ctx, CannotLeavePackageDir filename));
+  (* TODO: uncomment this when the main directory will be set to the correct value *)
+  (* if not (FilePath.is_subdir filename ctx.package_dir) *)
+  (* then raise (PackError (ctx, CannotLeavePackageDir filename)); *)
   let%lwt source =
-    try%lwt
-      Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
-    with Unix.Unix_error _ ->
-      raise (PackError (ctx, CannotReadModule filename))
+    match Str.string_match (Str.regexp "^builtin:") filename 0 with
+    | true ->
+      Lwt.return ""
+    | false ->
+      try%lwt
+        Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
+      with Unix.Unix_error _ ->
+        raise (PackError (ctx, CannotReadModule filename))
   in
   Lwt.return {
     Module.
@@ -122,6 +130,7 @@ let emit ?(with_runtime=true) out graph entry =
           (fun (ctx, seen) (dep, m) ->
              match m with
              | None ->
+               let%lwt () = Lwt_io.write Lwt_io.stderr "None" in
                (* TODO: emit stub module for the missing dep *)
                Lwt.return (ctx, seen)
              | Some m ->
@@ -139,47 +148,52 @@ let emit ?(with_runtime=true) out graph entry =
       >> Lwt.return seen
   in
 
-  if with_runtime
+  (if with_runtime
    then emit_runtime out entry.Module.id
-   else emit @@ "/* Entry point: " ^ entry.Module.id ^ " */\n"
+   else emit @@ "/* Entry point: " ^ entry.Module.id ^ " */\n")
   >> emit "({\n"
   >> emit_module entry
   >>= (fun _ -> emit "\n})\n")
   >> Lwt.return_unit
 
-
 let rec process graph ctx (m : Module.t) =
-  try%lwt
-    let source = m.Module.workspace.Workspace.value in
-    let (workspace, dependencies, scope) = Analyze.analyze m.id m.filename source in
-    let m = { m with workspace; scope; } in
-    DependencyGraph.add_module graph m;
-    let%lwt () = Lwt_list.iter_p (
-        fun ({ Dependency. request; _ } as req) ->
-          (match%lwt Dependency.resolve req with
-           | None ->
-             Lwt_io.write Lwt_io.stderr ("ERROR: cannot resolve: " ^ request ^ "\n");
-           | Some resolved ->
-             let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
-               | None ->
-                 let%lwt m = read_module ctx resolved in
-                 process graph { ctx with stack = req :: ctx.stack } m
-               | Some m ->
-                 Lwt.return m
-             in
-             DependencyGraph.add_dependency graph m (req, Some dep_module);
-             Lwt.return_unit
-          )
-      ) dependencies in
-    Lwt.return m
-  with
-  | Parse_error.Error args -> raise (PackError (ctx, ParserError (m.filename, args)))
+  let source = m.Module.workspace.Workspace.value in
+  let (workspace, dependencies, scope) =
+    try
+        Analyze.analyze m.id m.filename source
+    with
+    | Parse_error.Error args ->
+      raise (PackError (ctx, CannotParseFile (m.filename, args)))
+  in
+  let m = { m with workspace; scope; } in
+  DependencyGraph.add_module graph m;
+  let%lwt missing = Lwt_list.filter_map_s (
+      fun req ->
+        (match%lwt Dependency.resolve req with
+         | None ->
+           Lwt.return_some req
+         | Some resolved ->
+           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
+             | None ->
+               let%lwt m = read_module ctx resolved in
+               process graph { ctx with stack = req :: ctx.stack } m
+             | Some m ->
+               Lwt.return m
+           in
+           DependencyGraph.add_dependency graph m (req, Some dep_module);
+           Lwt.return_none
+        )
+    ) dependencies
+  in
+  match missing with
+  | [] -> Lwt.return m
+  | _ -> raise (PackError (ctx, CannotResolveModules missing))
 
 let pack ?(with_runtime=true) channel entry_filename =
   let graph = DependencyGraph.empty () in
   let%lwt (ctx, entry) = read_entry_module entry_filename in
   let%lwt entry = process graph ctx entry in
-  let%lwt () = emit ~with_runtime channel graph entry in
+  let%lwt _ = emit ~with_runtime channel graph entry in
   Lwt.return_unit
 
 let pack_main entry =

@@ -42,6 +42,9 @@ let package_entry_point package_json_path =
 
   match main_value with
   | Some main_value ->
+    let main_value =
+      main_value ^ if Filename.check_suffix main_value ".js" then "" else ".js"
+    in
     Lwt.return (FilePath.concat package_path main_value)
   | None ->
     Lwt.return (FilePath.concat package_path "index.js")

@@ -2,15 +2,17 @@
 type reason =
   | CannotReadModule of string
   | CannotLeavePackageDir of string
-  | CannotResolveModule of Dependency.t
-  | ParserError of string * ((Loc.t * Parse_error.t) list)
+  | CannotResolveModules of Dependency.t list
+  | CannotParseFile of string * ((Loc.t * Parse_error.t) list)
 
 let to_string error =
   match error with
-  | CannotReadModule _ -> "CannotReadModule"
+  | CannotReadModule filename -> "CannotReadModule: " ^ filename
   | CannotLeavePackageDir _ -> "CannotLeavePackageDir"
-  | CannotResolveModule _ -> "CannotResolveModule"
-  | ParserError (filename, errors) ->
+  | CannotResolveModules modules ->
+    "Cannot resolve modules:\n"
+    ^ String.concat "\n\t" (List.map Dependency.to_string modules)
+  | CannotParseFile (filename, errors) ->
     let format_error (loc, error) =
       let format_location {Loc. start; _end; _} =
         Printf.sprintf "(%d:%d) - (%d:%d):"
