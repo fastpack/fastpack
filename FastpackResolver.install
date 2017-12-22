@@ -1,0 +1,15 @@
+lib: [
+  "_build/install/default/lib/FastpackResolver/META" {"META"}
+  "_build/install/default/lib/FastpackResolver/opam" {"opam"}
+  "_build/install/default/lib/FastpackResolver/FastpackResolver.cmi"
+  "_build/install/default/lib/FastpackResolver/FastpackResolver.cmx"
+  "_build/install/default/lib/FastpackResolver/FastpackResolver.cmt"
+  "_build/install/default/lib/FastpackResolver/FastpackResolver.ml"
+  "_build/install/default/lib/FastpackResolver/FastpackResolver.cma"
+  "_build/install/default/lib/FastpackResolver/FastpackResolver.cmxa"
+  "_build/install/default/lib/FastpackResolver/FastpackResolver.a"
+  "_build/install/default/lib/FastpackResolver/FastpackResolver.cmxs"
+]
+doc: [
+  "_build/install/default/doc/FastpackResolver/README.md"
+]
