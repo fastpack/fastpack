@@ -3,6 +3,15 @@
   "version": "0.0.1",
   "description": "Pack JS code into a single bundle fast & easy.",
   "main": "index.js",
+  "esy": {
+    "build": [
+      "jbuilder build"
+    ],
+    "install": [
+      "jbuilder install --prefix=#{self.install}"
+    ],
+    "buildsInSource": "_build"
+  },
   "directories": {
     "example": "example",
     "test": "test"
@@ -34,6 +43,7 @@
     "@opam/utop": "*",
     "@opam/ocp-indent": "*",
     "@opam/merlin": "*",
+    "@esy-ocaml/esy-installer": "*",
     "ocaml": "~4.4.0"
   }
 }

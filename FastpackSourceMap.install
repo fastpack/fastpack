@@ -1,0 +1,24 @@
+lib: [
+  "_build/install/default/lib/FastpackSourceMap/META" {"META"}
+  "_build/install/default/lib/FastpackSourceMap/opam" {"opam"}
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap__Base64VLQ.cmi"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap__Base64VLQ.cmx"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap__Base64VLQ.cmt"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap__Base64VLQ.cmti"
+  "_build/install/default/lib/FastpackSourceMap/Base64VLQ.mli"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap.cmi"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap.cmx"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap.cmt"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap.ml"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap__.cmi"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap__.cmx"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap__.cmt"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap__.ml-gen"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap.cma"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap.cmxa"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap.a"
+  "_build/install/default/lib/FastpackSourceMap/FastpackSourceMap.cmxs"
+]
+doc: [
+  "_build/install/default/doc/FastpackSourceMap/README.md"
+]

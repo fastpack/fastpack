@@ -20,9 +20,9 @@ To run tests:
 
     % make test
 
-Prepend any command with `esy` to execute it in package's sandboxed environment:
+To test compiled executables prepend with `esy x`:
 
-    % esy ./_build/default/bin/fpack.exe
+    % esy x fpack
 
 As merlin and others live inside sandboxed environment you'd want to execute
 your editor from inside it:
