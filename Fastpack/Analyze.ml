@@ -3,6 +3,7 @@ module M = Map.Make(String)
 let analyze _id filename source =
   let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
+
   let module S = Ast.Statement in
   let module E = Ast.Expression in
   let module L = Ast.Literal in
@@ -76,6 +77,20 @@ let analyze _id filename source =
     end
   in
 
+  let get_local_name local =
+    match get_binding local with
+    | Some (_, Scope.Import { source; remote = Some remote}) ->
+      begin
+           match get_module_binding source with
+           | Some module_binding ->
+             module_binding ^ "." ^ remote
+           | None ->
+             (* TODO: provide better error report*)
+             failwith ("Usage of binding before import")
+      end
+    | _ -> local (* failwith ("Binding not found: " ^ local); *)
+  in
+
   let exports_from_specifiers =
     List.map
       (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
@@ -86,7 +101,7 @@ let analyze _id filename source =
            | Some (_, name) -> name
            | None -> local
          in
-         exported, local
+         exported, get_local_name local
       )
   in
 
@@ -98,12 +113,13 @@ let analyze _id filename source =
       id
   in
 
-  let update_exports exports =
+  let update_exports ?(property="") exports =
     exports
     |> List.map
       (fun (name, value) ->
          Printf.sprintf
-           "Object.defineProperty(exports, \"%s\", {get: () => %s});"
+           "Object.defineProperty(exports%s, \"%s\", {get: () => %s});"
+           property
            name
            value
       )
@@ -196,7 +212,9 @@ let analyze _id filename source =
           specifiers = Some (S.ExportNamedDeclaration.ExportSpecifiers specifiers);
           source = None;
         } ->
-        patch_loc loc @@ update_exports @@ exports_from_specifiers specifiers
+        patch_loc_with
+          loc
+          (fun _ -> update_exports @@ exports_from_specifiers specifiers)
 
       | S.ExportNamedDeclaration {
           exportKind = S.ExportValue;
@@ -281,6 +299,38 @@ let analyze _id filename source =
 
       | S.ExportDefaultDeclaration {
           exportKind = S.ExportValue;
+          declaration = S.ExportDefaultDeclaration.Expression (
+              _expr_loc,
+              E.Object {E.Object. properties})
+        } ->
+        let exports_from_props =
+          (* TODO: export default
+           * Only handles simple:
+           *      export default {x, y, z};
+           * Add:
+           *      export default {"value": "key", h: () => "x"};
+           * *)
+          List.filter_map
+            (fun prop ->
+              match prop with
+              | E.Object.Property (_,{
+                  key = E.Object.Property.Identifier (_, name);
+                  shorthand = true; _
+                }) ->
+                Some (name, get_local_name name)
+              | _ -> None
+            )
+        in
+        patch_loc_with
+          loc
+          (fun _ ->
+             "exports.default = {};\n"
+             ^ update_exports ~property:".default" @@ exports_from_props properties
+          )
+
+
+      | S.ExportDefaultDeclaration {
+          exportKind = S.ExportValue;
           declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _)
         }
       | S.ExportDefaultDeclaration {
@@ -350,7 +400,7 @@ let analyze _id filename source =
                  module_binding ^ "." ^ remote
                | None ->
                  (* TODO: provide better error report*)
-                 failwith "Usage of binding before import"
+                 failwith ("Usage of binding before import " ^ name ^ " " ^ source ^ " " ^ remote ^ " " ^ filename ^ " " ^ (string_of_int loc.start.offset) ^ " " ^ (string_of_int loc._end.offset))
             )
         | _ -> ();
       in Visit.Break;
@@ -367,7 +417,6 @@ let analyze _id filename source =
     enter_statement;
     leave_statement;
   } in
-
   Visit.visit handler program;
 
   (!workspace, !dependencies, program_scope)

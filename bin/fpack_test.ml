@@ -19,7 +19,7 @@ let pack fname _ =
   let pack' () =
     let bytes = ref @@ Lwt_bytes.create 65535 in
     let _, ch = Lwt_io.pipe ~out_buffer:(!bytes) () in
-    Fastpack.Packer.pack ~with_runtime:false ch fname
+    Fastpack.Packer.pack ~with_runtime:false (fun _ _ p -> p) ch fname
     >> Lwt.return
        @@ Lwt_bytes.to_string
        @@ Lwt_bytes.extract !bytes 0
@@ -29,7 +29,7 @@ let pack fname _ =
 
 
 let tests = [
-  ("object-spread-and-rest-operators.js", "", transpile_old);
+  (* ("object-spread-and-rest-operators.js", "", transpile_old); *)
   ("transpile-class.js", "", transpile);
   ("transpile-react-jsx.js", "", transpile);
   ("transpile-strip-flow.js", "", transpile);
@@ -37,7 +37,7 @@ let tests = [
   ("print-with-scope.js", "", print ~with_scope:true);
   ("pack/index.js", "pack.js", pack);
   ("transpile-object-spread.js", "", transpile);
-  (* ("current.js", "", transpile); *)
+  (* ("current.js", "", print ~with_scope:false); *)
 ]
 
 let () =

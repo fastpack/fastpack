@@ -120,6 +120,9 @@ module Parens = struct
     in
     has_comments ||
       match parent_stmt, parent_expr, node with
+      | S.Expression _, None, E.Identifier _
+      | S.Expression _, None, E.ArrowFunction _
+      | S.Expression _, None, E.Object _
       | S.Expression _, None, E.Class _
       | S.Expression _, None, E.Function _ ->
         true
@@ -270,8 +273,11 @@ let print ?(with_scope=false) (_, statements, comments) =
         (fun ((c_loc : Loc.t), _) -> c_loc._end.offset < loc.start.offset)
         ctx.comments
     in
-    let ctx = emit_list emit_comment before ctx in
-    {ctx with comments = after}
+    if List.length before > 0 then
+      let ctx = emit_list emit_comment before ctx in
+      {ctx with comments = after}
+    else
+      ctx
 
   and emit_statement ((loc, statement) : S.t) ctx =
     let prev_parent_stmt = ctx.parent_stmt in
@@ -285,7 +291,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit "{"
         |> indent
         |> emit_scope (Scope.of_statement (loc, statement))
-        |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
+        |> emit_statements body
         |> remove_scope
         |> dedent
         |> emit "}"
@@ -293,15 +299,19 @@ let print ?(with_scope=false) (_, statements, comments) =
       | S.Expression { expression; directive = _directive } ->
         ctx
         |> emit_expression expression
+        |> emit_semicolon_and_newline
 
       | S.If { test; consequent; alternate } ->
         ctx
         |> emit "if (" |> emit_expression test |> emit ") "
         |> emit_statement consequent
-        |> emit_if_some (fun alternate ctx ->
+        |> emit_if_some
+          (fun alternate ctx ->
             ctx
             |> emit " else "
-            |> emit_statement alternate) alternate
+            |> emit_statement alternate
+          )
+          alternate
 
       | S.Labeled { label = (_loc, label); body } ->
         ctx
@@ -317,6 +327,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_if_some
             (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
             label
+        |> emit_semicolon_and_newline
 
       | S.Continue { label } ->
         ctx
@@ -324,23 +335,16 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_if_some
             (fun (_loc, name) ctx -> ctx |> emit_space |> emit name)
             label
+        |> emit_semicolon_and_newline
 
       | S.With { _object; body } ->
         ctx
         |> emit "with (" |> emit_expression _object |> emit ") "
         |> emit_statement body
 
-      | S.TypeAlias { id = (_, id); typeParameters; right } ->
-        ctx
-        |> emit "type "
-        |> emit id
-        |> emit_if_some emit_type_parameter_declaration typeParameters
-        |> emit " = "
-        |> emit_type right
-
       | S.Switch { discriminant; cases } ->
         ctx
-        |> emit "swicth (" |> emit_expression discriminant |> emit ") {"
+        |> emit "switch (" |> emit_expression discriminant |> emit ") {"
         |> indent
         |> emit_list
           ~emit_sep:emit_newline
@@ -348,23 +352,26 @@ let print ?(with_scope=false) (_, statements, comments) =
             ctx
             |> (match test with
                 | None ->
-                  emit "default:"
+                  emit "default:\n"
                 | Some test ->
                   fun ctx ->
-                    ctx |> emit "case " |> emit_expression test |> emit ":")
-            |> emit_list
-                ~emit_sep:emit_semicolon_and_newline
-                emit_statement
-                consequent
+                    ctx |> emit "case " |> emit_expression test |> emit ":\n")
+            |> emit_statements consequent
           ) cases
         |> dedent
         |> emit "}"
 
       | S.Return { argument } ->
-        ctx |> emit "return " |> emit_if_some emit_expression argument
+        ctx
+        |> emit "return "
+        |> emit_if_some emit_expression argument
+        |> emit_semicolon_and_newline
 
       | S.Throw { argument } ->
-        ctx |> emit "throw " |> emit_expression argument
+        ctx
+        |> emit "throw "
+        |> emit_expression argument
+        |> emit_semicolon_and_newline
 
       | S.Try { block; handler; finalizer } ->
         ctx
@@ -394,7 +401,8 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_statement body
         |> emit "while ("
         |> emit_expression test
-        |> emit "("
+        |> emit ")"
+        |> emit_semicolon_and_newline
 
       | S.For { init; test; update; body } ->
         ctx
@@ -456,6 +464,7 @@ let print ?(with_scope=false) (_, statements, comments) =
       | S.Debugger ->
         ctx
         |> emit "debugger"
+        |> emit_semicolon_and_newline
 
       | S.FunctionDeclaration func ->
         emit_function (loc, func) ctx
@@ -463,6 +472,7 @@ let print ?(with_scope=false) (_, statements, comments) =
       | S.VariableDeclaration decl ->
         ctx
         |> emit_variable_declaration (loc, decl)
+        |> emit_semicolon_and_newline
 
       | S.ClassDeclaration cls ->
         ctx |> emit_class cls
@@ -550,6 +560,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_if (List.length specifiers > 0) (emit " from")
         |> emit " "
         |> emit_literal source
+        |> emit_semicolon_and_newline
 
       | S.ExportNamedDeclaration {
           declaration;
@@ -593,6 +604,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_if_some
           (fun source ctx -> ctx |> emit " from " |> emit_literal source)
           source
+        |> emit_semicolon_and_newline
 
       | S.ExportDefaultDeclaration { declaration; exportKind } ->
         ctx
@@ -603,6 +615,9 @@ let print ?(with_scope=false) (_, statements, comments) =
               emit_statement stmt
             | S.ExportDefaultDeclaration.Expression expr ->
               emit_expression expr)
+        |> emit_semicolon_and_newline
+      | S.TypeAlias _ ->
+        failwith "TypeAlias is not supported"
       | S.DeclareVariable _ ->
         failwith "DeclareVariable is not supported"
       | S.DeclareFunction _ ->
@@ -1139,10 +1154,11 @@ let print ?(with_scope=false) (_, statements, comments) =
             |> emit "{"
             |> indent
             |> emit_scope (Scope.of_function f)
-            |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement body
+            |> emit_statements body
             |> remove_scope
             |> dedent
             |> emit "}"
+            |> emit_newline
         | F.BodyExpression expr ->
           fun ctx ->
             let parens =
@@ -1171,7 +1187,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     |> emit_comments loc
     |> emit "{"
     |> indent
-    |> emit_list ~emit_sep:emit_semicolon_and_newline emit_statement block.body
+    |> emit_statements block.body
     |> dedent
     |> emit "}"
 
@@ -1298,18 +1314,9 @@ let print ?(with_scope=false) (_, statements, comments) =
 
   and emit_literal (loc, { raw; value = _value }) ctx =
     ctx |> emit_comments loc |> emit raw
-  in
 
-  let emit_statements statements ctx =
-    let ctx =
-      ctx
-      |> emit_list
-        ~emit_sep:emit_semicolon_and_newline
-        emit_statement
-        statements
-      |> emit_semicolon_and_newline
-    in
-    ctx |> emit_list emit_comment ctx.comments
+  and emit_statements statements =
+    emit_list emit_statement statements
   in
 
   let ctx = emit_scope (Scope.of_program statements) {
@@ -1320,4 +1327,8 @@ let print ?(with_scope=false) (_, statements, comments) =
     parent_stmt = S.Empty;
     scope = Scope.empty;
   } in
-  Buffer.to_bytes (emit_statements statements ctx).buf
+  Buffer.to_bytes
+    (ctx
+     |> emit_statements statements
+     |> (fun ctx -> emit_list emit_comment ctx.comments ctx)
+    ).buf

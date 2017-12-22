@@ -30,6 +30,7 @@ let read_module ctx filename =
   in
   Lwt.return {
     Module.
+    (* TODO: make more deacriptive module id *)
     id = Module.make_id (FilePath.basename filename) filename;
     filename = filename;
     workspace = Workspace.of_string source;
@@ -74,6 +75,11 @@ let emit_runtime out entry_id =
 
     // Flag the module as loaded
     module.l = true;
+
+    // TODO: is it sustainable?
+    if(module.exports.default === undefined) {
+      module.exports.default = module.exports;
+    }
 
     // Return the exports of the module
     return module.exports;
@@ -156,11 +162,12 @@ let emit ?(with_runtime=true) out graph entry =
   >>= (fun _ -> emit "\n})\n")
   >> Lwt.return_unit
 
-let rec process graph ctx (m : Module.t) =
+let rec process transpile graph ctx (m : Module.t) =
   let source = m.Module.workspace.Workspace.value in
+  let transpiled = transpile ctx.package_dir m.filename source in
   let (workspace, dependencies, scope) =
     try
-        Analyze.analyze m.id m.filename source
+        Analyze.analyze m.id m.filename transpiled
     with
     | Parse_error.Error args ->
       raise (PackError (ctx, CannotParseFile (m.filename, args)))
@@ -176,7 +183,7 @@ let rec process graph ctx (m : Module.t) =
            let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
              | None ->
                let%lwt m = read_module ctx resolved in
-               process graph { ctx with stack = req :: ctx.stack } m
+               process transpile graph { ctx with stack = req :: ctx.stack } m
              | Some m ->
                Lwt.return m
            in
@@ -189,12 +196,13 @@ let rec process graph ctx (m : Module.t) =
   | [] -> Lwt.return m
   | _ -> raise (PackError (ctx, CannotResolveModules missing))
 
-let pack ?(with_runtime=true) channel entry_filename =
+
+let pack ?(with_runtime=true) transpile channel entry_filename =
   let graph = DependencyGraph.empty () in
   let%lwt (ctx, entry) = read_entry_module entry_filename in
-  let%lwt entry = process graph ctx entry in
+  let%lwt entry = process transpile graph ctx entry in
   let%lwt _ = emit ~with_runtime channel graph entry in
   Lwt.return_unit
 
-let pack_main entry =
-  Lwt_main.run (pack Lwt_io.stdout entry)
+let pack_main ?(transpile=(fun _ _ p -> p)) entry =
+  Lwt_main.run (pack transpile Lwt_io.stdout entry)

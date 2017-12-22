@@ -116,7 +116,9 @@ let resolve path basedir =
 
     (* relative module path *)
     | '.' ->
-      let path = FilePath.make_absolute basedir path in
+      let path =
+        FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute basedir path
+      in
       resolve_extensionless_path path
 
     (* absolute module path *)

@@ -18,6 +18,7 @@ top: build-top
 build-bin:
 	@esy jbuilder build --dev bin/fpack.exe
 	@esy jbuilder build --dev bin/fpack_test.exe
+	@esy jbuilder build --dev bin/fpack_print.exe
 
 build-top:
 	@esy jbuilder build top/main.exe
