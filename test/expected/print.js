@@ -18,38 +18,41 @@ const {z: [a]} = 12;
 /** functions */
 function x() {
   
-};
+}
 function y(a) {
   
-};
+}
 function z(a, ...b) {
   
-};
+}
 function a() {
-  stmt
-};
+  (stmt);
+  
+}
 function b() {
-  return stmt
-};
+  return stmt;
+  
+}
 function c() {
-  stmt;
-  return stmt
-};
+  (stmt);
+  return stmt;
+  
+}
 function with_return_type_annot(): T {
   
-};
+}
 function with_arg_types(a: A): T {
   
-};
+}
 function with_type_param<T>(a: A): T {
   
-};
+}
 function with_type_param<T: X, Y>(a: A): T {
   
-};
+}
 function with_type_param<A: T<B>>(a: A): T {
   
-};
+}
 /** Types */
 let x: A;
 let x: number;
@@ -74,19 +77,19 @@ async function a() {
     {
       
     }
-  ;
   
-};
+}
 /* class decorators */
 @(f =>  f)
 @(function decorator1(s) {
-  return s
-})
+  return s;
+  
+}
+)
 @(decorator2)
 class C {
   
-};
-/* template literals */
+}/* template literals */
 let t = `test`;
 t = `test ${1} test`;
 t = `test ${x + y}
@@ -96,8 +99,10 @@ let tagged = Tag`xxx ${1}`;
 /* class expressions */
 let c = class  {
     render() {
-      console.log('hello')
+      console.log('hello');
+      
     }
+    
     static prop = 1;
   };
 /* JSX */
@@ -120,15 +125,19 @@ let j5 = <WithChildren>
 /* Arrow functions */
 let f = f =>  f;
 let f1 = x =>  {
-    x
-  };
+    x;
+    
+  }
+  ;
 let f2 = x =>  ({x});
 let f3 = ({x, y, z}) =>  {
     x++;
     y++;
     z++;
-    return x + y + z
-  };
+    return x + y + z;
+    
+  }
+  ;
 let f4 = (x, y) =>  ({[x]: y});
 /* Import expression */
 let p = import("a");
@@ -144,8 +153,9 @@ let e6 = 1 + 1 && 2 + 2;
 /* make sure the comment doesn't break the expression */
 function e7() {
   return (// xxx
-  "test")
-};
+  "test");
+  
+}
 /* never use parentheses with the spread operator */
 let e8 = {...x || z};
 let e9 = [1, 2, 3, ...[5, 6, 7]];
@@ -161,8 +171,6 @@ for (i = 1, l = list.length; i < l, l > 100; i++, l--)
   {
     
   }
-;
-;
 /*  Statement.Expression should be wrapped when the argument is:
   * - class
   * - function
@@ -171,39 +179,45 @@ for (i = 1, l = list.length; i < l, l > 100; i++, l--)
   constructor() {
     
   }
+  
 });
 (function () {
   
-});
-x =>  x;
+}
+);
+(x =>  x);
 function e15() {
   
-};
+}
 /* Immediately invoked functions */
 (function (x) {
   console.log(x);
-  return x
-})(1);
+  return x;
+  
+}
+)(1);
 /* Export */
 export class CLS {
   
 };
-;
 export function f() {
   
-};
+}
 ;
 export var C1,
   C2;
+;
 export let ya = 1,
   yo = function () {
     
-  };
+  }
+  ;
+;
 export { e11, e12, e13 };
 export { n1, n2 as newName, n3 } from "x";
 export * from "y";
 export * as test from "y";
 export default function F() {
   
-};
+}
 ;

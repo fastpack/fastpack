@@ -9,7 +9,13 @@ let () =
         | Some entry -> entry
       in
       try
-        `Ok (Fastpack.Packer.pack_main entry)
+        let transpile _root_dir _filename =
+          (* TODO: add filename check here *)
+          FastpackTranspiler.transpile_source [
+            (* FastpackTranspiler.ReactJSX.transpile; *)
+          ]
+        in
+        `Ok (Fastpack.Packer.pack_main ~transpile entry)
       with
       | Fastpack.Packer.PackError (ctx, error) ->
         `Error (

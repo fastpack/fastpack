@@ -6,7 +6,7 @@ build:
 	@esy build
 
 build-dev:
-	@esy b jbuilder build --dev bin/fpack.exe bin/fpack_test.exe
+	@esy b jbuilder build --dev bin/fpack.exe bin/fpack_test.exe bin/fpack_print.exe
 
 install:
 	@esy install

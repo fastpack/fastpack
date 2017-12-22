@@ -1,3 +1,4 @@
+module StringSet = Set.Make(String)
 type t = {
   modules : (string, Module.t) Hashtbl.t;
   dependencies : (string, (Dependency.t * Module.t option)) Hashtbl.t;
@@ -33,3 +34,38 @@ let add_dependency graph (m : Module.t) (dep : (Dependency.t * Module.t option))
     Hashtbl.add graph.dependents dep_module.filename m
   | _ ->
     ()
+
+let sort graph entry =
+  let modules = ref [] in
+  let seen_globally = ref (StringSet.empty) in
+  let add_module m =
+    modules := m :: !modules;
+    seen_globally := StringSet.add m.Module.filename !seen_globally
+  in
+  let check_module m =
+    StringSet.mem m.Module.filename !seen_globally
+  in
+  let rec sort seen m =
+    match List.mem m.Module.filename seen with
+    | true ->
+      let s = String.concat "\n" (m.Module.filename :: "" :: "" :: seen) in
+      begin
+        Printf.printf "%s\n\n" s;
+        failwith s;
+      end;
+    | false ->
+      match check_module m with
+      | true -> ()
+      | false ->
+        let sort' = sort (m.Module.filename :: seen) in
+        let () =
+          List.iter
+            sort'
+            (List.filter_map (fun (_, m) -> m) (lookup_dependencies graph m))
+        in
+          add_module m;
+  in
+  begin
+    sort [] entry;
+    List.rev !modules
+  end

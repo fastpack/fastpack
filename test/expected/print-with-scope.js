@@ -25,9 +25,9 @@ function F(a, b, c) {
   b -> Argument
   c -> Let
    */
-  let c = 2
-};
-;
+  let c = 2;
+  
+}
 let f = (x, y, z) =>  /* SCOPE: x -> Argument, y -> Argument, z -> Argument */x + y + z;
 let f1 = (x, y, z) =>  {
     /* SCOPE: 
@@ -35,8 +35,10 @@ let f1 = (x, y, z) =>  {
     y -> Argument
     z -> Argument
      */
-    return x
-  };
+    return x;
+    
+  }
+  ;
 if (true) {
   /* SCOPE: 
   C -> Class
@@ -54,30 +56,31 @@ if (true) {
       props -> Argument
        */
       super();
-      var a2 = 1
+      var a2 = 1;
+      
     }
+    
   }
-};
-for (let i = 0, l = 10; i < l; i++)/* SCOPE: i -> Let, l -> Let */
+}for (let i = 0, l = 10; i < l; i++)/* SCOPE: i -> Let, l -> Let */
   {
     /* SCOPE: j -> Let */
     console.log(i);
-    let j = 1
+    let j = 1;
+    
   }
-;
 export function exportF() {
   /* SCOPE:  */
   
-};
+}
 ;
 export class exportC {
   
 };
-;
 export let exportVar = 25;
+;
 export { a, a1 as A1 };
 export default function doSomethingUseful() {
   /* SCOPE:  */
   
-};
+}
 ;
