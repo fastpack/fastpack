@@ -14,7 +14,6 @@ let analyze _id filename source =
   let {Workspace.
         patch;
         patch_loc_with;
-        patch_loc;
         remove_loc;
         remove;
         _

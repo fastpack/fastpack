@@ -11,10 +11,10 @@ build-dev:
 install:
 	@esy install
 
-train: build
+train: build-dev
 	@esy x fpack_test --train $(FPACK_TEST_PATH)
 
-test: build
+test: build-dev
 	@esy x fpack_test $(FPACK_TEST_PATH)
 
 bootstrap: install build
