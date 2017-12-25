@@ -97,6 +97,7 @@ let write out w ctx =
   in
 
   let patches = fold_patches w.patches in
+  (* let () = print_endline w.value in *)
   (* let () = print_endline "----" in *)
   (* let _ = print_patches patches in *)
   (* let () = print_endline "----" in *)

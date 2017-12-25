@@ -15,8 +15,8 @@ let analyze _id filename source =
         patch;
         patch_loc_with;
         patch_loc;
-        sub_loc;
         remove_loc;
+        remove;
         _
       } = Workspace.make_patcher workspace
   in
@@ -202,7 +202,9 @@ let analyze _id filename source =
           @@ Scope.names_of_node declaration
         in
         begin
-          patch_loc loc @@ sub_loc stmt_loc;
+          remove
+            loc.start.offset
+            (stmt_loc.start.offset - loc.start.offset);
           patch loc._end.offset 0 @@ "\n" ^ update_exports exports ^ "\n";
         end;
 
@@ -299,38 +301,6 @@ let analyze _id filename source =
 
       | S.ExportDefaultDeclaration {
           exportKind = S.ExportValue;
-          declaration = S.ExportDefaultDeclaration.Expression (
-              _expr_loc,
-              E.Object {E.Object. properties})
-        } ->
-        let exports_from_props =
-          (* TODO: export default
-           * Only handles simple:
-           *      export default {x, y, z};
-           * Add:
-           *      export default {"value": "key", h: () => "x"};
-           * *)
-          List.filter_map
-            (fun prop ->
-              match prop with
-              | E.Object.Property (_,{
-                  key = E.Object.Property.Identifier (_, name);
-                  shorthand = true; _
-                }) ->
-                Some (name, get_local_name name)
-              | _ -> None
-            )
-        in
-        patch_loc_with
-          loc
-          (fun _ ->
-             "exports.default = {};\n"
-             ^ update_exports ~property:".default" @@ exports_from_props properties
-          )
-
-
-      | S.ExportDefaultDeclaration {
-          exportKind = S.ExportValue;
           declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _)
         }
       | S.ExportDefaultDeclaration {
@@ -347,8 +317,10 @@ let analyze _id filename source =
               S.ClassDeclaration { id=None; _ }
             )
         } ->
-        let expr = sub_loc expr_loc in
-        patch_loc loc @@ update_exports [("default", expr)]
+        patch
+          loc.start.offset
+          (expr_loc.start.offset - loc.start.offset)
+          "exports.default = "
 
       | S.ExportDefaultDeclaration {
           exportKind = S.ExportValue;
@@ -364,12 +336,11 @@ let analyze _id filename source =
               S.ClassDeclaration { id = Some (_, id); _ }
             )
         } ->
-        let expr = sub_loc expr_loc in
-        begin
-          patch_loc loc expr;
+        remove
+          loc.start.offset
+          (expr_loc.start.offset - loc.start.offset);
           patch loc._end.offset 0
-          @@ "\n" ^ update_exports [("default", id)] ^ "\n";
-        end;
+            (Printf.sprintf "\nexports.default = %s;\n" id);
 
       | _ -> ()
     in Visit.Continue

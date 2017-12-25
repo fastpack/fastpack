@@ -1,10 +1,10 @@
 /* Entry point: index.js-d31116a79821b0cf41ac93abe249fc4d */
 ({
 "z.js-9ac1a10900aa3f1c9a41b85a77459bd8": function(module, exports, __fastpack_require__) {
-Object.defineProperty(exports, "default", {get: () => 1});
+exports.default = 1;
 },
 "y.js-236e9c0761015ee1871421a78316fb8e": function(module, exports, __fastpack_require__) {
-Object.defineProperty(exports, "default", {get: () => 1});
+exports.default = 1;
 
 let a = 1;
 Object.defineProperty(exports, "a", {get: () => a});
@@ -23,6 +23,12 @@ Object.defineProperty(exports, "Z", {get: () => $lib1});
 const $lib2 = __fastpack_require__(/* "./y" */ "y.js-236e9c0761015ee1871421a78316fb8e");
 Object.defineProperty(exports, "a", {get: () => $lib2.a}); Object.defineProperty(exports, "updateA", {get: () => $lib2.updateA});
 },
+"yz_reimport.js-8e8b7c892b187dd9b10ddf1a48daa49c": function(module, exports, __fastpack_require__) {
+const $lib1 = __fastpack_require__(/* "./y" */ "y.js-236e9c0761015ee1871421a78316fb8e");
+const $lib2 = __fastpack_require__(/* "./z" */ "z.js-9ac1a10900aa3f1c9a41b85a77459bd8");
+
+exports.default = {$lib1.a, $lib1.updateA, $lib2.default};
+},
 "x.js-e575b1ec1676ae03493e1f7e4fcfec56": function(module, exports, __fastpack_require__) {
 const ZModule = __fastpack_require__(/* "./z" */ "z.js-9ac1a10900aa3f1c9a41b85a77459bd8");
 
@@ -39,7 +45,7 @@ Object.defineProperty(exports, "x", {get: () => x}); Object.defineProperty(expor
 // };
 // export default class {};
 class F {}
-Object.defineProperty(exports, "default", {get: () => F});
+exports.default = F;
 ;
 
 function updateX() {
@@ -83,6 +89,8 @@ module.exports.sayHello = function() {
 },
 "index.js-d31116a79821b0cf41ac93abe249fc4d": function(module, exports, __fastpack_require__) {
 __fastpack_require__(/* "./yz" */ "yz.js-de84e93847b6569f34aa614a3ce78835");
+
+__fastpack_require__(/* "./yz_reimport.js" */ "yz_reimport.js-8e8b7c892b187dd9b10ddf1a48daa49c");
 
 
 const util = __fastpack_require__(/* "./util" */ "util.js-8a3f3828d61694d58796e8412f7d4141");
