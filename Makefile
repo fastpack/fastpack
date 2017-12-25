@@ -17,7 +17,11 @@ train: build-dev
 test: build-dev
 	@esy x fpack_test $(FPACK_TEST_PATH)
 
-bootstrap: install build
+fetch:
+	git submodule init
+	git submodule update
+
+bootstrap: fetch install build
 
 clean:
 	@rm -rf _build/ node_modules/
