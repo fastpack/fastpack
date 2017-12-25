@@ -47,20 +47,27 @@ And execute commands from there.
 - [x] FastpackTraspiler: class syntax, properties, decorators [zindel]
 - [x] Fastpack: Verify printer correctness (use babel-generator) [zindel]
 - [x] Fastpack: JavaScript runtime - add require statement [zindel]
-- [ ] FastpackTraspiler: object spread, rest operators [andreypopp]
-- [ ] Fastpack: import statements handling
-- [ ] FastpackTranspiler: export statements
-- [ ] CSS support in import statements (webpack ICSS)?
+- [x] FastpackTranspiler: export statements [zindel]
+- [x] Fastpack: import statements handling
+- [ ] Fastpack: flat builds
+- [ ] Fastpack: `import` expressions
+- [ ] FastpackTraspiler: object spread, rest operators [zindel, `for-of` is left]
+- [ ] Fastpack: Partial builds
+- [ ] Fastpack: handle static files
+- [ ] Fastpack: export URLs for static files
+- [ ] UI/UX (error reporting, config) [zindel, in progress]
+  - [ ] Use combinators for error output for nicer formatting?
 - [ ] Support external command execution for LESS/SASS/other processing
 - [ ] Watch mode (watchman?)
 - [ ] Source maps [andreypopp, in progress]
-- [ ] UI/UX (error reporting, config)
+- [ ] CSS support in import statements (webpack ICSS)?
+- [ ] Documentation / Domain
 
 ### Heap
 
-- [ ] FastpackTraspiler / patch model - how to process node by 2 different
+- [x] FastpackTraspiler / patch model - how to process node by 2 different
       transpilers, i.e. spread operations and then remove flow type annotations
-- [ ] support AST variable scope and check collisions with tmp_vars
+- [x] support AST variable scope and check collisions with tmp_vars
 - [ ] Think of Workspace.make_patcher API
 - [ ] Think of integration with Flow
 - [ ] Implement rest operator for try/catch statements when flow parser suppots it
