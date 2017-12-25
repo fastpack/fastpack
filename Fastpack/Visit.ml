@@ -194,6 +194,14 @@ and visit_class handler {Class. body = (_, { body }); superClass; _} =
         }) ->
         visit_object_property_key handler key;
         visit_if_some handler visit_expression value
+      | Class.Body.PrivateField (_loc, {
+          key = _key;
+          value;
+          typeAnnotation = _typeAnnotation;
+          static = _static;
+          variance = _variance
+        }) ->
+        visit_if_some handler visit_expression value
     ) body
 
 and visit_expression handler ((loc, expression) : Loc.t Expression.t) =
@@ -270,6 +278,7 @@ and visit_expression handler ((loc, expression) : Loc.t Expression.t) =
       | Expression.Member.PropertyExpression expr ->
         visit_expression handler expr
       | Expression.Member.PropertyIdentifier _ -> ()
+      | Expression.Member.PropertyPrivateName _ -> ()
       end;
     | Expression.Yield { argument; delegate = _delegate } ->
       visit_if_some handler visit_expression argument
@@ -281,6 +290,7 @@ and visit_expression handler ((loc, expression) : Loc.t Expression.t) =
     | Expression.TemplateLiteral _ -> ()
     | Expression.TaggedTemplate _ -> ()
     | Expression.JSXElement _ -> ()
+    | Expression.JSXFragment _ -> ()
     | Expression.Class cls ->
       visit_class handler cls
     | Expression.TypeCast _ -> ()
@@ -321,18 +331,20 @@ and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Loc.t Patter
 
     | Pattern.Expression expr -> visit_expression handler expr
 
-and visit_object_property handler (_, {
-    key;
-    value;
-    _method;
-    shorthand = _shorthand;
-  }) =
+and visit_object_property handler (_, value) =
   match value with
-  | Expression.Object.Property.Init expr ->
+  | Expression.Object.Property.Init {key; value; _} ->
     visit_object_property_key handler key;
-    visit_expression handler expr
-  | Expression.Object.Property.Get func -> visit_function handler func
-  | Expression.Object.Property.Set func -> visit_function handler func
+    visit_expression handler value
+  | Expression.Object.Property.Method {key; value} ->
+    visit_object_property_key handler key;
+    visit_function handler value
+  | Expression.Object.Property.Get {key; value} ->
+    visit_object_property_key handler key;
+    visit_function handler value
+  | Expression.Object.Property.Set {key; value} ->
+    visit_object_property_key handler key;
+    visit_function handler value
 
 
 and visit_object_property_key handler key =
@@ -343,6 +355,8 @@ and visit_object_property_key handler key =
     ()
   | Expression.Object.Property.Computed expr ->
     visit_expression handler expr
+  | Expression.Object.Property.PrivateName _private_name ->
+    ()
 
 and visit_function handler (_, {
     Function.
@@ -364,7 +378,7 @@ and visit_function handler (_, {
     | Continue ->
       (** TODO: handle `predicate` *)
       (
-        let (params, rest) = params in
+        let (_loc, {Function.Params. params;rest}) = params in
         visit_list handler visit_pattern params;
         visit_if_some handler (fun handler (_loc, { Function.RestElement. argument }) ->
             visit_pattern handler argument) rest
