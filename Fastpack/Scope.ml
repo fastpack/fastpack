@@ -1,3 +1,4 @@
+module Ast = FlowParser.Ast
 module S = Ast.Statement
 module F = Ast.Function
 module P = Ast.Pattern
@@ -104,7 +105,7 @@ let update_bindings name typ bindings =
     (* TODO: track the Loc.t of bindings and raise the nice error *)
     failwith ("Naming collision: " ^ name)
 
-let names_of_node ((_, node) : S.t) =
+let names_of_node ((_, node) : Loc.t S.t) =
   let type_of_kind kind =
     match kind with
     | S.VariableDeclaration.Let -> Let

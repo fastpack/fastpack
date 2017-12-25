@@ -179,19 +179,6 @@
   peerDependencies:
     ocaml " < 4.6.0"
 
-"@opam/flow_parser@0.52.0":
-  version "0.52.0"
-  uid f2124dffa0efa903ee84e384151063a9
-  resolved "@opam/flow_parser@0.52.0-f2124dffa0efa903ee84e384151063a9.tgz"
-  dependencies:
-    "@esy-ocaml/esy-installer" "^0.0.0"
-    "@esy-ocaml/substs" "^0.0.1"
-    "@opam/ocamlbuild" "*"
-    "@opam/ocamlfind" "*"
-    "@opam/sedlex" "*"
-  peerDependencies:
-    ocaml " >= 4.3.0"
-
 "@opam/gen@*":
   version "0.5.0"
   uid "13bc9c1edffa5934de9c27affe1d358f"
@@ -289,8 +276,8 @@
   version "0.11.0-esy"
   resolved "https://codeload.github.com/esy-ocaml/ocamlbuild/tar.gz/337c6b9c6cc6ead6d0a89914ca53c3abf988c902"
   dependencies:
-    "@esy-ocaml/esy-installer" "^0.0.0"
-    "@esy-ocaml/substs" "^0.0.1"
+    opam-installer-bin esy-ocaml/opam-installer-bin
+    substs esy-ocaml/substs
   peerDependencies:
     ocaml " >= 4.3.0"
 
@@ -365,7 +352,7 @@
   peerDependencies:
     ocaml "*"
 
-"@opam/sedlex@*":
+"@opam/sedlex@^1.99.4":
   version "1.99.4"
   uid d6bca2fae7dc62dd192c9536b281f940
   resolved "@opam/sedlex@1.99.4-d6bca2fae7dc62dd192c9536b281f940.tgz"
@@ -412,6 +399,17 @@
   peerDependencies:
     ocaml " >= 4.2.3"
 
+"@opam/wtf8@^1.0.1":
+  version "1.0.1"
+  uid e4d1761eadbdc963f220ece9bc54f8a2
+  resolved "@opam/wtf8@1.0.1-e4d1761eadbdc963f220ece9bc54f8a2.tgz"
+  dependencies:
+    "@esy-ocaml/esy-installer" "^0.0.0"
+    "@esy-ocaml/substs" "^0.0.1"
+    "@opam/jbuilder" " >= 1.0.0-beta7"
+  peerDependencies:
+    ocaml " >= 4.1.0"
+
 "@opam/yojson@*", "@opam/yojson@1.4.0":
   version "1.4.0"
   uid "289a3103a174aaa23411c434cff4406a"
@@ -443,3 +441,11 @@
 ocaml@~4.4.0:
   version "4.4.2004"
   resolved "https://registry.yarnpkg.com/ocaml/-/ocaml-4.4.2004.tgz#9b696ae98dd3f3487699beebe617fe3ad6e5dec6"
+
+opam-installer-bin@esy-ocaml/opam-installer-bin:
+  version "0.0.0"
+  resolved "https://codeload.github.com/esy-ocaml/opam-installer-bin/tar.gz/37d5d7951cc5befd1f124e1abe14b39ba1bdf5a6"
+
+substs@esy-ocaml/substs:
+  version "0.0.1"
+  resolved "https://codeload.github.com/esy-ocaml/substs/tar.gz/9f9711253d4a384f73d115843cc30f25e39f7615"

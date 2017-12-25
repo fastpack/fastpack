@@ -1,3 +1,5 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
 module Expression = Ast.Expression
 module Pattern = Ast.Pattern
 module Statement = Ast.Statement
@@ -11,14 +13,14 @@ module Function = Ast.Function
 type visit_action = Continue | Break
 
 type visit_handler = {
-  visit_statement : Statement.t -> visit_action;
-  enter_statement : Statement.t -> unit;
-  leave_statement : Statement.t -> unit;
-  visit_expression : Expression.t -> visit_action;
-  visit_function : (Loc.t * Function.t) -> visit_action;
-  enter_function : (Loc.t * Function.t) -> unit;
-  leave_function : (Loc.t * Function.t) -> unit;
-  visit_pattern : Pattern.t -> visit_action;
+  visit_statement : Loc.t Statement.t -> visit_action;
+  enter_statement : Loc.t Statement.t -> unit;
+  leave_statement : Loc.t Statement.t -> unit;
+  visit_expression : Loc.t Expression.t -> visit_action;
+  visit_function : (Loc.t * Loc.t Function.t) -> visit_action;
+  enter_function : (Loc.t * Loc.t Function.t) -> unit;
+  leave_function : (Loc.t * Loc.t Function.t) -> unit;
+  visit_pattern : Loc.t Pattern.t -> visit_action;
 }
 
 let do_nothing _ = Continue
@@ -42,7 +44,7 @@ let visit_if_some handler visit = function
   | None -> ()
   | Some item -> visit handler item
 
-let rec visit_statement handler ((loc, statement) : Statement.t) =
+let rec visit_statement handler ((loc, statement) : Loc.t Statement.t) =
   let () = handler.enter_statement (loc, statement) in
   let action = handler.visit_statement (loc, statement) in
   let () =
@@ -123,14 +125,14 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
       | Statement.ForIn { left; right; body; each = _each } ->
         (match left with
          | Statement.ForIn.LeftDeclaration decl -> visit_variable_declaration handler decl
-         | Statement.ForIn.LeftExpression expression -> visit_expression handler expression);
+         | Statement.ForIn.LeftPattern pattern -> visit_pattern handler pattern);
         visit_expression handler right;
         visit_statement handler body
 
       | Statement.ForOf { left; right; body; async = _async } ->
         (match left with
          | Statement.ForOf.LeftDeclaration decl -> visit_variable_declaration handler decl
-         | Statement.ForOf.LeftExpression expression -> visit_expression handler expression);
+         | Statement.ForOf.LeftPattern pattern -> visit_pattern handler pattern);
         visit_expression handler right;
         visit_statement handler body
 
@@ -194,7 +196,7 @@ and visit_class handler {Class. body = (_, { body }); superClass; _} =
         visit_if_some handler visit_expression value
     ) body
 
-and visit_expression handler ((loc, expression) : Expression.t) =
+and visit_expression handler ((loc, expression) : Loc.t Expression.t) =
   let action = handler.visit_expression (loc, expression) in
   match action with
   | Break -> ()
@@ -284,7 +286,7 @@ and visit_expression handler ((loc, expression) : Expression.t) =
     | Expression.TypeCast _ -> ()
     | Expression.MetaProperty _ -> ()
 
-and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Pattern.t) =
+and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Loc.t Pattern.t) =
   match handler.visit_pattern p with
   | Break -> ()
   | Continue ->
@@ -376,7 +378,7 @@ and visit_function_body handler body =
   | Function.BodyBlock block -> visit_block handler block
   | Function.BodyExpression expr -> visit_expression handler expr
 
-and visit_block handler ((_loc, block) : (Loc.t * Statement.Block.t)) =
+and visit_block handler ((_loc, block) : (Loc.t * Loc.t Statement.Block.t)) =
   visit_list handler visit_statement block.body
 
 and visit_variable_declaration handler (_, { declarations; kind = _kind }) =
@@ -397,7 +399,7 @@ and visit_expression_or_spread handler item = match item with
 
 let visit handler program =
 
-  let visit_program ((_, statements, _): Ast.program) =
+  let visit_program ((_, statements, _): Loc.t Ast.program) =
     visit_list handler visit_statement statements
   in
 

@@ -4,6 +4,6 @@
  ((names (fpack fpack_test fpack_print))
   (public_names (fpack fpack_test fpack_print))
   (package Fastpack)
-  (libraries (Fastpack FastpackTranspiler FastpackResolver cmdliner lwt.unix sedlex flow_parser fileutils yojson))
+  (libraries (Fastpack FastpackTranspiler FastpackResolver cmdliner lwt.unix sedlex fileutils yojson))
   (preprocess (pps (lwt.ppx)))))
 

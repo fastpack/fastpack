@@ -5,6 +5,8 @@
 
 *)
 
+module Loc = FlowParser.Loc
+
 type 'ctx t = {
 
   (* Original string value *)

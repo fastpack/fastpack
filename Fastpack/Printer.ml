@@ -1,3 +1,4 @@
+module Ast = FlowParser.Ast
 module E = Ast.Expression
 module P = Ast.Pattern
 module S = Ast.Statement
