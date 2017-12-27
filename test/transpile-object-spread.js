@@ -118,3 +118,5 @@ for (var {x, ...y} = {x: 1, a: 2}; false; ) {}
 // for in
 for ({x, ...y} in iterator) {}
 for (var {x, ...y} in iterator) {}
+for ({x, ...y} in iterator) console.log(x);
+for (var {x, ...y} in iterator) console.log(x);

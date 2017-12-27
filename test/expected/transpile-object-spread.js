@@ -187,11 +187,29 @@ for (var __fpack__29 = {x: 1, a: 2}, {x} = __fpack__29, y = $__fpack__.omitProps
     
   }
 // for in
-for ({x, ...y} in iterator)
+for (let __fpack__30 in iterator)
   {
+    let {x} = __fpack__30,
+      y = $__fpack__.omitProps(__fpack__30, ["x"]);
     
   }
-for (var {x, ...y} in iterator)
+for (var __fpack__31 in iterator)
   {
+    let {x} = __fpack__31,
+      y = $__fpack__.omitProps(__fpack__31, ["x"]);
+    
+  }
+for (let __fpack__32 in iterator)
+  {
+    let {x} = __fpack__32,
+      y = $__fpack__.omitProps(__fpack__32, ["x"]);
+    console.log(x);
+    
+  }
+for (var __fpack__33 in iterator)
+  {
+    let {x} = __fpack__33,
+      y = $__fpack__.omitProps(__fpack__33, ["x"]);
+    console.log(x);
     
   }

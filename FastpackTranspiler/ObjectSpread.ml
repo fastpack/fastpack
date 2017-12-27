@@ -474,10 +474,13 @@ module TranspileObjectSpreadRest = struct
 
   module VariableDeclaration = struct
 
-    let test ({ declarations; _ } : Loc.t S.VariableDeclaration.t) =
+    let test
+        ?(with_init=true)
+        ({ declarations; _ } : Loc.t S.VariableDeclaration.t) =
       let test_declaration (_, {S.VariableDeclaration.Declarator. id; init }) = 
-        match id, init with
-        | id, Some _ -> Pattern.test id
+        match with_init, id, init with
+        | false, id, None
+        | true, id, Some _ -> Pattern.test id
         | _ -> false
       in
       List.exists test_declaration declarations
@@ -507,22 +510,80 @@ module TranspileObjectSpreadRest = struct
     let test {S.ForIn. left; _ } =
       match left with
       | S.ForIn.LeftDeclaration (_, decl) ->
-        VariableDeclaration.test decl
-      (* TODO: LeftPattern! *)
-      (* | S.ForIn.LeftExpression (_, E.Object obj) -> *)
-      (*   TranspileObjectSpread.test obj *)
-      | _ -> false
+        VariableDeclaration.test ~with_init:false decl
+      | S.ForIn.LeftPattern pattern ->
+        Pattern.test pattern
 
-    (* let transpile *)
-    (*     {Context. gen_binding; _} *)
-    (*     scope *)
-    (*     ({S.ForIn. left; body; } as for_) = *)
-    (*   let binding = gen_binding scope in *)
-    (*   let pattern = *)
-    (*     match left with *)
-    (*     | S.ForIn.LeftDeclaration (_, { declarations = []; _ }) -> (??) *)
-    (*     | S.ForIn.LeftExpression _ -> (??) *)
-    (*   in *)
+    let transpile
+        ({Context. gen_binding; _} as ctx)
+        scope
+        ({S.ForIn. left; body = (body_loc, body); _ } as for_) =
+      let binding = gen_binding scope in
+      let left_declaration loc kind =
+        S.ForIn.LeftDeclaration (
+          loc,
+          { kind;
+            declarations = [(Loc.none, { S.VariableDeclaration.Declarator.
+              id = (Loc.none, Ast.Pattern.Identifier {
+                name = (Loc.none, binding);
+                typeAnnotation = None;
+                optional = false;
+              });
+              init = None
+            })]
+          }
+        )
+      in
+      let prepend_stmt stmt =
+        match body with
+        | S.Block { body } ->
+          body_loc, S.Block { body = stmt :: body }
+        | prev ->
+          body_loc, S.Block { body = stmt :: (Loc.none, prev) :: [] }
+      in
+      match left with
+      | S.ForIn.LeftDeclaration (loc, { kind; declarations = (_, decl) :: [] }) ->
+        let stmt =
+          Loc.none,
+          S.VariableDeclaration (
+            VariableDeclaration.transpile ctx scope
+            @@
+            { S.VariableDeclaration.
+              kind = S.VariableDeclaration.Let;
+              declarations = [(Loc.none, {
+                decl with
+                init = Some (AstHelper.e_identifier binding)
+              })]
+            }
+          )
+        in
+        S.ForIn {
+          for_ with
+          left = left_declaration loc kind;
+          body = prepend_stmt stmt
+        }
+      | S.ForIn.LeftPattern pattern ->
+        let stmt =
+          Loc.none,
+          S.VariableDeclaration (
+            VariableDeclaration.transpile ctx scope
+            @@
+            { S.VariableDeclaration.
+              kind = S.VariableDeclaration.Let;
+              declarations = [(Loc.none, {
+                id = pattern;
+                init = Some (AstHelper.e_identifier binding)
+              })]
+            }
+          )
+        in
+        S.ForIn {
+          for_ with
+          left = left_declaration Loc.none S.VariableDeclaration.Let;
+          body = prepend_stmt stmt
+        }
+      | _ ->
+        failwith "Unexpected ForIn: more than one declaration"
 
   end
 
@@ -544,8 +605,8 @@ let transpile context program =
             Loc.none, T.VariableDeclaration.transpile context scope decl
           ))}
 
-      (* | S.ForIn for_ when T.ForIn.test for_ -> *)
-      (*   T.ForIn.transpile context scope for_ *)
+      | S.ForIn for_ when T.ForIn.test for_ ->
+        T.ForIn.transpile context scope for_
 
       | S.ForOf _ -> node
       | _ -> node
