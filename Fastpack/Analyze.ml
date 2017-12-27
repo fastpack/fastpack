@@ -4,6 +4,8 @@ let analyze _id filename source =
   let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
 
+  let module Ast = FlowParser.Ast in
+  let module Loc = FlowParser.Loc in
   let module S = Ast.Statement in
   let module E = Ast.Expression in
   let module L = Ast.Literal in
@@ -144,8 +146,9 @@ let analyze _id filename source =
   let visit_statement ((loc: Loc.t), stmt) =
     let _ = match stmt with
       | S.ImportDeclaration {
-          source = (_, { value = L.String request; _ });
+          source = (_, { value = request; _ });
           specifiers;
+          default;
           _;
         } ->
         let is_skipped =
@@ -163,32 +166,28 @@ let analyze _id filename source =
             (fun ctx ->
               let {Module. id = module_id; _} = get_module dep ctx in
               let namespace =
-                List.filter_map
-                  (fun spec ->
-                     match spec with
-                     | S.ImportDeclaration.ImportNamespaceSpecifier (_,(_, name)) ->
-                       Some name
-                     | _ ->
-                       None
-                  )
-                  specifiers
+                match specifiers with
+                | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
+                  Some name
+                | _ ->
+                  None
               in
-              match specifiers, get_module_binding dep.request, namespace with
-              | [], _, _ ->
+              let has_names = default <> None || specifiers <> None in
+              match has_names, get_module_binding dep.request, namespace with
+              | false, _, _ ->
                 fastpack_require module_id dep.request ^ ";\n"
-              | _, Some binding, spec :: [] ->
+              | _, Some binding, Some spec ->
                 define_binding spec binding
-              | _, None, spec::[] ->
+              | _, None, Some spec ->
                 define_binding
                   (add_module_binding ~binding:(Some spec) dep.request)
                   (fastpack_require module_id dep.request)
-              | _, Some _, [] ->
+              | _, Some _, None ->
                 ""
-              | _, None, [] ->
+              | _, None, None ->
                 define_binding
                   (add_module_binding dep.request)
                   (fastpack_require module_id dep.request)
-              | _ -> failwith "Unexpected several namespace specifiers"
             );
 
       | S.ExportNamedDeclaration {
@@ -221,7 +220,7 @@ let analyze _id filename source =
           exportKind = S.ExportValue;
           declaration = None;
           specifiers = Some (S.ExportNamedDeclaration.ExportSpecifiers specifiers);
-          source = Some (_, { value = L.String request; _ });
+          source = Some (_, { value = request; _ });
         } ->
         let dep = add_dependency request in
         let exports_from binding =
@@ -250,7 +249,7 @@ let analyze _id filename source =
           declaration = None;
           specifiers = Some (
               S.ExportNamedDeclaration.ExportBatchSpecifier (_, Some (_, spec)));
-          source = Some (_, { value = L.String request; _ });
+          source = Some (_, { value = request; _ });
         } ->
         let dep = add_dependency request in
         patch_loc_with
@@ -274,7 +273,7 @@ let analyze _id filename source =
           declaration = None;
           specifiers = Some (
               S.ExportNamedDeclaration.ExportBatchSpecifier (_, None));
-          source = Some (_, { value = L.String request; _ });
+          source = Some (_, { value = request; _ });
         } ->
         let dep = add_dependency request in
         patch_loc_with
@@ -299,22 +298,21 @@ let analyze _id filename source =
           )
 
       | S.ExportDefaultDeclaration {
-          exportKind = S.ExportValue;
-          declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _)
+          declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _); _
         }
       | S.ExportDefaultDeclaration {
-          exportKind = S.ExportValue;
           declaration = S.ExportDefaultDeclaration.Declaration (
               expr_loc,
               S.FunctionDeclaration { id=None; _ }
-            )
+          );
+          _
         }
       | S.ExportDefaultDeclaration {
-          exportKind = S.ExportValue;
           declaration = S.ExportDefaultDeclaration.Declaration (
               expr_loc,
               S.ClassDeclaration { id=None; _ }
-            )
+          );
+          _
         } ->
         patch
           loc.start.offset
@@ -322,18 +320,18 @@ let analyze _id filename source =
           "exports.default = "
 
       | S.ExportDefaultDeclaration {
-          exportKind = S.ExportValue;
           declaration = S.ExportDefaultDeclaration.Declaration (
               expr_loc,
               S.FunctionDeclaration { id = Some (_, id); _ }
-            )
+          );
+          _
         }
       | S.ExportDefaultDeclaration {
-          exportKind = S.ExportValue;
           declaration = S.ExportDefaultDeclaration.Declaration (
               expr_loc,
               S.ClassDeclaration { id = Some (_, id); _ }
-            )
+          );
+          _
         } ->
         remove
           loc.start.offset

@@ -3,6 +3,8 @@
  * patterns
  **)
 
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
 module E = Ast.Expression
 module F = Ast.Function
 module S = Ast.Statement
@@ -16,7 +18,7 @@ module L = Ast.Literal
  **)
 module AstFolder = struct
 
-  let rec fold_pattern f v ((_loc, node) : P.t) =
+  let rec fold_pattern f v ((_loc, node) : Loc.t P.t) =
     let v = match node with
 
       | P.Object { properties; _ } ->
@@ -89,14 +91,14 @@ end
 
 module TranspileObjectSpread = struct
 
-  let test (obj : E.Object.t) =
+  let test (obj : Loc.t E.Object.t) =
     List.exists
       (function
         | E.Object.SpreadProperty _ -> true
         | _ -> false)
       obj.properties
 
-  let transpile (obj : E.Object.t) =
+  let transpile (obj : Loc.t E.Object.t) =
     let add_argument bucket arguments =
       match bucket with
       | [] ->
@@ -124,14 +126,14 @@ module TranspileObjectSpreadRest = struct
 
   module Pattern = struct
 
-    type item = Assign of P.t' * E.t
-              | Omit of (P.t' * E.t * (E.t list))
+    type item = Assign of Loc.t P.t' * Loc.t E.t
+              | Omit of (Loc.t P.t' * Loc.t E.t * (Loc.t E.t list))
 
     type t = {
       before : item list;
       self : item option;
       after : item list;
-      result : E.t;
+      result : Loc.t E.t;
     }
 
     let test =
@@ -376,7 +378,7 @@ module TranspileObjectSpreadRest = struct
       let func =
         Loc.none, E.ArrowFunction {
           id = None;
-          params = ([], None);
+          params = (Loc.none, { params = []; rest = None});
           async = false;
           generator = false;
           predicate = None;
@@ -394,7 +396,7 @@ module TranspileObjectSpreadRest = struct
   end
 
   module Function = struct
-    let test {F. params = (params, rest); _} =
+    let test {F. params = (_, { params; rest }); _} =
       List.exists Pattern.test params
       || (match rest with
           | Some (_, {F.RestElement. argument}) -> Pattern.test argument
@@ -403,7 +405,7 @@ module TranspileObjectSpreadRest = struct
     let transpile
         context
         scope
-        ({F. params = (params, rest); body; _} as func) =
+        ({F. params = (_, { params; rest }); body; _} as func) =
       let vars = ref [] in
       let gen_binding pattern =
         let binding = context.Context.gen_binding scope in
@@ -465,14 +467,14 @@ module TranspileObjectSpreadRest = struct
               body = decl :: (Loc.none, S.Return {argument = Some expr}) :: []
             })
       in
-      { func with params = (params, rest); body }
+      { func with params = (Loc.none, { params; rest }); body }
 
 
   end
 
   module VariableDeclaration = struct
 
-    let test ({ declarations; _ } : S.VariableDeclaration.t) =
+    let test ({ declarations; _ } : Loc.t S.VariableDeclaration.t) =
       let test_declaration (_, {S.VariableDeclaration.Declarator. id; init }) = 
         match id, init with
         | id, Some _ -> Pattern.test id
@@ -506,8 +508,9 @@ module TranspileObjectSpreadRest = struct
       match left with
       | S.ForIn.LeftDeclaration (_, decl) ->
         VariableDeclaration.test decl
-      | S.ForIn.LeftExpression (_, E.Object obj) ->
-        TranspileObjectSpread.test obj
+      (* TODO: LeftPattern! *)
+      (* | S.ForIn.LeftExpression (_, E.Object obj) -> *)
+      (*   TranspileObjectSpread.test obj *)
       | _ -> false
 
     (* let transpile *)
@@ -527,7 +530,7 @@ end
 
 let transpile context program =
 
-  let map_statement scope ((loc, node) : S.t) =
+  let map_statement scope ((loc, node) : Loc.t S.t) =
     let module T = TranspileObjectSpreadRest in
     let node = match node with
       | S.VariableDeclaration d when T.VariableDeclaration.test d ->
@@ -550,7 +553,7 @@ let transpile context program =
     loc, node
   in
 
-  let map_expression scope ((loc, node) : E.t) =
+  let map_expression scope ((loc, node) : Loc.t E.t) =
     let node = match node with
       | E.Object obj when TranspileObjectSpread.test obj ->
         snd (TranspileObjectSpread.transpile obj)

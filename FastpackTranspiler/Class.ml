@@ -1,3 +1,5 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
 module S = Ast.Statement
 module E = Ast.Expression
 module C = Ast.Class
@@ -13,6 +15,8 @@ module Helper = struct
       literal_str name
     | E.Object.Property.Literal (_, lit) ->
       lit
+    | E.Object.Property.PrivateName _ ->
+      failwith "TODO: PrivateName"
     | E.Object.Property.Computed _ ->
       failwith "Computed properties are not supported here"
 
@@ -79,7 +83,7 @@ module Transform = struct
         methods
     in
 
-    let move_props_to_constructor (cls : C.t) =
+    let move_props_to_constructor (cls : Loc.t C.t) =
       match props with
       | [] -> cls
       | props ->
@@ -153,7 +157,7 @@ module Transform = struct
                                                       "constructor");
                   value = (Loc.none, {
                       id = None;
-                      params = ([], None);
+                      params = (Loc.none, { params = []; rest = None });
                       body = F.BodyBlock (Loc.none, { body = prop_stmts });
                       async = false;
                       generator = false;
@@ -221,7 +225,7 @@ end
 
 
 let transpile {Context. require_runtime; _ } program =
-  let map_expression _scope ((loc, node) : E.t) =
+  let map_expression _scope ((loc, node) : Loc.t E.t) =
     match node with
     | E.Class cls ->
       begin
@@ -235,7 +239,7 @@ let transpile {Context. require_runtime; _ } program =
     | _ -> (loc, node)
   in
 
-  let map_statement _scope ((loc, stmt) : S.t) =
+  let map_statement _scope ((loc, stmt) : Loc.t S.t) =
     match stmt with
     | S.ClassDeclaration cls ->
       begin

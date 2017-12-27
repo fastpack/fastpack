@@ -276,8 +276,8 @@
   version "0.11.0-esy"
   resolved "https://codeload.github.com/esy-ocaml/ocamlbuild/tar.gz/337c6b9c6cc6ead6d0a89914ca53c3abf988c902"
   dependencies:
-    opam-installer-bin esy-ocaml/opam-installer-bin
-    substs esy-ocaml/substs
+    "@esy-ocaml/esy-installer" "^0.0.0"
+    "@esy-ocaml/substs" "^0.0.1"
   peerDependencies:
     ocaml " >= 4.3.0"
 
@@ -441,11 +441,3 @@
 ocaml@~4.4.0:
   version "4.4.2004"
   resolved "https://registry.yarnpkg.com/ocaml/-/ocaml-4.4.2004.tgz#9b696ae98dd3f3487699beebe617fe3ad6e5dec6"
-
-opam-installer-bin@esy-ocaml/opam-installer-bin:
-  version "0.0.0"
-  resolved "https://codeload.github.com/esy-ocaml/opam-installer-bin/tar.gz/37d5d7951cc5befd1f124e1abe14b39ba1bdf5a6"
-
-substs@esy-ocaml/substs:
-  version "0.0.1"
-  resolved "https://codeload.github.com/esy-ocaml/substs/tar.gz/9f9711253d4a384f73d115843cc30f25e39f7615"

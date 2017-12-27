@@ -169,7 +169,7 @@ let rec process transpile graph ctx (m : Module.t) =
     try
         Analyze.analyze m.id m.filename transpiled
     with
-    | Parse_error.Error args ->
+    | FlowParser.Parse_error.Error args ->
       raise (PackError (ctx, CannotParseFile (m.filename, args)))
   in
   let m = { m with workspace; scope; } in

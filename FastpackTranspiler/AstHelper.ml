@@ -1,3 +1,5 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
 module S = Ast.Statement
 module E = Ast.Expression
 module L = Ast.Literal
@@ -61,10 +63,9 @@ let object_ properties =
   Loc.none, E.Object { properties }
 
 let object_property name value =
-  E.Object.Property (Loc.none, {
+  E.Object.Property (Loc.none, E.Object.Property.Init {
     key = E.Object.Property.Literal (Loc.none, literal_str name);
-    value = E.Object.Property.Init value;
-    _method = false;
+    value =  value;
     shorthand = false
   })
 
@@ -83,7 +84,7 @@ let object_define_property key value =
 let return expr =
   Loc.none, S.Return {argument = Some expr}
 
-let to_array convertor list : E.t =
+let to_array convertor list =
   Loc.none, E.Array {
     elements =
       list

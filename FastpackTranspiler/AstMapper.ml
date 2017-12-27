@@ -1,3 +1,5 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
 module Expression = Ast.Expression
 module Pattern = Ast.Pattern
 module Statement = Ast.Statement
@@ -9,10 +11,10 @@ module Function = Ast.Function
 module Scope = Fastpack.Scope
 
 type mapper = {
-  map_statement : Scope.t -> Statement.t -> Statement.t;
-  map_expression : Scope.t -> Expression.t -> Expression.t;
-  map_function : Scope.t -> (Loc.t * Function.t) -> (Loc.t * Function.t);
-  map_pattern : Scope.t -> Pattern.t -> Pattern.t;
+  map_statement : Scope.t -> Loc.t Statement.t -> Loc.t Statement.t;
+  map_expression : Scope.t -> Loc.t Expression.t -> Loc.t Expression.t;
+  map_function : Scope.t -> (Loc.t * Loc.t Function.t) -> (Loc.t * Loc.t Function.t);
+  map_pattern : Scope.t -> Loc.t Pattern.t -> Loc.t Pattern.t;
 }
 
 let do_nothing _ node =
@@ -33,7 +35,7 @@ let map_if_some get_scope handler map_with = function
   | None -> None
   | Some item -> Some (map_with (get_scope item) handler item)
 
-let rec map_statement scope handler ((loc, statement) : Statement.t) =
+let rec map_statement scope handler (loc, statement) =
   let statement = match statement with
     | Statement.Block { body } ->
       Statement.Block {
@@ -140,9 +142,9 @@ let rec map_statement scope handler ((loc, statement) : Statement.t) =
             | Statement.ForIn.LeftDeclaration decl ->
               let decl = map_variable_declaration scope handler decl in
               Statement.ForIn.LeftDeclaration decl
-            | Statement.ForIn.LeftExpression expression ->
-              let expression = map_expression scope handler expression in
-              Statement.ForIn.LeftExpression expression);
+            | Statement.ForIn.LeftPattern pattern ->
+              let pattern = map_pattern scope handler pattern in
+              Statement.ForIn.LeftPattern pattern);
         right = map_expression scope handler right;
         body = map_statement scope handler body;
       }
@@ -155,9 +157,9 @@ let rec map_statement scope handler ((loc, statement) : Statement.t) =
             | Statement.ForOf.LeftDeclaration decl ->
               let decl = map_variable_declaration scope handler decl in
               Statement.ForOf.LeftDeclaration decl
-            | Statement.ForOf.LeftExpression expression ->
-              let expression = map_expression scope handler expression in
-              Statement.ForOf.LeftExpression expression);
+            | Statement.ForOf.LeftPattern pattern ->
+              let pattern = map_pattern scope handler pattern in
+              Statement.ForOf.LeftPattern pattern);
         right = map_expression scope handler right;
         body = map_statement scope handler body;
       }
@@ -198,11 +200,16 @@ and map_class scope
                 map_if_some (fun _ -> scope) handler map_expression value
               in
               Class.Body.Property (loc, { n with key; value })
+            | Class.Body.PrivateField (loc, ({ value; _ } as n)) ->
+              let value =
+                map_if_some (fun _ -> scope) handler map_expression value
+              in
+              Class.Body.PrivateField (loc, { n with value })
           ) body
       })
   }
 
-and map_expression scope handler ((loc, expression) : Expression.t) =
+and map_expression scope handler (loc, expression) =
   let expression = match expression with
     | Expression.Array { elements } ->
       Expression.Array {
@@ -284,6 +291,7 @@ and map_expression scope handler ((loc, expression) : Expression.t) =
     | Expression.Member ({ _object; property; _ } as n) ->
       let _object = map_expression scope handler _object in
       let property = match property with
+        | Expression.Member.PropertyPrivateName _
         | Expression.Member.PropertyIdentifier _ -> property
         | Expression.Member.PropertyExpression expr ->
           let expr = map_expression scope handler expr in
@@ -303,7 +311,7 @@ and map_expression scope handler ((loc, expression) : Expression.t) =
   in
   handler.map_expression scope (loc, expression)
 
-and map_pattern scope (handler : mapper) ((loc, pattern) : Pattern.t) =
+and map_pattern scope (handler : mapper) (loc, pattern) =
   let pattern = match pattern with
     | Pattern.Object ({ properties; _ } as n) ->
       let properties = map_list
@@ -348,7 +356,7 @@ and map_pattern scope (handler : mapper) ((loc, pattern) : Pattern.t) =
 
   in handler.map_pattern scope (loc, pattern)
 
-and map_pattern_property_key scope handler (key : Pattern.Object.Property.key) =
+and map_pattern_property_key scope handler key =
   match key with
   | Pattern.Object.Property.Literal _ -> key
   | Pattern.Object.Property.Identifier _ -> key
@@ -356,19 +364,44 @@ and map_pattern_property_key scope handler (key : Pattern.Object.Property.key) =
     let expr = map_expression scope handler expr in
     Pattern.Object.Property.Computed expr
 
-and map_object_property scope handler (loc, ({ key; value; _ } as n)) =
-  let key = map_object_property_key scope handler key in
-  let value = match value with
-    | Expression.Object.Property.Init expr ->
-      let expr = map_expression scope handler expr in
-      Expression.Object.Property.Init expr
-    | Expression.Object.Property.Get func ->
-      let func = map_function scope handler func in
-      Expression.Object.Property.Get func
-    | Expression.Object.Property.Set func ->
-      let func = map_function scope handler func in
-      Expression.Object.Property.Set func
-  in (loc, Expression.Object.Property.({ n with key; value; }))
+and map_object_property scope handler (loc, prop) =
+  let prop =
+    match prop with
+    | Expression.Object.Property.Init ({ key; value; _ } as n) ->
+      Expression.Object.Property.Init {
+        n with
+        key = map_object_property_key scope handler key;
+        value = map_expression scope handler value
+      }
+    | Expression.Object.Property.Method { key; value } ->
+      Expression.Object.Property.Method {
+        key = map_object_property_key scope handler key;
+        value = map_function scope handler value
+      }
+    | Expression.Object.Property.Get { key; value } ->
+      Expression.Object.Property.Get {
+        key = map_object_property_key scope handler key;
+        value = map_function scope handler value
+      }
+    | Expression.Object.Property.Set { key; value } ->
+      Expression.Object.Property.Set {
+        key = map_object_property_key scope handler key;
+        value = map_function scope handler value
+      }
+  in
+  (loc, prop)
+  (* let key = map_object_property_key scope handler key in *)
+  (* let value = match value with *)
+  (*   | Expression.Object.Property.Init expr -> *)
+  (*     let expr = map_expression scope handler expr in *)
+  (*     Expression.Object.Property.Init expr *)
+  (*   | Expression.Object.Property.Get func -> *)
+  (*     let func = map_function scope handler func in *)
+  (*     Expression.Object.Property.Get func *)
+  (*   | Expression.Object.Property.Set func -> *)
+  (*     let func = map_function scope handler func in *)
+  (*     Expression.Object.Property.Set func *)
+  (* in (loc, Expression.Object.Property.({ n with key; value; })) *)
 
 and map_object_property_key scope handler key =
   match key with
@@ -380,7 +413,7 @@ and map_object_property_key scope handler key =
 and map_function
     scope
     handler
-    (loc, ({ Function. params = (params, rest); body; _ } as n)) =
+    (loc, ({ Function. params=(params_loc, { params; rest }); body; _ } as n)) =
   let scope = Scope.of_function (loc, n) scope in
   let params =
     map_list scope handler map_pattern params
@@ -394,7 +427,12 @@ and map_function
       rest
   in
   let body = map_function_body scope handler body in
-  let n = Function.({ n with params = (params, rest); body = body }) in
+  let n = Function.({
+      n with
+      params = (params_loc, { params; rest });
+      body = body
+    })
+  in
   handler.map_function scope (loc, n)
 
 and map_function_body scope handler body =
@@ -406,7 +444,7 @@ and map_function_body scope handler body =
     let expr = map_expression scope handler expr in
     Function.BodyExpression expr
 
-and map_block scope handler ((loc, block) : (Loc.t * Statement.Block.t)) =
+and map_block scope handler (loc, block) =
   (loc, { body = map_list scope handler map_statement block.body })
 
 and map_variable_declaration scope handler (loc, ({ declarations; _ } as n)) =
@@ -430,7 +468,7 @@ and map_expression_or_spread scope handler item = match item with
 
 let map handler program =
 
-  let map_program ((loc, statements, comments): Ast.program) =
+  let map_program ((loc, statements, comments): Loc.t Ast.program) =
     let scope = Scope.of_program statements Scope.empty in
     let statements = map_list scope handler map_statement statements in
     (loc, statements, comments)
