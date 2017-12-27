@@ -239,7 +239,7 @@ module TranspileObjectSpreadRest = struct
               AstHelper.e_literal_str name
             | P.Object.Property.Computed (_, E.Identifier (_, name)) ->
               AstHelper.e_identifier name
-            | _ -> failwith "should not happen"
+            | _ -> failwith "Unexpected Object.Property.Computed expression"
           in
           omit_keys := expr :: !omit_keys
         in

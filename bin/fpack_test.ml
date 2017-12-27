@@ -1,4 +1,3 @@
-
 let print ?(with_scope=false) _ source =
   let program, _ = Fastpack.Parser.parse_source source in
   let result = Fastpack.Printer.print ~with_scope program in
