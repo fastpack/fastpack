@@ -515,7 +515,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_kind (Some importKind)
         |> emit_if has_names (emit " ")
         |> emit_if_some emit_identifier default
-        |> emit_if (default <> None) emit_comma
+        |> emit_if (default <> None && specifiers <> None) emit_comma
         |> emit_if_some emit_specifiers specifiers
         |> emit_if has_names (emit " from")
         |> emit " "

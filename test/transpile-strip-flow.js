@@ -229,7 +229,6 @@ import type { foo2, bar } from "baz";
 import type { foo as bar2 } from "baz";
 import type from "foo";
 import type2, { foo3 } from "bar";
-import type * as namespace from "bar";
 export type { foo };
 export type { foo2 } from "bar";
 import {type T} from "foo";

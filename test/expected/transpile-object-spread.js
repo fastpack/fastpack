@@ -187,7 +187,7 @@ for (var __fpack__29 = {x: 1, a: 2}, {x} = __fpack__29, y = $__fpack__.omitProps
     
   }
 // for in
-for (Object.assign({}, {x}, y) in iterator)
+for ({x, ...y} in iterator)
   {
     
   }

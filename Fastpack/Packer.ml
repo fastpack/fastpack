@@ -164,7 +164,14 @@ let emit ?(with_runtime=true) out graph entry =
 
 let rec process transpile graph ctx (m : Module.t) =
   let source = m.Module.workspace.Workspace.value in
-  let transpiled = transpile ctx.package_dir m.filename source in
+  (* TODO: reafctor this *)
+  let transpiled =
+    try
+      transpile ctx.package_dir m.filename source
+    with
+    | FlowParser.Parse_error.Error args ->
+      raise (PackError (ctx, CannotParseFile (m.filename, args)))
+  in
   let (workspace, dependencies, scope) =
     try
         Analyze.analyze m.id m.filename transpiled
