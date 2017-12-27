@@ -179,19 +179,6 @@
   peerDependencies:
     ocaml " < 4.6.0"
 
-"@opam/flow_parser@0.52.0":
-  version "0.52.0"
-  uid f2124dffa0efa903ee84e384151063a9
-  resolved "@opam/flow_parser@0.52.0-f2124dffa0efa903ee84e384151063a9.tgz"
-  dependencies:
-    "@esy-ocaml/esy-installer" "^0.0.0"
-    "@esy-ocaml/substs" "^0.0.1"
-    "@opam/ocamlbuild" "*"
-    "@opam/ocamlfind" "*"
-    "@opam/sedlex" "*"
-  peerDependencies:
-    ocaml " >= 4.3.0"
-
 "@opam/gen@*":
   version "0.5.0"
   uid "13bc9c1edffa5934de9c27affe1d358f"
@@ -365,7 +352,7 @@
   peerDependencies:
     ocaml "*"
 
-"@opam/sedlex@*":
+"@opam/sedlex@^1.99.4":
   version "1.99.4"
   uid d6bca2fae7dc62dd192c9536b281f940
   resolved "@opam/sedlex@1.99.4-d6bca2fae7dc62dd192c9536b281f940.tgz"
@@ -411,6 +398,17 @@
     "@opam/react" " >= 1.0.0"
   peerDependencies:
     ocaml " >= 4.2.3"
+
+"@opam/wtf8@^1.0.1":
+  version "1.0.1"
+  uid e4d1761eadbdc963f220ece9bc54f8a2
+  resolved "@opam/wtf8@1.0.1-e4d1761eadbdc963f220ece9bc54f8a2.tgz"
+  dependencies:
+    "@esy-ocaml/esy-installer" "^0.0.0"
+    "@esy-ocaml/substs" "^0.0.1"
+    "@opam/jbuilder" " >= 1.0.0-beta7"
+  peerDependencies:
+    ocaml " >= 4.1.0"
 
 "@opam/yojson@*", "@opam/yojson@1.4.0":
   version "1.4.0"

@@ -1,9 +1,10 @@
+module Loc = FlowParser.Loc
 
 type reason =
   | CannotReadModule of string
   | CannotLeavePackageDir of string
   | CannotResolveModules of Dependency.t list
-  | CannotParseFile of string * ((Loc.t * Parse_error.t) list)
+  | CannotParseFile of string * ((Loc.t * FlowParser.Parse_error.t) list)
 
 let to_string error =
   match error with
@@ -18,7 +19,7 @@ let to_string error =
         Printf.sprintf "(%d:%d) - (%d:%d):"
           start.line start.column _end.line _end.column
       in
-      format_location loc ^ " " ^ Parse_error.PP.error error
+      format_location loc ^ " " ^ FlowParser.Parse_error.PP.error error
     in
     Printf.sprintf "Parse Error\nFile: %s\n\t" filename
     ^ String.concat "\n\t" (List.map format_error errors)

@@ -1,5 +1,8 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
+
 let transpile _context program =
-  let map_function _scope (loc, func) : (Loc.t * Ast.Function.t) =
+  let map_function _scope (loc, func) : (Loc.t * Loc.t Ast.Function.t) =
     (loc,
      { func with
        predicate = None;
@@ -8,7 +11,7 @@ let transpile _context program =
      })
   in
 
-  let map_pattern _scope (loc, pattern) : Ast.Pattern.t =
+  let map_pattern _scope (loc, pattern) : Loc.t Ast.Pattern.t =
     let module P = Ast.Pattern in
     let pattern =
       match pattern with
@@ -21,7 +24,7 @@ let transpile _context program =
     (loc, pattern)
   in
 
-  let map_class (cls : Ast.Class.t) =
+  let map_class (cls : Loc.t Ast.Class.t) =
     let module C = Ast.Class in
     let (body_loc, {C.Body. body}) = cls.body in
     let body =
@@ -46,7 +49,7 @@ let transpile _context program =
     }
   in
 
-  let map_expression _scope ((loc, node) : Ast.Expression.t) =
+  let map_expression _scope ((loc, node) : Loc.t Ast.Expression.t) =
     let module E = Ast.Expression in
     let node =
       match node with
@@ -57,7 +60,7 @@ let transpile _context program =
     (loc, node)
   in
 
-  let map_statement _scope ((loc, stmt) : Ast.Statement.t) =
+  let map_statement _scope ((loc, stmt) : Loc.t Ast.Statement.t) =
     let module S = Ast.Statement in
     let stmt =
       match stmt with
@@ -65,29 +68,37 @@ let transpile _context program =
         S.ClassDeclaration (map_class cls)
       | S.ImportDeclaration ({
           importKind = S.ImportDeclaration.ImportValue;
-          specifiers = (_ :: _) as specifiers; _
+          specifiers = Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers);
+          default;
+          _;
         } as import_decl) ->
         let specifiers =
           List.filter
-            (fun spec ->
-               match spec with
-               | S.ImportDeclaration.ImportNamedSpecifier {
-                   kind = Some S.ImportDeclaration.ImportType; _ }
-               | S.ImportDeclaration.ImportNamedSpecifier {
-                   kind = Some S.ImportDeclaration.ImportTypeof; _ } -> false
+            (fun {S.ImportDeclaration. kind; _ } ->
+               match kind with
+               | Some S.ImportDeclaration.ImportTypeof
+               | Some S.ImportDeclaration.ImportType -> false
                | _ -> true
             )
             specifiers
         in
         begin
-          match (List.length specifiers) with
-          | 0 -> S.Empty;
-          | _ -> S.ImportDeclaration { import_decl with specifiers; }
+          match default, specifiers with
+          | None, [] -> S.Empty;
+          | Some _, [] ->
+            S.ImportDeclaration {
+              import_decl with
+              specifiers = None
+            }
+          | _ ->
+            S.ImportDeclaration {
+              import_decl with
+              specifiers = Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers);
+            }
         end
       | S.ImportDeclaration { importKind = S.ImportDeclaration.ImportType; _ }
       | S.ImportDeclaration { importKind = S.ImportDeclaration.ImportTypeof; _ }
       | S.ExportNamedDeclaration { exportKind = S.ExportType; _ }
-      | S.ExportDefaultDeclaration { exportKind = S.ExportType; _ }
       | S.DeclareModule _
       | S.DeclareExportDeclaration _
       | S.DeclareVariable _

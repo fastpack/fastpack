@@ -1,6 +1,3 @@
-let transpile_old _ =
-  let scope = FastpackTranspiler.Util.make_scope () in
-  FastpackTranspiler.Main.transpile_source scope
 
 let print ?(with_scope=false) _ source =
   let program, _ = Fastpack.Parser.parse_source source in

@@ -1,7 +1,10 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
 module E = Ast.Expression
 module P = Ast.Pattern
 module S = Ast.Statement
 module L = Ast.Literal
+module SL = Ast.StringLiteral
 module T = Ast.Type
 module V = Ast.Variance
 module C = Ast.Class
@@ -18,13 +21,13 @@ type printer_ctx = {
   buf : Buffer.t;
 
   (** List of comments *)
-  comments : Ast.Comment.t list;
+  comments : Loc.t Ast.Comment.t list;
 
   (** Last expression *)
-  parent_expr : E.t' option;
+  parent_expr : Loc.t E.t' option;
 
   (** Last statement *)
-  parent_stmt : S.t';
+  parent_stmt : Loc.t S.t';
 
   (** Current scope *)
   scope: Scope.t;
@@ -45,7 +48,7 @@ module Parens = struct
    * - Function precedence is made to be 18 since it needs to be lower than
    *   Call to allow IIF
    * *)
-  let precedence (node : E.t') =
+  let precedence node =
     match node with
     | E.ArrowFunction _ -> 1
     | E.Yield _ -> 2
@@ -93,6 +96,7 @@ module Parens = struct
     | E.Class _
     | E.Import _
     | E.JSXElement _
+    | E.JSXFragment _
     | E.Member _
     | E.New _ -> 19
 
@@ -111,7 +115,7 @@ module Parens = struct
     | E.Comprehension _ -> failwith "Precedence: Comprehension is not supported"
     | E.MetaProperty _ -> failwith "Precedence: MetaProperty is not supported"
 
-  let is_required ((loc, node) : E.t)
+  let is_required ((loc : Loc.t), node)
       { comments; parent_expr; parent_stmt;  _ } =
     let has_comments =
       List.exists
@@ -279,7 +283,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     else
       ctx
 
-  and emit_statement ((loc, statement) : S.t) ctx =
+  and emit_statement (loc, statement) ctx =
     let prev_parent_stmt = ctx.parent_stmt in
     let ctx = ctx |> emit_comments loc |> set_parent_stmt statement in
     let ctx =
@@ -438,7 +442,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit "for ("
         |> (match left with
             | S.ForIn.LeftDeclaration decl -> emit_variable_declaration decl
-            | S.ForIn.LeftExpression expression -> emit_expression expression)
+            | S.ForIn.LeftPattern pattern -> emit_pattern pattern)
         |> emit " in "
         |> emit_expression right
         |> emit ")"
@@ -453,7 +457,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit "("
         |> (match left with
             | S.ForOf.LeftDeclaration decl -> emit_variable_declaration decl
-            | S.ForOf.LeftExpression expression -> emit_expression expression)
+            | S.ForOf.LeftPattern pattern -> emit_pattern pattern)
         |> emit " of "
         |> emit_expression right
         |> emit ")"
@@ -476,90 +480,46 @@ let print ?(with_scope=false) (_, statements, comments) =
 
       | S.ClassDeclaration cls ->
         ctx |> emit_class cls
-      | S.InterfaceDeclaration { id; typeParameters; body; extends; mixins } ->
-        fail_if
-          (List.length mixins > 0)
-          "InterfaceDeclaration: mixins are not supported";
-        ctx
-        |> emit "interface "
-        |> emit_identifier id
-        |> emit_if (List.length extends > 0) (emit " extends ")
-        |> emit_list ~emit_sep:emit_comma emit_generic_type extends
-        |> emit_if_some emit_type_parameter_declaration typeParameters
-        |> emit_object_type body
 
-      | S.ImportDeclaration { importKind; source; specifiers; } ->
+      | S.ImportDeclaration { importKind; source; specifiers; default } ->
         let emit_kind kind =
           match kind with
           | Some S.ImportDeclaration.ImportType -> emit " type "
           | Some S.ImportDeclaration.ImportTypeof -> emit " typeof "
           | _ -> emit_none
         in
-        let namespace =
-          List.head_opt
-          @@ List.filter
-            (fun spec ->
-               match spec with
-               | S.ImportDeclaration.ImportNamespaceSpecifier _ -> true
-               | _ -> false
-            )
-            specifiers
-        in
-        let default =
-          List.head_opt
-          @@ List.filter
-            (fun spec ->
-               match spec with
-               | S.ImportDeclaration.ImportDefaultSpecifier _ -> true
-               | _ -> false
-            )
-            specifiers
-        in
-        let named =
-          List.filter
-            (fun spec ->
-               match spec with
-               | S.ImportDeclaration.ImportNamedSpecifier _ -> true
-               | _ -> false
-            )
-            specifiers
-        in
-        let emit_specifier spec ctx =
+        let emit_specifiers specifiers ctx =
           ctx
-          |> (match spec with
-              | S.ImportDeclaration.ImportDefaultSpecifier ident ->
-                emit_identifier ident
+          |> (match specifiers with
               | S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, ident)) ->
-                emit @@ "* as " ^ ident
-              | S.ImportDeclaration.ImportNamedSpecifier
-                  { kind; local; remote = (_, remote) } ->
-                fun ctx ->
+                emit ("* as " ^ ident)
+              | S.ImportDeclaration.ImportNamedSpecifiers specifiers ->
+                let emit_specifier {S.ImportDeclaration. kind; local; remote} ctx =
                   ctx
                   |> emit_kind kind
-                  |> emit remote
-                  |> emit_if_some (fun local -> emit @@ " as " ^ (snd local)) local
+                  |> emit_identifier remote
+                  |> emit_if_some
+                    (fun local ctx -> ctx |> emit " as " |> emit_identifier local)
+                    local
+                in
+                fun ctx ->
+                 ctx
+                 |> emit "{"
+                 |> emit_list ~emit_sep:emit_comma emit_specifier specifiers
+                 |> emit "}"
              )
         in
+        let has_names = default <> None || specifiers <> None in
         ctx
         |> emit "import"
         |> emit_kind (Some importKind)
-        |> emit_if (List.length specifiers > 0) (emit " ")
-        |> emit_if_some emit_specifier default
-        |> emit_if_some emit_specifier namespace
-        |> emit_if
-          ((default != None || namespace != None) && List.length named > 0)
-          emit_comma
-        |> emit_if
-            (List.length named > 0)
-            (fun ctx ->
-               ctx
-               |> emit "{"
-               |> emit_list ~emit_sep:emit_comma emit_specifier named
-               |> emit "}"
-            )
-        |> emit_if (List.length specifiers > 0) (emit " from")
+        |> emit_if has_names (emit " ")
+        |> emit_if_some emit_identifier default
+        |> emit_if (default <> None && specifiers <> None) emit_comma
+        |> emit_if_some emit_specifiers specifiers
+        |> emit_if has_names (emit " from")
         |> emit " "
-        |> emit_literal source
+        |> emit_string_literal source
         |> emit_semicolon_and_newline
 
       | S.ExportNamedDeclaration {
@@ -602,20 +562,21 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_if_some emit_statement declaration
         |> emit_if_some emit_specifiers specifiers
         |> emit_if_some
-          (fun source ctx -> ctx |> emit " from " |> emit_literal source)
+          (fun source ctx -> ctx |> emit " from " |> emit_string_literal source)
           source
         |> emit_semicolon_and_newline
 
-      | S.ExportDefaultDeclaration { declaration; exportKind } ->
+      | S.ExportDefaultDeclaration { declaration; _ } ->
         ctx
         |> emit "export default "
-        |> emit_if (exportKind = S.ExportType) (emit "type ")
         |> (match declaration with
             | S.ExportDefaultDeclaration.Declaration stmt ->
               emit_statement stmt
             | S.ExportDefaultDeclaration.Expression expr ->
               emit_expression expr)
         |> emit_semicolon_and_newline
+      | S.InterfaceDeclaration _ ->
+        failwith "Interface declaration is not supported"
       | S.TypeAlias _ ->
         failwith "TypeAlias is not supported"
       | S.DeclareVariable _ ->
@@ -637,7 +598,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     in
     ctx |> set_parent_stmt prev_parent_stmt
 
-  and emit_expression ?(parens=true) ((loc, expression) : E.t) ctx =
+  and emit_expression ?(parens=true) (loc, expression) ctx =
     let parens = parens && Parens.is_required (loc, expression) ctx in
     let prev_parent_expr = ctx.parent_expr in
     let ctx =
@@ -668,33 +629,40 @@ let print ?(with_scope=false) (_, statements, comments) =
         ctx
         |> emit "{"
         |> emit_list ~emit_sep:emit_comma
-          (fun prop ctx -> match prop with
-             | E.Object.Property (loc, { key; value; _method; shorthand }) ->
+          (fun prop ctx ->
+             match prop with
+             | E.Object.Property (loc, prop) ->
                let ctx = emit_comments loc ctx in
                begin
-                 match value with
-                  | E.Object.Property.Init expr ->
-                    if shorthand then
-                      ctx |> emit_object_property_key key
-                    else
-                      ctx
-                      |> emit_object_property_key key
-                      |> emit ": "
-                      |> emit_expression ~parens:false expr
-                  | E.Object.Property.Get func ->
-                    ctx
-                    |> emit "get "
-                    |> emit_function
-                      ~emit_id:(emit_object_property_key key)
-                      ~as_method:true
-                      func
-                  | E.Object.Property.Set func ->
-                    ctx
-                    |> emit "set "
-                    |> emit_function
-                      ~emit_id:(emit_object_property_key key)
-                      ~as_method:true
-                      func
+                 match prop with
+                 | E.Object.Property.Init { key; value; shorthand } ->
+                   if shorthand then
+                     ctx |> emit_object_property_key key
+                   else
+                     ctx
+                     |> emit_object_property_key key
+                     |> emit ": "
+                     |> emit_expression ~parens:false value
+                 | E.Object.Property.Method { key; value; } ->
+                   ctx
+                   |> emit_function
+                     ~emit_id:(emit_object_property_key key)
+                     ~as_method:true
+                     value
+                 | E.Object.Property.Get { key; value } ->
+                   ctx
+                   |> emit "get "
+                   |> emit_function
+                     ~emit_id:(emit_object_property_key key)
+                     ~as_method:true
+                     value
+                 | E.Object.Property.Set { key; value } ->
+                   ctx
+                   |> emit "set "
+                   |> emit_function
+                     ~emit_id:(emit_object_property_key key)
+                     ~as_method:true
+                     value
                end
              | E.Object.SpreadProperty (loc, { argument }) ->
                ctx
@@ -810,6 +778,8 @@ let print ?(with_scope=false) (_, statements, comments) =
       | E.Member { _object; property; computed } ->
         let emit_property property =
           match property with
+          | E.Member.PropertyPrivateName name ->
+            emit_private_name name
           | E.Member.PropertyIdentifier (_, name) ->
             emit name
           | E.Member.PropertyExpression expression ->
@@ -841,6 +811,8 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_template_literal tmpl_lit
       | E.JSXElement element ->
         ctx |> emit_jsx_element element
+      | E.JSXFragment _ ->
+        failwith "JSXFragment is not supported"
       | E.Class cls ->
         ctx |> emit_class cls
       | E.TypeCast _ ->
@@ -857,19 +829,17 @@ let print ?(with_scope=false) (_, statements, comments) =
       children;
       closingElement;
       } ctx =
-    let emit_identifier ((_, { name }) : J.Identifier.t) =
+    let emit_identifier (_, {J.Identifier. name }) =
       emit name
     in
-    let emit_namespaced_name
-        ((_, { namespace; name }) : J.NamespacedName.t ) ctx =
+    let emit_namespaced_name (_, {J.NamespacedName. namespace; name }) ctx =
       ctx
       |> emit_identifier namespace
       |> emit ":"
       |> emit_identifier name
     in
     let emit_name name =
-      let rec emit_member_expression
-          ((_, { _object; property }) : J.MemberExpression.t) ctx =
+      let rec emit_member_expression (_, {J.MemberExpression. _object; property }) ctx =
         ctx
         |> (match _object with
             | J.MemberExpression.MemberExpression expr ->
@@ -940,6 +910,7 @@ let print ?(with_scope=false) (_, statements, comments) =
          | J.Text { raw; _ } -> emit raw
          | J.ExpressionContainer expr -> emit_expression_container expr
          | J.Element element -> emit_jsx_element element
+         | J.Fragment _ | J.SpreadChild _ -> failwith "Fragment/SpreadChild are not implemented"
       )
       children
     |> emit_if_some
@@ -990,6 +961,8 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_if_some (fun _ -> emit " = ") value
         |> emit_if_some emit_expression value
         |> emit_semicolon
+      | C.Body.PrivateField _ ->
+        failwith "Class PrivateField is not implemented"
     in
     begin
       fail_if
@@ -1038,7 +1011,7 @@ let print ?(with_scope=false) (_, statements, comments) =
       (List.combine quasis emit_expressions)
     |> emit "`"
 
-  and emit_pattern ((loc, pattern) : P.t) ctx =
+  and emit_pattern (loc, pattern) ctx =
     let ctx = emit_comments loc ctx in
     match pattern with
     | P.Object { properties; typeAnnotation } ->
@@ -1093,6 +1066,8 @@ let print ?(with_scope=false) (_, statements, comments) =
     match key with
     | E.Object.Property.Literal lit ->
       ctx |> emit_literal lit
+    | E.Object.Property.PrivateName name ->
+      ctx |> emit_private_name name
     | E.Object.Property.Identifier id ->
       ctx |> emit_identifier id
     | E.Object.Property.Computed expr ->
@@ -1108,7 +1083,7 @@ let print ?(with_scope=false) (_, statements, comments) =
   and emit_function ?(as_arrow=false) ?(as_method=false) ?emit_id ((loc, {
       F.
       id;
-      params;
+      params = (_, {params; rest});
       body;
       async;
       generator;
@@ -1119,7 +1094,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     }) as f) ctx =
     (** TODO: handle `predicate`, `expression` ? *)
     let omit_parameter_parens =
-      match as_arrow, fst params, snd params with
+      match as_arrow, params, rest with
       | true, [(_, P.Object _)], _ -> false
       | true, [_], None -> true
       | _ -> false
@@ -1134,14 +1109,10 @@ let print ?(with_scope=false) (_, statements, comments) =
         | Some emit_id -> emit_id)
     |> emit_if_some emit_type_parameter_declaration typeParameters
     |> emit_if (not omit_parameter_parens) (emit "(")
-    |> (
-      let (params, rest) = params in fun ctx ->
-        ctx
-        |> emit_list ~emit_sep:emit_comma emit_pattern params
-        |> emit_if (List.length params > 0 && rest <> None) (emit ",")
-        |> emit_if_some (fun (_loc, { F.RestElement.  argument }) ctx ->
-            ctx |> emit " ..." |> emit_pattern argument) rest
-    )
+    |> emit_list ~emit_sep:emit_comma emit_pattern params
+    |> emit_if (List.length params > 0 && rest <> None) (emit ",")
+    |> emit_if_some (fun (_loc, { F.RestElement.  argument }) ctx ->
+        ctx |> emit " ..." |> emit_pattern argument) rest
     |> emit_if (not omit_parameter_parens) (emit ")")
     |> emit_if as_arrow (emit " => ")
     |> emit_if_some emit_type_annotation returnType
@@ -1182,7 +1153,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     | V.Plus -> emit "+"
     | V.Minus -> emit "-"
 
-  and emit_block ((loc, block) : (Loc.t * S.Block.t)) ctx =
+  and emit_block (loc, block) ctx =
     ctx
     |> emit_comments loc
     |> emit "{"
@@ -1191,7 +1162,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     |> dedent
     |> emit "}"
 
-  and emit_identifier ((loc, identifier) : Ast.Identifier.t) ctx =
+  and emit_identifier (loc, identifier) ctx =
     ctx |> emit_comments loc |> emit identifier
 
   and emit_variable_declaration
@@ -1255,7 +1226,7 @@ let print ?(with_scope=false) (_, statements, comments) =
       |> emit "]"
     | T.StringLiteral { value = _; raw } -> emit raw ctx
     | T.NumberLiteral { value = _; raw } -> emit raw ctx
-    | T.BooleanLiteral { value = _; raw } -> emit raw ctx
+    | T.BooleanLiteral value -> emit (if value then "true" else "false") ctx
     | T.Exists -> emit "*" ctx
 
   and emit_object_type (_loc, _value) _ctx =
@@ -1290,7 +1261,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     ctx
     |> emit_comments loc
     |> emit_if_some emit_variance variance
-    |> emit name
+    |> emit_identifier name
     |> emit_if_some
       (fun (_, bound) ctx -> ctx |> emit ": " |> emit_type bound)
       bound
@@ -1312,8 +1283,14 @@ let print ?(with_scope=false) (_, statements, comments) =
     |> emit_list ~emit_sep:emit_comma emit_type params
     |> emit ">"
 
-  and emit_literal (loc, { raw; value = _value }) ctx =
+  and emit_literal (loc, {L. raw; _ }) ctx =
     ctx |> emit_comments loc |> emit raw
+
+  and emit_string_literal (_, {SL. raw; _ }) =
+    emit raw
+
+  and emit_private_name (loc, (_, name)) ctx =
+    ctx |> emit_comments loc |> emit "#" |> emit name
 
   and emit_statements statements =
     emit_list emit_statement statements

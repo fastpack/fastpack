@@ -3,6 +3,6 @@
 (library
  ((name        FastpackTranspiler)
   (public_name FastpackTranspiler)
-  (libraries (Fastpack flow_parser lwt.unix fileutils yojson))
+  (libraries (Fastpack lwt.unix fileutils yojson))
   (flags (:standard "-open" "Containers"))
   (preprocess (pps (lwt.ppx)))))

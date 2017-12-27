@@ -1,0 +1,4 @@
+[submodule "flow"]
+	path = flow
+	url = https://github.com/fastpack/flow
+	branch = fastpack

@@ -1,3 +1,5 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
 module Expression = Ast.Expression
 module Pattern = Ast.Pattern
 module Statement = Ast.Statement
@@ -11,14 +13,14 @@ module Function = Ast.Function
 type visit_action = Continue | Break
 
 type visit_handler = {
-  visit_statement : Statement.t -> visit_action;
-  enter_statement : Statement.t -> unit;
-  leave_statement : Statement.t -> unit;
-  visit_expression : Expression.t -> visit_action;
-  visit_function : (Loc.t * Function.t) -> visit_action;
-  enter_function : (Loc.t * Function.t) -> unit;
-  leave_function : (Loc.t * Function.t) -> unit;
-  visit_pattern : Pattern.t -> visit_action;
+  visit_statement : Loc.t Statement.t -> visit_action;
+  enter_statement : Loc.t Statement.t -> unit;
+  leave_statement : Loc.t Statement.t -> unit;
+  visit_expression : Loc.t Expression.t -> visit_action;
+  visit_function : (Loc.t * Loc.t Function.t) -> visit_action;
+  enter_function : (Loc.t * Loc.t Function.t) -> unit;
+  leave_function : (Loc.t * Loc.t Function.t) -> unit;
+  visit_pattern : Loc.t Pattern.t -> visit_action;
 }
 
 let do_nothing _ = Continue
@@ -42,7 +44,7 @@ let visit_if_some handler visit = function
   | None -> ()
   | Some item -> visit handler item
 
-let rec visit_statement handler ((loc, statement) : Statement.t) =
+let rec visit_statement handler ((loc, statement) : Loc.t Statement.t) =
   let () = handler.enter_statement (loc, statement) in
   let action = handler.visit_statement (loc, statement) in
   let () =
@@ -123,14 +125,14 @@ let rec visit_statement handler ((loc, statement) : Statement.t) =
       | Statement.ForIn { left; right; body; each = _each } ->
         (match left with
          | Statement.ForIn.LeftDeclaration decl -> visit_variable_declaration handler decl
-         | Statement.ForIn.LeftExpression expression -> visit_expression handler expression);
+         | Statement.ForIn.LeftPattern pattern -> visit_pattern handler pattern);
         visit_expression handler right;
         visit_statement handler body
 
       | Statement.ForOf { left; right; body; async = _async } ->
         (match left with
          | Statement.ForOf.LeftDeclaration decl -> visit_variable_declaration handler decl
-         | Statement.ForOf.LeftExpression expression -> visit_expression handler expression);
+         | Statement.ForOf.LeftPattern pattern -> visit_pattern handler pattern);
         visit_expression handler right;
         visit_statement handler body
 
@@ -192,9 +194,17 @@ and visit_class handler {Class. body = (_, { body }); superClass; _} =
         }) ->
         visit_object_property_key handler key;
         visit_if_some handler visit_expression value
+      | Class.Body.PrivateField (_loc, {
+          key = _key;
+          value;
+          typeAnnotation = _typeAnnotation;
+          static = _static;
+          variance = _variance
+        }) ->
+        visit_if_some handler visit_expression value
     ) body
 
-and visit_expression handler ((loc, expression) : Expression.t) =
+and visit_expression handler ((loc, expression) : Loc.t Expression.t) =
   let action = handler.visit_expression (loc, expression) in
   match action with
   | Break -> ()
@@ -268,6 +278,7 @@ and visit_expression handler ((loc, expression) : Expression.t) =
       | Expression.Member.PropertyExpression expr ->
         visit_expression handler expr
       | Expression.Member.PropertyIdentifier _ -> ()
+      | Expression.Member.PropertyPrivateName _ -> ()
       end;
     | Expression.Yield { argument; delegate = _delegate } ->
       visit_if_some handler visit_expression argument
@@ -279,12 +290,13 @@ and visit_expression handler ((loc, expression) : Expression.t) =
     | Expression.TemplateLiteral _ -> ()
     | Expression.TaggedTemplate _ -> ()
     | Expression.JSXElement _ -> ()
+    | Expression.JSXFragment _ -> ()
     | Expression.Class cls ->
       visit_class handler cls
     | Expression.TypeCast _ -> ()
     | Expression.MetaProperty _ -> ()
 
-and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Pattern.t) =
+and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Loc.t Pattern.t) =
   match handler.visit_pattern p with
   | Break -> ()
   | Continue ->
@@ -319,18 +331,20 @@ and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Pattern.t) =
 
     | Pattern.Expression expr -> visit_expression handler expr
 
-and visit_object_property handler (_, {
-    key;
-    value;
-    _method;
-    shorthand = _shorthand;
-  }) =
+and visit_object_property handler (_, value) =
   match value with
-  | Expression.Object.Property.Init expr ->
+  | Expression.Object.Property.Init {key; value; _} ->
     visit_object_property_key handler key;
-    visit_expression handler expr
-  | Expression.Object.Property.Get func -> visit_function handler func
-  | Expression.Object.Property.Set func -> visit_function handler func
+    visit_expression handler value
+  | Expression.Object.Property.Method {key; value} ->
+    visit_object_property_key handler key;
+    visit_function handler value
+  | Expression.Object.Property.Get {key; value} ->
+    visit_object_property_key handler key;
+    visit_function handler value
+  | Expression.Object.Property.Set {key; value} ->
+    visit_object_property_key handler key;
+    visit_function handler value
 
 
 and visit_object_property_key handler key =
@@ -341,6 +355,8 @@ and visit_object_property_key handler key =
     ()
   | Expression.Object.Property.Computed expr ->
     visit_expression handler expr
+  | Expression.Object.Property.PrivateName _private_name ->
+    ()
 
 and visit_function handler (_, {
     Function.
@@ -362,7 +378,7 @@ and visit_function handler (_, {
     | Continue ->
       (** TODO: handle `predicate` *)
       (
-        let (params, rest) = params in
+        let (_loc, {Function.Params. params;rest}) = params in
         visit_list handler visit_pattern params;
         visit_if_some handler (fun handler (_loc, { Function.RestElement. argument }) ->
             visit_pattern handler argument) rest
@@ -376,7 +392,7 @@ and visit_function_body handler body =
   | Function.BodyBlock block -> visit_block handler block
   | Function.BodyExpression expr -> visit_expression handler expr
 
-and visit_block handler ((_loc, block) : (Loc.t * Statement.Block.t)) =
+and visit_block handler ((_loc, block) : (Loc.t * Loc.t Statement.Block.t)) =
   visit_list handler visit_statement block.body
 
 and visit_variable_declaration handler (_, { declarations; kind = _kind }) =
@@ -397,7 +413,7 @@ and visit_expression_or_spread handler item = match item with
 
 let visit handler program =
 
-  let visit_program ((_, statements, _): Ast.program) =
+  let visit_program ((_, statements, _): Loc.t Ast.program) =
     visit_list handler visit_statement statements
   in
 

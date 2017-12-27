@@ -159,19 +159,19 @@ a = {get fooProp() {
   
 }
 };
-a = {id: function (x) {
+a = {id(x) {
   
 }
 };
-a = {id: function *(x) {
+a = {*id(x) {
   
 }
 };
-a = {id: async function (x) {
+a = {async id(x) {
   
 }
 };
-a = {123: function (x) {
+a = {123(x) {
   
 }
 };

@@ -1,15 +1,18 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
+
 let transpile _context program =
-  let map_expression _scope ((loc, node) : Ast.Expression.t) =
+  let map_expression _scope ((loc, node) : Loc.t Ast.Expression.t) =
     let module E = Ast.Expression in
     let module I = Ast.Identifier in
     let open Ast.JSX in
 
     (** Transpile JSX elememnt name *)
-    let transpile_name (name : name) =
-      let aux_property ((loc, { name }) : Identifier.t) =
+    let transpile_name (name : Loc.t name) =
+      let aux_property ((loc, { name }) : Loc.t Identifier.t) =
         (loc, name)
       in
-      let rec aux_object (_object : MemberExpression._object) =
+      let rec aux_object (_object : Loc.t MemberExpression._object) =
         match _object with
         | MemberExpression.Identifier (loc, { name }) ->
           E.Identifier (loc, name)
@@ -37,7 +40,7 @@ let transpile _context program =
     in
 
     (** Transpile JSX attributes *)
-    let transpile_attributes (attributes : Opening.attribute list) =
+    let transpile_attributes (attributes : Loc.t Opening.attribute list) =
 
       let null_expression =
         Loc.none, E.Literal { value = Ast.Literal.Null; raw = "null"; }
@@ -70,7 +73,7 @@ let transpile _context program =
             (`Expression expr)::expressions
         in
         let bucket, expressions = List.fold_left
-            (fun (bucket, expressions) (attr : Opening.attribute) ->
+            (fun (bucket, expressions) (attr : Loc.t Opening.attribute) ->
                match attr with
                | Opening.Attribute (loc, { name; value }) ->
                  let key = match name with
@@ -90,8 +93,7 @@ let transpile _context program =
                      failwith "Found EmptyExpression container"
                  in
                  let prop = E.Object.Property (
-                     loc,
-                     { key; value = E.Object.Property.Init value; _method = false; shorthand = false }
+                     loc, E.Object.Property.Init { key; value; shorthand = false }
                    ) in
                  (prop::bucket, expressions)
                | Opening.SpreadAttribute (_loc, { argument }) ->
@@ -128,7 +130,7 @@ let transpile _context program =
         |> List.filter is_not_empty_line
         |> String.concat " "
       in
-      let transpile_child ((loc, child) : child) =
+      let transpile_child ((loc, child) : Loc.t child) =
         let expr = match child with
           | Element element ->
             (loc, transpile_element element)
@@ -139,6 +141,7 @@ let transpile _context program =
           | Text { value; raw } ->
             let raw = trim_text raw in
             (loc, E.Literal { value = Ast.Literal.String value; raw = ("'" ^ raw ^ "'"); })
+          | Fragment _ | SpreadChild _ -> failwith "Fragment/SpreadChild are not implemented"
         in
         E.Expression expr
       in

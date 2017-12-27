@@ -1,7 +1,10 @@
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
 module S = Ast.Statement
 module F = Ast.Function
 module P = Ast.Pattern
 module L = Ast.Literal
+module SL = Ast.StringLiteral
 module M = Map.Make(String)
 
 type t = {
@@ -104,7 +107,7 @@ let update_bindings name typ bindings =
     (* TODO: track the Loc.t of bindings and raise the nice error *)
     failwith ("Naming collision: " ^ name)
 
-let names_of_node ((_, node) : S.t) =
+let names_of_node ((_, node) : Loc.t S.t) =
   let type_of_kind kind =
     match kind with
     | S.VariableDeclaration.Let -> Let
@@ -123,25 +126,42 @@ let names_of_node ((_, node) : S.t) =
   match node with
   | S.ImportDeclaration {
       importKind = S.ImportDeclaration.ImportValue;
-      source = (_, { value = L.String source; _ });
-      specifiers
-    } ->
-    List.map
-      (fun spec ->
-         match spec with
-         | S.ImportDeclaration.ImportNamedSpecifier { local; remote; _ } ->
-           let local =
-             match local with
-             | Some name -> name
-             | None -> remote
-           in (name_of_identifier local,
-               Import {remote = Some (name_of_identifier remote); source})
-         | S.ImportDeclaration.ImportDefaultSpecifier (_, name) ->
-           name, Import { remote = Some "default"; source }
-         | S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name)) ->
-           name, Import { remote = None; source }
-      )
+      source = (_, { value = source; _ });
       specifiers;
+      default
+    } ->
+    let names =
+      match specifiers with
+      | None ->
+        []
+      | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
+        [name, Import { remote = None; source }]
+      | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
+        List.filter_map
+          (fun {S.ImportDeclaration. kind; local; remote } ->
+             match kind with
+             | Some S.ImportDeclaration.ImportValue | None ->
+               let local =
+                 match local with
+                 | Some name -> name
+                 | None -> remote
+               in
+               Some (
+                 name_of_identifier local,
+                 Import {remote = Some (name_of_identifier remote); source}
+               )
+             | _ ->
+               None
+          )
+          specifiers
+    in
+    begin
+      match default with
+      | None ->
+        names
+      | Some (_, name) ->
+        (name, Import { remote = Some "default"; source}) :: names
+    end
   | S.ClassDeclaration { id = Some name; _} ->
     [(name_of_identifier name, Class)]
   | S.FunctionDeclaration { id = Some name; _ } ->
@@ -277,8 +297,8 @@ let of_function_body args stmts scope =
       Visit.Continue
 
     | S.ExportDefaultDeclaration {
-        exportKind = S.ExportValue;
         declaration = S.ExportDefaultDeclaration.Declaration declaration;
+        _
       }
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
@@ -338,8 +358,7 @@ let of_function_body args stmts scope =
     parent = Some scope;
   }
 
-let of_function (_, {F. params; body; _}) =
-  let params, rest = params in
+let of_function (_, {F. params = (_, { params; rest }); body; _}) =
   let arguments =
     List.flatten
     @@ List.append
