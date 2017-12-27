@@ -94,6 +94,9 @@ __fastpack_require__(/* "./yz_reimport.js" */ "yz_reimport.js-8e8b7c892b187dd9b1
 
 
 const util = __fastpack_require__(/* "./util" */ "util.js-8a3f3828d61694d58796e8412f7d4141");
+if (true) {
+  let yz = __fastpack_require__(/* "./yz" */ "yz.js-de84e93847b6569f34aa614a3ce78835");
+}
 
 },
 

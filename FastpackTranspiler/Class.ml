@@ -180,10 +180,7 @@ module Transform = struct
 
 
     let cls = {
-      (cls
-       |> move_props_to_constructor
-       |> undecorate_methods
-      )
+      (cls |> move_props_to_constructor |> undecorate_methods)
       with classDecorators = []
     }
     in

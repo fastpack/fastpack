@@ -136,11 +136,11 @@ let make_patcher workspace =
   in
   let patch start offset s = patch_with start offset (fun _ -> s) in
   let remove start offset = patch start offset "" in
-  let patch_loc_with (loc: Loc.t) f =
-    patch_with loc.start.offset (loc._end.offset - loc.start.offset) f
+  let patch_loc_with (loc: Loc.t) =
+    patch_with loc.start.offset (loc._end.offset - loc.start.offset)
   in
-  let patch_loc (loc: Loc.t) s =
-    patch loc.start.offset (loc._end.offset - loc.start.offset) s
+  let patch_loc (loc: Loc.t) =
+    patch loc.start.offset (loc._end.offset - loc.start.offset)
   in
   let remove_loc (loc: Loc.t) =
     remove loc.start.offset (loc._end.offset - loc.start.offset)

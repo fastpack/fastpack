@@ -344,8 +344,8 @@ let analyze _id filename source =
   in
 
   let visit_expression ((loc: Loc.t), expr) =
-    (* TODO: E.Import *)
     match expr with
+    | E.Import (_, E.Literal { value = L.String request; _ })
     | E.Call {
         callee = (_, E.Identifier (_, "require"));
         arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
@@ -370,8 +370,10 @@ let analyze _id filename source =
                  (* TODO: provide better error report*)
                  failwith ("Usage of binding before import " ^ name ^ " " ^ source ^ " " ^ remote ^ " " ^ filename ^ " " ^ (string_of_int loc.start.offset) ^ " " ^ (string_of_int loc._end.offset))
             )
-        | _ -> ();
+        | _ -> ()
       in Visit.Break;
+    | E.Import _ ->
+      failwith "import(_) is supported only with the constant argument"
     | _ ->
       Visit.Continue;
   in

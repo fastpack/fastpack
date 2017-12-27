@@ -672,7 +672,7 @@ module TranspileObjectSpreadRest = struct
 end
 
 let transpile context program =
-
+  (* TODO: require_runtime *)
   let map_statement scope ((loc, node) : Loc.t S.t) =
     let module T = TranspileObjectSpreadRest in
     let node = match node with

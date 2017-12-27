@@ -50,7 +50,8 @@ And execute commands from there.
 - [x] FastpackTranspiler: export statements [zindel]
 - [x] Fastpack: import statements handling
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
-- [ ] Fastpack: `import` expressions
+- [x] Fastpack: `import` expressions
+- [ ] FastpackTraspiler: JSXFragment, SpreadChild, PrivateName, PrivateField
 - [ ] Fastpack: flat builds
 - [ ] Fastpack: Partial builds
 - [ ] Fastpack: handle static files
