@@ -587,6 +587,88 @@ module TranspileObjectSpreadRest = struct
 
   end
 
+  module ForOf = struct
+
+    let test {S.ForOf. left; _ } =
+      match left with
+      | S.ForOf.LeftDeclaration (_, decl) ->
+        VariableDeclaration.test ~with_init:false decl
+      | S.ForOf.LeftPattern pattern ->
+        Pattern.test pattern
+
+    let transpile
+        ({Context. gen_binding; _} as ctx)
+        scope
+        ({S.ForOf. left; body = (body_loc, body); _ } as for_) =
+      let binding = gen_binding scope in
+      let left_declaration loc kind =
+        S.ForOf.LeftDeclaration (
+          loc,
+          { kind;
+            declarations = [(Loc.none, { S.VariableDeclaration.Declarator.
+              id = (Loc.none, Ast.Pattern.Identifier {
+                name = (Loc.none, binding);
+                typeAnnotation = None;
+                optional = false;
+              });
+              init = None
+            })]
+          }
+        )
+      in
+      let prepend_stmt stmt =
+        match body with
+        | S.Block { body } ->
+          body_loc, S.Block { body = stmt :: body }
+        | prev ->
+          body_loc, S.Block { body = stmt :: (Loc.none, prev) :: [] }
+      in
+      match left with
+      | S.ForOf.LeftDeclaration (loc, { kind; declarations = (_, decl) :: [] }) ->
+        let stmt =
+          Loc.none,
+          S.VariableDeclaration (
+            VariableDeclaration.transpile ctx scope
+            @@
+            { S.VariableDeclaration.
+              kind = S.VariableDeclaration.Let;
+              declarations = [(Loc.none, {
+                decl with
+                init = Some (AstHelper.e_identifier binding)
+              })]
+            }
+          )
+        in
+        S.ForOf {
+          for_ with
+          left = left_declaration loc kind;
+          body = prepend_stmt stmt
+        }
+      | S.ForOf.LeftPattern pattern ->
+        let stmt =
+          Loc.none,
+          S.VariableDeclaration (
+            VariableDeclaration.transpile ctx scope
+            @@
+            { S.VariableDeclaration.
+              kind = S.VariableDeclaration.Let;
+              declarations = [(Loc.none, {
+                id = pattern;
+                init = Some (AstHelper.e_identifier binding)
+              })]
+            }
+          )
+        in
+        S.ForOf {
+          for_ with
+          left = left_declaration Loc.none S.VariableDeclaration.Let;
+          body = prepend_stmt stmt
+        }
+      | _ ->
+        failwith "Unexpected ForOf: more than one declaration"
+
+  end
+
 end
 
 let transpile context program =
@@ -608,7 +690,9 @@ let transpile context program =
       | S.ForIn for_ when T.ForIn.test for_ ->
         T.ForIn.transpile context scope for_
 
-      | S.ForOf _ -> node
+      | S.ForOf for_ when T.ForOf.test for_ ->
+        T.ForOf.transpile context scope for_
+
       | _ -> node
     in
     loc, node

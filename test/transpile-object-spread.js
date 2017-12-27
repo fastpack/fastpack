@@ -120,3 +120,9 @@ for ({x, ...y} in iterator) {}
 for (var {x, ...y} in iterator) {}
 for ({x, ...y} in iterator) console.log(x);
 for (var {x, ...y} in iterator) console.log(x);
+
+// for of
+for ({x, ...y} of iterator) {}
+for (var {x, ...y} of iterator) {}
+for ({x, ...y} of iterator) console.log(x);
+for (var {x, ...y} of iterator) console.log(x);
