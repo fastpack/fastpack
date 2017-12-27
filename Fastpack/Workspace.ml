@@ -64,16 +64,10 @@ let write out w ctx =
      * - then (same start positions): zero-length patches
      * - then (same start positions): ordered by length in descending order
      * - then (same length): ordered by appearance in the patch list
-     * 100000 magic constant is taken with an assumption that we won't have
-     * patches longer than that as well as the number of patches will never be
-     * greater than that.
      * *)
     let key {offset_start; offset_end; order; _} =
-      let magic = 100000 in
       let len = offset_end - offset_start in
-      offset_start * magic * magic
-      - (if len = 0 then magic else len) * magic
-      + order
+      (offset_start, len <> 0, -len, order)
     in
     let _, folded =
       List.fold_left

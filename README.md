@@ -49,9 +49,9 @@ And execute commands from there.
 - [x] Fastpack: JavaScript runtime - add require statement [zindel]
 - [x] FastpackTranspiler: export statements [zindel]
 - [x] Fastpack: import statements handling
-- [ ] Fastpack: flat builds
+- [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [ ] Fastpack: `import` expressions
-- [ ] FastpackTraspiler: object spread, rest operators [zindel, `for-of` is left]
+- [ ] Fastpack: flat builds
 - [ ] Fastpack: Partial builds
 - [ ] Fastpack: handle static files
 - [ ] Fastpack: export URLs for static files
