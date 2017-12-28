@@ -2,3 +2,4 @@
 #directory "./_build/default/FastpackSourceMap"
 #directory "./_build/default/FastpackResolver"
 #directory "./_build/default/FastpackTranspiler"
+#directory "./_build/default/FastpackUtil"

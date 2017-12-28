@@ -1,7 +1,3 @@
-module Util = Util
-module AstHelper = AstHelper
-module AstMapper = AstMapper
-
 module ReactJSX = ReactJSX
 module StripFlow = StripFlow
 module Class = Class
@@ -20,10 +16,10 @@ let transpile transpilers program =
     program
   else
     let loc, stmts, comments = program in
-    (loc, AstHelper.require_runtime :: stmts, comments)
+    (loc, FastpackUtil.AstHelper.require_runtime :: stmts, comments)
 
 
 (** Transpile source code using a list of transpilers *)
 let transpile_source transpilers source =
-  let program, _ = Fastpack.Parser.parse_source source in
-  Fastpack.Printer.print (transpile transpilers program)
+  let program, _ = FastpackUtil.Parser.parse_source source in
+  FastpackUtil.Printer.print (transpile transpilers program)

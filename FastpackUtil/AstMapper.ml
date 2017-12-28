@@ -8,7 +8,6 @@ module Type = Ast.Type
 module Variance = Ast.Variance
 module Class = Ast.Class
 module Function = Ast.Function
-module Scope = Fastpack.Scope
 
 type mapper = {
   map_statement : Scope.t -> Loc.t Statement.t -> Loc.t Statement.t;

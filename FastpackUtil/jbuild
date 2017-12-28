@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(library
+ ((name        FastpackUtil)
+  (public_name FastpackUtil)
+  (libraries (lwt.unix fileutils yojson containers str FlowParser))
+  (flags (:standard "-open" "Containers"))
+  (preprocess (pps (lwt.ppx)))))

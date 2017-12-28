@@ -1,14 +1,6 @@
 lib: [
   "_build/install/default/lib/FastpackTranspiler/META" {"META"}
   "_build/install/default/lib/FastpackTranspiler/opam" {"opam"}
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__AstHelper.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__AstHelper.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__AstHelper.cmt"
-  "_build/install/default/lib/FastpackTranspiler/AstHelper.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__AstMapper.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__AstMapper.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__AstMapper.cmt"
-  "_build/install/default/lib/FastpackTranspiler/AstMapper.ml"
   "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmi"
   "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmx"
   "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmt"
@@ -37,10 +29,6 @@ lib: [
   "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__StripFlow.cmx"
   "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__StripFlow.cmt"
   "_build/install/default/lib/FastpackTranspiler/StripFlow.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Util.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Util.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Util.cmt"
-  "_build/install/default/lib/FastpackTranspiler/Util.ml"
   "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cma"
   "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmxa"
   "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.a"

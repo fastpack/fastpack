@@ -14,7 +14,7 @@ type t = {
   workspace : t DependencyMap.t Workspace.t;
 
   (** Module scope *)
-  scope: Scope.t;
+  scope: FastpackUtil.Scope.t;
 }
 
 let make_id prefix filename =

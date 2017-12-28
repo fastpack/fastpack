@@ -2,7 +2,8 @@
  * This is transform for spread in object literals and rest spread in object
  * patterns
  **)
-
+module AstMapper = FastpackUtil.AstMapper
+module AstHelper = FastpackUtil.AstHelper
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
 module E = Ast.Expression

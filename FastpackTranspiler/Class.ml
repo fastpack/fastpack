@@ -5,7 +5,9 @@ module E = Ast.Expression
 module C = Ast.Class
 module F = Ast.Function
 module L = Ast.Literal
-open AstHelper
+
+module AstMapper = FastpackUtil.AstMapper
+open FastpackUtil.AstHelper
 
 module Helper = struct
 

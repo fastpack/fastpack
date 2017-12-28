@@ -1,4 +1,4 @@
-module Scope = Fastpack.Scope
+module Scope = FastpackUtil.Scope
 
 type t = {
   gen_id : string -> unit -> string;

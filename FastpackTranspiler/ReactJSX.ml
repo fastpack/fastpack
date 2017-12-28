@@ -28,7 +28,7 @@ let transpile _context program =
       | Identifier (loc, { name }) ->
         if Str.string_match (Str.regexp "^[A-Z]") name 0
         then E.Expression (loc, E.Identifier (loc, name))
-        else E.Expression (AstHelper.e_literal_str name)
+        else E.Expression (FastpackUtil.AstHelper.e_literal_str name)
       | MemberExpression (loc, { _object; property }) ->
         E.Expression (loc, E.Member {
             _object = Loc.none, aux_object _object;
@@ -168,8 +168,8 @@ let transpile _context program =
   in
 
   let mapper = {
-    AstMapper.default_mapper with
+    FastpackUtil.AstMapper.default_mapper with
     map_expression;
   } in
 
-  AstMapper.map mapper program
+  FastpackUtil.AstMapper.map mapper program

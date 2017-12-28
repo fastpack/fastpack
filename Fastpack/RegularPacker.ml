@@ -4,6 +4,10 @@ module M = Map.Make(String)
 open PackerUtil
 open Lwt.Infix
 
+module Parser = FastpackUtil.Parser
+module Scope = FastpackUtil.Scope
+module Visit = FastpackUtil.Visit
+
 let analyze _id filename source =
   let ((_, stmts, _) as program), _ = Parser.parse_source source in
 

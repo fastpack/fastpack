@@ -1,10 +1,6 @@
 
-module Scope = Scope
-module Parser = Parser
-module Printer = Printer
 module PackerUtil = PackerUtil
 module Error = Error
-
 module RegularPacker = RegularPacker
 
 module StringSet = Set.Make(String)

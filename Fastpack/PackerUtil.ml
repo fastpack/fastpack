@@ -38,5 +38,5 @@ let read_module ctx filename =
     id = Module.make_id (FilePath.basename filename) filename;
     filename = filename;
     workspace = Workspace.of_string source;
-    scope = Scope.empty;
+    scope = FastpackUtil.Scope.empty;
   }

@@ -118,11 +118,11 @@ let transpile _context program =
   in
 
   let mapper = {
-    AstMapper.
+    FastpackUtil.AstMapper.
     map_statement;
     map_expression;
     map_function;
     map_pattern;
   } in
 
-  AstMapper.map mapper program
+  FastpackUtil.AstMapper.map mapper program
