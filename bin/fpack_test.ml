@@ -12,10 +12,11 @@ let transpile _ =
   ]
 
 let pack fname _ =
+  let pack_f = Fastpack.RegularPacker.pack ~with_runtime:false in
   let pack' () =
     let bytes = ref @@ Lwt_bytes.create 65535 in
     let _, ch = Lwt_io.pipe ~out_buffer:(!bytes) () in
-    Fastpack.Packer.pack ~with_runtime:false (fun _ _ p -> p) ch fname
+    Fastpack.pack pack_f (fun _ _ p -> p) ch fname
     >> Lwt.return
        @@ Lwt_bytes.to_string
        @@ Lwt_bytes.extract !bytes 0

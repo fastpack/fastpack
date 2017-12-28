@@ -15,13 +15,13 @@ let () =
             (* FastpackTranspiler.ReactJSX.transpile; *)
           ]
         in
-        `Ok (Fastpack.Packer.pack_main ~transpile entry)
+        `Ok (Fastpack.pack_main ~transpile entry)
       with
-      | Fastpack.Packer.PackError (ctx, error) ->
+      | Fastpack.PackerUtil.PackError (ctx, error) ->
         `Error (
           false,
           "\n"
-          ^ Fastpack.Packer.ctx_to_string ctx
+          ^ Fastpack.PackerUtil.ctx_to_string ctx
           ^ "\n"
           ^ Fastpack.Error.to_string error
         )

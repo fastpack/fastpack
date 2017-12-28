@@ -39,10 +39,10 @@ let () =
         let () = Lwt_main.run (print' entry) in
         `Ok ""
       with
-      | Fastpack.Packer.PackError (ctx, error) ->
+      | Fastpack.PackerUtil.PackError (ctx, error) ->
         `Error (false,
           "\n"
-          ^ Fastpack.Packer.ctx_to_string ctx
+          ^ Fastpack.PackerUtil.ctx_to_string ctx
           ^ "\n"
           ^ Fastpack.Error.to_string error
         )
