@@ -27,7 +27,7 @@ Object.defineProperty(exports, "a", {get: () => $lib2.a}); Object.defineProperty
 const $lib1 = __fastpack_require__(/* "./y" */ "y.js-236e9c0761015ee1871421a78316fb8e");
 const $lib2 = __fastpack_require__(/* "./z" */ "z.js-9ac1a10900aa3f1c9a41b85a77459bd8");
 
-exports.default = {$lib1.a, $lib1.updateA, $lib2.default};
+exports.default = {a: $lib1.a, updateA: $lib1.updateA, Z: $lib2.default};
 },
 "x.js-e575b1ec1676ae03493e1f7e4fcfec56": function(module, exports, __fastpack_require__) {
 const ZModule = __fastpack_require__(/* "./z" */ "z.js-9ac1a10900aa3f1c9a41b85a77459bd8");

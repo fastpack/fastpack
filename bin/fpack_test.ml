@@ -16,7 +16,7 @@ let pack fname _ =
   let pack' () =
     let bytes = ref @@ Lwt_bytes.create 65535 in
     let _, ch = Lwt_io.pipe ~out_buffer:(!bytes) () in
-    Fastpack.pack pack_f (fun _ _ p -> p) ch fname
+    Fastpack.pack pack_f (fun _ _ p -> p) fname (Filename.dirname fname) ch
     >> Lwt.return
        @@ Lwt_bytes.to_string
        @@ Lwt_bytes.extract !bytes 0

@@ -353,6 +353,23 @@ let analyze _id filename source =
 
   let visit_expression ((loc: Loc.t), expr) =
     match expr with
+    | E.Object { properties } ->
+        properties
+        |> List.filter_map
+          (fun prop ->
+             match prop with
+              | E.Object.Property (loc, E.Object.Property.Init {
+                  key = E.Object.Property.Identifier (_, name) ;
+                  shorthand = true;
+                  _
+                })  -> Some (loc, name)
+              | _ -> None
+          )
+        |> List.iter
+          (fun (loc, name) ->
+             patch loc.Loc.start.offset 0 @@ name ^ ": "
+          );
+        Visit.Continue
     | E.Import (_, E.Literal { value = L.String request; _ })
     | E.Call {
         callee = (_, E.Identifier (_, "require"));
