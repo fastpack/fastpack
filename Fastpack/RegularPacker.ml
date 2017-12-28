@@ -3,6 +3,7 @@ module M = Map.Make(String)
 
 open PackerUtil
 open Lwt.Infix
+
 let analyze _id filename source =
   let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
@@ -395,7 +396,7 @@ let analyze _id filename source =
   (!workspace, !dependencies, program_scope)
 
 
-let pack ?(with_runtime=true) ctx =
+let pack ?(with_runtime=true) ctx channel =
 
   (* Gather dependencies *)
   let rec process ({transpile; _} as ctx) graph (m : Module.t) =
@@ -520,8 +521,7 @@ let pack ?(with_runtime=true) ctx =
   in
 
   let emit graph entry =
-    let out = ctx.out in
-    let emit bytes = Lwt_io.write out bytes in
+    let emit bytes = Lwt_io.write channel bytes in
     let rec emit_module ?(seen=StringSet.empty) m =
       if StringSet.mem m.Module.id seen
       then Lwt.return seen
@@ -547,13 +547,13 @@ let pack ?(with_runtime=true) ctx =
         emit (Printf.sprintf
                 "\"%s\": function(module, exports, __fastpack_require__) {\n"
                 m.id)
-        >> Workspace.write out workspace ctx
+        >> Workspace.write channel workspace ctx
         >> emit "},\n"
         >> Lwt.return seen
     in
 
     (if with_runtime
-     then emit_runtime out entry.Module.id
+     then emit_runtime channel entry.Module.id
      else emit @@ "/* Entry point: " ^ entry.Module.id ^ " */\n")
     >> emit "({\n"
     >> emit_module entry

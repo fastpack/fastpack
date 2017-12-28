@@ -1,3 +1,8 @@
+(*
+ * fpack --transpile-jsx '^lib' --transpile-jsx '^src'
+ * *)
+
+
 let () =
   let open Cmdliner in
 
@@ -17,14 +22,8 @@ let () =
         in
         `Ok (Fastpack.pack_main ~transpile entry)
       with
-      | Fastpack.PackerUtil.PackError (ctx, error) ->
-        `Error (
-          false,
-          "\n"
-          ^ Fastpack.PackerUtil.ctx_to_string ctx
-          ^ "\n"
-          ^ Fastpack.Error.to_string error
-        )
+      | Fastpack.PackError (ctx, error) ->
+        `Error (false, Fastpack.string_of_error ctx error)
     in
 
     let entry_t =

@@ -1,19 +1,16 @@
 
-type mode = Development | Production
-
 type ctx = {
   entry_filename : string;
   package_dir : string;
   transpile : string -> string -> string;
   stack : Dependency.t list;
-  mode : mode;
-  out : Lwt_io.output_channel; 
+  development : bool;
 }
 
 
-let ctx_to_string { package_dir; stack; mode; _ } =
+let ctx_to_string { package_dir; stack; development; _ } =
   Printf.sprintf "Working directory: %s\n" package_dir
-  ^ Printf.sprintf "Mode: %s" (if mode = Production then "production" else "development")
+  ^ Printf.sprintf "Mode: %s" (if development then "development" else "production")
   ^ "\nCall stack:\n"
   ^ String.concat "\t\n" @@ List.map Dependency.to_string stack
 
