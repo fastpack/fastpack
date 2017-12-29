@@ -1,7 +1,9 @@
 
 module PackerUtil = PackerUtil
 module Error = Error
+
 module RegularPacker = RegularPacker
+module FlatPacker = FlatPacker
 
 module StringSet = Set.Make(String)
 open PackerUtil

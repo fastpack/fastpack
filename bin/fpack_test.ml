@@ -11,11 +11,10 @@ let transpile _ =
     FastpackTranspiler.ObjectSpread.transpile;
   ]
 
-let pack entry_filename _ =
-  let pack_f = Fastpack.RegularPacker.pack ~with_runtime:false in
+let pack pack_f entry_filename _ =
   let pack' () =
-    let bytes = ref @@ Lwt_bytes.create 65535 in
-    let _, ch = Lwt_io.pipe ~out_buffer:(!bytes) () in
+    let bytes = Lwt_bytes.create 20000000 in
+    let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
     Fastpack.pack
       ~pack_f
       ~transpile_f:(fun _ _ p -> p)
@@ -24,21 +23,38 @@ let pack entry_filename _ =
       ch
     >> Lwt.return
        @@ Lwt_bytes.to_string
-       @@ Lwt_bytes.extract !bytes 0
+       @@ Lwt_bytes.extract bytes 0
        @@ Int64.to_int
        @@ Lwt_io.position ch
   in Lwt_main.run (pack' ())
 
+(* let pack_regular = *)
+(*   pack (Fastpack.RegularPacker.pack ~with_runtime:false) *)
+
+let pack_flat =
+  pack (Fastpack.FlatPacker.pack)
+
+let pack_stdout entry_filename _ =
+  let pack' () =
+    Fastpack.pack
+      ~pack_f:(Fastpack.FlatPacker.pack)
+      ~transpile_f:(fun _ _ p -> p)
+      ~entry_filename
+      ~package_dir:(Filename.dirname entry_filename)
+      Lwt_io.stdout
+  in Lwt_main.run (pack' ()); ""
 
 let tests = [
   (* ("object-spread-and-rest-operators.js", "", transpile_old); *)
-  ("transpile-class.js", "", transpile);
-  ("transpile-react-jsx.js", "", transpile);
-  ("transpile-strip-flow.js", "", transpile);
-  ("print.js", "", print ~with_scope:false);
-  ("print-with-scope.js", "", print ~with_scope:true);
-  ("pack/index.js", "pack.js", pack);
-  ("transpile-object-spread.js", "", transpile);
+  (* ("transpile-object-spread.js", "", transpile); *)
+  (* ("transpile-class.js", "", transpile); *)
+  (* ("transpile-react-jsx.js", "", transpile); *)
+  (* ("transpile-strip-flow.js", "", transpile); *)
+  (* ("print.js", "", print ~with_scope:false); *)
+  (* ("print-with-scope.js", "", print ~with_scope:true); *)
+  (* ("pack/index.js", "pack.js", pack_regular); *)
+  ("pack_flat/index.js", "pack_flat.js", pack_flat);
+  (* ("pack_flat/index.js", "pack_flat.js", pack_stdout); *)
   (* ("current.js", "", print ~with_scope:false); *)
 ]
 
@@ -81,7 +97,8 @@ let () =
       let%lwt output = Lwt_process.(pread @@ shell cmd) in
       Lwt.finalize
         (fun () -> print output)
-        (fun () -> Lwt_unix.unlink temp_file)
+        (fun () -> Lwt.return_unit)
+        (* (fun () -> Lwt_unix.unlink temp_file) *)
     in
 
     let save_data message filename data =
