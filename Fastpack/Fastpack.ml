@@ -72,7 +72,7 @@ let merge_options o1 o2 =
     transpile_object_spread = merge o1.transpile_object_spread o2.transpile_object_spread;
   }
 
-let pack pack_f transpile_f entry_filename package_dir channel =
+let pack ~pack_f ~transpile_f ~entry_filename ~package_dir channel =
   let ctx = {
     entry_filename;
     package_dir;
@@ -157,15 +157,12 @@ let prepare_and_pack cl_options =
     let%lwt () = makedirs @@ FilePath.dirname output_file in
     let transpile_f = fun _ _ s -> s in
     let pack_f = RegularPacker.pack in
-    let run =
-      pack pack_f transpile_f entry_filename package_dir
-    in
-    Lwt_io.(with_file
-              ~mode:Output
-              ~perm:0o640
-              ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
-              output_file
-              run)
+    Lwt_io.with_file
+      ~mode:Lwt_io.Output
+      ~perm:0o640
+      ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+      output_file
+      @@ pack ~pack_f ~transpile_f ~entry_filename ~package_dir
   | _ ->
     failwith "Input / Output are not provided. Should not happen"
 

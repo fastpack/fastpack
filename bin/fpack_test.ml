@@ -11,12 +11,17 @@ let transpile _ =
     FastpackTranspiler.ObjectSpread.transpile;
   ]
 
-let pack fname _ =
+let pack entry_filename _ =
   let pack_f = Fastpack.RegularPacker.pack ~with_runtime:false in
   let pack' () =
     let bytes = ref @@ Lwt_bytes.create 65535 in
     let _, ch = Lwt_io.pipe ~out_buffer:(!bytes) () in
-    Fastpack.pack pack_f (fun _ _ p -> p) fname (Filename.dirname fname) ch
+    Fastpack.pack
+      ~pack_f
+      ~transpile_f:(fun _ _ p -> p)
+      ~entry_filename
+      ~package_dir:(Filename.dirname entry_filename)
+      ch
     >> Lwt.return
        @@ Lwt_bytes.to_string
        @@ Lwt_bytes.extract !bytes 0
