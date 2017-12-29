@@ -355,19 +355,15 @@ let analyze _id filename source =
     match expr with
     | E.Object { properties } ->
         properties
-        |> List.filter_map
+        |> List.iter
           (fun prop ->
              match prop with
               | E.Object.Property (loc, E.Object.Property.Init {
                   key = E.Object.Property.Identifier (_, name) ;
                   shorthand = true;
                   _
-                })  -> Some (loc, name)
-              | _ -> None
-          )
-        |> List.iter
-          (fun (loc, name) ->
-             patch loc.Loc.start.offset 0 @@ name ^ ": "
+                })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
+              | _ -> ()
           );
         Visit.Continue
     | E.Import (_, E.Literal { value = L.String request; _ })

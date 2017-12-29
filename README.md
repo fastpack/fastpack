@@ -52,7 +52,8 @@ And execute commands from there.
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [x] Fastpack: `import` expressions
 - [ ] FastpackTraspiler: JSXFragment, SpreadChild, PrivateName, PrivateField
-- [ ] Fastpack: flat builds
+- [ ] Fastpack: flat bundles
+- [ ] Fastpack: Support 'development' & 'production' modes
 - [ ] Fastpack: Partial builds
 - [ ] Fastpack: handle static files
 - [ ] Fastpack: export URLs for static files

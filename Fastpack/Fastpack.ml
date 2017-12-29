@@ -131,11 +131,17 @@ let prepare_and_pack cl_options =
       Lwt.return_none
   in
   let options =
+    match cl_options.output with
+    | None -> cl_options
+    | Some path ->
+      { cl_options with output = Some (abs_path current_dir path)}
+  in
+  let options =
     merge_options
       default_options
       (match package_json_options with
-       | None -> cl_options
-       | Some package_json_options -> merge_options package_json_options cl_options)
+       | None -> options
+       | Some package_json_options -> merge_options package_json_options options)
   in
   (* find root directory *)
   (* if package.json exists parse it and merge options: *)
