@@ -12,11 +12,68 @@ module Scope = FastpackUtil.Scope
 module Visit = FastpackUtil.Visit
 
 module StringSet = Set.Make(String)
+module M = Map.Make(String)
+module DM = Map.Make(Dependency)
+
+type binding = Normal | Wrapper
 
 let pack ctx channel =
-  let rec pack ?(_with_wrapper=None) ?(_parent_graph=None) ctx =
+
+  (* binding generators*)
+  let ext = ref 0 in
+  let gen_ext_binding () =
+    ext := !ext + 1;
+    "$_e" ^ (string_of_int !ext)
+  in
+
+  let rec pack ?(with_wrapper=None) ctx modules =
 
     let () = Printf.printf "Packing: %s \n" ctx.entry_filename in
+
+    let resolved_requests = ref DM.empty in
+    let add_resolved_request req filename =
+      resolved_requests := DM.add req filename !resolved_requests
+    in
+    let get_resolved_request req =
+      DM.get req !resolved_requests
+    in
+
+    let wrappers = ref M.empty in
+    let get_wrapper filename =
+      M.get filename !wrappers
+    in
+
+    let modules = ref modules in
+    let add_module filename =
+      modules := M.add filename M.empty !modules
+    in
+    let has_module filename =
+      M.mem filename !modules
+    in
+    let get_module filename =
+      M.get filename !modules
+    in
+    let add_module_binding ?(with_wrapper=false) filename binding value =
+      let expr =
+        if with_wrapper
+        then begin
+          wrappers := M.add filename value !wrappers;
+          Printf.sprintf "__fpack_cache__(\"%s\", %s)" value value
+        end
+        else value
+      in
+      let mod_map =
+        match get_module filename with
+        | Some mod_map -> mod_map
+        | None -> M.empty
+      in
+      modules := M.add filename (M.add binding expr mod_map) !modules
+    in
+    let get_module_binding filename binding =
+      match get_module filename with
+      | Some mod_map -> M.get binding mod_map
+      | None -> None
+    in
 
     (* Keep track of all dynamic dependencies while packing *)
     let dynamic_deps = ref [] in
@@ -26,7 +83,8 @@ let pack ctx channel =
         request;
         requested_from_filename = filename;
       } in
-      dynamic_deps := (ctx, dep, "wrapper") :: !dynamic_deps
+      let () = dynamic_deps := (ctx, dep) :: !dynamic_deps in
+      dep
     in
 
     let rec process ({transpile; _} as ctx) graph (m : Module.t) =
@@ -39,7 +97,8 @@ let pack ctx channel =
         let workspace = ref (Workspace.of_string source) in
         let {Workspace.
               patch;
-              (* patch_loc_with; *)
+              (* patch_with; *)
+              patch_loc_with;
               (* remove_loc; *)
               (* remove; *)
               _
@@ -104,8 +163,18 @@ let pack ctx channel =
               callee = (_, E.Identifier (_, "require"));
               arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
             } when !stmt_level > 1 ->
-              let _ = add_dynamic_dep ctx request filename in
-              patch loc.Loc.start.offset 0 "/* dynamic */ ";
+              let dep = add_dynamic_dep ctx request filename in
+              patch_loc_with
+                loc
+                (fun _ ->
+                   match get_resolved_request dep with
+                   | None ->
+                     failwith "Something wrong"
+                   | Some filename ->
+                     match get_module_binding filename "*" with
+                     | None -> failwith "Cannot find * of module"
+                     | Some binding -> binding
+                );
               Visit.Break;
           | _ -> Visit.Continue;
 
@@ -118,7 +187,19 @@ let pack ctx channel =
           enter_statement;
           leave_statement;
         } in
-        Visit.visit handler program;
+        begin
+          begin
+            match with_wrapper with
+            | Some wrapper -> patch 0 0 @@ "\nfunction " ^ wrapper ^ "() {\n"
+            | None -> ()
+          end;
+          Visit.visit handler program;
+          begin
+            match with_wrapper with
+            | Some _ -> patch (String.length source - 1) 0 @@ "\n}\n"
+            | None -> ()
+          end;
+        end;
 
         (!workspace, !static_deps, program_scope)
       in
@@ -134,25 +215,38 @@ let pack ctx channel =
       let m = { m with workspace; scope; } in
       DependencyGraph.add_module graph m;
 
-      (* check all static dependecies and gather potetial dynamic ones *)
+      (* check all static dependecies *)
       let%lwt missing = Lwt_list.filter_map_s (
           fun req ->
             (match%lwt Dependency.resolve req with
              | None ->
                Lwt.return_some req
              | Some resolved ->
-               let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
-                 | None ->
-                   let%lwt m = read_module ctx resolved in
-                   let%lwt m =
-                     process { ctx with stack = req :: ctx.stack } graph m
-                   in
-                   Lwt.return m
-                 | Some m ->
-                   Lwt.return m
-               in
-               DependencyGraph.add_dependency graph m (req, Some dep_module);
-               Lwt.return_none
+               (* check if this modules is seen earlier in the stack *)
+               if not (has_module resolved)
+               then begin
+                 let%lwt dep_module =
+                   match DependencyGraph.lookup_module graph resolved with
+                   | None ->
+                     let%lwt m = read_module ctx resolved in
+                     let%lwt m =
+                       process { ctx with stack = req :: ctx.stack } graph m
+                     in
+                     begin
+                       let () = add_resolved_request req resolved in
+                       add_module resolved;
+                       Lwt.return m
+                     end
+                   | Some m ->
+                     Lwt.return m
+                 in
+                 let () =
+                   DependencyGraph.add_dependency graph m (req, Some dep_module)
+                 in
+                 Lwt.return_none
+               end
+               else
+                 Lwt.return_none
             )
         ) static_deps
       in
@@ -186,38 +280,52 @@ let pack ctx channel =
     let graph = DependencyGraph.empty () in
     let%lwt entry = read_module ctx ctx.entry_filename in
     let%lwt entry = process ctx graph entry in
-    let%lwt () = emit graph entry in
     let%lwt dynamic_deps =
       Lwt_list.map_s
-        (fun (ctx, req, wrapper) ->
+        (fun (ctx, req) ->
            let%lwt resolved = Dependency.resolve req in
-           Lwt.return (ctx, req, wrapper, resolved)
+           begin
+             match resolved with
+             | Some filename ->
+               let binding = gen_ext_binding () in
+               let () = add_resolved_request req filename in
+               add_module_binding ~with_wrapper:true filename "*" binding
+             | None -> ()
+           end;
+           Lwt.return (ctx, req, resolved)
         )
         !dynamic_deps
     in
     let missing_dynamic_deps =
-      List.filter (fun (_, _, _, resolved) -> resolved = None) dynamic_deps
+      List.filter (fun (_, _, resolved) -> resolved = None) dynamic_deps
     in
     match missing_dynamic_deps with
-    | (ctx, req, _, None) :: [] ->
+    | (ctx, req, None) :: _ ->
       raise (PackError (ctx, CannotResolveModules [req]))
     | _ ->
+      let%lwt () = emit graph entry in
       let%lwt _ =
         Lwt_list.fold_left_s
-          (fun seen (ctx, _, wrapper, resolved) ->
+          (fun seen (ctx, _, resolved) ->
              match resolved with
              | Some entry_filename ->
                if StringSet.mem entry_filename seen
                then Lwt.return seen
                else
                  let () = Printf.printf "%s %d\n" entry_filename (List.length dynamic_deps) in
-                 let%lwt () =
-                   pack
-                    ~_with_wrapper:(Some wrapper)
-                    ~_parent_graph:(Some graph)
-                    { ctx with entry_filename }
-                 in
-                 Lwt.return (StringSet.add entry_filename seen)
+                 begin
+                   match get_wrapper entry_filename with
+                   | None ->
+                     failwith "Cannot find wrapper!"
+                   | Some wrapper ->
+                     let%lwt () =
+                       pack
+                        ~with_wrapper:(Some wrapper)
+                        { ctx with entry_filename }
+                        !modules
+                     in
+                     Lwt.return (StringSet.add entry_filename seen)
+                 end
              | None ->
                failwith "Never happens!"
           )
@@ -226,4 +334,4 @@ let pack ctx channel =
         in
         Lwt.return_unit
   in
-  pack ctx
+  pack ctx M.empty
