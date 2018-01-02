@@ -10,10 +10,10 @@ export let a2 = 2;
 export function d1() {
   let c;
   if(true) {
-    c = __fpack_cache__("$_e2", $_e2);
+    c = __fpack__.cached($_w1);
   }
   else {
-    c = __fpack_cache__("$_e2", $_e2);
+    c = __fpack__.cached($_w1);
   }
   return c;
 }
@@ -26,14 +26,15 @@ console.log('"e" is imported');
 
 /* index.js-c46c4e9e002d45c71aaf635189f80e19 */
 
-/* static */ import {a1, a2} from './a';
-/* static */ import {d1, d2} from './d';
+/* static */ import {a1, a2 as A2} from './a';
+/* static */ import * as D from './d';
 
 {
   {
     /* static */ import('./e');
   }
 }
+console.log(A2, D);
 
 
 /*
@@ -53,29 +54,29 @@ console.log('"e" is imported');
 /* c.js-d61468bee36ba5f51f6f73437a95ba4a */
 
 
-function $_e2() {
+function $_w1() {
 
 let cInternal1 = 100;
 let cInternal2 = 200;
 
 function c1() {
-  let b = __fpack_cache__("$_e4", $_e4);
+  let b = __fpack__.cached($_w2);
   return b.b1() + b.b2() + cInternal1;
 }
 
 function c2() {
-  let b = __fpack_cache__("$_e4", $_e4);
+  let b = __fpack__.cached($_w2);
   return b.default.b1() + b.default.b2() + cInternal2;
 }
 
 Object.assign(module.exports, {c1, c2});
-}
 
+}
 
 /* b.js-fbc8722aa7253184e85b898677c98268 */
 
 
-function $_e4() {
+function $_w2() {
 /* static */ import {a1 as a} from './a';
 
 export function b1() {
@@ -87,5 +88,5 @@ export function b2() {
 }
 
 export default {b1, b2, b3: a1};
-}
 
+}

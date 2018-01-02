@@ -1,11 +1,12 @@
-import {a1, a2} from './a';
-import {d1, d2} from './d';
+import {a1, a2 as A2} from './a';
+import * as D from './d';
 
 {
   {
     import('./e');
   }
 }
+console.log(A2, D);
 
 
 /*
