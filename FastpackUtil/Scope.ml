@@ -9,7 +9,7 @@ module M = Map.Make(String)
 
 type t = {
   parent : t option;
-  bindings : (exported * binding) M.t;
+  bindings : (exported * Loc.t * binding) M.t;
 }
 and exported = string option
 and binding = Import of import
@@ -26,26 +26,35 @@ and import = {
 
 let empty = { bindings = M.empty; parent = None; }
 
+let string_of_binding (exported, loc, typ) =
+  (match typ with
+   | Import { source; remote } ->
+     let remote = (match remote with | None -> "*" | Some n -> n) in
+     Printf.sprintf "Import %s from '%s'" remote source
+   | Function -> "Function"
+   | Class -> "Class"
+   | Argument -> "Argument"
+   | Var -> "Var"
+   | Let -> "Let"
+   | Const -> "Const"
+  )
+  ^ (match exported with
+     | None -> ""
+     | Some name -> Printf.sprintf " [exported as %s]" name)
+  ^ Loc.(Printf.sprintf
+           " [%d:%d - %d:%d]"
+           loc.start.line
+           loc.start.column
+           loc._end.line
+           loc._end.column)
+
+
 let scope_to_str ?(sep="\n") scope =
   scope.bindings
   |> M.bindings
   |> List.map
-    (fun (name, (exported, typ)) ->
-       name ^ " -> " ^
-       (match typ with
-        | Import { source; remote } ->
-          let remote = (match remote with | None -> "*" | Some n -> n) in
-          Printf.sprintf "Import %s from '%s'" remote source
-        | Function -> "Function"
-        | Class -> "Class"
-        | Argument -> "Argument"
-        | Var -> "Var"
-        | Let -> "Let"
-        | Const -> "Const"
-       )
-       ^ (match exported with
-          | None -> ""
-          | Some name -> Printf.sprintf " [exported as %s]" name)
+    (fun (name, binding) ->
+       name ^ " -> " ^ string_of_binding binding
     )
   |> String.concat sep
 
@@ -60,7 +69,7 @@ let names_of_pattern node =
         | P.Object.Property (_,{ key; pattern; shorthand }) ->
           if shorthand then
             match key with
-            | P.Object.Property.Identifier id -> (name_of_identifier id)::names
+            | P.Object.Property.Identifier id -> id::names
             | _ -> names
           else
             names_of_pattern' names pattern
@@ -81,27 +90,27 @@ let names_of_pattern node =
     | P.Assignment { left; _ } ->
       names_of_pattern' names left
     | P.Identifier { name = id; _ } ->
-      (name_of_identifier id)::names
+      id::names
     | P.Expression _ ->
       names
   in names_of_pattern' [] node
 
 let export_binding name remote bindings =
   match M.get name bindings with
-  | Some (None, Argument) -> failwith ("Cannot export Argument: " ^ name)
-  | Some (None, typ) -> M.add name (Some remote, typ) bindings
-  | Some (Some _, _) -> failwith ("Cannot export twice: " ^ name)
+  | Some (None, _, Argument) -> failwith ("Cannot export Argument: " ^ name)
+  | Some (None, loc, typ) -> M.add name (Some remote, loc, typ) bindings
+  | Some (Some _, _, _) -> failwith ("Cannot export twice: " ^ name)
   | None -> failwith ("Cannot export previously undefined name: " ^ name)
 
-let update_bindings name typ bindings =
+let update_bindings loc name typ bindings =
   match M.get name bindings, typ with
   | None, _
-  | Some (_, Argument), _
-  | Some (_, Function), Var
-  | Some (_, Function), Function
-  | Some (_, Var), Var ->
-    M.add name (None, typ) bindings
-  | Some (_, Var), Function ->
+  | Some (_, _, Argument), _
+  | Some (_, _, Function), Var
+  | Some (_, _, Function), Function
+  | Some (_, _, Var), Var ->
+    M.add name (None, loc, typ) bindings
+  | Some (_, _, Var), Function ->
     bindings
   | _ ->
     (* TODO: track the Loc.t of bindings and raise the nice error *)
@@ -134,7 +143,7 @@ let names_of_node ((_, node) : Loc.t S.t) =
       match specifiers with
       | None ->
         []
-      | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
+      | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, name)) ->
         [name, Import { remote = None; source }]
       | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
         List.filter_map
@@ -147,7 +156,7 @@ let names_of_node ((_, node) : Loc.t S.t) =
                  | None -> remote
                in
                Some (
-                 name_of_identifier local,
+                 local,
                  Import {remote = Some (name_of_identifier remote); source}
                )
              | _ ->
@@ -159,13 +168,13 @@ let names_of_node ((_, node) : Loc.t S.t) =
       match default with
       | None ->
         names
-      | Some (_, name) ->
+      | Some name ->
         (name, Import { remote = Some "default"; source}) :: names
     end
   | S.ClassDeclaration { id = Some name; _} ->
-    [(name_of_identifier name, Class)]
+    [(name, Class)]
   | S.FunctionDeclaration { id = Some name; _ } ->
-    [(name_of_identifier name, Function)]
+    [(name, Function)]
   | S.VariableDeclaration { kind; declarations } ->
     names_of_declarations kind declarations
   | S.For {
@@ -187,8 +196,8 @@ let of_statement ((_, stmt) as node) scope =
   let bindings = ref (M.empty) in
   let add_bindings node =
     List.iter
-      (fun (name, typ) ->
-        bindings := update_bindings name typ !bindings
+      (fun ((loc, name), typ) ->
+        bindings := update_bindings loc name typ !bindings
       )
       @@ names_of_node node
   in
@@ -234,13 +243,17 @@ let of_statement ((_, stmt) as node) scope =
 
 let of_function_body args stmts scope =
   let bindings =
-    ref @@ List.fold_left (fun m key -> M.add key (None, Argument) m) M.empty args
+    ref
+    @@ List.fold_left
+      (fun m (loc, name) -> M.add name (None, loc, Argument) m)
+      M.empty
+      args
   in
 
   let add_bindings node =
     List.iter
-      (fun (name, typ) ->
-        bindings := update_bindings name typ !bindings
+      (fun ((loc, name), typ) ->
+        bindings := update_bindings loc name typ !bindings
       )
       @@ names_of_node node
   in
@@ -306,7 +319,7 @@ let of_function_body args stmts scope =
         source = None; _
       } ->
       let names =
-        List.map (fun (name, _) -> (name, name)) @@ names_of_node declaration
+        List.map (fun ((_, name), _) -> (name, name)) @@ names_of_node declaration
       in
       begin
         add_bindings declaration;
@@ -387,4 +400,4 @@ let has_binding name scope =
 let get_exports scope =
   scope.bindings
   |> M.bindings
-  |> List.filter_map (fun (_, value) -> fst value)
+  |> List.filter_map (fun (_, (value, _, _)) -> value)

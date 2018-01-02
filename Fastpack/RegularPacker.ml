@@ -88,7 +88,7 @@ let analyze _id filename source =
 
   let get_local_name local =
     match get_binding local with
-    | Some (_, Scope.Import { source; remote = Some remote}) ->
+    | Some (_, _, Scope.Import { source; remote = Some remote}) ->
       begin
            match get_module_binding source with
            | Some module_binding ->
@@ -204,7 +204,7 @@ let analyze _id filename source =
           _
         } ->
         let exports =
-          List.map (fun (name, _) -> (name, name))
+          List.map (fun ((_, name), _) -> (name, name))
           @@ Scope.names_of_node declaration
         in
         begin
@@ -380,7 +380,7 @@ let analyze _id filename source =
     | E.Identifier (loc, name) ->
       let () =
         match get_binding name with
-        | Some (_, Scope.Import { source; remote = Some remote}) ->
+        | Some (_, _, Scope.Import { source; remote = Some remote}) ->
           patch_loc_with
             loc
             (fun _ ->
