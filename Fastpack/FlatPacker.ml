@@ -188,16 +188,25 @@ let pack ctx channel =
               | None -> failwith "Should not happen"
               | Some { exports; _ } ->
                 match M.get "*" exports with
-                | Some _ -> ""
+                | Some value ->
+                  begin
+                    match with_wrapper with
+                    | None -> ""
+                    | Some _ -> "return " ^ value
+                  end
                 | None ->
-                  let binding = gen_ext_binding () in
-                  let () = add_export filename "*" binding in
-                  Printf.sprintf
-                    "\nconst %s = {%s};"
-                    binding
-                    @@ String.concat ", "
+                  let expr =
+                    String.concat ", "
                     @@ List.map (fun (name, value) -> name ^ ": " ^ value)
                     @@ M.bindings exports
+                  in
+                  match with_wrapper with
+                  | None ->
+                    let binding = gen_ext_binding () in
+                    let () = add_export filename "*" binding in
+                    Printf.sprintf "\nconst %s = {%s};" binding expr
+                  | Some _ ->
+                    Printf.sprintf "return ({%s});" expr;
             )
         in
 

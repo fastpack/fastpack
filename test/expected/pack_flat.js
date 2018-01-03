@@ -74,8 +74,7 @@ function $_i4() {
 }
 
 Object.assign(module.exports, {c1, c2});
-
-const $_e9 = {};
+return ({});
 }
 
 /* b.js-fbc8722aa7253184e85b898677c98268 */
@@ -84,15 +83,14 @@ const $_e9 = {};
 function $_w2() {
 /* static */ import {a1 as a} from './a';
 
-export function $_e10() {
+export function $_e9() {
   return a + 1;
 }
 
-export function $_e11() {
+export function $_e10() {
   return a + 2;
 }
 
 export default {b1, b2, b3: a1};
-
-const $_e12 = {b1: $_e10, b2: $_e11};
+return ({b1: $_e9, b2: $_e10});
 }
