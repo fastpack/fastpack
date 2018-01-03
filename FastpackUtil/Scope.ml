@@ -312,7 +312,16 @@ let of_function_body args stmts scope =
     | S.ExportDefaultDeclaration {
         declaration = S.ExportDefaultDeclaration.Declaration declaration;
         _
-      }
+      } ->
+      let names =
+        List.map (fun ((_, name), _) -> (name, "default")) @@ names_of_node declaration
+      in
+      begin
+        add_bindings declaration;
+        export_bindings names;
+        Visit.Break
+      end
+
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
         declaration = Some declaration;
@@ -401,3 +410,8 @@ let get_exports scope =
   scope.bindings
   |> M.bindings
   |> List.filter_map (fun (_, (value, _, _)) -> value)
+
+let iter f scope =
+  scope.bindings
+  |> M.bindings
+  |> List.iter f

@@ -16,11 +16,20 @@ module StringSet = Set.Make(String)
 module M = Map.Make(String)
 module DM = Map.Make(Dependency)
 
-type binding = Normal | Wrapper
+type bindings = {
+  exports : string M.t;
+  internals: string M.t;
+}
 
 let pack ctx channel =
 
   (* binding generators*)
+  let internal = ref 0 in
+  let gen_int_binding () =
+    internal := !internal + 1;
+    "$_i" ^ (string_of_int !internal)
+  in
+
   let ext = ref 0 in
   let gen_ext_binding () =
     ext := !ext + 1;
@@ -53,8 +62,11 @@ let pack ctx channel =
     in
 
     let modules = ref modules in
+    let empty_module =
+      {exports = M.empty; internals = M.empty}
+    in
     let add_module filename =
-      modules := M.add filename M.empty !modules
+      modules := M.add filename empty_module !modules
     in
     let has_module filename =
       M.mem filename !modules
@@ -62,13 +74,32 @@ let pack ctx channel =
     let get_module filename =
       M.get filename !modules
     in
-    let add_module_binding filename binding value =
+    let add_export filename binding value =
       let mod_map =
         match get_module filename with
         | Some mod_map -> mod_map
-        | None -> M.empty
+        | None -> empty_module
       in
-      modules := M.add filename (M.add binding value mod_map) !modules
+      let mod_map =
+        { mod_map with exports = M.add binding value mod_map.exports }
+      in
+      modules := M.add filename mod_map !modules
+    in
+    let get_export filename binding =
+      match M.get filename !modules with
+      | None -> None
+      | Some mod_map -> M.get binding mod_map.exports
+    in
+    let add_internal filename binding value =
+      let mod_map =
+        match get_module filename with
+        | Some mod_map -> mod_map
+        | None -> empty_module
+      in
+      let mod_map =
+        { mod_map with internals = M.add binding value mod_map.internals }
+      in
+      modules := M.add filename mod_map !modules
     in
     (* let get_module_binding filename binding = *)
     (*   match get_module filename with *)
@@ -99,7 +130,7 @@ let pack ctx channel =
         let {Workspace.
               patch;
               (* patch_loc; *)
-              (* patch_with; *)
+              patch_with;
               patch_loc_with;
               (* remove_loc; *)
               remove;
@@ -107,13 +138,67 @@ let pack ctx channel =
             } = Workspace.make_patcher workspace
         in
 
-        let patch_external (loc, name) =
-          let patch_external' _ =
-            let binding = gen_ext_binding () in
-            let () = add_module_binding filename name binding in
+        let resolve_request request =
+          let req =
+            {Dependency. request; requested_from_filename = filename}
+          in
+          get_resolved_request req
+        in
+
+        let patch_binding ?(exported_as=None) (loc, name) =
+          let patch' _ =
+            let binding =
+              match exported_as with
+              | Some exported_as ->
+                let binding = gen_ext_binding () in
+                let () = add_export filename exported_as binding in
+                binding
+              | None ->
+                gen_int_binding ()
+            in
+            let () = add_internal filename name binding in
             binding
           in
-          patch_loc_with loc patch_external'
+          patch_loc_with loc patch'
+        in
+        let add_import_deferred ?(exported_as=None) name remote source =
+          patch_with 0 0
+            (fun _ ->
+               match resolve_request source with
+               (* TODO: proper error reporting *)
+               | None -> failwith ("Cannot resolve request: " ^ source ^ " " ^ filename)
+               | Some imported_from ->
+                 match get_export imported_from remote with
+                 | None ->
+                   failwith ("Cannot find binding '"
+                             ^ remote ^ "' in module " ^ imported_from)
+                 | Some binding ->
+                   let () = add_internal filename name binding in
+                   match exported_as with
+                   | None -> ""
+                   | Some exported_as ->
+                     let () = add_export filename exported_as binding in
+                     ""
+            )
+        in
+        let add_export_all () =
+          patch_with (String.length source) 0
+            (fun _ ->
+              match get_module filename with
+              | None -> failwith "Should not happen"
+              | Some { exports; _ } ->
+                match M.get "*" exports with
+                | Some _ -> ""
+                | None ->
+                  let binding = gen_ext_binding () in
+                  let () = add_export filename "*" binding in
+                  Printf.sprintf
+                    "\nconst %s = {%s};"
+                    binding
+                    @@ String.concat ", "
+                    @@ List.map (fun (name, value) -> name ^ ": " ^ value)
+                    @@ M.bindings exports
+            )
         in
 
         (* Static dependencies *)
@@ -131,6 +216,25 @@ let pack ctx channel =
         in
 
         let program_scope = Scope.of_program stmts Scope.empty in
+        let () = Scope.iter
+          (fun (name, (export, loc, typ)) ->
+            match export, typ with
+            | None, Scope.Import { source; remote = Some remote } ->
+              add_import_deferred name remote source
+            | None, Scope.Import { source; remote = None } ->
+              add_import_deferred name "*" source
+            | Some _, Scope.Import { source; remote = Some remote } ->
+              add_import_deferred ~exported_as:export name remote source
+            | Some _, Scope.Import { source; remote = None } ->
+              add_import_deferred ~exported_as:export name "*" source
+            | Some _, _ ->
+              patch_binding ~exported_as:export (loc, name)
+            | _ ->
+              patch_binding (loc, name)
+          )
+          program_scope
+        in
+        let () = add_export_all () in
 
         (* Level of statement *)
         let stmt_level = ref 0 in
@@ -151,54 +255,15 @@ let pack ctx channel =
           match stmt with
 
           | S.ExportNamedDeclaration {
-              declaration = Some (stmt_loc, S.VariableDeclaration {
-                  declarations; _
-                });
+              declaration = Some (stmt_loc, S.VariableDeclaration _);
               specifiers = None;
               source = None;
               _
             } ->
-            let rec patch_pattern ((_, pattern) : Loc.t P.t) =
-              match pattern with
-              | P.Object { properties; _ } ->
-                let on_property = function
-                  | P.Object.Property (_,{ key; pattern; shorthand }) ->
-                    if shorthand then
-                      match key with
-                      | P.Object.Property.Identifier id ->
-                        patch_external id
-                      | _ -> ()
-                    else
-                      patch_pattern pattern
-                  | P.Object.RestProperty (_,{ argument }) ->
-                    patch_pattern argument
-                in
-                List.iter on_property properties
-              | P.Array { elements; _ } ->
-                let on_element = function
-                  | None -> ()
-                  | Some (P.Array.Element node) -> patch_pattern node
-                  | Some (P.Array.RestElement (_, { argument })) ->
-                    patch_pattern argument
-                in
-                List.iter on_element elements
-              | P.Assignment { left; _ } ->
-                patch_pattern left
-              | P.Identifier { name; _ } ->
-                patch_external name
-              | P.Expression _ -> ()
-            in
-            begin
-              remove
-                loc.Loc.start.offset
-                (stmt_loc.Loc.start.offset - loc.Loc.start.offset);
-              declarations
-              |> List.iter
-                (fun (_, {S.VariableDeclaration.Declarator. id; _}) ->
-                  patch_pattern id
-                );
-              Visit.Continue;
-            end
+            remove
+              loc.Loc.start.offset
+              (stmt_loc.Loc.start.offset - loc.Loc.start.offset);
+            Visit.Continue;
 
           | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
             let _ = add_static_dep request in
@@ -274,8 +339,12 @@ let pack ctx channel =
              Lwt.return_some req
            | Some resolved ->
              (* check if this modules is seen earlier in the stack *)
-             if not (has_module resolved)
+             if has_module resolved
              then begin
+               let () = add_resolved_request req resolved in
+               Lwt.return_none
+             end
+             else begin
                let%lwt dep_module =
                  match DependencyGraph.lookup_module graph resolved with
                  | None ->
@@ -296,8 +365,6 @@ let pack ctx channel =
                in
                Lwt.return_none
              end
-             else
-               Lwt.return_none
           )
         )
         static_deps

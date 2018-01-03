@@ -31,8 +31,8 @@ let pack pack_f entry_filename _ =
 let pack_regular =
   pack (Fastpack.RegularPacker.pack ~with_runtime:false)
 
-(* let pack_flat = *)
-(*   pack (Fastpack.FlatPacker.pack) *)
+let pack_flat =
+  pack (Fastpack.FlatPacker.pack)
 
 let pack_stdout entry_filename _ =
   let pack' () =
@@ -52,7 +52,7 @@ let tests = [
   ("print.js", "", print ~with_scope:false);
   ("print-with-scope.js", "", print ~with_scope:true);
   ("pack/index.js", "pack.js", pack_regular);
-  (* ("pack_flat/index.js", "pack_flat.js", pack_flat); *)
+  ("pack_flat/index.js", "pack_flat.js", pack_flat);
   (* ("pack_flat/index.js", "pack_flat.js", pack_stdout); *)
   (* ("current.js", "", print ~with_scope:false); *)
 ]
