@@ -312,6 +312,7 @@ let pack ctx channel =
             let _ = add_static_dep request in
             remove_loc loc;
             Visit.Continue;
+
           | _ ->
             Visit.Continue
         in
