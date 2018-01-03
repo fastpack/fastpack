@@ -101,6 +101,12 @@ let pack ctx channel =
       in
       modules := M.add filename mod_map !modules
     in
+    let get_internal filename binding =
+      match M.get filename !modules with
+      | None -> None
+      | Some mod_map -> M.get binding mod_map.internals
+    in
+
     (* let get_module_binding filename binding = *)
     (*   match get_module filename with *)
     (*   | Some mod_map -> M.get binding mod_map *)
@@ -128,7 +134,7 @@ let pack ctx channel =
 
         let workspace = ref (Workspace.of_string source) in
         let {Workspace.
-              (* patch; *)
+              patch;
               (* patch_loc; *)
               patch_with;
               patch_loc_with;
@@ -190,9 +196,9 @@ let pack ctx channel =
                 match M.get "*" exports with
                 | Some value ->
                   begin
-                    match with_wrapper with
-                    | None -> ""
-                    | Some _ -> "return " ^ value
+                    match (with_wrapper, filename = ctx.entry_filename) with
+                    | Some _, true -> "return " ^ value
+                    | _ -> ""
                   end
                 | None ->
                   let expr =
@@ -200,13 +206,13 @@ let pack ctx channel =
                     @@ List.map (fun (name, value) -> name ^ ": " ^ value)
                     @@ M.bindings exports
                   in
-                  match with_wrapper with
-                  | None ->
+                  match (with_wrapper, filename = ctx.entry_filename) with
+                  | Some _, true ->
+                    Printf.sprintf "return ({%s});" expr;
+                  | _ ->
                     let binding = gen_ext_binding () in
                     let () = add_export filename "*" binding in
                     Printf.sprintf "\nconst %s = {%s};" binding expr
-                  | Some _ ->
-                    Printf.sprintf "return ({%s});" expr;
             )
         in
 
@@ -243,18 +249,48 @@ let pack ctx channel =
           )
           program_scope
         in
-        let () = add_export_all () in
+
+
+        (* scope stack *)
+        let scopes = ref [program_scope] in
+        let top_scope () = List.hd !scopes in
+        let push_scope scope =
+          scopes := scope :: !scopes
+        in
+        let pop_scope () =
+          scopes := List.tl !scopes
+        in
+        let is_top_level name =
+          let binding = Scope.get_binding name (top_scope ()) in
+          match binding with
+          | None -> false
+          | Some b ->
+            let top_level_binding = Scope.get_binding name program_scope in
+            match top_level_binding with
+            | Some top_level -> b == top_level
+            | None -> false
+        in
 
         (* Level of statement *)
         let stmt_level = ref 0 in
 
-        let enter_statement (_, stmt) =
+        let enter_function f =
+          push_scope (Scope.of_function f (top_scope ()))
+        in
+
+        let leave_function _ =
+          pop_scope ()
+        in
+
+        let enter_statement (loc, stmt) =
+          let () = push_scope (Scope.of_statement (loc, stmt) (top_scope ())) in
           match stmt, !stmt_level with
           | S.Block _, 0 -> ()
           | _ -> stmt_level := !stmt_level + 1;
         in
 
         let leave_statement (_, stmt) =
+          let () = pop_scope () in
           match stmt, !stmt_level with
           | S.Block _, 0 -> ()
           | _ -> stmt_level := !stmt_level - 1;
@@ -284,6 +320,22 @@ let pack ctx channel =
 
         let visit_expression (loc, expr) =
           match expr with
+          (* patch shorthands, since we will be doing renaming *)
+          | E.Object { properties } ->
+              properties
+              |> List.iter
+                (fun prop ->
+                   match prop with
+                    | E.Object.Property (loc, E.Object.Property.Init {
+                        key = E.Object.Property.Identifier (_, name) ;
+                        shorthand = true;
+                        _
+                      })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
+                    | _ -> ()
+                );
+              Visit.Continue
+
+          (* static imports *)
           | E.Import (_, E.Literal { value = L.String request; _ })
           | E.Call {
               callee = (_, E.Identifier (_, "require"));
@@ -301,6 +353,7 @@ let pack ctx channel =
                 );
               Visit.Break;
 
+          (* dynamic imports *)
           | E.Import (_, E.Literal { value = L.String request; _ })
           | E.Call {
               callee = (_, E.Identifier (_, "require"));
@@ -321,8 +374,25 @@ let pack ctx channel =
                        Printf.sprintf "__fpack__.cached(%s)" wrapper
                 );
               Visit.Break;
-          | _ -> Visit.Continue;
 
+            (* replace identifiers with previously calculated names *)
+            | E.Identifier (loc, name) ->
+              let () =
+                match is_top_level name with
+                | true ->
+                  patch_loc_with
+                    loc
+                    (fun _ ->
+                       match get_internal filename name with
+                       | Some name -> name
+                       | None ->
+                         failwith ("Cannot find replacement for name: " ^ name)
+                    )
+                | _ -> ()
+              in
+              Visit.Break;
+          | _ ->
+            Visit.Continue;
         in
 
         let handler = {
@@ -331,8 +401,13 @@ let pack ctx channel =
           visit_expression;
           enter_statement;
           leave_statement;
+          enter_function;
+          leave_function;
         } in
-        Visit.visit handler program;
+        begin
+          Visit.visit handler program;
+          add_export_all ();
+        end;
 
         (!workspace, !static_deps, program_scope)
       in

@@ -19,7 +19,7 @@ export function $_e4() {
   return c;
 }
 
-let $_e5 = d1;
+let $_e5 = $_e4;
 
 const $_e6 = {d1: $_e4, d2: $_e5};
 /* e.js-53755ac792d422954b7b38d32fb8e8f6 */
@@ -37,7 +37,7 @@ const $_e7 = {};
     ($_e7);
   }
 }
-console.log(A2, D);
+console.log($_e2, $_e6);
 
 
 /*
@@ -65,15 +65,22 @@ let $_i2 = 200;
 
 function $_i3() {
   let b = __fpack__.cached($_w2);
-  return b.b1() + b.b2() + cInternal1;
+  let cInternal2 = 300;
+  return b.b1() + b.b2() + $_i1 + cInternal2;
 }
 
 function $_i4() {
   let b = __fpack__.cached($_w2);
-  return b.default.b1() + b.default.b2() + cInternal2;
+  return b.default.b1() + b.default.b2() + $_i2;
 }
 
-Object.assign(module.exports, {c1, c2});
+function $_i5() {
+  ({cInternal1, cInternal2} = {cInternal1: $_i2, cInternal2: $_i1});
+  [cInternal1, cInternal2] = [1,2];
+  cInternal1 = null;
+}
+
+Object.assign(module.exports, {c1: $_i3, c2: $_i4, c3: $_i5});
 return ({});
 }
 
@@ -84,13 +91,13 @@ function $_w2() {
 
 
 export function $_e9() {
-  return a + 1;
+  return $_e1 + 1;
 }
 
 export function $_e10() {
-  return a + 2;
+  return $_e1 + 2;
 }
 
-export default {b1, b2, b3: a1};
+export default {b1: $_e9, b2: $_e10, b3: a1};
 return ({b1: $_e9, b2: $_e10});
 }
