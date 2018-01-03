@@ -29,12 +29,12 @@ console.log('"e" is imported');
 const $_e7 = {};
 /* index.js-c46c4e9e002d45c71aaf635189f80e19 */
 
-/* static */ import {a1, a2 as A2} from './a';
-/* static */ import * as D from './d';
+
+
 
 {
   {
-    /* static */ import('./e');
+    ($_e7);
   }
 }
 console.log(A2, D);
@@ -81,7 +81,7 @@ return ({});
 
 
 function $_w2() {
-/* static */ import {a1 as a} from './a';
+
 
 export function $_e9() {
   return a + 1;

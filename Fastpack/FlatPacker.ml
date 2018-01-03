@@ -128,11 +128,11 @@ let pack ctx channel =
 
         let workspace = ref (Workspace.of_string source) in
         let {Workspace.
-              patch;
+              (* patch; *)
               (* patch_loc; *)
               patch_with;
               patch_loc_with;
-              (* remove_loc; *)
+              remove_loc;
               remove;
               _
             } = Workspace.make_patcher workspace
@@ -276,7 +276,7 @@ let pack ctx channel =
 
           | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
             let _ = add_static_dep request in
-            patch loc.Loc.start.offset 0 "/* static */ ";
+            remove_loc loc;
             Visit.Continue;
           | _ ->
             Visit.Continue
@@ -289,8 +289,16 @@ let pack ctx channel =
               callee = (_, E.Identifier (_, "require"));
               arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
             } when !stmt_level = 1 ->
-              let _ = add_static_dep request in
-              patch loc.Loc.start.offset 0 "/* static */ ";
+              let dep = add_static_dep request in
+              patch_loc_with loc
+                (fun _ ->
+                   match get_resolved_request dep with
+                   | None -> failwith ("Cannot resolve request: " ^ request)
+                   | Some filename ->
+                     match get_export filename "*" with
+                     | None -> failwith ("Cannot export * from: " ^ filename)
+                     | Some binding -> Printf.sprintf "(%s)" binding
+                );
               Visit.Break;
 
           | E.Import (_, E.Literal { value = L.String request; _ })
