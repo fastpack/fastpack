@@ -51,8 +51,12 @@ And execute commands from there.
 - [x] Fastpack: import statements handling
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [x] Fastpack: `import` expressions
-- [ ] FastpackTraspiler: JSXFragment, SpreadChild, PrivateName, PrivateField
+- [ ] FlatPacker: handle potential naming collisions with internal names
+- [ ] FlatPacker: `module.exports`
+- [ ] FlatPacker: `export default`
+- [ ] FlatPacker: add runtime
 - [ ] Fastpack: flat bundles
+- [ ] FastpackTraspiler: JSXFragment, SpreadChild, PrivateName, PrivateField
 - [ ] Fastpack: Support 'development' & 'production' modes
 - [ ] Fastpack: Partial builds
 - [ ] Fastpack: handle static files

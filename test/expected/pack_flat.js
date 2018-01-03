@@ -8,7 +8,7 @@ let $_e2 = 2;
 const $_e3 = {a1: $_e1, a2: $_e2};
 /* d.js-4b186fd1d6f1579cb8d1e2d8b3961ffe */
 
-export function $_e4() {
+function $_e4() {
   let c;
   if(true) {
     c = __fpack__.cached($_w1);
@@ -90,11 +90,11 @@ return ({});
 function $_w2() {
 
 
-export function $_e9() {
+function $_e9() {
   return $_e1 + 1;
 }
 
-export function $_e10() {
+function $_e10() {
   return $_e1 + 2;
 }
 

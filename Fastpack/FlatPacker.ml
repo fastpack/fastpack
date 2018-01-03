@@ -298,13 +298,11 @@ let pack ctx channel =
 
         let visit_statement (loc, stmt) =
           match stmt with
+          | S.ExportNamedDeclaration { source = Some _; _} ->
+            remove_loc loc;
+            Visit.Break;
 
-          | S.ExportNamedDeclaration {
-              declaration = Some (stmt_loc, S.VariableDeclaration _);
-              specifiers = None;
-              source = None;
-              _
-            } ->
+          | S.ExportNamedDeclaration { declaration = Some (stmt_loc, _); _ } ->
             remove
               loc.Loc.start.offset
               (stmt_loc.Loc.start.offset - loc.Loc.start.offset);
