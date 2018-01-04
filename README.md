@@ -52,20 +52,21 @@ And execute commands from there.
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [x] Fastpack: `import` expressions
 - [ ] FlatPacker: handle assignment expressions
-- [ ] FlatPacker: `module.exports`
+- [ ] FlatPacker: `module.exports` / `exports`
 - [ ] FlatPacker: `export default`
 - [ ] FlatPacker: add runtime
-- [ ] Fastpack: `--flat es6` / `--flat cjs` for the last export statement
+- [ ] Fastpack: `--target app` / `--target es6` / `--target cjs` for the last export statement
 - [ ] Fastpack: flat bundles
-- [ ] FastpackTraspiler: JSXFragment, SpreadChild, PrivateName, PrivateField
-- [ ] Fastpack: Support 'development' & 'production' modes
-- [ ] Fastpack: Partial builds
-- [ ] Fastpack: handle static files
-- [ ] Fastpack: export URLs for static files
-- [ ] UI/UX (error reporting, config) [zindel, in progress]
+- [ ] Fastpack: Support 'development', 'production', 'test' modes
+- [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
   - [ ] Use combinators for error output for nicer formatting?
+- [ ] `--debug` writes to stderr (1)
+- [ ] FastpackTraspiler: JSXFragment, SpreadChild (1)
+- [ ] FastpackTraspiler: PrivateName, PrivateField
+- [ ] Fastpack: Incremental builds (2)
+- [ ] Fastpack: handle static files (2)
+- [ ] Fastpack: export URLs for static files (2)
 - [ ] Support external command execution for LESS/SASS/other processing
-- [ ] Watch mode (watchman?)
 - [ ] Source maps [andreypopp, in progress]
 - [ ] CSS support in import statements (webpack ICSS)?
 - [ ] Documentation / Domain

@@ -79,9 +79,9 @@ function $_i4() {
 }
 
 function $_i5() {
-  ({cInternal1, cInternal2} = {cInternal1: $_i2, cInternal2: $_i1});
-  [cInternal1, cInternal2] = [1,2];
-  cInternal1 = null;
+  ({cInternal1: $_i1, cInternal2: $_i2} = {cInternal1: $_i2, cInternal2: $_i1});
+  [$_i1, $_i2] = [1,2];
+  $_i1 = null;
 }
 
 Object.assign(module.exports, {c1: $_i3, c2: $_i4, c3: $_i5});

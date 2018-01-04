@@ -66,13 +66,8 @@ let names_of_pattern node =
     match node with
     | P.Object { properties; _ } ->
       let on_property names = function
-        | P.Object.Property (_,{ key; pattern; shorthand }) ->
-          if shorthand then
-            match key with
-            | P.Object.Property.Identifier id -> id::names
-            | _ -> names
-          else
-            names_of_pattern' names pattern
+        | P.Object.Property (_,{ pattern; _ }) ->
+          names_of_pattern' names pattern
         | P.Object.RestProperty (_,{ argument }) ->
           names_of_pattern' names argument
       in

@@ -13,6 +13,9 @@ exportF -> Function [exported as exportF] [33:16 - 33:23]
 exportVar -> Let [exported as exportVar] [35:11 - 35:20]
 f -> Let [10:4 - 10:5]
 f1 -> Let [11:4 - 11:6]
+z11 -> Let [40:9 - 40:12]
+z2 -> Let [40:14 - 40:16]
+z3 -> Let [40:18 - 40:20]
  */
 import X from "defaultTest";
 import * as Y from "namespaceTest";
@@ -84,3 +87,4 @@ export default function doSomethingUseful() {
   
 }
 ;
+let {z1: z11, z2, z3} = {};

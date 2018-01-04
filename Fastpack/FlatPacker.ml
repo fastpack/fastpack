@@ -151,6 +151,7 @@ let pack ctx channel =
         let workspace = ref (Workspace.of_string source) in
         let {Workspace.
               patch;
+              sub_loc;
               patch_loc;
               patch_with;
               patch_loc_with;
@@ -344,6 +345,35 @@ let pack ctx channel =
             | Some (name, _) -> patch_loc loc name
             | None -> ()
         in
+        let rec patch_pattern (_, node) =
+          match node with
+          | P.Object { properties; _ } ->
+            let on_property = function
+              | P.Object.Property (loc, { pattern; shorthand; _ }) ->
+                if shorthand
+                then patch loc.Loc.start.offset 0 @@ sub_loc loc ^ ": "; 
+                patch_pattern pattern
+              | P.Object.RestProperty (_,{ argument }) ->
+                patch_pattern argument
+            in
+            List.iter on_property properties
+          | P.Array { elements; _ } ->
+            let on_element = function
+              | None ->
+                ()
+              | Some (P.Array.Element node) ->
+                patch_pattern node
+              | Some (P.Array.RestElement (_, { argument })) ->
+                patch_pattern argument
+            in
+            List.iter on_element elements
+          | P.Assignment { left; _ } ->
+            patch_pattern left
+          | P.Identifier { name; _ } ->
+            patch_identifier name
+          | P.Expression _ ->
+            ()
+        in
 
         (* Level of statement *)
         let stmt_level = ref 0 in
@@ -452,6 +482,11 @@ let pack ctx channel =
           | E.Identifier id ->
             patch_identifier id;
             Visit.Break;
+
+          | E.Assignment { left; _ } ->
+            patch_pattern left;
+            Visit.Continue
+
           | _ ->
             Visit.Continue;
         in
