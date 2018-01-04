@@ -40,7 +40,7 @@ const $e$__e__$$NAMESPACE$$ = {};
     ($e$__e__$$NAMESPACE$$);
   }
 }
-console.log($e$__index__a2, $e$__d__$$NAMESPACE$$);
+console.log($e$__a__a2, $e$__d__$$NAMESPACE$$);
 
 
 /*
@@ -97,11 +97,11 @@ function $_w2() {
 
 
 function $e$__b__b1() {
-  return $e$__b__a1 + 1;
+  return $e$__a__a1 + 1;
 }
 
 function $e$__b__b2() {
-  return $e$__b__a1 + 2;
+  return $e$__a__a1 + 2;
 }
 
 export default {b1: $e$__b__b1, b2: $e$__b__b2, b3: a1};
