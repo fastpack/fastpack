@@ -112,9 +112,6 @@ let rec makedirs dir =
 
 let prepare_and_pack cl_options =
   let%lwt current_dir = Lwt_unix.getcwd () in
-  let abs_path dir filename =
-    FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute dir filename
-  in
   let start_dir =
     match cl_options.input with
     | Some filename -> FilePath.dirname @@ abs_path current_dir filename

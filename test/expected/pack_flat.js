@@ -1,5 +1,5 @@
 
-/* a.js-fb1192555b4afa97f8bf590f5331902d */
+/* a */
 
 
 let $_e1 = 1;
@@ -7,7 +7,7 @@ let $_e2 = 2;
 
 const $_e3 = {a1: $_e1, a2: $_e2};
 
-/* d.js-4b186fd1d6f1579cb8d1e2d8b3961ffe */
+/* d */
 
 function $_e4() {
   let c;
@@ -24,13 +24,13 @@ let $_e5 = $_e4;
 
 const $_e6 = {d1: $_e4, d2: $_e5};
 
-/* e.js-53755ac792d422954b7b38d32fb8e8f6 */
+/* e */
 
 console.log('"e" is imported');
 
 const $_e7 = {};
 
-/* index.js-c46c4e9e002d45c71aaf635189f80e19 */
+/* index */
 
 
 
@@ -59,7 +59,7 @@ console.log($_e2, $_e6);
 
 const $_e8 = {};
 
-/* c.js-d61468bee36ba5f51f6f73437a95ba4a */
+/* c */
 
 
 function $_w1() {
@@ -90,7 +90,7 @@ return ({});
 
 }
 
-/* b.js-fbc8722aa7253184e85b898677c98268 */
+/* b */
 
 
 function $_w2() {

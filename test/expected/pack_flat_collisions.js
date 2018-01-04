@@ -1,5 +1,5 @@
 
-/* a.js-8b777862f8f7f3bd5fbe46af31409e7b */
+/* a */
 
 let $_e1 = 1; // expect: let $_e1 = 1;
 let $_e2 = 2; // expect: let $_e2 = 2;
@@ -31,9 +31,12 @@ for(var $_i5 of $_i3) {
   }
 }
 
+for(let {$_c5, $_c6} = {$_i1 : 1, $_i2: 2};;)
+  console.log($_c5, $_c6);
+
 const $_e3 = {a1: $_e1, a2: $_e2};
 
-/* index.js-a20aab43919e65bedc9837ef6de8bd2e */
+/* index */
 
 
 
