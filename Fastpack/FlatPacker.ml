@@ -15,6 +15,7 @@ module Visit = FastpackUtil.Visit
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
 module DM = Map.Make(Dependency)
+module MDM = Module.DependencyMap
 
 type bindings = {
   exports : string M.t;
@@ -24,17 +25,16 @@ type bindings = {
 let pack ctx channel =
 
   (* internal top-level bindings in the file *)
-  let internal = ref 0 in
-  let gen_int_binding () =
-    internal := !internal + 1;
-    "$_i" ^ (string_of_int !internal)
+  let gen_int_binding module_id name =
+    Printf.sprintf "$i$__%s__%s" module_id name
   in
 
-  (* exported bindings *)
-  let ext = ref 0 in
-  let gen_ext_binding () =
-    ext := !ext + 1;
-    "$_e" ^ (string_of_int !ext)
+  let gen_ext_binding module_id name =
+    Printf.sprintf "$e$__%s__%s" module_id name
+  in
+
+  let gen_ext_namespace_binding module_id =
+    gen_ext_binding module_id "$$NAMESPACE$$"
   in
 
   (* potential collisions, never appear on the top-level
@@ -61,13 +61,25 @@ let pack ctx channel =
     M.get filename !wrappers
   in
 
-  let may_collide name =
-    Str.string_match (Str.regexp "^\\$_[iewc][0-9]+$") name 0
+  let may_collide _name =
+    false
+    (* Str.string_match (Str.regexp "^\\$_[iewc][0-9]+$") name 0 *)
   in
 
   let rec pack ?(with_wrapper=None) ctx modules =
 
     let () = Printf.printf "Packing: %s \n" ctx.entry_filename in
+
+    let () = Printf.printf "------------- \n" in
+    let () =
+      modules
+      |> MDM.bindings
+      |> List.iter
+        (fun ({Dependency. request; requested_from_filename = rf }, _) ->
+          Printf.printf "%s from %s \n" request rf
+        )
+    in
+    let () = Printf.printf "------------- \n" in
 
     let resolved_requests = ref DM.empty in
     let add_resolved_request req filename =
@@ -77,57 +89,22 @@ let pack ctx channel =
       DM.get req !resolved_requests
     in
 
-    let modules = ref modules in
-    let empty_module =
-      {exports = M.empty; internals = M.empty}
-    in
-    let add_module filename =
-      modules := M.add filename empty_module !modules
-    in
     let has_module filename =
-      M.mem filename !modules
-    in
-    let get_module filename =
-      M.get filename !modules
-    in
-    let add_export filename binding value =
-      let mod_map =
-        match get_module filename with
-        | Some mod_map -> mod_map
-        | None -> empty_module
-      in
-      let mod_map =
-        { mod_map with exports = M.add binding value mod_map.exports }
-      in
-      modules := M.add filename mod_map !modules
-    in
-    let get_export filename binding =
-      match M.get filename !modules with
-      | None -> None
-      | Some mod_map -> M.get binding mod_map.exports
-    in
-    let add_internal filename binding value =
-      let mod_map =
-        match get_module filename with
-        | Some mod_map -> mod_map
-        | None -> empty_module
-      in
-      let mod_map =
-        { mod_map with internals = M.add binding value mod_map.internals }
-      in
-      modules := M.add filename mod_map !modules
-    in
-    let get_internal filename binding =
-      match M.get filename !modules with
-      | None -> None
-      | Some mod_map -> M.get binding mod_map.internals
+      modules
+      |> MDM.bindings
+      |> List.exists (fun (_, m) -> m.Module.filename = filename)
     in
 
-    (* let get_module_binding filename binding = *)
-    (*   match get_module filename with *)
-    (*   | Some mod_map -> M.get binding mod_map *)
-    (*   | None -> None *)
-    (* in *)
+    let get_module filename =
+      let matching =
+        modules
+        |> MDM.bindings
+        |> List.filter (fun (_, m) -> m.Module.filename = filename)
+      in
+      match matching with
+      | [] -> None
+      | (_, m) :: _ -> Some m
+    in
 
     (* Keep track of all dynamic dependencies while packing *)
     let dynamic_deps = ref [] in
@@ -143,7 +120,7 @@ let pack ctx channel =
 
     let rec process ({transpile; _} as ctx) graph (m : Module.t) =
 
-      let analyze _id filename source =
+      let analyze module_id filename source =
         let () = Printf.printf "Analyzing: %s \n" filename in
 
         let ((_, stmts, _) as program), _ = Parser.parse_source source in
@@ -161,75 +138,46 @@ let pack ctx channel =
             } = Workspace.make_patcher workspace
         in
 
-        let resolve_request request =
-          let req =
-            {Dependency. request; requested_from_filename = filename}
-          in
-          get_resolved_request req
+        let name_of_binding name (binding : Scope.binding) =
+          match binding.exported with
+          | Some exported -> gen_ext_binding module_id exported
+          | None -> gen_int_binding module_id name
         in
 
-        let patch_binding ?(exported_as=None) (loc, name) =
-          let patch' _ =
-            let binding =
-              match exported_as with
-              | Some exported_as ->
-                let binding = gen_ext_binding () in
-                let () = add_export filename exported_as binding in
-                binding
-              | None ->
-                gen_int_binding ()
-            in
-            let () = add_internal filename name binding in
-            binding
-          in
-          patch_loc_with loc patch'
+        let patch_binding name (binding : Scope.binding) =
+          patch_loc binding.loc @@ name_of_binding name binding
         in
-        let add_import_deferred ?(exported_as=None) name remote source =
-          patch_with 0 0
-            (fun _ ->
-               match resolve_request source with
-               (* TODO: proper error reporting *)
-               | None -> failwith ("Cannot resolve request: " ^ source ^ " " ^ filename)
-               | Some imported_from ->
-                 match get_export imported_from remote with
-                 | None ->
-                   failwith ("Cannot find binding '"
-                             ^ remote ^ "' in module " ^ imported_from)
-                 | Some binding ->
-                   let () = add_internal filename name binding in
-                   match exported_as with
-                   | None -> ""
-                   | Some exported_as ->
-                     let () = add_export filename exported_as binding in
-                     ""
+
+        let program_scope = Scope.of_program stmts Scope.empty in
+        let () =
+          Scope.iter
+            (fun (name, binding) ->
+              match binding.typ with
+              | Scope.Import _ -> ()
+              | _ -> patch_binding name binding
+
             )
+            program_scope
         in
+
         let add_export_all () =
           patch_with (String.length source) 0
             (fun _ ->
-              match get_module filename with
-              | None -> failwith "Should not happen"
-              | Some { exports; _ } ->
-                match M.get "*" exports with
-                | Some value ->
-                  begin
-                    match (with_wrapper, filename = ctx.entry_filename) with
-                    | Some _, true -> "return " ^ value
-                    | _ -> ""
-                  end
-                | None ->
-                  let expr =
-                    String.concat ", "
-                    @@ List.map (fun (name, value) -> name ^ ": " ^ value)
-                    @@ M.bindings exports
-                  in
-                  match (with_wrapper, filename = ctx.entry_filename) with
-                  | Some _, true ->
-                    Printf.sprintf "\nreturn ({%s});\n" expr;
-                  | _ ->
-                    let binding = gen_ext_binding () in
-                    let () = add_export filename "*" binding in
-                    Printf.sprintf "\nconst %s = {%s};\n" binding expr
+              let expr =
+                Scope.bindings program_scope
+                |> List.filter_map
+                  (fun (name, binding) ->
+                     match binding.Scope.exported with
+                     | None -> None
+                     | Some exported ->
+                       Some (Printf.sprintf "%s: %s" exported @@ name_of_binding name binding)
+                  )
+                |> String.concat ", "
+                |> Printf.sprintf "{%s}"
+              in
+              Printf.sprintf "\nconst %s = %s;\n"
+                (gen_ext_namespace_binding module_id)
+                expr
             )
         in
 
@@ -247,25 +195,6 @@ let pack ctx channel =
           end
         in
 
-        let program_scope = Scope.of_program stmts Scope.empty in
-        let () = Scope.iter
-            (fun (name, { typ; loc; exported }) ->
-            match exported, typ with
-            | None, Scope.Import { source; remote = Some remote } ->
-              add_import_deferred name remote source
-            | None, Scope.Import { source; remote = None } ->
-              add_import_deferred name "*" source
-            | Some _, Scope.Import { source; remote = Some remote } ->
-              add_import_deferred ~exported_as:exported name remote source
-            | Some _, Scope.Import { source; remote = None } ->
-              add_import_deferred ~exported_as:exported name "*" source
-            | Some _, _ ->
-              patch_binding ~exported_as:exported (loc, name)
-            | _ ->
-              patch_binding (loc, name)
-          )
-          program_scope
-        in
 
 
         (* scope stack *)
@@ -319,32 +248,68 @@ let pack ctx channel =
           collisions := List.tl !collisions;
           scopes := List.tl !scopes;
         in
-        let is_top_level name =
+
+        let get_top_level_binding name =
           let binding = Scope.get_binding name (top_scope ()) in
           match binding with
-          | None -> false
+          | None -> None
           | Some b ->
             let top_level_binding = Scope.get_binding name program_scope in
             match top_level_binding with
-            | Some top_level -> b == top_level
-            | None -> false
+            | Some top_level -> if b == top_level then Some b else None
+            | None -> None
         in
+
+        let rec resolve_import dep_map {Scope. source; remote } =
+          let dep = {
+            Dependency.
+            request = source;
+            requested_from_filename = filename
+          }
+          in
+          let m = MDM.get dep dep_map in
+          match m with
+          | None ->
+            failwith ("Cannot find module: " ^ source ^ " from " ^ filename)
+          | Some m ->
+            match remote with
+            | None ->
+              gen_ext_namespace_binding m.Module.id
+            | Some remote ->
+              let names =
+                Scope.bindings m.scope
+                |> List.filter
+                  (fun (name, {Scope. exported; _}) ->
+                     name = remote && exported <> None
+                  )
+              in
+              match names with
+              | [] ->
+                failwith ("Name " ^ remote ^ " not found in module " ^ m.Module.filename)
+              | (name, ({ Scope. typ; _} as binding)) :: _ ->
+                match typ with
+                | Scope.Import import -> resolve_import dep_map import
+                | _ -> name_of_binding name binding
+        in
+
         let patch_identifier (loc, name) =
-          match is_top_level name with
-          | true ->
+          match get_top_level_binding name with
+          | Some binding ->
             patch_loc_with
               loc
-              (fun _ ->
-                 match get_internal filename name with
-                 | Some name -> name
-                 | None ->
-                   failwith ("Cannot find replacement for name: " ^ name)
+              (fun dep_map ->
+                 match binding.typ with
+                 | Scope.Import import ->
+                   resolve_import dep_map import
+                 | _ ->
+                   name_of_binding name binding
               )
-          | false ->
+          | None ->
             match M.get name (top_collisions ()) with
             | Some (name, _) -> patch_loc loc name
             | None -> ()
         in
+
         let rec patch_pattern (_, node) =
           match node with
           | P.Object { properties; _ } ->
@@ -446,13 +411,11 @@ let pack ctx channel =
             } when !stmt_level = 1 ->
               let dep = add_static_dep request in
               patch_loc_with loc
-                (fun _ ->
-                   match get_resolved_request dep with
+                (fun dep_map ->
+                   match MDM.get dep dep_map with
                    | None -> failwith ("Cannot resolve request: " ^ request)
-                   | Some filename ->
-                     match get_export filename "*" with
-                     | None -> failwith ("Cannot export * from: " ^ filename)
-                     | Some binding -> Printf.sprintf "(%s)" binding
+                   | Some m ->
+                     Printf.sprintf "(%s)" @@ gen_ext_namespace_binding m.id
                 );
               Visit.Break;
 
@@ -542,7 +505,6 @@ let pack ctx channel =
                    in
                    begin
                      let () = add_resolved_request req resolved in
-                     add_module resolved;
                      Lwt.return m
                    end
                  | Some m ->
@@ -569,28 +531,37 @@ let pack ctx channel =
         | Some value -> f value
         | None -> emit ""
       in
-      let emit_module m =
-        let dependencies = DependencyGraph.lookup_dependencies graph m in
-        let ctx =
-          List.fold_left
-            (fun ctx (dep, m) ->
-               match m with
-               | None -> failwith "Module dependency not found"
-               | Some m -> Module.DependencyMap.add dep m ctx
-            )
-            Module.DependencyMap.empty
-            dependencies
-        in
-        let () = Printf.printf "Emitting: %s \n" m.filename in
+      let emit_module dep_map m =
+        let () = Printf.printf "Emitting: %s \n" m.Module.filename in
         emit (Printf.sprintf "\n/* %s */\n\n" m.id)
         >> emit_if_some
           with_wrapper
           (fun wrapper -> emit @@ "\nfunction " ^ wrapper ^ "() {\n")
-        >> Workspace.write channel m.Module.workspace ctx
+        >> Workspace.write channel m.Module.workspace dep_map
         >> emit_if_some with_wrapper (fun _ -> emit "\n}\n")
       in
-      let modules = DependencyGraph.sort graph entry in
-      Lwt_list.iter_s emit_module modules;
+      DependencyGraph.sort graph entry
+      |> Lwt_list.fold_left_s
+        (fun dependency_map m ->
+          let%lwt () = emit_module dependency_map m in
+          !resolved_requests
+          |> DM.bindings
+          |> List.filter (fun (_, value) -> value = m.filename)
+          |> List.fold_left (fun acc (k, _) -> MDM.add k m acc) dependency_map
+          |> Lwt.return
+        )
+        (!resolved_requests
+         |> DM.bindings
+         |> List.filter (fun (_, filename) -> has_module filename)
+         |> List.fold_left
+           (fun modules (dep, filename) ->
+              let () = Printf.printf "In Fold: %s \n" filename in
+              match get_module filename with
+              | Some m -> MDM.add dep m modules
+              | None -> failwith "Should not happen"
+           )
+          modules
+        )
     in
 
     let graph = DependencyGraph.empty () in
@@ -618,7 +589,7 @@ let pack ctx channel =
     | (ctx, req, None) :: _ ->
       raise (PackError (ctx, CannotResolveModules [req]))
     | _ ->
-      let%lwt () = emit graph entry in
+      let%lwt modules = emit graph entry in
       let%lwt _ =
         Lwt_list.fold_left_s
           (fun seen (ctx, _, resolved) ->
@@ -628,11 +599,23 @@ let pack ctx channel =
                then Lwt.return seen
                else
                  let () = Printf.printf "%s %d\n" entry_filename (List.length dynamic_deps) in
+
+                 let () = Printf.printf "**----------- \n" in
+                 let () =
+                   modules
+                   |> MDM.bindings
+                   |> List.iter
+                     (fun ({Dependency. request; requested_from_filename = rf }, _) ->
+                       Printf.printf "%s from %s \n" request rf
+                     )
+                 in
+                 let () = Printf.printf "**----------- \n" in
+
                  let%lwt () =
                    pack
                     ~with_wrapper:(get_wrapper entry_filename)
                     { ctx with entry_filename }
-                    !modules
+                    modules
                  in
                  Lwt.return (StringSet.add entry_filename seen)
              | None ->
@@ -643,4 +626,4 @@ let pack ctx channel =
         in
         Lwt.return_unit
   in
-  pack ctx M.empty
+  pack ctx MDM.empty

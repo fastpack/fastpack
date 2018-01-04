@@ -409,6 +409,9 @@ let rec get_binding name { bindings; parent } =
 let has_binding name scope =
   (get_binding name scope) != None
 
+let bindings scope =
+  scope.bindings |> M.bindings
+
 let get_exports scope =
   scope.bindings
   |> M.bindings
