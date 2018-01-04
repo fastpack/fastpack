@@ -28,8 +28,8 @@ let pack pack_f entry_filename _ =
        @@ Lwt_io.position ch
   in Lwt_main.run (pack' ())
 
-(* let pack_regular = *)
-(*   pack (Fastpack.RegularPacker.pack ~with_runtime:false) *)
+let pack_regular =
+  pack (Fastpack.RegularPacker.pack ~with_runtime:false)
 
 let pack_flat =
   pack (Fastpack.FlatPacker.pack)
@@ -45,14 +45,14 @@ let pack_stdout entry_filename _ =
   in Lwt_main.run (pack' ()); ""
 
 let tests = [
-  (* ("transpile-object-spread.js", "", transpile); *)
-  (* ("transpile-class.js", "", transpile); *)
-  (* ("transpile-react-jsx.js", "", transpile); *)
-  (* ("transpile-strip-flow.js", "", transpile); *)
-  (* ("print.js", "", print ~with_scope:false); *)
-  (* ("print-with-scope.js", "", print ~with_scope:true); *)
-  (* ("pack/index.js", "pack.js", pack_regular); *)
-  (* ("pack_flat/index.js", "pack_flat.js", pack_flat); *)
+  ("transpile-object-spread.js", "", transpile);
+  ("transpile-class.js", "", transpile);
+  ("transpile-react-jsx.js", "", transpile);
+  ("transpile-strip-flow.js", "", transpile);
+  ("print.js", "", print ~with_scope:false);
+  ("print-with-scope.js", "", print ~with_scope:true);
+  ("pack/index.js", "pack.js", pack_regular);
+  ("pack_flat/index.js", "pack_flat.js", pack_flat);
   ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat);
   (* ("pack_flat/index.js", "pack_flat.js", pack_stdout); *)
   (* ("current.js", "", print ~with_scope:false); *)

@@ -52,7 +52,6 @@ And execute commands from there.
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [x] Fastpack: `import` expressions
 - [ ] FlatPacker: handle assignment expressions
-- [ ] FlatPacker: handle potential naming collisions with internal names
 - [ ] FlatPacker: `module.exports`
 - [ ] FlatPacker: `export default`
 - [ ] FlatPacker: add runtime

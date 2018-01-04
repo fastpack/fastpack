@@ -23,19 +23,31 @@ type bindings = {
 
 let pack ctx channel =
 
-  (* binding generators*)
+  (* internal top-level bindings in the file *)
   let internal = ref 0 in
   let gen_int_binding () =
     internal := !internal + 1;
     "$_i" ^ (string_of_int !internal)
   in
 
+  (* exported bindings *)
   let ext = ref 0 in
   let gen_ext_binding () =
     ext := !ext + 1;
     "$_e" ^ (string_of_int !ext)
   in
 
+  (* potential collisions, never appear on the top-level
+   * It should be safe to move this generator into the `analyze` function
+   * since these names are always scoped
+   * *)
+  let collision = ref 0 in
+  let gen_collision_binding () =
+    collision := !collision + 1;
+    "$_c" ^ (string_of_int !collision)
+  in
+
+  (* names of wrapper functions used to handle dynamic imports *)
   let wrap = ref 0 in
   let wrappers = ref M.empty in
   let add_wrapper filename =
@@ -49,8 +61,8 @@ let pack ctx channel =
     M.get filename !wrappers
   in
 
-  let collides_with_naming name =
-    Str.string_match (Str.regexp "^\\$_[iew][0-9]+$") name 0
+  let may_collide name =
+    Str.string_match (Str.regexp "^\\$_[iewc][0-9]+$") name 0
   in
 
   let rec pack ?(with_wrapper=None) ctx modules =
@@ -275,11 +287,11 @@ let pack ctx channel =
             Scope.fold_left
               (fun acc (name, (_, loc, _)) ->
                 let update_acc () =
-                  let binding = gen_int_binding () in
+                  let binding = gen_collision_binding () in
                   let () = patch_loc loc binding in
                   M.add name (binding, loc) acc
                 in
-                if collides_with_naming name
+                if may_collide name
                 then begin
                   match M.get name acc with
                   | None ->
