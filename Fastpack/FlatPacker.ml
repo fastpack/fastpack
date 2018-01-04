@@ -106,6 +106,12 @@ let pack ctx channel =
       | (_, m) :: _ -> Some m
     in
 
+    let name_of_binding module_id name (binding : Scope.binding) =
+      match binding.exported with
+      | Some exported -> gen_ext_binding module_id exported
+      | None -> gen_int_binding module_id name
+    in
+
     (* Keep track of all dynamic dependencies while packing *)
     let dynamic_deps = ref [] in
     let add_dynamic_dep ctx request filename =
@@ -138,14 +144,9 @@ let pack ctx channel =
             } = Workspace.make_patcher workspace
         in
 
-        let name_of_binding name (binding : Scope.binding) =
-          match binding.exported with
-          | Some exported -> gen_ext_binding module_id exported
-          | None -> gen_int_binding module_id name
-        in
 
         let patch_binding name (binding : Scope.binding) =
-          patch_loc binding.loc @@ name_of_binding name binding
+          patch_loc binding.loc @@ name_of_binding module_id name binding
         in
 
         let program_scope = Scope.of_program stmts Scope.empty in
@@ -170,7 +171,7 @@ let pack ctx channel =
                      match binding.Scope.exported with
                      | None -> None
                      | Some exported ->
-                       Some (Printf.sprintf "%s: %s" exported @@ name_of_binding name binding)
+                       Some (Printf.sprintf "%s: %s" exported @@ name_of_binding module_id name binding)
                   )
                 |> String.concat ", "
                 |> Printf.sprintf "{%s}"
@@ -289,7 +290,7 @@ let pack ctx channel =
               | (name, ({ Scope. typ; _} as binding)) :: _ ->
                 match typ with
                 | Scope.Import import -> resolve_import dep_map import
-                | _ -> name_of_binding name binding
+                | _ -> name_of_binding m.id name binding
         in
 
         let patch_identifier (loc, name) =
@@ -302,7 +303,7 @@ let pack ctx channel =
                  | Scope.Import import ->
                    resolve_import dep_map import
                  | _ ->
-                   name_of_binding name binding
+                   name_of_binding module_id name binding
               )
           | None ->
             match M.get name (top_collisions ()) with
