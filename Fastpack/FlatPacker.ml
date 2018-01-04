@@ -249,18 +249,18 @@ let pack ctx channel =
 
         let program_scope = Scope.of_program stmts Scope.empty in
         let () = Scope.iter
-          (fun (name, (export, loc, typ)) ->
-            match export, typ with
+            (fun (name, { typ; loc; exported }) ->
+            match exported, typ with
             | None, Scope.Import { source; remote = Some remote } ->
               add_import_deferred name remote source
             | None, Scope.Import { source; remote = None } ->
               add_import_deferred name "*" source
             | Some _, Scope.Import { source; remote = Some remote } ->
-              add_import_deferred ~exported_as:export name remote source
+              add_import_deferred ~exported_as:exported name remote source
             | Some _, Scope.Import { source; remote = None } ->
-              add_import_deferred ~exported_as:export name "*" source
+              add_import_deferred ~exported_as:exported name "*" source
             | Some _, _ ->
-              patch_binding ~exported_as:export (loc, name)
+              patch_binding ~exported_as:exported (loc, name)
             | _ ->
               patch_binding (loc, name)
           )
@@ -286,7 +286,7 @@ let pack ctx channel =
         let push_scope scope =
           let scope_collisions =
             Scope.fold_left
-              (fun acc (name, (_, loc, _)) ->
+              (fun acc (name, { loc; _ }) ->
                 let update_acc () =
                   let binding = gen_collision_binding () in
                   let () = patch_loc loc binding in

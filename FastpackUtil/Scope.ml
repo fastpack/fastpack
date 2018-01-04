@@ -9,16 +9,20 @@ module M = Map.Make(String)
 
 type t = {
   parent : t option;
-  bindings : (exported * Loc.t * binding) M.t;
+  bindings : binding M.t;
 }
-and exported = string option
-and binding = Import of import
-            | Function
-            | Argument
-            | Class
-            | Var
-            | Let
-            | Const
+and binding = {
+  typ : typ;
+  loc : Loc.t;
+  exported : string option;
+}
+and typ = Import of import
+          | Function
+          | Argument
+          | Class
+          | Var
+          | Let
+          | Const
 and import = {
   source : string;
   remote: string option;
@@ -26,7 +30,7 @@ and import = {
 
 let empty = { bindings = M.empty; parent = None; }
 
-let string_of_binding (exported, loc, typ) =
+let string_of_binding { typ; loc; exported } =
   (match typ with
    | Import { source; remote } ->
      let remote = (match remote with | None -> "*" | Some n -> n) in
@@ -92,20 +96,24 @@ let names_of_pattern node =
 
 let export_binding name remote bindings =
   match M.get name bindings with
-  | Some (None, _, Argument) -> failwith ("Cannot export Argument: " ^ name)
-  | Some (None, loc, typ) -> M.add name (Some remote, loc, typ) bindings
-  | Some (Some _, _, _) -> failwith ("Cannot export twice: " ^ name)
-  | None -> failwith ("Cannot export previously undefined name: " ^ name)
+  | Some { typ = Argument; _ } ->
+    failwith ("Cannot export Argument: " ^ name)
+  | Some ({ exported = None; _ } as binding) ->
+    M.add name { binding with exported = Some remote } bindings
+  | Some { exported = Some _; _ } ->
+    failwith ("Cannot export twice: " ^ name)
+  | None ->
+    failwith ("Cannot export previously undefined name: " ^ name)
 
-let update_bindings loc name typ bindings =
+let update_bindings loc name typ (bindings : binding M.t)=
   match M.get name bindings, typ with
   | None, _
-  | Some (_, _, Argument), _
-  | Some (_, _, Function), Var
-  | Some (_, _, Function), Function
-  | Some (_, _, Var), Var ->
-    M.add name (None, loc, typ) bindings
-  | Some (_, _, Var), Function ->
+  | Some { typ = Argument; _ }, _
+  | Some { typ = Function; _ }, Var
+  | Some { typ = Function; _ }, Function
+  | Some { typ = Var; _}, Var ->
+    M.add name { exported = None; loc; typ } bindings
+  | Some { typ = Var; _}, Function ->
     bindings
   | _ ->
     (* TODO: track the Loc.t of bindings and raise the nice error *)
@@ -240,7 +248,7 @@ let of_function_body args stmts scope =
   let bindings =
     ref
     @@ List.fold_left
-      (fun m (loc, name) -> M.add name (None, loc, Argument) m)
+      (fun m (loc, name) -> M.add name {exported = None;  loc; typ = Argument} m)
       M.empty
       args
   in
@@ -404,7 +412,7 @@ let has_binding name scope =
 let get_exports scope =
   scope.bindings
   |> M.bindings
-  |> List.filter_map (fun (_, (value, _, _)) -> value)
+  |> List.filter_map (fun (_, { exported; _ }) -> exported)
 
 let iter f scope =
   scope.bindings

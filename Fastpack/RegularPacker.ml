@@ -88,7 +88,7 @@ let analyze _id filename source =
 
   let get_local_name local =
     match get_binding local with
-    | Some (_, _, Scope.Import { source; remote = Some remote}) ->
+    | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
       begin
            match get_module_binding source with
            | Some module_binding ->
@@ -380,7 +380,7 @@ let analyze _id filename source =
     | E.Identifier (loc, name) ->
       let () =
         match get_binding name with
-        | Some (_, _, Scope.Import { source; remote = Some remote}) ->
+        | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
           patch_loc_with
             loc
             (fun _ ->
