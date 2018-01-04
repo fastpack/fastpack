@@ -49,6 +49,10 @@ let pack ctx channel =
     M.get filename !wrappers
   in
 
+  let collides_with_naming name =
+    Str.string_match (Str.regexp "^\\$_[iew][0-9]+$") name 0
+  in
+
   let rec pack ?(with_wrapper=None) ctx modules =
 
     let () = Printf.printf "Packing: %s \n" ctx.entry_filename in
@@ -135,7 +139,7 @@ let pack ctx channel =
         let workspace = ref (Workspace.of_string source) in
         let {Workspace.
               patch;
-              (* patch_loc; *)
+              patch_loc;
               patch_with;
               patch_loc_with;
               remove_loc;
@@ -208,11 +212,11 @@ let pack ctx channel =
                   in
                   match (with_wrapper, filename = ctx.entry_filename) with
                   | Some _, true ->
-                    Printf.sprintf "return ({%s});" expr;
+                    Printf.sprintf "\nreturn ({%s});\n" expr;
                   | _ ->
                     let binding = gen_ext_binding () in
                     let () = add_export filename "*" binding in
-                    Printf.sprintf "\nconst %s = {%s};" binding expr
+                    Printf.sprintf "\nconst %s = {%s};\n" binding expr
             )
         in
 
@@ -252,13 +256,55 @@ let pack ctx channel =
 
 
         (* scope stack *)
+        (* let print_col col = *)
+        (*   let () = Printf.printf "-----\n" in *)
+        (*   let () = *)
+        (*     List.iter *)
+        (*       (fun (n, v) -> Printf.printf "%s = %s\n" n v) *)
+        (*       (M.bindings col) *)
+        (*   in *)
+        (*   Printf.printf "-----\n" *)
+        (* in *)
         let scopes = ref [program_scope] in
+        let collisions = ref [M.empty] in
         let top_scope () = List.hd !scopes in
+        let top_collisions () = List.hd !collisions in
+
         let push_scope scope =
-          scopes := scope :: !scopes
+          let scope_collisions =
+            Scope.fold_left
+              (fun acc (name, (_, loc, _)) ->
+                let update_acc () =
+                  let binding = gen_int_binding () in
+                  let () = patch_loc loc binding in
+                  M.add name (binding, loc) acc
+                in
+                if collides_with_naming name
+                then begin
+                  match M.get name acc with
+                  | None ->
+                    update_acc ()
+                  | Some (_, prev_loc) when (prev_loc <> loc) ->
+                    update_acc ()
+                  | _ ->
+                    acc
+                end
+                else
+                  acc
+              )
+              (top_collisions ())
+              scope
+          in
+          begin
+            (* let () = print_col (top_collisions ()) in *)
+            (* let () = print_col scope_collisions in *)
+            collisions := scope_collisions :: !collisions;
+            scopes := scope :: !scopes;
+          end;
         in
         let pop_scope () =
-          scopes := List.tl !scopes
+          collisions := List.tl !collisions;
+          scopes := List.tl !scopes;
         in
         let is_top_level name =
           let binding = Scope.get_binding name (top_scope ()) in
@@ -269,6 +315,22 @@ let pack ctx channel =
             match top_level_binding with
             | Some top_level -> b == top_level
             | None -> false
+        in
+        let patch_identifier (loc, name) =
+          match is_top_level name with
+          | true ->
+            patch_loc_with
+              loc
+              (fun _ ->
+                 match get_internal filename name with
+                 | Some name -> name
+                 | None ->
+                   failwith ("Cannot find replacement for name: " ^ name)
+              )
+          | false ->
+            match M.get name (top_collisions ()) with
+            | Some (name, _) -> patch_loc loc name
+            | None -> ()
         in
 
         (* Level of statement *)
@@ -374,22 +436,10 @@ let pack ctx channel =
                 );
               Visit.Break;
 
-            (* replace identifiers with previously calculated names *)
-            | E.Identifier (loc, name) ->
-              let () =
-                match is_top_level name with
-                | true ->
-                  patch_loc_with
-                    loc
-                    (fun _ ->
-                       match get_internal filename name with
-                       | Some name -> name
-                       | None ->
-                         failwith ("Cannot find replacement for name: " ^ name)
-                    )
-                | _ -> ()
-              in
-              Visit.Break;
+          (* replace identifiers with previously calculated names *)
+          | E.Identifier id ->
+            patch_identifier id;
+            Visit.Break;
           | _ ->
             Visit.Continue;
         in

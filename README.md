@@ -56,6 +56,7 @@ And execute commands from there.
 - [ ] FlatPacker: `module.exports`
 - [ ] FlatPacker: `export default`
 - [ ] FlatPacker: add runtime
+- [ ] Fastpack: `--flat es6` / `--flat cjs` for the last export statement
 - [ ] Fastpack: flat bundles
 - [ ] FastpackTraspiler: JSXFragment, SpreadChild, PrivateName, PrivateField
 - [ ] Fastpack: Support 'development' & 'production' modes

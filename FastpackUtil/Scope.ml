@@ -415,3 +415,8 @@ let iter f scope =
   scope.bindings
   |> M.bindings
   |> List.iter f
+
+let fold_left f acc scope =
+  scope.bindings
+  |> M.bindings
+  |> List.fold_left f acc
