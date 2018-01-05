@@ -45,6 +45,8 @@
     "@opam/utop": "*",
     "@opam/wtf8": "^1.0.1",
     "@opam/yojson": "1.4.0",
+    "@opam/logs": "0.6.2",
+    "@opam/fmt": "0.8.5",
     "ocaml": "~4.4.0"
   }
 }

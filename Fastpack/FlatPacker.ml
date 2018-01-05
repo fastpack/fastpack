@@ -17,10 +17,13 @@ module M = Map.Make(String)
 module DM = Map.Make(Dependency)
 module MDM = Module.DependencyMap
 
+let debug = Logs.debug
+
 type bindings = {
   exports : string M.t;
   internals: string M.t;
 }
+
 
 let pack ctx channel =
 
@@ -68,7 +71,7 @@ let pack ctx channel =
 
   let rec pack ?(with_wrapper=None) ctx modules =
 
-    let () = Printf.printf "Packing: %s \n" ctx.entry_filename in
+    let () = debug (fun m -> m "Packing: %s" ctx.entry_filename) in
 
     let () = Printf.printf "------------- \n" in
     let () =

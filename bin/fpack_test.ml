@@ -32,6 +32,12 @@ let pack pack_f entry_filename _ =
 (*   pack (Fastpack.RegularPacker.pack ~with_runtime:false) *)
 
 let pack_flat =
+  Logs.set_level (Some Logs.Debug);
+  Logs.set_reporter (Logs_fmt.reporter ());
+  (* let debug (s : string) = *)
+  (*   let _ = Logs.debug (fun m -> m s) in *)
+  (*   () *)
+  (* in *)
   pack (Fastpack.FlatPacker.pack)
 
 let pack_stdout entry_filename _ =
