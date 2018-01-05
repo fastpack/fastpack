@@ -2,33 +2,33 @@
 /* a */
 
 
-let $e$__a__a1 = 1;
-let $e$__a__a2 = 2;
+let $e__a__a1 = 1;
+let $e__a__a2 = 2;
 
-const $e$__a__$$NAMESPACE$$ = {a1: $e$__a__a1, a2: $e$__a__a2};
+const $n__a = {a1: $e__a__a1, a2: $e__a__a2};
 
 /* d */
 
-function $e$__d__d1() {
+function $e__d__d1() {
   let c;
   if(true) {
-    c = __fpack__.cached($_w1);
+    c = __fpack_cached__($w__c);
   }
   else {
-    c = __fpack__.cached($_w1);
+    c = __fpack_cached__($w__c);
   }
   return c;
 }
 
-let $e$__d__d2 = $e$__d__d1;
+let $e__d__d2 = $e__d__d1;
 
-const $e$__d__$$NAMESPACE$$ = {d1: $e$__d__d1, d2: $e$__d__d2};
+const $n__d = {d1: $e__d__d1, d2: $e__d__d2};
 
 /* e */
 
 console.log('"e" is imported');
 
-const $e$__e__$$NAMESPACE$$ = {};
+const $n__e = {};
 
 /* index */
 
@@ -37,10 +37,10 @@ const $e$__e__$$NAMESPACE$$ = {};
 
 {
   {
-    ($e$__e__$$NAMESPACE$$);
+    ($n__e);
   }
 }
-console.log($e$__a__a2, $e$__d__$$NAMESPACE$$);
+console.log($e__a__a2, $n__d);
 
 
 /*
@@ -57,55 +57,55 @@ console.log($e$__a__a2, $e$__d__$$NAMESPACE$$);
  *   b => a
  */
 
-const $e$__index__$$NAMESPACE$$ = {};
+const $n__index = {};
 
 /* c */
 
 
-function $_w1() {
+function $w__c() {
 
-let $i$__c__cInternal1 = 100;
-let $i$__c__cInternal2 = 200;
+let $i__c__cInternal1 = 100;
+let $i__c__cInternal2 = 200;
 
-function $i$__c__c1() {
-  let b = __fpack__.cached($_w2);
+function $i__c__c1() {
+  let b = __fpack_cached__($w__b);
   let cInternal2 = 300;
-  return b.b1() + b.b2() + $i$__c__cInternal1 + cInternal2;
+  return b.b1() + b.b2() + $i__c__cInternal1 + cInternal2;
 }
 
-function $i$__c__c2() {
-  let b = __fpack__.cached($_w2);
-  return b.default.b1() + b.default.b2() + $i$__c__cInternal2;
+function $i__c__c2() {
+  let b = __fpack_cached__($w__b);
+  return b.default.b1() + b.default.b2() + $i__c__cInternal2;
 }
 
-function $i$__c__c3() {
-  ({cInternal1: $i$__c__cInternal1, cInternal2: $i$__c__cInternal2} = {cInternal1: $i$__c__cInternal2, cInternal2: $i$__c__cInternal1});
-  [$i$__c__cInternal1, $i$__c__cInternal2] = [1,2];
-  $i$__c__cInternal1 = null;
+function $i__c__c3() {
+  ({cInternal1: $i__c__cInternal1, cInternal2: $i__c__cInternal2} = {cInternal1: $i__c__cInternal2, cInternal2: $i__c__cInternal1});
+  [$i__c__cInternal1, $i__c__cInternal2] = [1,2];
+  $i__c__cInternal1 = null;
 }
 
-Object.assign(module.exports, {c1: $i$__c__c1, c2: $i$__c__c2, c3: $i$__c__c3});
+Object.assign(module.exports, {c1: $i__c__c1, c2: $i__c__c2, c3: $i__c__c3});
 
-const $e$__c__$$NAMESPACE$$ = {};
+const $n__c = {};
 
 }
 
 /* b */
 
 
-function $_w2() {
+function $w__b() {
 
 
-function $e$__b__b1() {
-  return $e$__a__a1 + 1;
+function $e__b__b1() {
+  return $e__a__a1 + 1;
 }
 
-function $e$__b__b2() {
-  return $e$__a__a1 + 2;
+function $e__b__b2() {
+  return $e__a__a1 + 2;
 }
 
-export default {b1: $e$__b__b1, b2: $e$__b__b2, b3: a1};
+export default {b1: $e__b__b1, b2: $e__b__b2, b3: a1};
 
-const $e$__b__$$NAMESPACE$$ = {b1: $e$__b__b1, b2: $e$__b__b2};
+const $n__b = {b1: $e__b__b1, b2: $e__b__b2};
 
 }

@@ -29,15 +29,20 @@ let pack ctx channel =
 
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
-    Printf.sprintf "$i$__%s__%s" module_id name
+    Printf.sprintf "$i__%s__%s" module_id name
   in
 
   let gen_ext_binding module_id name =
-    Printf.sprintf "$e$__%s__%s" module_id name
+    Printf.sprintf "$e__%s__%s" module_id name
   in
 
   let gen_ext_namespace_binding module_id =
-    gen_ext_binding module_id "$$NAMESPACE$$"
+    Printf.sprintf "$n__%s" module_id
+  in
+
+  let gen_wrapper_binding filename =
+    let module_id = relative_name ctx filename |> Module.make_id in
+    Printf.sprintf "$w__%s" module_id
   in
 
   (* potential collisions, never appear on the top-level
@@ -50,39 +55,14 @@ let pack ctx channel =
     "$_c" ^ (string_of_int !collision)
   in
 
-  (* names of wrapper functions used to handle dynamic imports *)
-  let wrap = ref 0 in
-  let wrappers = ref M.empty in
-  let add_wrapper filename =
-    if not (M.mem filename !wrappers)
-    then begin
-      wrap := !wrap + 1;
-      wrappers := M.add filename ("$_w" ^ (string_of_int !wrap)) !wrappers;
-    end
-  in
-  let get_wrapper filename =
-    M.get filename !wrappers
-  in
-
   let may_collide _name =
     false
     (* Str.string_match (Str.regexp "^\\$_[iewc][0-9]+$") name 0 *)
   in
 
-  let rec pack ?(with_wrapper=None) ctx modules =
+  let rec pack ?(with_wrapper=false) ctx modules =
 
     let () = debug (fun m -> m "Packing: %s" ctx.entry_filename) in
-
-    let () = Printf.printf "------------- \n" in
-    let () =
-      modules
-      |> MDM.bindings
-      |> List.iter
-        (fun ({Dependency. request; requested_from_filename = rf }, _) ->
-          Printf.printf "%s from %s \n" request rf
-        )
-    in
-    let () = Printf.printf "------------- \n" in
 
     let resolved_requests = ref DM.empty in
     let add_resolved_request req filename =
@@ -130,7 +110,7 @@ let pack ctx channel =
     let rec process ({transpile; _} as ctx) graph (m : Module.t) =
 
       let analyze module_id filename source =
-        let () = Printf.printf "Analyzing: %s \n" filename in
+        debug (fun m -> m "Analyzing: %s" filename);
 
         let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
@@ -199,18 +179,6 @@ let pack ctx channel =
           end
         in
 
-
-
-        (* scope stack *)
-        (* let print_col col = *)
-        (*   let () = Printf.printf "-----\n" in *)
-        (*   let () = *)
-        (*     List.iter *)
-        (*       (fun (n, v) -> Printf.printf "%s = %s\n" n v) *)
-        (*       (M.bindings col) *)
-        (*   in *)
-        (*   Printf.printf "-----\n" *)
-        (* in *)
         let scopes = ref [program_scope] in
         let collisions = ref [M.empty] in
         let top_scope () = List.hd !scopes in
@@ -437,11 +405,8 @@ let pack ctx channel =
                    | None ->
                      failwith "Something wrong"
                    | Some filename ->
-                     match get_wrapper filename with
-                     | None ->
-                       failwith "Cannot find wrapper for module"
-                     | Some wrapper ->
-                       Printf.sprintf "__fpack__.cached(%s)" wrapper
+                     let wrapper = gen_wrapper_binding filename in
+                     Printf.sprintf "__fpack_cached__(%s)" wrapper
                 );
               Visit.Break;
 
@@ -530,19 +495,21 @@ let pack ctx channel =
 
     let emit graph entry =
       let emit bytes = Lwt_io.write channel bytes in
-      let emit_if_some value f =
-        match value with
-        | Some value -> f value
-        | None -> emit ""
-      in
       let emit_module dep_map m =
-        let () = Printf.printf "Emitting: %s \n" m.Module.filename in
+        let emit_wrapper_start, emit_wrapper_end =
+          if with_wrapper && entry.Module.filename = m.Module.filename then
+            (fun () ->
+               emit @@ "\nfunction " ^ gen_wrapper_binding m.Module.filename ^ "() {\n"
+            ),
+            (fun () -> emit "\n}\n")
+          else
+            (fun () -> emit ""), (fun () -> emit "")
+        in
+        debug (fun m_ -> m_ "Emitting: %s" m.Module.filename);
         emit (Printf.sprintf "\n/* %s */\n\n" m.id)
-        >> emit_if_some
-          with_wrapper
-          (fun wrapper -> emit @@ "\nfunction " ^ wrapper ^ "() {\n")
+        >> emit_wrapper_start ()
         >> Workspace.write channel m.Module.workspace dep_map
-        >> emit_if_some with_wrapper (fun _ -> emit "\n}\n")
+        >> emit_wrapper_end ()
       in
       DependencyGraph.sort graph entry
       |> Lwt_list.fold_left_s
@@ -559,7 +526,6 @@ let pack ctx channel =
          |> List.filter (fun (_, filename) -> has_module filename)
          |> List.fold_left
            (fun modules (dep, filename) ->
-              let () = Printf.printf "In Fold: %s \n" filename in
               match get_module filename with
               | Some m -> MDM.add dep m modules
               | None -> failwith "Should not happen"
@@ -577,9 +543,7 @@ let pack ctx channel =
            let%lwt resolved = Dependency.resolve req in
            begin
              match resolved with
-             | Some filename ->
-               let () = add_resolved_request req filename in
-               add_wrapper filename
+             | Some filename -> add_resolved_request req filename
              | None -> ()
            end;
            Lwt.return (ctx, req, resolved)
@@ -602,22 +566,9 @@ let pack ctx channel =
                if StringSet.mem entry_filename seen
                then Lwt.return seen
                else
-                 let () = Printf.printf "%s %d\n" entry_filename (List.length dynamic_deps) in
-
-                 let () = Printf.printf "**----------- \n" in
-                 let () =
-                   modules
-                   |> MDM.bindings
-                   |> List.iter
-                     (fun ({Dependency. request; requested_from_filename = rf }, _) ->
-                       Printf.printf "%s from %s \n" request rf
-                     )
-                 in
-                 let () = Printf.printf "**----------- \n" in
-
                  let%lwt () =
                    pack
-                    ~with_wrapper:(get_wrapper entry_filename)
+                    ~with_wrapper:true
                     { ctx with entry_filename }
                     modules
                  in

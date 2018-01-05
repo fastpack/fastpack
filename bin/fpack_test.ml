@@ -32,12 +32,6 @@ let pack pack_f entry_filename _ =
 (*   pack (Fastpack.RegularPacker.pack ~with_runtime:false) *)
 
 let pack_flat =
-  Logs.set_level (Some Logs.Debug);
-  Logs.set_reporter (Logs_fmt.reporter ());
-  (* let debug (s : string) = *)
-  (*   let _ = Logs.debug (fun m -> m s) in *)
-  (*   () *)
-  (* in *)
   pack (Fastpack.FlatPacker.pack)
 
 let pack_stdout entry_filename _ =
@@ -60,7 +54,6 @@ let tests = [
   (* ("pack/index.js", "pack.js", pack_regular); *)
   ("pack_flat/index.js", "pack_flat.js", pack_flat);
   (* ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat); *)
-  (* ("pack_flat/index.js", "pack_flat.js", pack_stdout); *)
   (* ("current.js", "", print ~with_scope:false); *)
 ]
 
@@ -211,4 +204,6 @@ let () =
     Term.info "fpack_test" ~version:"preview" ~doc ~exits:Term.default_exits
   in
 
+  Logs.set_level (Some Logs.Debug);
+  Logs.set_reporter (Logs_fmt.reporter ());
   Term.exit @@ Term.eval (run_t, info)
