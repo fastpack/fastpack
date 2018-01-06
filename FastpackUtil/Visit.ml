@@ -1,33 +1,34 @@
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
-module Expression = Ast.Expression
-module Pattern = Ast.Pattern
-module Statement = Ast.Statement
-module Literal = Ast.Literal
-module Type = Ast.Type
-module Variance = Ast.Variance
+module E = Ast.Expression
+module P = Ast.Pattern
+module S= Ast.Statement
 module Class = Ast.Class
-module Function = Ast.Function
+module F = Ast.Function
 
 
 type visit_action = Continue | Break
 
+type parent = Program
+            | Statement of Loc.t S.t
+            | Function of Loc.t F.t
+
 type visit_handler = {
-  visit_statement : Loc.t Statement.t -> visit_action;
-  enter_statement : Loc.t Statement.t -> unit;
-  leave_statement : Loc.t Statement.t -> unit;
+  visit_statement : Loc.t S.t -> visit_action;
+  enter_statement : Loc.t S.t -> unit;
+  leave_statement : Loc.t S.t -> unit;
 
-  visit_expression : Loc.t Expression.t -> visit_action;
+  visit_expression : Loc.t E.t -> visit_action;
 
-  visit_function : (Loc.t * Loc.t Function.t) -> visit_action;
-  enter_function : (Loc.t * Loc.t Function.t) -> unit;
-  leave_function : (Loc.t * Loc.t Function.t) -> unit;
+  visit_function : (Loc.t * Loc.t F.t) -> visit_action;
+  enter_function : (Loc.t * Loc.t F.t) -> unit;
+  leave_function : (Loc.t * Loc.t F.t) -> unit;
 
-  visit_block : (Loc.t * Loc.t Statement.Block.t) -> visit_action;
-  enter_block : (Loc.t * Loc.t Statement.Block.t) -> unit;
-  leave_block : (Loc.t * Loc.t Statement.Block.t) -> unit;
+  visit_block : (Loc.t * Loc.t S.Block.t) -> visit_action;
+  enter_block : (Loc.t * Loc.t S.Block.t) -> unit;
+  leave_block : (Loc.t * Loc.t S.Block.t) -> unit;
 
-  visit_pattern : Loc.t Pattern.t -> visit_action;
+  visit_pattern : Loc.t P.t -> visit_action;
 }
 
 let do_nothing _ = Continue
@@ -55,7 +56,7 @@ let visit_if_some handler visit = function
   | None -> ()
   | Some item -> visit handler item
 
-let rec visit_statement handler ((loc, statement) : Loc.t Statement.t) =
+let rec visit_statement handler ((loc, statement) : Loc.t S.t) =
   let () = handler.enter_statement (loc, statement) in
   let action = handler.visit_statement (loc, statement) in
   let () =
@@ -63,123 +64,123 @@ let rec visit_statement handler ((loc, statement) : Loc.t Statement.t) =
     | Break -> ()
     | Continue ->
       match statement with
-      | Statement.Empty ->
+      | S.Empty ->
         ()
 
-      | Statement.Block block ->
+      | S.Block block ->
         visit_block handler (loc, block)
 
-      | Statement.Expression { expression; directive = _directive } ->
+      | S.Expression { expression; directive = _directive } ->
         visit_expression handler expression
 
-      | Statement.If { test; consequent; alternate } ->
+      | S.If { test; consequent; alternate } ->
         visit_expression handler test;
         visit_statement handler consequent;
         visit_if_some handler visit_statement alternate
 
-      | Statement.Labeled { label = (_loc, _label); body } ->
+      | S.Labeled { label = (_loc, _label); body } ->
         visit_statement handler body
 
-      | Statement.Break { label = _label } ->
+      | S.Break { label = _label } ->
         ()
 
-      | Statement.Continue { label = _label } ->
+      | S.Continue { label = _label } ->
         ()
 
-      | Statement.With { _object; body } ->
+      | S.With { _object; body } ->
         visit_statement handler body
 
-      | Statement.TypeAlias {
+      | S.TypeAlias {
           id = _id;
           typeParameters = _typeParameters;
           right = _right
         } ->
         ()
 
-      | Statement.Switch { discriminant; cases } ->
+      | S.Switch { discriminant; cases } ->
         visit_expression handler discriminant;
-        visit_list handler (fun handler (_loc, { Statement.Switch.Case. test; consequent }) ->
+        visit_list handler (fun handler (_loc, { S.Switch.Case. test; consequent }) ->
             visit_if_some handler visit_expression test;
             visit_list handler visit_statement consequent
           ) cases
 
-      | Statement.Return { argument } ->
+      | S.Return { argument } ->
         visit_if_some handler visit_expression argument
 
-      | Statement.Throw { argument } ->
+      | S.Throw { argument } ->
         visit_expression handler argument
 
-      | Statement.Try { block; handler = _handler; finalizer } ->
+      | S.Try { block; handler = _handler; finalizer } ->
         visit_block handler block;
-        visit_if_some handler (fun handler (_loc, { Statement.Try.CatchClause. param; body }) ->
+        visit_if_some handler (fun handler (_loc, { S.Try.CatchClause. param; body }) ->
             visit_pattern handler param;
             visit_block handler body
           ) _handler;
         visit_if_some handler visit_block finalizer
 
-      | Statement.While { test; body } ->
+      | S.While { test; body } ->
         visit_expression handler test;
         visit_statement handler body
 
-      | Statement.DoWhile { body; test } ->
+      | S.DoWhile { body; test } ->
         visit_statement handler body;
         visit_expression handler test;
 
-      | Statement.For { init; test; update; body } ->
+      | S.For { init; test; update; body } ->
         visit_if_some handler(fun handler init -> match init with
-            | Statement.For.InitDeclaration decl -> visit_variable_declaration handler decl
-            | Statement.For.InitExpression expression -> visit_expression handler expression) init;
+            | S.For.InitDeclaration decl -> visit_variable_declaration handler decl
+            | S.For.InitExpression expression -> visit_expression handler expression) init;
         visit_if_some handler visit_expression test;
         visit_if_some handler visit_expression update;
         visit_statement handler body;
 
-      | Statement.ForIn { left; right; body; each = _each } ->
+      | S.ForIn { left; right; body; each = _each } ->
         (match left with
-         | Statement.ForIn.LeftDeclaration decl -> visit_variable_declaration handler decl
-         | Statement.ForIn.LeftPattern pattern -> visit_pattern handler pattern);
+         | S.ForIn.LeftDeclaration decl -> visit_variable_declaration handler decl
+         | S.ForIn.LeftPattern pattern -> visit_pattern handler pattern);
         visit_expression handler right;
         visit_statement handler body
 
-      | Statement.ForOf { left; right; body; async = _async } ->
+      | S.ForOf { left; right; body; async = _async } ->
         (match left with
-         | Statement.ForOf.LeftDeclaration decl -> visit_variable_declaration handler decl
-         | Statement.ForOf.LeftPattern pattern -> visit_pattern handler pattern);
+         | S.ForOf.LeftDeclaration decl -> visit_variable_declaration handler decl
+         | S.ForOf.LeftPattern pattern -> visit_pattern handler pattern);
         visit_expression handler right;
         visit_statement handler body
 
-      | Statement.FunctionDeclaration func ->
+      | S.FunctionDeclaration func ->
         visit_function handler (loc, func)
 
-      | Statement.VariableDeclaration decl ->
+      | S.VariableDeclaration decl ->
         visit_variable_declaration handler (loc, decl)
 
-      | Statement.ClassDeclaration cls ->
+      | S.ClassDeclaration cls ->
         visit_class handler cls
 
-      | Statement.ExportDefaultDeclaration { declaration; _ } ->
+      | S.ExportDefaultDeclaration { declaration; _ } ->
         (match declaration with
-         | Statement.ExportDefaultDeclaration.Declaration stmt ->
+         | S.ExportDefaultDeclaration.Declaration stmt ->
            visit_statement handler stmt
-         | Statement.ExportDefaultDeclaration.Expression expr ->
+         | S.ExportDefaultDeclaration.Expression expr ->
            visit_expression handler expr
         )
 
-      | Statement.ExportNamedDeclaration { declaration; _ } ->
+      | S.ExportNamedDeclaration { declaration; _ } ->
         visit_if_some handler visit_statement declaration;
 
-      | Statement.Debugger -> ()
-      | Statement.InterfaceDeclaration _ -> ()
-      | Statement.ImportDeclaration _ -> ()
-      | Statement.DeclareVariable _ -> ()
-      | Statement.DeclareFunction _ -> ()
-      | Statement.DeclareClass _ -> ()
-      | Statement.DeclareModule _ -> ()
-      | Statement.DeclareModuleExports _ -> ()
-      | Statement.DeclareExportDeclaration _ -> ()
-      | Statement.DeclareInterface _ -> ()
-      | Statement.DeclareTypeAlias _ -> ()
-      | Statement.DeclareOpaqueType _ -> ()
-      | Statement.OpaqueType _ -> ()
+      | S.Debugger -> ()
+      | S.InterfaceDeclaration _ -> ()
+      | S.ImportDeclaration _ -> ()
+      | S.DeclareVariable _ -> ()
+      | S.DeclareFunction _ -> ()
+      | S.DeclareClass _ -> ()
+      | S.DeclareModule _ -> ()
+      | S.DeclareModuleExports _ -> ()
+      | S.DeclareExportDeclaration _ -> ()
+      | S.DeclareInterface _ -> ()
+      | S.DeclareTypeAlias _ -> ()
+      | S.DeclareOpaqueType _ -> ()
+      | S.OpaqueType _ -> ()
   in
   handler.leave_statement (loc, statement)
 
@@ -215,162 +216,162 @@ and visit_class handler {Class. body = (_, { body }); superClass; _} =
         visit_if_some handler visit_expression value
     ) body
 
-and visit_expression handler ((loc, expression) : Loc.t Expression.t) =
+and visit_expression handler ((loc, expression) : Loc.t E.t) =
   let action = handler.visit_expression (loc, expression) in
   match action with
   | Break -> ()
   | Continue ->
     match expression with
-    | Expression.Import _ -> ()
-    | Expression.This -> ()
-    | Expression.Super -> ()
-    | Expression.Array { elements } ->
+    | E.Import _ -> ()
+    | E.This -> ()
+    | E.Super -> ()
+    | E.Array { elements } ->
       visit_list
         handler
         (fun handler -> function
            | None -> ()
            | Some element -> visit_expression_or_spread handler element)
         elements
-    | Expression.Object { properties } ->
+    | E.Object { properties } ->
       visit_list
         handler
         (fun handler prop -> match prop with
-           | Expression.Object.Property property ->
+           | E.Object.Property property ->
              visit_object_property handler property
-           | Expression.Object.SpreadProperty (_, { argument }) ->
+           | E.Object.SpreadProperty (_, { argument }) ->
              visit_expression handler argument
         )
         properties
 
-    | Expression.Function func ->
+    | E.Function func ->
       visit_function handler (loc, func)
 
-    | Expression.ArrowFunction func ->
+    | E.ArrowFunction func ->
       visit_function handler (loc, func)
 
-    | Expression.Sequence { expressions } ->
+    | E.Sequence { expressions } ->
       visit_list handler visit_expression expressions
 
-    | Expression.Unary { operator = _operator; prefix = _prefix; argument } ->
+    | E.Unary { operator = _operator; prefix = _prefix; argument } ->
       visit_expression handler argument
 
-    | Expression.Binary { operator = _operator; left; right } ->
+    | E.Binary { operator = _operator; left; right } ->
       visit_expression handler left;
       visit_expression handler right
 
-    | Expression.Assignment { operator = _operator; left; right } ->
+    | E.Assignment { operator = _operator; left; right } ->
       visit_pattern handler left;
       visit_expression handler right
 
-    | Expression.Update { operator = _operator; argument; prefix = _prefix } ->
+    | E.Update { operator = _operator; argument; prefix = _prefix } ->
       visit_expression handler argument
 
-    | Expression.Logical { operator = _operator; left; right } ->
+    | E.Logical { operator = _operator; left; right } ->
       visit_expression handler left;
       visit_expression handler right
 
-    | Expression.Conditional { test; consequent; alternate } ->
+    | E.Conditional { test; consequent; alternate } ->
       visit_expression handler test;
       visit_expression handler consequent;
       visit_expression handler alternate
 
-    | Expression.New { callee; arguments } ->
+    | E.New { callee; arguments } ->
       visit_expression handler callee;
       visit_list handler visit_expression_or_spread arguments
 
-    | Expression.Call { callee; arguments } ->
+    | E.Call { callee; arguments } ->
       visit_expression handler callee;
       visit_list handler visit_expression_or_spread arguments
 
-    | Expression.Member { _object; property; computed = _computed } ->
+    | E.Member { _object; property; computed = _computed } ->
       visit_expression handler _object;
       begin
       match property with
-      | Expression.Member.PropertyExpression expr ->
+      | E.Member.PropertyExpression expr ->
         visit_expression handler expr
-      | Expression.Member.PropertyIdentifier _ -> ()
-      | Expression.Member.PropertyPrivateName _ -> ()
+      | E.Member.PropertyIdentifier _ -> ()
+      | E.Member.PropertyPrivateName _ -> ()
       end;
-    | Expression.Yield { argument; delegate = _delegate } ->
+    | E.Yield { argument; delegate = _delegate } ->
       visit_if_some handler visit_expression argument
 
-    | Expression.Comprehension _ -> ()
-    | Expression.Generator _ -> ()
-    | Expression.Identifier _ -> ()
-    | Expression.Literal _ -> ()
-    | Expression.TemplateLiteral _ -> ()
-    | Expression.TaggedTemplate _ -> ()
-    | Expression.JSXElement _ -> ()
-    | Expression.JSXFragment _ -> ()
-    | Expression.Class cls ->
+    | E.Comprehension _ -> ()
+    | E.Generator _ -> ()
+    | E.Identifier _ -> ()
+    | E.Literal _ -> ()
+    | E.TemplateLiteral _ -> ()
+    | E.TaggedTemplate _ -> ()
+    | E.JSXElement _ -> ()
+    | E.JSXFragment _ -> ()
+    | E.Class cls ->
       visit_class handler cls
-    | Expression.TypeCast _ -> ()
-    | Expression.MetaProperty _ -> ()
+    | E.TypeCast _ -> ()
+    | E.MetaProperty _ -> ()
 
-and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Loc.t Pattern.t) =
+and visit_pattern (handler : visit_handler) ((_loc, pattern) as p : Loc.t P.t) =
   match handler.visit_pattern p with
   | Break -> ()
   | Continue ->
     match pattern with
 
-    | Pattern.Object { properties; typeAnnotation = _typeAnnotation } ->
+    | P.Object { properties; typeAnnotation = _typeAnnotation } ->
       visit_list
         handler
         (fun handler prop -> match prop with
-           | Pattern.Object.Property (_,{ key = _key; pattern; shorthand = _shorthand }) ->
+           | P.Object.Property (_,{ key = _key; pattern; shorthand = _shorthand }) ->
              visit_pattern handler pattern
-           | Pattern.Object.RestProperty (_,{ argument }) ->
+           | P.Object.RestProperty (_,{ argument }) ->
              visit_pattern handler argument
         ) properties
 
-    | Pattern.Array { elements; typeAnnotation = _typeAnnotation } ->
+    | P.Array { elements; typeAnnotation = _typeAnnotation } ->
       visit_list
         handler
         (fun handler element -> match element with
            | None -> ()
-           | Some (Pattern.Array.Element pattern) ->
+           | Some (P.Array.Element pattern) ->
              visit_pattern handler pattern
-           | Some (Pattern.Array.RestElement (_,{ argument })) ->
+           | Some (P.Array.RestElement (_,{ argument })) ->
              visit_pattern handler argument)
         elements
 
-    | Pattern.Assignment { left; right } ->
+    | P.Assignment { left; right } ->
       visit_pattern handler left;
       visit_expression handler right
 
-    | Pattern.Identifier { name = _name; typeAnnotation = _typeAnnotation; optional = _optional } -> ()
+    | P.Identifier { name = _name; typeAnnotation = _typeAnnotation; optional = _optional } -> ()
 
-    | Pattern.Expression expr -> visit_expression handler expr
+    | P.Expression expr -> visit_expression handler expr
 
 and visit_object_property handler (_, value) =
   match value with
-  | Expression.Object.Property.Init {key; value; _} ->
+  | E.Object.Property.Init {key; value; _} ->
     visit_object_property_key handler key;
     visit_expression handler value
-  | Expression.Object.Property.Method {key; value} ->
+  | E.Object.Property.Method {key; value} ->
     visit_object_property_key handler key;
     visit_function handler value
-  | Expression.Object.Property.Get {key; value} ->
+  | E.Object.Property.Get {key; value} ->
     visit_object_property_key handler key;
     visit_function handler value
-  | Expression.Object.Property.Set {key; value} ->
+  | E.Object.Property.Set {key; value} ->
     visit_object_property_key handler key;
     visit_function handler value
 
 
 and visit_object_property_key handler key =
   match key with
-  | Expression.Object.Property.Literal _lit ->
+  | E.Object.Property.Literal _lit ->
     ()
-  | Expression.Object.Property.Identifier _id ->
+  | E.Object.Property.Identifier _id ->
     ()
-  | Expression.Object.Property.Computed expr ->
+  | E.Object.Property.Computed expr ->
     visit_expression handler expr
-  | Expression.Object.Property.PrivateName _private_name ->
+  | E.Object.Property.PrivateName _private_name ->
     ()
 
 and visit_function handler (_, {
-    Function.
+    F.
     id = _id;
     params;
     body;
@@ -389,9 +390,9 @@ and visit_function handler (_, {
     | Continue ->
       (** TODO: handle `predicate` *)
       (
-        let (_loc, {Function.Params. params;rest}) = params in
+        let (_loc, {F.Params. params;rest}) = params in
         visit_list handler visit_pattern params;
-        visit_if_some handler (fun handler (_loc, { Function.RestElement. argument }) ->
+        visit_if_some handler (fun handler (_loc, { F.RestElement. argument }) ->
             visit_pattern handler argument) rest
       );
       visit_function_body handler body
@@ -400,8 +401,8 @@ and visit_function handler (_, {
 
 and visit_function_body handler body =
   match body with
-  | Function.BodyBlock block -> visit_block handler block
-  | Function.BodyExpression expr -> visit_expression handler expr
+  | F.BodyBlock block -> visit_block handler block
+  | F.BodyExpression expr -> visit_expression handler expr
 
 and visit_block handler ((_, { body }) as block) =
   let () = handler.enter_block block in
@@ -425,8 +426,8 @@ and visit_variable_declarator handler (_, { init; id }) =
    | Some expr -> visit_expression handler expr);
 
 and visit_expression_or_spread handler item = match item with
-  | Expression.Expression expression -> visit_expression handler expression
-  | Expression.Spread (_, { argument }) -> visit_expression handler argument
+  | E.Expression expression -> visit_expression handler expression
+  | E.Spread (_, { argument }) -> visit_expression handler argument
 
 
 let visit handler program =
