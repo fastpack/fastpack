@@ -16,24 +16,35 @@ type visit_handler = {
   visit_statement : Loc.t Statement.t -> visit_action;
   enter_statement : Loc.t Statement.t -> unit;
   leave_statement : Loc.t Statement.t -> unit;
+
   visit_expression : Loc.t Expression.t -> visit_action;
+
   visit_function : (Loc.t * Loc.t Function.t) -> visit_action;
   enter_function : (Loc.t * Loc.t Function.t) -> unit;
   leave_function : (Loc.t * Loc.t Function.t) -> unit;
+
+  visit_block : (Loc.t * Loc.t Statement.Block.t) -> visit_action;
+  enter_block : (Loc.t * Loc.t Statement.Block.t) -> unit;
+  leave_block : (Loc.t * Loc.t Statement.Block.t) -> unit;
+
   visit_pattern : Loc.t Pattern.t -> visit_action;
 }
 
 let do_nothing _ = Continue
+let wrap_nothing _ = ()
 
 let default_visit_handler =
   {
-    enter_statement = (fun _ -> ());
-    leave_statement = (fun _ -> ());
-    enter_function = (fun _ -> ());
-    leave_function = (fun _ -> ());
+    enter_statement = wrap_nothing;
+    leave_statement = wrap_nothing;
+    enter_function = wrap_nothing;
+    leave_function = wrap_nothing;
+    enter_block = wrap_nothing;
+    leave_block = wrap_nothing;
     visit_statement = do_nothing;
     visit_expression = do_nothing;
     visit_function = do_nothing;
+    visit_block = do_nothing;
     visit_pattern = do_nothing;
   }
 
@@ -392,8 +403,15 @@ and visit_function_body handler body =
   | Function.BodyBlock block -> visit_block handler block
   | Function.BodyExpression expr -> visit_expression handler expr
 
-and visit_block handler ((_loc, block) : (Loc.t * Loc.t Statement.Block.t)) =
-  visit_list handler visit_statement block.body
+and visit_block handler ((_, { body }) as block) =
+  let () = handler.enter_block block in
+  let visit_action = handler.visit_block block in
+  let () =
+    match visit_action with
+    | Break -> ()
+    | Continue -> visit_list handler visit_statement body
+  in
+  handler.leave_block block
 
 and visit_variable_declaration handler (_, { declarations; kind = _kind }) =
   visit_list handler
