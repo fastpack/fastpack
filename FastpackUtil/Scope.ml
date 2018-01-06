@@ -318,6 +318,9 @@ let of_function_body args stmts scope =
       add_bindings node;
       Visit.Continue
 
+    (* | S.Try { handler = Some (_,{ param; body }); _ } -> *)
+    (*   failwith "not implemented" *)
+
     | S.ExportDefaultDeclaration {
         declaration = S.ExportDefaultDeclaration.Declaration declaration;
         _

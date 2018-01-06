@@ -55,8 +55,8 @@ let rec visit_statement handler ((loc, statement) : Loc.t Statement.t) =
       | Statement.Empty ->
         ()
 
-      | Statement.Block { body } ->
-        visit_list handler visit_statement body
+      | Statement.Block block ->
+        visit_block handler (loc, block)
 
       | Statement.Expression { expression; directive = _directive } ->
         visit_expression handler expression

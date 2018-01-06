@@ -34,6 +34,10 @@ for(var $i__a__p of $i__a__obj) {
 for(let {$i__1: $c__a__$i__1, $i__2: $c__a__$i__2} = {$_i1 : 1, $_i2: 2};;)
   console.log($_i1, $_i2);
 
+function $i__a__g({$w__1: $c__a__$w__1, $c__2: $c__a__$c__2, ...$c__a__$e__3}) {
+  return Object.assign($c__a__$e__3, {x: $c__a__$w__1 + $c__a__$c__2});
+}
+
 const $n__a = {a1: $e__a__a1, a2: $e__a__a2};
 
 /* index */

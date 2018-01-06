@@ -38,3 +38,4 @@ export {a, a1 as A1};
 export default function doSomethingUseful() {};
 
 let {z1: z11, z2, z3} = {};
+

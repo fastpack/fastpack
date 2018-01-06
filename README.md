@@ -50,9 +50,9 @@ And execute commands from there.
 - [x] FastpackTranspiler: export statements [zindel]
 - [x] Fastpack: import statements handling
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
+- [ ] FastpackTranspiler: spread operator in try/catch clause
 - [ ] FlatPacker: `export default`
-- [ ] FlatPacker: check patterns in function arguments
-- [ ] FlatPacker: check pattern in the `try ... catch` clause
+- [ ] FlatPacker: check pattern in the `try / catch` clause
 - [ ] FlatPacker: add runtime
 - [ ] FlatPacker / RegularPacker: `import` expressions should be Promises
 - [ ] FlatPacker / RegularPacker: Support 'development', 'production', 'test' modes

@@ -30,3 +30,14 @@ for(var p of obj) {
 
 for(let {$i__1, $i__2} = {$_i1 : 1, $_i2: 2};;)
   console.log($_i1, $_i2);
+
+function g({$w__1, $c__2, ...$e__3}) {
+  return Object.assign($e__3, {x: $w__1 + $c__2});
+}
+
+try {
+  g();
+}
+catch({$w__x, ...$c__y}) {
+  console.log($w__x, $c__y);
+}
