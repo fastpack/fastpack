@@ -19,11 +19,7 @@ module MDM = Module.DependencyMap
 
 let debug = Logs.debug
 
-type bindings = {
-  exports : string M.t;
-  internals: string M.t;
-}
-
+type binding_type = Collision
 
 let pack ctx channel =
 
@@ -49,15 +45,12 @@ let pack ctx channel =
    * It should be safe to move this generator into the `analyze` function
    * since these names are always scoped
    * *)
-  let collision = ref 0 in
-  let gen_collision_binding () =
-    collision := !collision + 1;
-    "$_c" ^ (string_of_int !collision)
+  let gen_collision_binding module_id name =
+    Printf.sprintf "$c__%s__%s" module_id name
   in
 
-  let may_collide _name =
-    false
-    (* Str.string_match (Str.regexp "^\\$_[iewc][0-9]+$") name 0 *)
+  let may_collide name =
+    Str.string_match (Str.regexp "^\\$[iewcn]__") name 0
   in
 
   let rec pack ?(with_wrapper=false) ctx modules =
@@ -89,10 +82,13 @@ let pack ctx channel =
       | (_, m) :: _ -> Some m
     in
 
-    let name_of_binding module_id name (binding : Scope.binding) =
-      match binding.exported with
-      | Some exported -> gen_ext_binding module_id exported
-      | None -> gen_int_binding module_id name
+    let name_of_binding ?(typ=None) module_id name (binding : Scope.binding) =
+      match typ with
+      | Some Collision -> gen_collision_binding module_id name
+      | None ->
+        match binding.exported with
+        | Some exported -> gen_ext_binding module_id exported
+        | None -> gen_int_binding module_id name
     in
 
     (* Keep track of all dynamic dependencies while packing *)
@@ -128,8 +124,8 @@ let pack ctx channel =
         in
 
 
-        let patch_binding name (binding : Scope.binding) =
-          patch_loc binding.loc @@ name_of_binding module_id name binding
+        let patch_binding ?(typ=None) name (binding : Scope.binding) =
+          patch_loc binding.loc @@ name_of_binding ~typ module_id name binding
         in
 
         let program_scope = Scope.of_program stmts Scope.empty in
@@ -187,18 +183,17 @@ let pack ctx channel =
         let push_scope scope =
           let scope_collisions =
             Scope.fold_left
-              (fun acc (name, { loc; _ }) ->
+              (fun acc (name, binding) ->
                 let update_acc () =
-                  let binding = gen_collision_binding () in
-                  let () = patch_loc loc binding in
-                  M.add name (binding, loc) acc
+                  let () = patch_binding ~typ:(Some Collision) name binding in
+                  M.add name binding acc
                 in
                 if may_collide name
                 then begin
                   match M.get name acc with
                   | None ->
                     update_acc ()
-                  | Some (_, prev_loc) when (prev_loc <> loc) ->
+                  | Some prev_binding when prev_binding.loc <> binding.loc ->
                     update_acc ()
                   | _ ->
                     acc
@@ -278,7 +273,9 @@ let pack ctx channel =
               )
           | None ->
             match M.get name (top_collisions ()) with
-            | Some (name, _) -> patch_loc loc name
+            | Some binding ->
+              patch_loc loc
+              @@ name_of_binding ~typ:(Some Collision) module_id name binding
             | None -> ()
         in
 

@@ -52,8 +52,8 @@ let tests = [
   (* ("print.js", "", print ~with_scope:false); *)
   (* ("print-with-scope.js", "", print ~with_scope:true); *)
   (* ("pack/index.js", "pack.js", pack_regular); *)
-  ("pack_flat/index.js", "pack_flat.js", pack_flat);
-  (* ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat); *)
+  (* ("pack_flat/index.js", "pack_flat.js", pack_flat); *)
+  ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat);
   (* ("current.js", "", print ~with_scope:false); *)
 ]
 

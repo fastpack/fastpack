@@ -1,13 +1,13 @@
-export let a1 = 1; // expect: let $_e1 = 1;
-export let a2 = 2; // expect: let $_e2 = 2;
+export let a1 = 1;
+export let a2 = 2;
 
 if (false) {
-  let $_e1 = 100; // expect: let $_c1 = 100;
-  a1 += $_e1; // expect: $_e1 += $_c1;
+  let $e__a__a1 = 100;
+  a1 += $e__a__a1;
 }
 
 
-function f($_e1) {return $_e1 + a1}; // expect: function $_i1($_c2) {return $_c2 + $_e1}
+function f($e__a__a1) {return $e__a__a1 + f(a1)};
 
 for (var i = 0; i < 10; i++) {
   console.log(i);
@@ -19,14 +19,14 @@ for(var k in obj) {
 }
 for(var p of obj) {
   console.log(p);
-  let $_w1;
-  for (let {a,b,c, $_c2} of p) {
-    console.log(a, b, c, $_c2);
+  let $w__1;
+  for (let {a,b,c, $c__2} of p) {
+    console.log(a, b, c, $c__2);
   }
-  for ({$_w1} of p) {
-    console.log($_w1);
+  for ({$w__1} of p) {
+    console.log($w__1);
   }
 }
 
-for(let {$_i1, $_i2} = {$_i1 : 1, $_i2: 2};;)
+for(let {$i__1, $i__2} = {$_i1 : 1, $_i2: 2};;)
   console.log($_i1, $_i2);
