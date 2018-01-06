@@ -50,15 +50,14 @@ And execute commands from there.
 - [x] FastpackTranspiler: export statements [zindel]
 - [x] Fastpack: import statements handling
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
+- [ ] FlatPacker: `export default`
 - [ ] FlatPacker: check patterns in function arguments
 - [ ] FlatPacker: check pattern in the `try ... catch` clause
-- [ ] FlatPacker: `module.exports` / `exports`
-- [ ] FlatPacker: `export default`
 - [ ] FlatPacker: add runtime
 - [ ] FlatPacker / RegularPacker: `import` expressions should be Promises
+- [ ] FlatPacker / RegularPacker: Support 'development', 'production', 'test' modes
 - [ ] Fastpack: `--target [ app | es6 | cjs ]` for the last export statement
 - [ ] Fastpack: `--mode [ production | development | test ]`
-- [ ] Fastpack: Support 'development', 'production', 'test' modes
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
   - [ ] Use combinators for error output for nicer formatting?
 - [ ] `--debug` writes to stderr (1)

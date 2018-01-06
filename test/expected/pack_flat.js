@@ -63,7 +63,7 @@ const $n__index = {};
 
 
 function $w__c() {
-
+let $n__c;
 let $i__c__cInternal1 = 100;
 let $i__c__cInternal2 = 200;
 
@@ -84,10 +84,9 @@ function $i__c__c3() {
   $i__c__cInternal1 = null;
 }
 
-Object.assign(module.exports, {c1: $i__c__c1, c2: $i__c__c2, c3: $i__c__c3});
+Object.assign($n__c, {c1: $i__c__c1, c2: $i__c__c2, c3: $i__c__c3});
 
-const $n__c = {};
-
+return $n__c;
 }
 
 /* b */
@@ -108,4 +107,5 @@ export default {b1: $e__b__b1, b2: $e__b__b2, b3: a1};
 
 const $n__b = {b1: $e__b__b1, b2: $e__b__b2};
 
+return $n__b;
 }

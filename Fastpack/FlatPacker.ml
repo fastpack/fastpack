@@ -141,7 +141,18 @@ let pack ctx channel =
             program_scope
         in
 
-        let add_export_all () =
+        let has_namespace_binding = ref false in
+        let patch_namespace loc =
+          patch_loc loc @@ gen_ext_namespace_binding module_id;
+          if (not !has_namespace_binding) then begin
+            patch 0 0
+            @@ Printf.sprintf "let %s;"
+            @@ gen_ext_namespace_binding module_id;
+            has_namespace_binding := true;
+          end
+        in
+
+        let add_namespace_binding () =
           patch_with (String.length source) 0
             (fun _ ->
               let expr =
@@ -413,9 +424,19 @@ let pack ctx channel =
                 );
               Visit.Break;
 
-          (* replace identifiers with previously calculated names *)
-          | E.Identifier id ->
-            patch_identifier id;
+          | E.Member {
+              _object = (_, E.Identifier (_, "module"));
+              property = E.Member.PropertyIdentifier (_, "exports");
+              _
+            } ->
+            patch_namespace loc;
+            Visit.Break;
+
+          (* replace identifiers *)
+          | E.Identifier ((loc, name) as id) ->
+            if (name = "exports")
+            then patch_namespace loc
+            else patch_identifier id;
             Visit.Break;
 
           | E.Assignment { left; _ } ->
@@ -437,7 +458,7 @@ let pack ctx channel =
         } in
         begin
           Visit.visit handler program;
-          add_export_all ();
+          if (not !has_namespace_binding) then add_namespace_binding ();
         end;
 
         (!workspace, !static_deps, program_scope)
@@ -504,7 +525,11 @@ let pack ctx channel =
             (fun () ->
                emit @@ "\nfunction " ^ gen_wrapper_binding m.Module.filename ^ "() {\n"
             ),
-            (fun () -> emit "\n}\n")
+            (fun () ->
+               emit
+               @@ Printf.sprintf "\nreturn %s;\n}\n"
+               @@ gen_ext_namespace_binding m.Module.id
+            )
           else
             (fun () -> emit ""), (fun () -> emit "")
         in
