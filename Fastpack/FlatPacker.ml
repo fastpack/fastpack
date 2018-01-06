@@ -286,7 +286,7 @@ let pack ctx channel =
             let on_property = function
               | P.Object.Property (loc, { pattern; shorthand; _ }) ->
                 if shorthand
-                then patch loc.Loc.start.offset 0 @@ sub_loc loc ^ ": "; 
+                then patch loc.Loc.start.offset 0 @@ sub_loc loc ^ ": ";
                 patch_pattern pattern
               | P.Object.RestProperty (_,{ argument }) ->
                 patch_pattern argument
@@ -350,6 +350,11 @@ let pack ctx channel =
           | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
             let _ = add_static_dep request in
             remove_loc loc;
+            Visit.Continue;
+
+          | S.ForIn {left = S.ForIn.LeftPattern pattern; _}
+          | S.ForOf {left = S.ForOf.LeftPattern pattern; _} ->
+            patch_pattern pattern;
             Visit.Continue;
 
           | _ ->
