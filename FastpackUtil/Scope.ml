@@ -15,6 +15,7 @@ and binding = {
   typ : typ;
   loc : Loc.t;
   exported : string option;
+  shorthand : bool;
 }
 and typ = Import of import
           | Function
@@ -30,7 +31,7 @@ and import = {
 
 let empty = { bindings = M.empty; parent = None; }
 
-let string_of_binding { typ; loc; exported } =
+let string_of_binding { typ; loc; exported; _ } =
   (match typ with
    | Import { source; remote } ->
      let remote = (match remote with | None -> "*" | Some n -> n) in
@@ -66,12 +67,12 @@ let name_of_identifier (_, name) =
   name
 
 let names_of_pattern node =
-  let rec names_of_pattern' names (_, node) =
+  let rec names_of_pattern' ?(shorthand=false) names (_, node) =
     match node with
     | P.Object { properties; _ } ->
       let on_property names = function
-        | P.Object.Property (_,{ pattern; _ }) ->
-          names_of_pattern' names pattern
+        | P.Object.Property (_,{ pattern; shorthand; _ }) ->
+          names_of_pattern' ~shorthand names pattern
         | P.Object.RestProperty (_,{ argument }) ->
           names_of_pattern' names argument
       in
@@ -88,8 +89,8 @@ let names_of_pattern node =
       List.fold_left on_element names elements
     | P.Assignment { left; _ } ->
       names_of_pattern' names left
-    | P.Identifier { name = id; _ } ->
-      id::names
+    | P.Identifier { name; _ } ->
+      (name, shorthand) :: names
     | P.Expression _ ->
       names
   in names_of_pattern' [] node
@@ -105,14 +106,14 @@ let export_binding name remote bindings =
   | None ->
     failwith ("Cannot export previously undefined name: " ^ name)
 
-let update_bindings loc name typ (bindings : binding M.t)=
+let update_bindings loc name typ shorthand (bindings : binding M.t)=
   match M.get name bindings, typ with
   | None, _
   | Some { typ = Argument; _ }, _
   | Some { typ = Function; _ }, Var
   | Some { typ = Function; _ }, Function
   | Some { typ = Var; _}, Var ->
-    M.add name { exported = None; loc; typ } bindings
+    M.add name { exported = None; loc; typ; shorthand } bindings
   | Some { typ = Var; _}, Function ->
     bindings
   | _ ->
@@ -131,7 +132,9 @@ let names_of_node ((_, node) : Loc.t S.t) =
     List.flatten
     @@ List.map
       (fun (_, {S.VariableDeclaration.Declarator. id; _ }) ->
-         List.map (fun name -> (name, typ)) (names_of_pattern id)
+         List.map
+           (fun (name, shorthand) -> (name, typ, shorthand))
+           (names_of_pattern id)
       )
       declarations
   in
@@ -147,7 +150,7 @@ let names_of_node ((_, node) : Loc.t S.t) =
       | None ->
         []
       | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, name)) ->
-        [name, Import { remote = None; source }]
+        [name, Import { remote = None; source }, false]
       | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
         List.filter_map
           (fun {S.ImportDeclaration. kind; local; remote } ->
@@ -160,7 +163,8 @@ let names_of_node ((_, node) : Loc.t S.t) =
                in
                Some (
                  local,
-                 Import {remote = Some (name_of_identifier remote); source}
+                 Import {remote = Some (name_of_identifier remote); source},
+                 false
                )
              | _ ->
                None
@@ -172,12 +176,12 @@ let names_of_node ((_, node) : Loc.t S.t) =
       | None ->
         names
       | Some name ->
-        (name, Import { remote = Some "default"; source}) :: names
+        (name, Import { remote = Some "default"; source}, false) :: names
     end
   | S.ClassDeclaration { id = Some name; _} ->
-    [(name, Class)]
+    [(name, Class, false)]
   | S.FunctionDeclaration { id = Some name; _ } ->
-    [(name, Function)]
+    [(name, Function, false)]
   | S.VariableDeclaration { kind; declarations } ->
     names_of_declarations kind declarations
   | S.For {
@@ -199,8 +203,8 @@ let of_statement ((_, stmt) as node) scope =
   let bindings = ref (M.empty) in
   let add_bindings node =
     List.iter
-      (fun ((loc, name), typ) ->
-        bindings := update_bindings loc name typ !bindings
+      (fun ((loc, name), typ, shorthand) ->
+        bindings := update_bindings loc name typ shorthand !bindings
       )
       @@ names_of_node node
   in
@@ -248,15 +252,17 @@ let of_function_body args stmts scope =
   let bindings =
     ref
     @@ List.fold_left
-      (fun m (loc, name) -> M.add name {exported = None;  loc; typ = Argument} m)
+      (fun m ((loc, name), shorthand) ->
+         M.add name {exported = None;  loc; typ = Argument; shorthand} m
+      )
       M.empty
       args
   in
 
   let add_bindings node =
     List.iter
-      (fun ((loc, name), typ) ->
-        bindings := update_bindings loc name typ !bindings
+      (fun ((loc, name), typ, shorthand) ->
+        bindings := update_bindings loc name typ shorthand !bindings
       )
       @@ names_of_node node
   in
@@ -317,7 +323,7 @@ let of_function_body args stmts scope =
         _
       } ->
       let names =
-        List.map (fun ((_, name), _) -> (name, "default")) @@ names_of_node declaration
+        List.map (fun ((_, name), _, _) -> (name, "default")) @@ names_of_node declaration
       in
       begin
         add_bindings declaration;
@@ -331,7 +337,7 @@ let of_function_body args stmts scope =
         source = None; _
       } ->
       let names =
-        List.map (fun ((_, name), _) -> (name, name)) @@ names_of_node declaration
+        List.map (fun ((_, name), _, _) -> (name, name)) @@ names_of_node declaration
       in
       begin
         add_bindings declaration;

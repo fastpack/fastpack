@@ -204,7 +204,7 @@ let analyze _id filename source =
           _
         } ->
         let exports =
-          List.map (fun ((_, name), _) -> (name, name))
+          List.map (fun ((_, name), _, _) -> (name, name))
           @@ Scope.names_of_node declaration
         in
         begin
