@@ -123,9 +123,10 @@ let pack ctx channel =
             } = Workspace.make_patcher workspace
         in
 
-
         let patch_binding ?(typ=None) name (binding : Scope.binding) =
-          patch_loc binding.loc @@ name_of_binding ~typ module_id name binding
+          patch_loc binding.loc @@ name_of_binding ~typ module_id name binding;
+          if binding.shorthand
+          then patch binding.loc.start.offset 0 @@ name ^ ": "
         in
 
         let program_scope = Scope.of_program stmts Scope.empty in
