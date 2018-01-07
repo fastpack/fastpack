@@ -135,23 +135,23 @@ let analyze _id filename source =
     |> String.concat " "
   in
 
-  let enter_function f =
+  let enter_function _ f =
     push_scope (Scope.of_function f (top_scope ()))
   in
 
-  let leave_function _ =
+  let leave_function _ _ =
     pop_scope ()
   in
 
-  let enter_statement stmt =
+  let enter_statement _ stmt =
     push_scope (Scope.of_statement stmt (top_scope ()))
   in
 
-  let leave_statement _ =
+  let leave_statement _ _ =
     pop_scope ()
   in
 
-  let visit_statement ((loc: Loc.t), stmt) =
+  let visit_statement _ ((loc: Loc.t), stmt) =
     let _ = match stmt with
       | S.ImportDeclaration {
           source = (_, { value = request; _ });
@@ -351,7 +351,7 @@ let analyze _id filename source =
     in Visit.Continue
   in
 
-  let visit_expression ((loc: Loc.t), expr) =
+  let visit_expression _ ((loc: Loc.t), expr) =
     match expr with
     | E.Object { properties } ->
         properties

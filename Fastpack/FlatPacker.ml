@@ -324,29 +324,29 @@ let pack ctx channel =
         (* Level of statement *)
         let stmt_level = ref 0 in
 
-        let enter_function f =
+        let enter_function _ f =
           push_scope (Scope.of_function f (top_scope ()))
         in
 
-        let leave_function _ =
+        let leave_function _ _ =
           pop_scope ()
         in
 
-        let enter_statement (loc, stmt) =
+        let enter_statement _ (loc, stmt) =
           let () = push_scope (Scope.of_statement (loc, stmt) (top_scope ())) in
           match stmt, !stmt_level with
           | S.Block _, 0 -> ()
           | _ -> stmt_level := !stmt_level + 1;
         in
 
-        let leave_statement (_, stmt) =
+        let leave_statement _ (_, stmt) =
           let () = pop_scope () in
           match stmt, !stmt_level with
           | S.Block _, 0 -> ()
           | _ -> stmt_level := !stmt_level - 1;
         in
 
-        let visit_statement (loc, stmt) =
+        let visit_statement _ (loc, stmt) =
           match stmt with
           | S.ExportNamedDeclaration { source = Some _; _} ->
             remove_loc loc;
@@ -372,7 +372,7 @@ let pack ctx channel =
             Visit.Continue
         in
 
-        let visit_expression (loc, expr) =
+        let visit_expression _ (loc, expr) =
           match expr with
           (* patch shorthands, since we will be doing renaming *)
           | E.Object { properties } ->

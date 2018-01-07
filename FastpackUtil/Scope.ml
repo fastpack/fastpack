@@ -273,15 +273,15 @@ let of_function_body args stmts scope =
 
   let level = ref 0 in
 
-  let enter_statement _ =
+  let enter_statement _ctx _ =
     level := !level + 1
   in
 
-  let leave_statement _ =
+  let leave_statement _ctx _ =
     level := !level - 1
   in
 
-  let visit_statement ((_, stmt) as node) =
+  let visit_statement _ctx ((_, stmt) as node) =
     match stmt with
     | S.ImportDeclaration { importKind = S.ImportDeclaration.ImportValue; _} ->
       add_bindings node;
@@ -379,14 +379,11 @@ let of_function_body args stmts scope =
   let handler = {
     Visit.default_visit_handler with
     visit_statement;
-    visit_expression = (fun _ -> Visit.Break);
-    visit_pattern = (fun _ -> Visit.Break);
-    visit_function = (fun _ -> Visit.Break);
     enter_statement;
     leave_statement;
   } in
   let () =
-    Visit.visit_list handler Visit.visit_statement stmts
+    Visit.visit handler ([], stmts, [])
   in {
     bindings = !bindings;
     parent = Some scope;
