@@ -9,9 +9,9 @@ module F = Ast.Function
 
 type visit_action = Continue | Break
 
-type parent = Program
-            | Statement of Loc.t S.t
-            | Function of Loc.t F.t
+type parent = Statement of Loc.t S.t
+            | Function of (Loc.t * Loc.t F.t)
+            | Block of (Loc.t * Loc.t S.Block.t)
 
 and visit_handler = {
   visit_statement : ctx -> Loc.t S.t -> visit_action;
@@ -68,6 +68,14 @@ let rec visit_statement ctx ((loc, statement) : Loc.t S.t) =
     match action with
     | Break -> ()
     | Continue ->
+      let ctx =
+        match statement with
+        (* Block statement doesn't add the Statement, it'll add Block instead *)
+        | S.Block _ ->
+          ctx
+        | _ ->
+          { ctx with parents = (Statement (loc, statement)) :: ctx.parents }
+      in
       match statement with
       | S.Empty ->
         ()
@@ -348,6 +356,7 @@ and visit_pattern ctx ((_loc, pattern) as p : Loc.t P.t) =
 
     | P.Expression expr -> visit_expression ctx expr
 
+
 and visit_object_property ctx (_, value) =
   match value with
   | E.Object.Property.Init {key; value; _} ->
@@ -375,39 +384,27 @@ and visit_object_property_key ctx key =
   | E.Object.Property.PrivateName _private_name ->
     ()
 
-and visit_function ctx (_, {
-    F.
-    id = _id;
-    params;
-    body;
-    async = _async;
-    generator = _generator;
-    predicate = _predicate;
-    expression = _expression;
-    returnType = _returnType;
-    typeParameters = _typeParameters;
-  } as func) =
+
+and visit_function ctx (_, { F. params; body; _ } as func) =
   let () = ctx.handler.enter_function ctx func in
   let action = ctx.handler.visit_function ctx func in
   let () =
     match action with
     | Break -> ()
     | Continue ->
-      (** TODO: handle `predicate` *)
-      (
-        let (_loc, {F.Params. params;rest}) = params in
-        visit_list ctx visit_pattern params;
-        visit_if_some ctx (fun ctx (_loc, { F.RestElement. argument }) ->
-            visit_pattern ctx argument) rest
-      );
-      visit_function_body ctx body
+      let ctx = { ctx with parents = (Function func) :: ctx.parents } in
+      let (_, { F.Params. params; rest }) = params in
+      visit_list ctx visit_pattern params;
+      visit_if_some
+        ctx
+        (fun ctx (_, { F.RestElement. argument }) -> visit_pattern ctx argument)
+        rest;
+      match body with
+      | F.BodyBlock block -> visit_block ctx block
+      | F.BodyExpression expr -> visit_expression ctx expr
   in
   ctx.handler.leave_function ctx func
 
-and visit_function_body ctx body =
-  match body with
-  | F.BodyBlock block -> visit_block ctx block
-  | F.BodyExpression expr -> visit_expression ctx expr
 
 and visit_block ctx ((_, { body }) as block) =
   let () = ctx.handler.enter_block ctx block in
@@ -415,7 +412,11 @@ and visit_block ctx ((_, { body }) as block) =
   let () =
     match visit_action with
     | Break -> ()
-    | Continue -> visit_list ctx visit_statement body
+    | Continue ->
+      visit_list
+        { ctx with parents = (Block block) :: ctx.parents }
+        visit_statement
+        body
   in
   ctx.handler.leave_block ctx block
 
