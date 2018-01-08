@@ -52,7 +52,6 @@ And execute commands from there.
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [ ] FastpackTranspiler: spread operator in try/catch clause
 - [ ] FlatPacker: `export default`
-- [ ] FlatPacker: check pattern in the `try / catch` clause
 - [ ] FlatPacker: add runtime
 - [ ] FlatPacker / RegularPacker: `import` expressions should be Promises
 - [ ] FlatPacker / RegularPacker: Support 'development', 'production', 'test' modes

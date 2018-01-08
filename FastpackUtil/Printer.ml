@@ -1182,11 +1182,12 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     ctx
     |> emit_comments loc
     |> emit "{"
-    (* |> emit_scope (Scope.of_block (loc, block)) *)
+    |> emit_scope (Scope.of_block ctx.parents (loc, block))
     |> indent
     |> push_parent_block (loc, block)
     |> emit_statements block.body
     |> pop_parent_block (loc, block)
+    |> remove_scope
     |> dedent
     |> emit "}"
 

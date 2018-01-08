@@ -199,12 +199,17 @@ let names_of_node ((_, node) : Loc.t S.t) =
   | _ -> []
 
 
-let gather_bindings =
+let gather_bindings ?(init=None) =
+  let init =
+    match init with
+    | Some init -> init
+    | None -> M.empty
+  in
   List.fold_left
     (fun bindings ((loc, name), typ, shorthand) ->
       update_bindings loc name typ shorthand bindings
     )
-    M.empty
+    init
 
 
 let of_statement _ ((_, stmt) as node) scope =
@@ -230,17 +235,6 @@ let of_statement _ ((_, stmt) as node) scope =
       }); _ } ->
       names_of_node node |> gather_bindings
 
-    (* | S.Block { body } -> *)
-    (*   List.iter *)
-    (*     (fun ((_, stmt) as node) -> *)
-    (*        match stmt with *)
-    (*        | S.ClassDeclaration _ *)
-    (*        | S.VariableDeclaration { kind = S.VariableDeclaration.Let; _ } *)
-    (*        | S.VariableDeclaration { kind = S.VariableDeclaration.Const; _ } -> *)
-    (*          add_bindings node *)
-    (*        | _ -> () *)
-    (*     ) *)
-    (*     body *)
     | _ ->
       M.empty
   in
@@ -384,13 +378,25 @@ let bindings_of_function_block stmts =
   !bindings
 
 
-let of_block parents ((_ : Loc.t), { S.Block. body }) scope =
+let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
   let bindings =
     match parents with
     | [] | (AstParentStack.Function _) :: _ ->
       bindings_of_function_block body
     | _ ->
       (* TODO: account for names in try/catch *)
+      let init =
+        match parents with
+        | (AstParentStack.Statement (_, S.Try { handler = Some (
+            _, {S.Try.CatchClause. body; param }
+          ); _})) :: _
+          when body = block ->
+          names_of_pattern param
+          |> List.map (fun (id, shorthand) -> (id, Let, shorthand))
+          |> gather_bindings
+        | _ ->
+          M.empty
+      in
       body
       |> List.map
         (fun ((_, stmt) as node) ->
@@ -402,11 +408,9 @@ let of_block parents ((_ : Loc.t), { S.Block. body }) scope =
            | _ -> []
         )
       |> List.concat
-      |> gather_bindings
+      |> gather_bindings ~init:(Some init)
   in
-  if bindings != M.empty
-  then { bindings; parent = Some scope; }
-  else scope
+  { bindings; parent = Some scope; }
 
 let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
   let bindings =
@@ -421,9 +425,7 @@ let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
        | None -> []
       )
   in
-  if bindings != M.empty
-  then { bindings; parent = Some scope; }
-  else scope
+  { bindings; parent = Some scope; }
 
 let of_program stmts =
   of_block [] (Loc.none, { S.Block. body = stmts; })
