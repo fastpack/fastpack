@@ -57,6 +57,7 @@ And execute commands from there.
 - [ ] FlatPacker / RegularPacker: Support 'development', 'production', 'test' modes
 - [ ] Fastpack: `--target [ app | es6 | cjs ]` for the last export statement
 - [ ] Fastpack: `--mode [ production | development | test ]`
+- [ ] Printer / AstMapper: make sure to handle scope properly: for-in, for-of
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
   - [ ] Use combinators for error output for nicer formatting?
 - [ ] `--debug` writes to stderr (1)
