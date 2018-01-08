@@ -5,13 +5,11 @@ module P = Ast.Pattern
 module S= Ast.Statement
 module Class = Ast.Class
 module F = Ast.Function
+module APS = AstParentStack
 
 
 type visit_action = Continue | Break
 
-type parent = Statement of Loc.t S.t
-            | Function of (Loc.t * Loc.t F.t)
-            | Block of (Loc.t * Loc.t S.Block.t)
 
 and visit_handler = {
   visit_statement : ctx -> Loc.t S.t -> visit_action;
@@ -33,7 +31,7 @@ and visit_handler = {
 
 and ctx = {
   handler : visit_handler;
-  parents : parent list;
+  parents : APS.parent list;
 }
 
 let do_nothing _ _ = Continue
@@ -69,12 +67,7 @@ let rec visit_statement ctx ((loc, statement) : Loc.t S.t) =
     | Break -> ()
     | Continue ->
       let ctx =
-        match statement with
-        (* Block statement doesn't add the Statement, it'll add Block instead *)
-        | S.Block _ ->
-          ctx
-        | _ ->
-          { ctx with parents = (Statement (loc, statement)) :: ctx.parents }
+        { ctx with parents = APS.push_statement (loc, statement) ctx.parents }
       in
       match statement with
       | S.Empty ->
@@ -229,11 +222,12 @@ and visit_class ctx {Class. body = (_, { body }); superClass; _} =
         visit_if_some ctx visit_expression value
     ) body
 
-and visit_expression ctx ((loc, expression) : Loc.t E.t) =
+and visit_expression ctx ((loc, expression) as expr) =
   let action = ctx.handler.visit_expression ctx (loc, expression) in
   match action with
   | Break -> ()
   | Continue ->
+    let ctx = { ctx with parents = APS.push_expression expr ctx.parents } in
     match expression with
     | E.Import _ -> ()
     | E.This -> ()
@@ -392,7 +386,7 @@ and visit_function ctx (_, { F. params; body; _ } as func) =
     match action with
     | Break -> ()
     | Continue ->
-      let ctx = { ctx with parents = (Function func) :: ctx.parents } in
+      let ctx = { ctx with parents = APS.push_function func ctx.parents } in
       let (_, { F.Params. params; rest }) = params in
       visit_list ctx visit_pattern params;
       visit_if_some
@@ -414,7 +408,7 @@ and visit_block ctx ((_, { body }) as block) =
     | Break -> ()
     | Continue ->
       visit_list
-        { ctx with parents = (Block block) :: ctx.parents }
+        { ctx with parents = APS.push_block block ctx.parents }
         visit_statement
         body
   in
