@@ -324,16 +324,26 @@ let pack ctx channel =
         (* Level of statement *)
         let stmt_level = ref 0 in
 
-        let enter_function _ f =
-          push_scope (Scope.of_function f (top_scope ()))
+        let enter_function { Visit. parents; _ } f =
+          push_scope (Scope.of_function parents f (top_scope ()))
         in
 
         let leave_function _ _ =
           pop_scope ()
         in
 
-        let enter_statement _ (loc, stmt) =
-          let () = push_scope (Scope.of_statement (loc, stmt) (top_scope ())) in
+        let enter_block { Visit. parents; _ } block =
+          push_scope (Scope.of_block parents block (top_scope ()))
+        in
+
+        let leave_block _ _ =
+          pop_scope ()
+        in
+
+        let enter_statement { Visit. parents; _ } (loc, stmt) =
+          let () =
+            push_scope (Scope.of_statement parents (loc, stmt) (top_scope ()))
+          in
           match stmt, !stmt_level with
           | S.Block _, 0 -> ()
           | _ -> stmt_level := !stmt_level + 1;
@@ -455,6 +465,8 @@ let pack ctx channel =
           leave_statement;
           enter_function;
           leave_function;
+          enter_block;
+          leave_block;
         } in
         begin
           Visit.visit handler program;

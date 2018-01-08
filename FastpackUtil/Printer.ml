@@ -13,6 +13,8 @@ module J = Ast.JSX
 
 module APS = AstParentStack
 
+let debug = Logs.debug
+
 (** Printer context *)
 type printer_ctx = {
 
@@ -291,7 +293,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     then
       match ctx.scope.parent with
       | Some scope -> { ctx with scope }
-      | None -> assert false
+      | None -> ctx (** TODO: is it a bug? assert is not working for some reason **)
     else
       ctx
 

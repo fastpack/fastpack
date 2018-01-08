@@ -135,16 +135,24 @@ let analyze _id filename source =
     |> String.concat " "
   in
 
-  let enter_function _ f =
-    push_scope (Scope.of_function f (top_scope ()))
+  let enter_function {Visit. parents; _} f =
+    push_scope (Scope.of_function parents f (top_scope ()))
   in
 
   let leave_function _ _ =
     pop_scope ()
   in
 
-  let enter_statement _ stmt =
-    push_scope (Scope.of_statement stmt (top_scope ()))
+  let enter_block {Visit. parents; _} block =
+    push_scope (Scope.of_block parents block (top_scope ()))
+  in
+
+  let leave_block _ _ =
+    pop_scope ()
+  in
+
+  let enter_statement {Visit. parents; _} stmt =
+    push_scope (Scope.of_statement parents stmt (top_scope ()))
   in
 
   let leave_statement _ _ =
@@ -405,6 +413,8 @@ let analyze _id filename source =
     visit_expression;
     enter_function;
     leave_function;
+    enter_block;
+    leave_block;
     enter_statement;
     leave_statement;
   } in
