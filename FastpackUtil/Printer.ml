@@ -13,6 +13,8 @@ module J = Ast.JSX
 
 module APS = AstParentStack
 
+let debug = Logs.debug
+
 (** Printer context *)
 type printer_ctx = {
 
@@ -258,7 +260,7 @@ let  emit_if_none emit option ctx =
   | Some _ -> ctx
   | None -> emit ctx
 
-let print ?(with_scope=false) (_, statements, comments) =
+let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
 
   let rec emit_scope ?(sep="\n") ?(emit_newline_after=true) get_scope ctx =
     if with_scope
@@ -291,7 +293,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     then
       match ctx.scope.parent with
       | Some scope -> { ctx with scope }
-      | None -> assert false
+      | None -> ctx (** TODO: is it a bug? assert is not working for some reason **)
     else
       ctx
 
@@ -453,7 +455,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_scope
           ~sep:", "
           ~emit_newline_after:false
-          (Scope.of_statement (loc, statement)) (* TODO: use List.tl on parents *)
+          @@ Scope.of_statement (List.tl ctx.parents) (loc, statement)
         |> indent
         |> emit_statement body
         |> dedent
@@ -1136,6 +1138,10 @@ let print ?(with_scope=false) (_, statements, comments) =
     |> emit_if_some (fun (_loc, { F.RestElement.  argument }) ctx ->
         ctx |> emit " ..." |> emit_pattern argument) rest
     |> emit_if (not omit_parameter_parens) (emit ")")
+    |> emit_scope
+      ~sep:", "
+      ~emit_newline_after:false
+      (Scope.of_function ctx.parents f)
     |> emit_if as_arrow (emit " => ")
     |> emit_if_some emit_type_annotation returnType
     |> emit_space
@@ -1156,14 +1162,13 @@ let print ?(with_scope=false) (_, statements, comments) =
               | _ -> false
             in
             ctx
-            |> emit_scope ~sep:", " ~emit_newline_after:false (Scope.of_function f)
             |> emit_if parens (emit "(")
             |> push_parent_function f
             |> emit_expression ~parens:false expr
             |> pop_parent_function f
             |> emit_if parens (emit ")")
-            |> remove_scope
        )
+    |> remove_scope
 
   and emit_type_annotation (loc, typeAnnotation) ctx =
     ctx |> emit_comments loc |> emit ": " |> emit_type typeAnnotation

@@ -199,17 +199,16 @@ let names_of_node ((_, node) : Loc.t S.t) =
   | _ -> []
 
 
-let of_statement ((_, stmt) as node) scope =
-  let bindings = ref (M.empty) in
-  let add_bindings node =
-    List.iter
-      (fun ((loc, name), typ, shorthand) ->
-        bindings := update_bindings loc name typ shorthand !bindings
-      )
-      @@ names_of_node node
-  in
+let gather_bindings =
+  List.fold_left
+    (fun bindings ((loc, name), typ, shorthand) ->
+      update_bindings loc name typ shorthand bindings
+    )
+    M.empty
 
-  let () =
+
+let of_statement _ ((_, stmt) as node) scope =
+  let bindings =
     match stmt with
     | S.For { init = Some (S.For.InitDeclaration (_, {
         kind = S.VariableDeclaration.Let; _
@@ -229,35 +228,30 @@ let of_statement ((_, stmt) as node) scope =
     | S.ForOf { left = S.ForOf.LeftDeclaration (_, {
         kind = S.VariableDeclaration.Const; _
       }); _ } ->
-      add_bindings node
-    | S.Block { body } ->
-      List.iter
-        (fun ((_, stmt) as node) ->
-           match stmt with
-           | S.ClassDeclaration _
-           | S.VariableDeclaration { kind = S.VariableDeclaration.Let; _ }
-           | S.VariableDeclaration { kind = S.VariableDeclaration.Const; _ } ->
-             add_bindings node
-           | _ -> ()
-        )
-        body
-    | _ -> ()
+      names_of_node node |> gather_bindings
+
+    (* | S.Block { body } -> *)
+    (*   List.iter *)
+    (*     (fun ((_, stmt) as node) -> *)
+    (*        match stmt with *)
+    (*        | S.ClassDeclaration _ *)
+    (*        | S.VariableDeclaration { kind = S.VariableDeclaration.Let; _ } *)
+    (*        | S.VariableDeclaration { kind = S.VariableDeclaration.Const; _ } -> *)
+    (*          add_bindings node *)
+    (*        | _ -> () *)
+    (*     ) *)
+    (*     body *)
+    | _ ->
+      M.empty
   in
-  if !bindings != M.empty
-  then { bindings = !bindings; parent = Some scope; }
+  if bindings != M.empty
+  then { bindings; parent = Some scope; }
   else scope
 
 
-let of_function_body args stmts scope =
-  let bindings =
-    ref
-    @@ List.fold_left
-      (fun m ((loc, name), shorthand) ->
-         M.add name {exported = None;  loc; typ = Argument; shorthand} m
-      )
-      M.empty
-      args
-  in
+
+let bindings_of_function_block stmts =
+  let bindings = ref (M.empty) in
 
   let add_bindings node =
     List.iter
@@ -268,7 +262,8 @@ let of_function_body args stmts scope =
   in
 
   let export_bindings =
-    List.iter (fun (name, remote) -> bindings := export_binding name remote !bindings)
+    List.iter
+      (fun (name, remote) -> bindings := export_binding name remote !bindings)
   in
 
   let level = ref 0 in
@@ -318,15 +313,14 @@ let of_function_body args stmts scope =
       add_bindings node;
       Visit.Continue
 
-    (* | S.Try { handler = Some (_,{ param; body }); _ } -> *)
-    (*   failwith "not implemented" *)
-
     | S.ExportDefaultDeclaration {
         declaration = S.ExportDefaultDeclaration.Declaration declaration;
         _
       } ->
       let names =
-        List.map (fun ((_, name), _, _) -> (name, "default")) @@ names_of_node declaration
+        List.map
+          (fun ((_, name), _, _) -> (name, "default"))
+          @@ names_of_node declaration
       in
       begin
         add_bindings declaration;
@@ -340,7 +334,9 @@ let of_function_body args stmts scope =
         source = None; _
       } ->
       let names =
-        List.map (fun ((_, name), _, _) -> (name, name)) @@ names_of_node declaration
+        List.map
+          (fun ((_, name), _, _) -> (name, name))
+          @@ names_of_node declaration
       in
       begin
         add_bindings declaration;
@@ -384,14 +380,39 @@ let of_function_body args stmts scope =
   } in
   let () =
     Visit.visit handler ([], stmts, [])
-  in {
-    bindings = !bindings;
-    parent = Some scope;
-  }
+  in
+  !bindings
 
-let of_function (_, {F. params = (_, { params; rest }); body; _}) =
-  let arguments =
-    List.flatten
+
+let of_block parents ((_ : Loc.t), { S.Block. body }) scope =
+  let bindings =
+    match parents with
+    | [] | (AstParentStack.Function _) :: _ ->
+      bindings_of_function_block body
+    | _ ->
+      (* TODO: account for names in try/catch *)
+      body
+      |> List.map
+        (fun ((_, stmt) as node) ->
+           match stmt with
+           | S.ClassDeclaration _
+           | S.VariableDeclaration { kind = S.VariableDeclaration.Let; _ }
+           | S.VariableDeclaration { kind = S.VariableDeclaration.Const; _ } ->
+             names_of_node node
+           | _ -> []
+        )
+      |> List.concat
+      |> gather_bindings
+  in
+  if bindings != M.empty
+  then { bindings; parent = Some scope; }
+  else scope
+
+let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
+  let bindings =
+    gather_bindings
+    @@ List.map (fun (id, shorthand) -> (id, Argument, shorthand))
+    @@ List.flatten
     @@ List.append
       (List.map names_of_pattern params)
       (match rest with
@@ -400,11 +421,13 @@ let of_function (_, {F. params = (_, { params; rest }); body; _}) =
        | None -> []
       )
   in
-  match body with
-  | F.BodyBlock (_, { body; }) -> of_function_body arguments body
-  | F.BodyExpression _ -> of_function_body arguments []
+  if bindings != M.empty
+  then { bindings; parent = Some scope; }
+  else scope
 
-let of_program = of_function_body []
+let of_program stmts =
+  of_block [] (Loc.none, { S.Block. body = stmts; })
+
 
 let rec get_binding name { bindings; parent } =
   let binding = M.get name bindings in
