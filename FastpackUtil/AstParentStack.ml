@@ -18,7 +18,17 @@ let push_block block stack =
 let push_function func stack =
   (Function func) :: stack
 
-let push_statement ((_, stmt) as statement) stack =
-  match stmt with
-  | S.Block _ -> stack
-  | _ -> (Statement statement) :: stack
+let push_statement stmt stack =
+  (Statement stmt) :: stack
+
+let rec top_statement stack =
+  match stack with
+  | [] -> None
+  | (Statement stmt) :: _ -> Some stmt
+  | _ :: tl -> top_statement tl
+
+let rec top_expression stack =
+  match stack with
+  | [] -> None
+  | (Expression expr) :: _ -> Some expr
+  | _ :: tl -> top_expression tl

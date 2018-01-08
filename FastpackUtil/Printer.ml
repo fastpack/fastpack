@@ -11,6 +11,8 @@ module C = Ast.Class
 module F = Ast.Function
 module J = Ast.JSX
 
+module APS = AstParentStack
+
 (** Printer context *)
 type printer_ctx = {
 
@@ -23,11 +25,8 @@ type printer_ctx = {
   (** List of comments *)
   comments : Loc.t Ast.Comment.t list;
 
-  (** Last expression *)
-  parent_expr : Loc.t E.t' option;
-
-  (** Last statement *)
-  parent_stmt : Loc.t S.t';
+  (** Parent stack *)
+  parents : APS.parent list;
 
   (** Current scope *)
   scope: Scope.t;
@@ -115,12 +114,21 @@ module Parens = struct
     | E.Comprehension _ -> failwith "Precedence: Comprehension is not supported"
     | E.MetaProperty _ -> failwith "Precedence: MetaProperty is not supported"
 
-  let is_required ((loc : Loc.t), node)
-      { comments; parent_expr; parent_stmt;  _ } =
+  let is_required ((loc : Loc.t), node) { comments; parents;  _ } =
     let has_comments =
       List.exists
         (fun ((c_loc : Loc.t), _) -> c_loc._end.offset < loc.start.offset)
         comments
+    in
+    let parent_stmt, parent_expr =
+      match APS.top_statement parents, APS.top_expression parents with
+      | None, _ ->
+        (* we always expect parent statement to be in the stack at this moment *)
+        assert false;
+      | Some (_, stmt), None ->
+        stmt, None
+      | Some (_, stmt), Some (_, expr) ->
+        stmt, Some expr
     in
     has_comments ||
       match parent_stmt, parent_expr, node with
@@ -154,11 +162,33 @@ let fail_if_some option message =
   | Some _ -> failwith message
   | None -> ()
 
-let set_parent_expr some_expr ctx =
-  { ctx with parent_expr = some_expr }
+let push_parent_stmt stmt ctx =
+  { ctx with parents = APS.push_statement stmt ctx.parents }
 
-let set_parent_stmt stmt ctx =
-  { ctx with parent_stmt = stmt }
+let pop_parent_stmt stmt ctx =
+  assert (List.hd ctx.parents = (APS.Statement stmt));
+  { ctx with parents = List.tl ctx.parents }
+
+let push_parent_function func ctx =
+  { ctx with parents = APS.push_function func ctx.parents }
+
+let pop_parent_function func ctx =
+  assert (List.hd ctx.parents = (APS.Function func));
+  { ctx with parents = List.tl ctx.parents }
+
+let push_parent_block block ctx =
+  { ctx with parents = APS.push_block block ctx.parents }
+
+let pop_parent_block block ctx =
+  assert (List.hd ctx.parents = (APS.Block block));
+  { ctx with parents = List.tl ctx.parents }
+
+let push_parent_expr expr ctx =
+  { ctx with parents = APS.push_expression expr ctx.parents }
+
+let pop_parent_expr expr ctx =
+  assert (List.hd ctx.parents = (APS.Expression expr));
+  { ctx with parents = List.tl ctx.parents }
 
 let emit str ctx =
   Buffer.add_string ctx.buf str;
@@ -261,7 +291,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     then
       match ctx.scope.parent with
       | Some scope -> { ctx with scope }
-      | None -> failwith "Should not happen"
+      | None -> assert false
     else
       ctx
 
@@ -284,21 +314,14 @@ let print ?(with_scope=false) (_, statements, comments) =
       ctx
 
   and emit_statement (loc, statement) ctx =
-    let prev_parent_stmt = ctx.parent_stmt in
-    let ctx = ctx |> emit_comments loc |> set_parent_stmt statement in
+    let ctx = ctx |> emit_comments loc |> push_parent_stmt (loc, statement) in
     let ctx =
       match statement with
       | S.Empty -> ctx
 
-      | S.Block { body } ->
+      | S.Block block ->
         ctx
-        |> emit "{"
-        |> indent
-        |> emit_scope (Scope.of_statement (loc, statement))
-        |> emit_statements body
-        |> remove_scope
-        |> dedent
-        |> emit "}"
+        |> emit_block (loc, block)
 
       | S.Expression { expression; directive = _directive } ->
         ctx
@@ -430,7 +453,7 @@ let print ?(with_scope=false) (_, statements, comments) =
         |> emit_scope
           ~sep:", "
           ~emit_newline_after:false
-          (Scope.of_statement (loc, statement))
+          (Scope.of_statement (loc, statement)) (* TODO: use List.tl on parents *)
         |> indent
         |> emit_statement body
         |> dedent
@@ -596,16 +619,15 @@ let print ?(with_scope=false) (_, statements, comments) =
       | S.DeclareOpaqueType _ -> failwith "DeclareOpaqueType not supported"
       | S.OpaqueType _ -> failwith "OpaqueType not supported"
     in
-    ctx |> set_parent_stmt prev_parent_stmt
+    ctx |> pop_parent_stmt (loc, statement)
 
   and emit_expression ?(parens=true) (loc, expression) ctx =
     let parens = parens && Parens.is_required (loc, expression) ctx in
-    let prev_parent_expr = ctx.parent_expr in
     let ctx =
       ctx
       |> emit_if parens (emit "(")
       |> emit_comments loc
-      |> set_parent_expr (Some expression)
+      |> push_parent_expr (loc, expression)
     in
     let ctx =
       match expression with
@@ -822,7 +844,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     in
     ctx
     |> emit_if parens (emit ")")
-    |> set_parent_expr prev_parent_expr
+    |> pop_parent_expr (loc, expression)
 
   and emit_jsx_element {
       openingElement = (_, { J.Opening.  name; selfClosing; attributes; });
@@ -1118,17 +1140,13 @@ let print ?(with_scope=false) (_, statements, comments) =
     |> emit_if_some emit_type_annotation returnType
     |> emit_space
     |> (match body with
-        | F.BodyBlock (loc, { body; }) ->
+        | F.BodyBlock ((loc, _) as block) ->
           fun ctx ->
             ctx
             |> emit_comments loc
-            |> emit "{"
-            |> indent
-            |> emit_scope (Scope.of_function f)
-            |> emit_statements body
-            |> remove_scope
-            |> dedent
-            |> emit "}"
+            |> push_parent_function f
+            |> emit_block block
+            |> pop_parent_function f
             |> emit_newline
         | F.BodyExpression expr ->
           fun ctx ->
@@ -1140,7 +1158,9 @@ let print ?(with_scope=false) (_, statements, comments) =
             ctx
             |> emit_scope ~sep:", " ~emit_newline_after:false (Scope.of_function f)
             |> emit_if parens (emit "(")
+            |> push_parent_function f
             |> emit_expression ~parens:false expr
+            |> pop_parent_function f
             |> emit_if parens (emit ")")
             |> remove_scope
        )
@@ -1157,8 +1177,11 @@ let print ?(with_scope=false) (_, statements, comments) =
     ctx
     |> emit_comments loc
     |> emit "{"
+    (* |> emit_scope (Scope.of_block (loc, block)) *)
     |> indent
+    |> push_parent_block (loc, block)
     |> emit_statements block.body
+    |> pop_parent_block (loc, block)
     |> dedent
     |> emit "}"
 
@@ -1300,8 +1323,7 @@ let print ?(with_scope=false) (_, statements, comments) =
     buf = Buffer.create 1024;
     indent = 0;
     comments = comments;
-    parent_expr = None;
-    parent_stmt = S.Empty;
+    parents = [];
     scope = Scope.empty;
   } in
   Buffer.to_bytes
