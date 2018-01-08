@@ -39,3 +39,21 @@ export default function doSomethingUseful() {};
 
 let {z1: z11, z2, z3} = {};
 
+
+for (let p in {a: 1}) {
+  console.log(p);
+}
+
+for (let p of {a: 1}) {
+  console.log(p);
+}
+
+try {
+  let a = 1;
+  throw "test";
+} catch({e1, e2, ...e3}) {
+  console.log(e1, e2, e3);
+} finally {
+  let f = 1;
+}
+

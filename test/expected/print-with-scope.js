@@ -76,3 +76,33 @@ export default function doSomethingUseful()/* SCOPE:  */ {/* SCOPE:  */
 }
 ;
 let {z1: z11, z2, z3} = {};
+for (let p in {a: 1})/* SCOPE: p -> Let [43:9 - 43:10] */
+  {/* SCOPE:  */
+  
+    console.log(p);
+    
+  }
+for (let p of {a: 1})/* SCOPE: p -> Let [47:9 - 47:10] */
+  {/* SCOPE:  */
+  
+    console.log(p);
+    
+  }
+try {/* SCOPE: a -> Let [52:6 - 52:7] */
+
+  let a = 1;
+  throw "test";
+  
+} catch ({e1, e2, ...e3}) {/* SCOPE: 
+e1 -> Let [54:9 - 54:11]
+e2 -> Let [54:13 - 54:15]
+e3 -> Let [54:20 - 54:22]
+ */
+
+  console.log(e1, e2, e3);
+  
+} finally {/* SCOPE: f -> Let [57:6 - 57:7] */
+
+  let f = 1;
+  
+}

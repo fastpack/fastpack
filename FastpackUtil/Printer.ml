@@ -293,7 +293,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     then
       match ctx.scope.parent with
       | Some scope -> { ctx with scope }
-      | None -> ctx (** TODO: is it a bug? assert is not working for some reason **)
+      | None -> assert false
     else
       ctx
 
@@ -416,6 +416,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
             |> emit " finally "
             |> emit_block finalizer
           ) finalizer
+        |> emit_newline
 
       | S.While { test; body } ->
         ctx
@@ -471,9 +472,14 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> emit " in "
         |> emit_expression right
         |> emit ")"
+        |> emit_scope
+          ~sep:", "
+          ~emit_newline_after:false
+          @@ Scope.of_statement (List.tl ctx.parents) (loc, statement)
         |> indent
         |> emit_statement body
         |> dedent
+        |> remove_scope
 
       | S.ForOf { left; right; body; async } ->
         ctx
@@ -486,9 +492,14 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> emit " of "
         |> emit_expression right
         |> emit ")"
+        |> emit_scope
+          ~sep:", "
+          ~emit_newline_after:false
+          @@ Scope.of_statement (List.tl ctx.parents) (loc, statement)
         |> indent
         |> emit_statement body
         |> dedent
+        |> remove_scope
 
       | S.Debugger ->
         ctx
