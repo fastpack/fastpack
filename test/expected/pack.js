@@ -21,7 +21,7 @@ Object.defineProperty(exports, "updateA", {get: () => updateA});
 const $lib1 = __fastpack_require__(/* "./z" */ "z");
 Object.defineProperty(exports, "Z", {get: () => $lib1});
 const $lib2 = __fastpack_require__(/* "./y" */ "y");
-Object.defineProperty(exports, "a", {get: () => $lib2.a}); Object.defineProperty(exports, "updateA", {get: () => $lib2.updateA});
+Object.defineProperty(exports, "default", {get: () => $lib2.default}); Object.defineProperty(exports, "a", {get: () => $lib2.a}); Object.defineProperty(exports, "updateA", {get: () => $lib2.updateA});
 },
 "yz_reimport": function(module, exports, __fastpack_require__) {
 const $lib1 = __fastpack_require__(/* "./y" */ "y");

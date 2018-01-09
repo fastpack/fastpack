@@ -1,7 +1,6 @@
 import {a1, a2 as A2} from './a';
 import * as D from './d';
 import Declaration from './default_declaration';
-// import Expression from './default_expression';
 
 {
   {

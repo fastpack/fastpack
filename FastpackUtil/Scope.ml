@@ -10,6 +10,7 @@ module M = Map.Make(String)
 type t = {
   parent : t option;
   bindings : binding M.t;
+  export_default : bool;
 }
 and binding = {
   typ : typ;
@@ -29,7 +30,7 @@ and import = {
   remote: string option;
 }
 
-let empty = { bindings = M.empty; parent = None; }
+let empty = { bindings = M.empty; parent = None; export_default = false }
 
 let string_of_binding { typ; loc; exported; _ } =
   (match typ with
@@ -239,12 +240,12 @@ let of_statement _ ((_, stmt) as node) scope =
       M.empty
   in
   if bindings != M.empty
-  then { bindings; parent = Some scope; }
+  then { empty with bindings; parent = Some scope }
   else scope
 
 
 
-let bindings_of_function_block stmts =
+let of_function_block stmts =
   let bindings = ref (M.empty) in
 
   let add_bindings node =
@@ -260,6 +261,7 @@ let bindings_of_function_block stmts =
       (fun (name, remote) -> bindings := export_binding name remote !bindings)
   in
 
+  let export_default = ref false in
   let level = ref 0 in
 
   let enter_statement _ctx _ =
@@ -316,11 +318,14 @@ let bindings_of_function_block stmts =
           (fun ((_, name), _, _) -> (name, "default"))
           @@ names_of_node declaration
       in
-      begin
-        add_bindings declaration;
-        export_bindings names;
-        Visit.Break
-      end
+      export_default := true;
+      add_bindings declaration;
+      export_bindings names;
+      Visit.Break
+
+    | S.ExportDefaultDeclaration _ ->
+      export_default := true;
+      Visit.Break
 
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
@@ -375,14 +380,14 @@ let bindings_of_function_block stmts =
   let () =
     Visit.visit handler ([], stmts, [])
   in
-  !bindings
+  !export_default, !bindings
 
 
 let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
-  let bindings =
+  let export_default, bindings =
     match parents with
     | [] | (AstParentStack.Function _) :: _ ->
-      bindings_of_function_block body
+      of_function_block body
     | _ ->
       (* TODO: account for names in try/catch *)
       let init =
@@ -397,6 +402,7 @@ let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
         | _ ->
           M.empty
       in
+      false,
       body
       |> List.map
         (fun ((_, stmt) as node) ->
@@ -410,7 +416,7 @@ let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
       |> List.concat
       |> gather_bindings ~init:(Some init)
   in
-  { bindings; parent = Some scope; }
+  { bindings; parent = Some scope; export_default }
 
 let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
   let bindings =
@@ -425,13 +431,13 @@ let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
        | None -> []
       )
   in
-  { bindings; parent = Some scope; }
+  { empty with bindings; parent = Some scope; }
 
 let of_program stmts =
   of_block [] (Loc.none, { S.Block. body = stmts; })
 
 
-let rec get_binding name { bindings; parent } =
+let rec get_binding name { bindings; parent; _ } =
   let binding = M.get name bindings in
   match binding, parent with
   | None, Some parent -> get_binding name parent
@@ -444,9 +450,31 @@ let bindings scope =
   scope.bindings |> M.bindings
 
 let get_exports scope =
-  scope.bindings
-  |> M.bindings
-  |> List.filter_map (fun (_, { exported; _ }) -> exported)
+  let named_default = ref false in
+  let exports =
+    scope.bindings
+    |> M.bindings
+    |> List.filter_map
+      (fun (name, ({ exported; _ } as binding)) ->
+         match exported with
+         | Some exported ->
+           if exported = "default" then named_default := true;
+           Some(exported, Some name, binding)
+         | None ->
+           None
+      )
+  in
+  if scope.export_default && (not !named_default)
+  then
+    ("default",
+     None,
+     {
+       typ = Const;
+       loc = Loc.none;
+       exported = Some "default";
+       shorthand = false
+     }) :: exports
+  else exports
 
 let iter f scope =
   scope.bindings

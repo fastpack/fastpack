@@ -156,16 +156,16 @@ let pack ctx channel =
           patch_with (String.length source) 0
             (fun _ ->
               let expr =
-                Scope.bindings program_scope
-                |> List.filter_map
-                  (fun (name, binding) ->
-                     match binding.Scope.exported with
-                     | None -> None
-                     | Some exported ->
-                       Some (
-                         Printf.sprintf "%s: %s" exported
-                         @@ name_of_binding module_id name binding
-                       )
+                Scope.get_exports program_scope
+                |> List.map
+                  (fun (exported_name, internal_name, binding) ->
+                     match internal_name with
+                     | Some internal_name ->
+                       Printf.sprintf "%s: %s" exported_name
+                       @@ name_of_binding module_id internal_name binding
+                     | None ->
+                       Printf.sprintf "default: %s"
+                       @@ gen_ext_binding module_id "default"
                   )
                 |> String.concat ", "
                 |> Printf.sprintf "{%s}"
@@ -259,18 +259,14 @@ let pack ctx channel =
               gen_ext_namespace_binding m.Module.id
             | Some remote ->
               let names =
-                Scope.bindings m.scope
+                Scope.get_exports m.scope
                 |> List.filter
-                  (fun (_, {Scope. exported; _}) ->
-                     match exported with
-                     | Some exported -> exported = remote
-                     | None -> false
-                  )
+                  (fun (name, _, _) -> name = remote)
               in
               match names with
               | [] ->
                 failwith ("Name " ^ remote ^ " not found in module " ^ m.Module.filename)
-              | (name, ({ Scope. typ; _} as binding)) :: _ ->
+              | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
                 match typ with
                 | Scope.Import import -> resolve_import dep_map import
                 | _ -> name_of_binding m.id name binding
@@ -380,6 +376,16 @@ let pack ctx channel =
           | S.ExportNamedDeclaration { specifiers = Some _; _ }->
             remove_loc loc;
             Visit.Break;
+
+          | S.ExportDefaultDeclaration {
+              declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _);
+              _ } ->
+            patch
+              loc.Loc.start.offset
+              (expr_loc.Loc.start.offset - loc.Loc.start.offset)
+            @@ Printf.sprintf "const %s = "
+            @@ gen_ext_binding module_id "default";
+            Visit.Continue
 
           | S.ExportDefaultDeclaration {
               declaration = S.ExportDefaultDeclaration.Declaration (stmt_loc, _);

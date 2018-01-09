@@ -298,7 +298,7 @@ let analyze _id filename source =
             let {Module. id = module_id; scope; _} = get_module dep ctx in
             let exports_from binding =
               Scope.get_exports scope
-              |> List.map (fun name -> name, binding ^ "." ^ name)
+              |> List.map (fun (name, _, _) -> name, binding ^ "." ^ name)
             in
             match get_module_binding dep.request with
             | Some binding ->
