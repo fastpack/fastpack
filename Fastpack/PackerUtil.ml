@@ -1,16 +1,23 @@
 
+type mode = Production | Development | Test
+
 type ctx = {
   entry_filename : string;
   package_dir : string;
   transpile : string -> string -> string;
   stack : Dependency.t list;
-  development : bool;
+  mode : mode;
 }
 
+let string_of_mode (m : mode) =
+  match m with
+  | Production -> "production"
+  | Development -> "development"
+  | Test -> "test"
 
-let ctx_to_string { package_dir; stack; development; _ } =
+let ctx_to_string { package_dir; stack; mode; _ } =
   Printf.sprintf "Working directory: %s\n" package_dir
-  ^ Printf.sprintf "Mode: %s" (if development then "development" else "production")
+  ^ Printf.sprintf "Mode: %s" (string_of_mode mode)
   ^ "\nCall stack:\n"
   ^ String.concat "\t\n" @@ List.map Dependency.to_string stack
 

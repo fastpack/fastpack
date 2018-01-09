@@ -6,8 +6,8 @@ let () =
     let run
         input
         output
-        flat
-        development
+        bundle
+        mode
         transpile_all
         transpile_react_jsx
         transpile_flow
@@ -19,8 +19,8 @@ let () =
           { Fastpack.empty_options with
             input;
             output;
-            flat = Some flat;
-            development = Some development;
+            bundle;
+            mode;
           }
         in
         let options =
@@ -73,16 +73,31 @@ let () =
       Arg.(value & opt (some string) None & info ["o"; "output"] ~docv ~doc)
     in
 
-    let flat_t =
-      let doc = "Build flat bundle (fastpack.flat in package.json)" in
-      let docv = "FLAG" in
-      Arg.(value & flag & info ["flat"] ~docv ~doc)
+    let bundle_t =
+      let doc =
+        "Bundle type [ regular / flat ] (fastpack.flat in package.json)"
+      in
+      let docv = "[ regular | flat ]" in
+      let bundle =
+        Arg.enum [
+          "regular", Fastpack.Regular;
+          "flat", Fastpack.Flat;
+        ]
+      in
+      Arg.(value & opt (some bundle) None & info ["bundle"] ~docv ~doc)
     in
 
-    let dev_t =
-      let doc = "Build development bundle (fastpack.development in package.json)" in
-      let docv = "DEVELOPMENT" in
-      Arg.(value & flag & info ["dev"] ~docv ~doc)
+    let mode_t =
+      let doc = "process.env.NODE_ENV (fastpack.mode in package.json)" in
+      let docv = "[ production | development | test ]" in
+      let mode =
+        Arg.enum [
+          "production", Fastpack.PackerUtil.Production;
+          "development", Fastpack.PackerUtil.Development;
+          "test", Fastpack.PackerUtil.Test;
+        ]
+      in
+      Arg.(value & opt (some mode) None & info ["mode"] ~docv ~doc)
     in
 
     let transpile_all =
@@ -130,17 +145,18 @@ let () =
       Arg.(value & opt_all string [] & info ["transpile-object-spread"] ~docv ~doc)
     in
 
-    Term.(ret (const run
-               $ input_t
-               $ output_t
-               $ flat_t
-               $ dev_t
-               $ transpile_all
-               $ transpile_react_jsx
-               $ transpile_flow
-               $ transpile_class
-               $ transpile_object_spread
-              ))
+    Term.(ret (
+        const run
+        $ input_t
+        $ output_t
+        $ bundle_t
+        $ mode_t
+        $ transpile_all
+        $ transpile_react_jsx
+        $ transpile_flow
+        $ transpile_class
+        $ transpile_object_spread
+    ))
   in
 
   let info =

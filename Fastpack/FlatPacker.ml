@@ -21,7 +21,7 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let pack ctx channel =
+let pack ?(with_runtime=true) ctx channel =
 
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
@@ -570,7 +570,8 @@ let pack ctx channel =
             (fun () -> emit ""), (fun () -> emit "")
         in
         debug (fun m_ -> m_ "Emitting: %s" m.Module.filename);
-        emit (Printf.sprintf "\n/* %s */\n\n" m.id)
+        emit (if with_runtime then "" else "") (* TODO: add real runtime here *)
+        >> emit (Printf.sprintf "\n/* %s */\n\n" m.id)
         >> emit_wrapper_start ()
         >> Workspace.write channel m.Module.workspace dep_map
         >> emit_wrapper_end ()
