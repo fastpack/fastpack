@@ -8,4 +8,4 @@ export function b2() {
   return a + 2;
 }
 
-export default {b1, b2, b3: a1};
+export default {b1, b2, b3: a};

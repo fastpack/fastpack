@@ -105,7 +105,7 @@ function $e__b__b2() {
   return $e__a__a1 + 2;
 }
 
-const $e__b__default = {b1: $e__b__b1, b2: $e__b__b2, b3: a1};
+const $e__b__default = {b1: $e__b__b1, b2: $e__b__b2, b3: $e__a__a1};
 
 const $n__b = {default: $e__b__default, b1: $e__b__b1, b2: $e__b__b2};
 
