@@ -17,7 +17,7 @@ let pack pack_f entry_filename _ =
     let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
     Fastpack.pack
       ~pack_f
-      ~mode:Fastpack.PackerUtil.Production
+      ~mode:Fastpack.Mode.Production
       ~transpile_f:(fun _ _ p -> p)
       ~entry_filename
       ~package_dir:(Filename.dirname entry_filename)
@@ -39,7 +39,7 @@ let pack_stdout entry_filename _ =
   let pack' () =
     Fastpack.pack
       ~pack_f:(Fastpack.FlatPacker.pack)
-      ~mode:Fastpack.PackerUtil.Production
+      ~mode:Fastpack.Mode.Production
       ~transpile_f:(fun _ _ p -> p)
       ~entry_filename
       ~package_dir:(Filename.dirname entry_filename)

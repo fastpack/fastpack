@@ -92,9 +92,9 @@ let () =
       let docv = "[ production | development | test ]" in
       let mode =
         Arg.enum [
-          "production", Fastpack.PackerUtil.Production;
-          "development", Fastpack.PackerUtil.Development;
-          "test", Fastpack.PackerUtil.Test;
+          "production", Fastpack.Mode.Production;
+          "development", Fastpack.Mode.Development;
+          "test", Fastpack.Mode.Test;
         ]
       in
       Arg.(value & opt (some mode) None & info ["mode"] ~docv ~doc)

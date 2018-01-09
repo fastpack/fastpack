@@ -1,34 +1,50 @@
 
-type mode = Production | Development | Test
+module Mode = struct
+  type t = Production | Development | Test
 
-type ctx = {
-  entry_filename : string;
-  package_dir : string;
-  transpile : string -> string -> string;
-  stack : Dependency.t list;
-  mode : mode;
-}
+  let to_string m =
+    match m with
+    | Production -> "production"
+    | Development -> "development"
+    | Test -> "test"
+end
 
-let string_of_mode (m : mode) =
-  match m with
-  | Production -> "production"
-  | Development -> "development"
-  | Test -> "test"
+module Target = struct
+  type t = Application | EcmaScipt6Module | CommonJS
 
-let ctx_to_string { package_dir; stack; mode; _ } =
-  Printf.sprintf "Working directory: %s\n" package_dir
-  ^ Printf.sprintf "Mode: %s" (string_of_mode mode)
-  ^ "\nCall stack:\n"
-  ^ String.concat "\t\n" @@ List.map Dependency.to_string stack
+  let to_string (t : t) =
+    match t with
+    | Application -> "Application"
+    | EcmaScipt6Module -> "EcmaScript 6 Module"
+    | CommonJS -> "CommonJS Module"
+end
+
+module Context = struct
+  type t = {
+    entry_filename : string;
+    package_dir : string;
+    transpile : string -> string -> string;
+    stack : Dependency.t list;
+    mode : Mode.t;
+    target : Target.t;
+  }
+
+  let to_string { package_dir; stack; mode; _ } =
+    Printf.sprintf "Working directory: %s\n" package_dir
+    ^ Printf.sprintf "Mode: %s" (Mode.to_string mode)
+    ^ "\nCall stack:\n"
+    ^ String.concat "\t\n" @@ List.map Dependency.to_string stack
+end
 
 
-exception PackError of ctx * Error.reason
+
+exception PackError of Context.t * Error.reason
 
 
 let abs_path dir filename =
   FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute dir filename
 
-let relative_name { package_dir; _} filename =
+let relative_name {Context. package_dir; _} filename =
   String.(
     sub
       filename
@@ -36,7 +52,7 @@ let relative_name { package_dir; _} filename =
       (length filename - length package_dir - 1)
   )
 
-let read_module ctx filename =
+let read_module (ctx : Context.t) filename =
   let filename = abs_path ctx.package_dir filename in
 
   if not (FilePath.is_subdir filename ctx.package_dir)
@@ -64,4 +80,3 @@ let read_module ctx filename =
     scope = FastpackUtil.Scope.empty;
   }
 
-let ie s = failwith ("Internal Error: " ^ s)

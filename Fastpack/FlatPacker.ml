@@ -21,7 +21,7 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let pack ?(with_runtime=true) ctx channel =
+let pack ?(with_runtime=true) (ctx : Context.t) channel =
 
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
@@ -53,7 +53,7 @@ let pack ?(with_runtime=true) ctx channel =
     Str.string_match (Str.regexp "^\\$[iewcn]__") name 0
   in
 
-  let rec pack ?(with_wrapper=false) ctx modules =
+  let rec pack ?(with_wrapper=false) (ctx : Context.t) modules =
 
     let () = debug (fun m -> m "Packing: %s" ctx.entry_filename) in
 
@@ -103,7 +103,7 @@ let pack ?(with_runtime=true) ctx channel =
       dep
     in
 
-    let rec process ({transpile; _} as ctx) graph (m : Module.t) =
+    let rec process ({Context. transpile; _} as ctx) graph (m : Module.t) =
 
       let analyze module_id filename source =
         debug (fun m -> m "Analyzing: %s" filename);
@@ -328,7 +328,7 @@ let pack ?(with_runtime=true) ctx channel =
             (fun _ ->
                match get_resolved_request dep with
                | None ->
-                 ie "At this point dependency should be resolved"
+                 Error.ie "At this point dependency should be resolved"
                | Some filename ->
                  let wrapper = gen_wrapper_binding filename in
                  Printf.sprintf "%s(%s)" require wrapper

@@ -23,3 +23,5 @@ let to_string error =
     in
     Printf.sprintf "Parse Error\nFile: %s\n\t" filename
     ^ String.concat "\n\t" (List.map format_error errors)
+
+let ie s = failwith ("Internal Error: " ^ s)

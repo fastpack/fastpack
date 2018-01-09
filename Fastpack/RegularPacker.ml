@@ -426,7 +426,7 @@ let analyze _id filename source =
 let pack ?(with_runtime=true) ctx channel =
 
   (* Gather dependencies *)
-  let rec process ({transpile; _} as ctx) graph (m : Module.t) =
+  let rec process ({Context. transpile; _} as ctx) graph (m : Module.t) =
     let source = m.Module.workspace.Workspace.value in
     (* TODO: reafctor this *)
     let transpiled =

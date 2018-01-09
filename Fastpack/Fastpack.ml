@@ -1,11 +1,10 @@
 
-module PackerUtil = PackerUtil
 module Error = Error
-
+module Mode = PackerUtil.Mode
+module Target = PackerUtil.Target
+module Context = PackerUtil.Context
 module RegularPacker = RegularPacker
 module FlatPacker = FlatPacker
-
-module StringSet = Set.Make(String)
 
 
 open PackerUtil
@@ -17,14 +16,14 @@ type bundle = Regular | Flat
 let string_of_error ctx error =
   Printf.sprintf
     "\n%s\n%s"
-    (PackerUtil.ctx_to_string ctx)
+    (Context.to_string ctx)
     (Error.to_string error)
 
 type options = {
   input: string option;
   output: string option;
   bundle : bundle option;
-  mode: mode option;
+  mode: Mode.t option;
   transpile_react_jsx : string list option;
   transpile_class : string list option;
   transpile_flow : string list option;
@@ -73,12 +72,13 @@ let merge_options o1 o2 =
   }
 
 let pack ~pack_f ~mode ~transpile_f ~entry_filename ~package_dir channel =
-  let ctx = {
+  let ctx = { Context.
     entry_filename;
     package_dir;
     transpile = transpile_f package_dir;
     stack = [];
     mode;
+    target = Target.Application;
   }
   in
   pack_f ctx channel
@@ -157,12 +157,12 @@ let prepare_and_pack cl_options =
       match options.bundle with
       | Some Regular -> RegularPacker.pack
       | Some Flat -> FlatPacker.pack
-      | None -> ie "Unexpected Packer"
+      | None -> Error.ie "Unexpected Packer"
     in
     let mode =
       match options.mode with
       | Some mode -> mode
-      | None -> ie "mode is not set"
+      | None -> Error.ie "mode is not set"
     in
     Lwt_io.with_file
       ~mode:Lwt_io.Output
@@ -171,7 +171,7 @@ let prepare_and_pack cl_options =
       output_file
       @@ pack ~pack_f ~mode ~transpile_f ~entry_filename ~package_dir
   | _ ->
-    ie "input / output are not provided"
+    Error.ie "input / output are not provided"
 
 
 let pack_main options =
