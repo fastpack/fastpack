@@ -8,6 +8,7 @@ let () =
         output
         bundle
         mode
+        target
         transpile_all
         transpile_react_jsx
         transpile_flow
@@ -21,6 +22,7 @@ let () =
             output;
             bundle;
             mode;
+            target;
           }
         in
         let options =
@@ -100,6 +102,19 @@ let () =
       Arg.(value & opt (some mode) None & info ["mode"] ~docv ~doc)
     in
 
+    let target_t =
+      let doc = "Deployment target (fastpack.target in package.json)" in
+      let docv = "[ app | es6 | cjs ]" in
+      let target =
+        Arg.enum [
+          "app", Fastpack.Target.Application;
+          "es6", Fastpack.Target.EcmaScript6;
+          "cjs", Fastpack.Target.CommonJS;
+        ]
+      in
+      Arg.(value & opt (some target) None & info ["target"] ~docv ~doc)
+    in
+
     let transpile_all =
       let doc =
         "[Experimental] Apply all transpilers to files matching $(docv)"
@@ -151,6 +166,7 @@ let () =
         $ output_t
         $ bundle_t
         $ mode_t
+        $ target_t
         $ transpile_all
         $ transpile_react_jsx
         $ transpile_flow

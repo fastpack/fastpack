@@ -24,6 +24,7 @@ type options = {
   output: string option;
   bundle : bundle option;
   mode: Mode.t option;
+  target: Target.t option;
   transpile_react_jsx : string list option;
   transpile_class : string list option;
   transpile_flow : string list option;
@@ -35,6 +36,7 @@ let empty_options = {
     output = None;
     bundle = None;
     mode = None;
+    target = None;
     transpile_react_jsx = None;
     transpile_class = None;
     transpile_flow = None;
@@ -47,6 +49,7 @@ let default_options =
     output = Some "./bundle/bundle.js";
     bundle = Some Regular;
     mode = Some Production;
+    target = Some Application;
     transpile_react_jsx = None;
     transpile_class = None;
     transpile_flow = None;
@@ -65,20 +68,21 @@ let merge_options o1 o2 =
     output = merge o1.output o2.output;
     bundle = merge o1.bundle o2.bundle;
     mode = merge o1.mode o2.mode;
+    target = merge o1.target o2.target;
     transpile_react_jsx = merge o1.transpile_react_jsx o2.transpile_react_jsx;
     transpile_flow = merge o1.transpile_flow o2.transpile_flow;
     transpile_class = merge o1.transpile_class o2.transpile_class;
     transpile_object_spread = merge o1.transpile_object_spread o2.transpile_object_spread;
   }
 
-let pack ~pack_f ~mode ~transpile_f ~entry_filename ~package_dir channel =
+let pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir channel =
   let ctx = { Context.
     entry_filename;
     package_dir;
     transpile = transpile_f package_dir;
     stack = [];
     mode;
-    target = Target.Application;
+    target;
   }
   in
   pack_f ctx channel
@@ -164,12 +168,17 @@ let prepare_and_pack cl_options =
       | Some mode -> mode
       | None -> Error.ie "mode is not set"
     in
+    let target =
+      match options.target with
+      | Some target -> target
+      | None -> Error.ie "target is not set"
+    in
     Lwt_io.with_file
       ~mode:Lwt_io.Output
       ~perm:0o640
       ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
       output_file
-      @@ pack ~pack_f ~mode ~transpile_f ~entry_filename ~package_dir
+      @@ pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir
   | _ ->
     Error.ie "input / output are not provided"
 

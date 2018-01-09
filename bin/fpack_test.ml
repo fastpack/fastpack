@@ -18,6 +18,7 @@ let pack pack_f entry_filename _ =
     Fastpack.pack
       ~pack_f
       ~mode:Fastpack.Mode.Production
+      ~target:Fastpack.Target.Application
       ~transpile_f:(fun _ _ p -> p)
       ~entry_filename
       ~package_dir:(Filename.dirname entry_filename)
@@ -40,6 +41,7 @@ let pack_stdout entry_filename _ =
     Fastpack.pack
       ~pack_f:(Fastpack.FlatPacker.pack)
       ~mode:Fastpack.Mode.Production
+      ~target:Fastpack.Target.Application
       ~transpile_f:(fun _ _ p -> p)
       ~entry_filename
       ~package_dir:(Filename.dirname entry_filename)
