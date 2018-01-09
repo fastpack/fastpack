@@ -17,7 +17,6 @@ let debug = Logs.debug
 
 (** Printer context *)
 type printer_ctx = {
-
   (** Current indentation level *)
   indent : int;
 

@@ -56,3 +56,5 @@ let read_module ctx filename =
     workspace = Workspace.of_string source;
     scope = FastpackUtil.Scope.empty;
   }
+
+let ie s = failwith ("Internal Error: " ^ s)

@@ -51,9 +51,12 @@ And execute commands from there.
 - [x] Fastpack: import statements handling
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [ ] FastpackTranspiler: spread operator in try/catch clause
+- [ ] FastpackTranspiler: the transpile function
 - [ ] FlatPacker: `export default`
+- [ ] FlatPacker: turn dynamic dependency into static if needed
 - [ ] FlatPacker: add runtime
-- [ ] FlatPacker / RegularPacker: `import` expressions should be Promises
+- [ ] RegularPacker: __es6Module flag
+- [ ] RegularPacker: `import` expressions should be Promises
 - [ ] FlatPacker / RegularPacker: Support 'development', 'production', 'test' modes
 - [ ] Fastpack: `--target [ app | es6 | cjs ]` for the last export statement
 - [ ] Fastpack: `--mode [ production | development | test ]`
@@ -61,14 +64,14 @@ And execute commands from there.
   - [ ] Use combinators for error output for nicer formatting?
 - [ ] `--debug` writes to stderr (1)
 - [ ] FastpackTraspiler: JSXFragment, SpreadChild (1)
-- [ ] FastpackTraspiler: PrivateName, PrivateField
+- [ ] Documentation / Domain (1)
 - [ ] Fastpack: Incremental builds (2)
 - [ ] Fastpack: handle static files (2)
 - [ ] Fastpack: export URLs for static files (2)
 - [ ] Support external command execution for LESS/SASS/other processing
-- [ ] Source maps [andreypopp, in progress]
-- [ ] CSS support in import statements (webpack ICSS)?
-- [ ] Documentation / Domain
+- [ ] Source maps [andreypopp, in progress] (2)
+- [ ] CSS support in import statements (webpack ICSS)? (2)
+- [ ] FastpackTraspiler: PrivateName, PrivateField
 
 ### Heap
 

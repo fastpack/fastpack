@@ -12,10 +12,10 @@ const $n__a = {a1: $e__a__a1, a2: $e__a__a2};
 function $e__d__d1() {
   let c;
   if(true) {
-    c = __fpack_cached__($w__c);
+    c = __fastpack_require__($w__c);
   }
   else {
-    c = __fpack_cached__($w__c);
+    c = __fastpack_require__($w__c);
   }
   return c;
 }
@@ -68,13 +68,13 @@ let $i__c__cInternal1 = 100;
 let $i__c__cInternal2 = 200;
 
 function $i__c__c1() {
-  let b = __fpack_cached__($w__b);
+  let b = __fastpack_require__($w__b);
   let cInternal2 = 300;
   return b.b1() + b.b2() + $i__c__cInternal1 + cInternal2;
 }
 
 function $i__c__c2() {
-  let b = __fpack_cached__($w__b);
+  let b = __fastpack_require__($w__b);
   return b.default.b1() + b.default.b2() + $i__c__cInternal2;
 }
 

@@ -321,6 +321,19 @@ let pack ctx channel =
             ()
         in
 
+        let patch_dynamic_dep loc dep require =
+          patch_loc_with
+            loc
+            (fun _ ->
+               match get_resolved_request dep with
+               | None ->
+                 ie "At this point dependency should be resolved"
+               | Some filename ->
+                 let wrapper = gen_wrapper_binding filename in
+                 Printf.sprintf "%s(%s)" require wrapper
+            )
+        in
+
         (* Level of statement *)
         let stmt_level = ref 0 in
 
@@ -400,7 +413,6 @@ let pack ctx channel =
               Visit.Continue
 
           (* static imports *)
-          | E.Import (_, E.Literal { value = L.String request; _ })
           | E.Call {
               callee = (_, E.Identifier (_, "require"));
               arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
@@ -409,30 +421,27 @@ let pack ctx channel =
               patch_loc_with loc
                 (fun dep_map ->
                    match MDM.get dep dep_map with
-                   | None -> failwith ("Cannot resolve request: " ^ request)
+                   | None ->
+                     failwith ("Cannot resolve request: " ^ request)
                    | Some m ->
                      Printf.sprintf "(%s)" @@ gen_ext_namespace_binding m.id
                 );
               Visit.Break;
 
           (* dynamic imports *)
-          | E.Import (_, E.Literal { value = L.String request; _ })
           | E.Call {
               callee = (_, E.Identifier (_, "require"));
               arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
             } when !stmt_level > 1 ->
-              let dep = add_dynamic_dep ctx request filename in
-              patch_loc_with
-                loc
-                (fun _ ->
-                   match get_resolved_request dep with
-                   | None ->
-                     failwith "Something wrong"
-                   | Some filename ->
-                     let wrapper = gen_wrapper_binding filename in
-                     Printf.sprintf "__fpack_cached__(%s)" wrapper
-                );
-              Visit.Break;
+            let dep = add_dynamic_dep ctx request filename in
+            patch_dynamic_dep loc dep "__fastpack_require__";
+            Visit.Break;
+
+          | E.Import (_, E.Literal { value = L.String request; _ }) ->
+            let dep = add_dynamic_dep ctx request filename in
+            patch_dynamic_dep loc dep "__fastpack_import__";
+            Visit.Break;
+
 
           | E.Member {
               _object = (_, E.Identifier (_, "module"));
