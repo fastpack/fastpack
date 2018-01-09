@@ -162,7 +162,10 @@ let pack ctx channel =
                      match binding.Scope.exported with
                      | None -> None
                      | Some exported ->
-                       Some (Printf.sprintf "%s: %s" exported @@ name_of_binding module_id name binding)
+                       Some (
+                         Printf.sprintf "%s: %s" exported
+                         @@ name_of_binding module_id name binding
+                       )
                   )
                 |> String.concat ", "
                 |> Printf.sprintf "{%s}"
@@ -258,8 +261,10 @@ let pack ctx channel =
               let names =
                 Scope.bindings m.scope
                 |> List.filter
-                  (fun (name, {Scope. exported; _}) ->
-                     name = remote && exported <> None
+                  (fun (_, {Scope. exported; _}) ->
+                     match exported with
+                     | Some exported -> exported = remote
+                     | None -> false
                   )
               in
               match names with
@@ -371,10 +376,14 @@ let pack ctx channel =
 
         let visit_statement _ (loc, stmt) =
           match stmt with
-          | S.ExportNamedDeclaration { source = Some _; _} ->
+          | S.ExportNamedDeclaration { source = Some _; _ }
+          | S.ExportNamedDeclaration { specifiers = Some _; _ }->
             remove_loc loc;
             Visit.Break;
 
+          | S.ExportDefaultDeclaration {
+              declaration = S.ExportDefaultDeclaration.Declaration (stmt_loc, _);
+              _ }
           | S.ExportNamedDeclaration { declaration = Some (stmt_loc, _); _ } ->
             remove
               loc.Loc.start.offset

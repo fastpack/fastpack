@@ -12,10 +12,10 @@ const $n__a = {a1: $e__a__a1, a2: $e__a__a2};
 function $e__d__d1() {
   let c;
   if(true) {
-    c = __fastpack_require__($w__c);
+    c = __fastpack_import__($w__c);
   }
   else {
-    c = __fastpack_require__($w__c);
+    c = __fastpack_import__($w__c);
   }
   return c;
 }
@@ -24,23 +24,26 @@ let $e__d__d2 = $e__d__d1;
 
 const $n__d = {d1: $e__d__d1, d2: $e__d__d2};
 
-/* e */
+/* default_declaration */
 
-console.log('"e" is imported');
+function $e__default_declaration__default(x) {};
+function $e__default_declaration__g() {return $e__default_declaration__default(1)}
 
-const $n__e = {};
+const $n__default_declaration = {default: $e__default_declaration__default, g: $e__default_declaration__g};
 
 /* index */
 
 
 
 
+// import Expression from './default_expression';
+
 {
   {
-    ($n__e);
+    __fastpack_import__($w__e);
   }
 }
-console.log($e__a__a2, $n__d);
+console.log($e__a__a2, $n__d, $e__default_declaration__default, Expression);
 
 
 /*
@@ -108,4 +111,15 @@ export default {b1: $e__b__b1, b2: $e__b__b2, b3: a1};
 const $n__b = {b1: $e__b__b1, b2: $e__b__b2};
 
 return $n__b;
+}
+
+/* e */
+
+
+function $w__e() {
+console.log('"e" is imported');
+
+const $n__e = {};
+
+return $n__e;
 }
