@@ -370,53 +370,59 @@ let pack ?(with_runtime=true) ctx channel =
         in Visit.Continue
     in
 
-    let visit_expression _ ((loc: Loc.t), expr) =
-      match expr with
-      | E.Object { properties } ->
-          properties
-          |> List.iter
-            (fun prop ->
-               match prop with
-                | E.Object.Property (loc, E.Object.Property.Init {
-                    key = E.Object.Property.Identifier (_, name) ;
-                    shorthand = true;
-                    _
-                  })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
-                | _ -> ()
-            );
-          Visit.Continue
+    let visit_expression visit_ctx ((loc: Loc.t), expr) =
+      let action =
+        Mode.patch_expression patcher ctx.Context.mode visit_ctx (loc,expr)
+      in
+      match action with
+      | Visit.Break -> Visit.Break
+      | Visit.Continue ->
+        match expr with
+        | E.Object { properties } ->
+            properties
+            |> List.iter
+              (fun prop ->
+                 match prop with
+                  | E.Object.Property (loc, E.Object.Property.Init {
+                      key = E.Object.Property.Identifier (_, name) ;
+                      shorthand = true;
+                      _
+                    })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
+                  | _ -> ()
+              );
+            Visit.Continue
 
-      | E.Import (_, E.Literal { value = L.String request; _ })
-      | E.Call {
-          callee = (_, E.Identifier (_, "require"));
-          arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
-        } ->
-        let dep = add_dependency request in
-        patch_loc_with loc (fun ctx ->
-            let {Module. id = module_id; _} = get_module dep ctx in
-            fastpack_require module_id dep.request
-          );
-        Visit.Break
-      | E.Identifier (loc, name) ->
-        let () =
-          match get_binding name with
-          | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
-            patch_loc_with
-              loc
-              (fun _ ->
-                 match get_module_binding source with
-                 | Some module_binding ->
-                   module_binding ^ "." ^ remote
-                 | None ->
-                   (* TODO: provide better error report*)
-                   failwith ("Usage of binding before import " ^ name ^ " " ^ source ^ " " ^ remote ^ " " ^ filename ^ " " ^ (string_of_int loc.start.offset) ^ " " ^ (string_of_int loc._end.offset))
-              )
-          | _ -> ()
-        in Visit.Break;
-      | E.Import _ ->
-        failwith "import(_) is supported only with the constant argument"
-      | _ ->
-        Visit.Continue;
+        | E.Import (_, E.Literal { value = L.String request; _ })
+        | E.Call {
+            callee = (_, E.Identifier (_, "require"));
+            arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
+          } ->
+          let dep = add_dependency request in
+          patch_loc_with loc (fun ctx ->
+              let {Module. id = module_id; _} = get_module dep ctx in
+              fastpack_require module_id dep.request
+            );
+          Visit.Break
+        | E.Identifier (loc, name) ->
+          let () =
+            match get_binding name with
+            | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
+              patch_loc_with
+                loc
+                (fun _ ->
+                   match get_module_binding source with
+                   | Some module_binding ->
+                     module_binding ^ "." ^ remote
+                   | None ->
+                     (* TODO: provide better error report*)
+                     failwith ("Usage of binding before import " ^ name ^ " " ^ source ^ " " ^ remote ^ " " ^ filename ^ " " ^ (string_of_int loc.start.offset) ^ " " ^ (string_of_int loc._end.offset))
+                )
+            | _ -> ()
+          in Visit.Break;
+        | E.Import _ ->
+          failwith "import(_) is supported only with the constant argument"
+        | _ ->
+          Visit.Continue;
     in
 
     let handler = {
@@ -486,7 +492,7 @@ let pack ?(with_runtime=true) ctx channel =
        TODO: Give them proper credits!
     *)
     Lwt_io.write out (Printf.sprintf "
-var process = {env: {NODE_ENV: 'production'}};
+var process = {env: {NODE_ENV: '%s'}};
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -555,7 +561,7 @@ var process = {env: {NODE_ENV: 'production'}};
   // Load entry module and return exports
   return __fastpack_require__(__fastpack_require__.s = '%s');
 })
-" entry_id)
+" (Mode.to_string ctx.mode) entry_id)
   in
 
   let emit graph entry =

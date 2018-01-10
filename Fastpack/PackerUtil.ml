@@ -109,6 +109,49 @@ module Mode = struct
       end
     | _ ->
       Visit.Continue
+
+  let patch_expression
+      { Workspace. remove; _ }
+      mode
+      {Visit. parents; _ }
+      (expr_loc, _) =
+    match parents with
+    | (Visit.APS.Expression (loc, E.Conditional {
+        test;
+        consequent = (consequent_loc, _);
+        alternate = (alternate_loc, _)
+      })) :: _ ->
+      begin
+        match is_matched test mode with
+        | None ->
+          Visit.Continue
+        | Some is_matched ->
+          if consequent_loc = expr_loc then begin
+            match is_matched with
+            (* patch test & alternate *)
+            | true ->
+              remove
+                loc.Loc.start.offset
+                (consequent_loc.Loc.start.offset - loc.Loc.start.offset);
+              remove
+                consequent_loc.Loc._end.offset
+                (alternate_loc.Loc._end.offset - consequent_loc.Loc._end.offset);
+              Visit.Continue
+
+            (* patch test & consequent *)
+            | false ->
+              remove
+                loc.Loc.start.offset
+                (alternate_loc.Loc.start.offset - loc.Loc.start.offset);
+              Visit.Break
+          end
+          else begin
+            if (not is_matched) then Visit.Continue else Visit.Break
+          end
+      end
+
+    | _ ->
+      Visit.Continue
 end
 
 module Target = struct

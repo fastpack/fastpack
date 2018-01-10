@@ -47,6 +47,9 @@ p = __fastpack_require__(/* "./prod" */ "prod");
 
 // logical AND expression
 p = __fastpack_require__(/* "./prod" */ "prod");
+
+// conditional operator
+p = __fastpack_require__(/* "./prod" */ "prod");
 },
 
 })
