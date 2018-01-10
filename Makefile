@@ -23,7 +23,16 @@ fetch:
 	git submodule init
 	git submodule update
 
-bootstrap: fetch install build
+build-react-app-simple:
+	@cd examples/react-app-simple && yarn install
 
-clean:
+build-examples: build-react-app-simple
+	@echo "Examples built."
+
+clean-examples:
+	@rm -rf examples/react-app-simple/node_modules
+
+bootstrap: fetch install build build-examples
+
+clean: clean-examples
 	@rm -rf _build/ node_modules/

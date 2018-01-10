@@ -6,3 +6,4 @@ _esyinstall
 yarn-error.log
 .merlin
 tags
+examples/*/fpack-test/*.js
