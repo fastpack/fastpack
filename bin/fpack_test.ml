@@ -11,13 +11,13 @@ let transpile _ =
     FastpackTranspiler.ObjectSpread.transpile;
   ]
 
-let pack pack_f entry_filename _ =
+let pack ~mode pack_f entry_filename _ =
   let pack' () =
     let bytes = Lwt_bytes.create 20000000 in
     let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
     Fastpack.pack
       ~pack_f
-      ~mode:Fastpack.Mode.Production
+      ~mode
       ~target:Fastpack.Target.Application
       ~transpile_f:(fun _ _ p -> p)
       ~entry_filename
@@ -30,11 +30,21 @@ let pack pack_f entry_filename _ =
        @@ Lwt_io.position ch
   in Lwt_main.run (pack' ())
 
-let pack_regular =
-  pack (Fastpack.RegularPacker.pack ~with_runtime:false)
+let pack_regular_prod =
+  pack
+    ~mode:Fastpack.Mode.Production
+    (Fastpack.RegularPacker.pack ~with_runtime:false)
+
+let pack_regular_dev =
+  pack
+    ~mode:Fastpack.Mode.Development
+    (Fastpack.RegularPacker.pack ~with_runtime:false)
+
 
 let pack_flat =
-  pack (Fastpack.FlatPacker.pack)
+  pack
+    ~mode:Fastpack.Mode.Development
+    (Fastpack.FlatPacker.pack)
 
 let pack_stdout entry_filename _ =
   let pack' () =
@@ -55,9 +65,11 @@ let tests = [
   ("transpile-strip-flow.js", "", transpile);
   ("print.js", "", print ~with_scope:false);
   ("print-with-scope.js", "", print ~with_scope:true);
-  ("pack/index.js", "pack.js", pack_regular);
+  ("pack/index.js", "pack.js", pack_regular_prod);
   ("pack_flat/index.js", "pack_flat.js", pack_flat);
   ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat);
+  ("pack_regular_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
+  ("pack_regular_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
   (* ("current.js", "", print ~with_scope:false); *)
 ]
 
@@ -145,6 +157,7 @@ let () =
     in
 
     let run_one (fname, expect_fname, f) =
+      let title = if expect_fname = "" then fname else expect_fname in
       let actual_fname = path ^ "/" ^ fname in
       let expect_fname =
         if expect_fname = ""
@@ -153,7 +166,7 @@ let () =
       in
       let%lwt actual = get_contents actual_fname in
       match actual with
-      | Some c -> test_or_train_one fname f c actual_fname expect_fname
+      | Some c -> test_or_train_one title f c actual_fname expect_fname
       | None -> Lwt.return_some false
     in
 

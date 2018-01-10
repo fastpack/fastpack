@@ -15,8 +15,11 @@ module Mode = struct
     | Development -> "development"
     | Test -> "test"
 
-  let is_matched expr mode =
+  let rec is_matched expr mode =
     match expr with
+    | (_, E.Logical { operator = E.Logical.And; left; _ }) ->
+      is_matched left mode
+
     | (_, E.Binary {
         left = (_, E.Literal { value = L.String value; _});
         right = (_, E.Member {
@@ -59,11 +62,11 @@ module Mode = struct
       { Workspace. remove; _ }
       mode
       {Visit. parents; _ }
-      (stmt_loc, stmt) =
+      (stmt_loc, _) =
     match parents with
     | (Visit.APS.Statement (loc, S.If {
         test;
-        consequent = (consequent_loc, consequent);
+        consequent = (consequent_loc, _);
         alternate;
       })) :: _ ->
       begin
@@ -71,7 +74,7 @@ module Mode = struct
         | None ->
           Visit.Continue
         | Some is_matched ->
-          if (consequent_loc, consequent) = (stmt_loc, stmt) then begin
+          if consequent_loc = stmt_loc then begin
             match is_matched with
             (* patch test & alternate *)
             | true ->
