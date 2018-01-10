@@ -182,4 +182,6 @@ let () =
     Term.info "fpack" ~version:"preview" ~doc ~exits:Term.default_exits
   in
 
+  Logs.set_level (Some Logs.Debug);
+  Logs.set_reporter (Logs_fmt.reporter ());
   Term.exit @@ Term.eval (run_t, info)

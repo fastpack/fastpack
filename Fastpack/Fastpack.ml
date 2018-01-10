@@ -102,17 +102,6 @@ let find_package_root start_dir =
 let read_package_json_options _ =
   Lwt.return_none
 
-let rec makedirs dir =
-  match%lwt FastpackResolver.stat_option dir with
-  | None ->
-    let%lwt () = makedirs (FilePath.dirname dir) in
-    Lwt_unix.mkdir dir 0o777
-  | Some stat ->
-    match stat.st_kind with
-    | Lwt_unix.S_DIR -> Lwt.return_unit
-    | _ -> failwith (dir ^ "is not a directory")
-
-
 let build_transpile_f
     { transpile_react_jsx; transpile_class;
       transpile_flow; transpile_object_spread; _ } =
@@ -194,10 +183,15 @@ let prepare_and_pack cl_options =
     let output_file = abs_path package_dir output in
     let%lwt () = makedirs @@ FilePath.dirname output_file in
     let transpile_f = build_transpile_f options in
-    let pack_f =
+    let%lwt pack_f =
       match options.bundle with
-      | Some Regular -> RegularPacker.pack
-      | Some Flat -> FlatPacker.pack
+      | Some Regular ->
+        let%lwt cache = Cache.create package_dir "some_prefix" input in
+        Lwt.return
+        @@ RegularPacker.pack ~with_runtime:true ~cache:cache
+      | Some Flat ->
+        Lwt.return
+        @@ FlatPacker.pack ~with_runtime:true ~cache:Cache.fake
       | None -> Error.ie "Unexpected Packer"
     in
     let mode =

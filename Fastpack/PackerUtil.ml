@@ -1,4 +1,16 @@
 
+let debug = Logs.debug
+
+let rec makedirs dir =
+  match%lwt FastpackResolver.stat_option dir with
+  | None ->
+    let%lwt () = makedirs (FilePath.dirname dir) in
+    Lwt_unix.mkdir dir 0o777
+  | Some stat ->
+    match stat.st_kind with
+    | Lwt_unix.S_DIR -> Lwt.return_unit
+    | _ -> failwith (dir ^ "is not a directory")
+
 module Mode = struct
   module Visit = FastpackUtil.Visit
   module Ast = FlowParser.Ast
@@ -192,8 +204,39 @@ module Cache = struct
 
   let fake =
     { get = (fun _ -> None); dump = (fun _ -> ())}
-end
 
+  let create ?(_load=true) package_dir prefix filename =
+    (* generate safe filename *)
+    let try_dir dir =
+      try%lwt
+        let%lwt stat = Lwt_unix.stat dir in
+        match stat.st_kind with
+        | Lwt_unix.S_DIR -> Lwt.return_some dir
+        | _ -> Lwt.return_none
+      with Unix.Unix_error _ ->
+        Lwt.return_none
+    in
+    let%lwt cache_dir =
+      match%lwt try_dir (FilePath.concat package_dir "node_modules") with
+      | Some dir ->
+        let dir = FilePath.concat dir ".cache/fpack" in
+        makedirs dir
+        >> Lwt.return dir
+      | None ->
+        let dir = FilePath.concat package_dir ".cache/fpack" in
+        makedirs dir
+        >> Lwt.return dir
+    in
+    let cache_filename =
+      filename
+      |> String.replace ~sub:"/" ~by:"__"
+      |> String.replace ~sub:"." ~by:"___"
+      |> Printf.sprintf "%s-%s.cache" prefix
+      |> FilePath.concat cache_dir
+    in
+    let () = debug (fun m -> m "Cache filename: %s" cache_filename) in
+    Lwt.return fake
+end
 
 
 exception PackError of Context.t * Error.reason
