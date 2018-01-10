@@ -28,7 +28,8 @@ build-react-app-simple:
 
 test-react-app-simple: build-dev
 	@cd examples/react-app-simple \
-		&& yarn run fpack:build:regular
+		&& yarn run fpack:build:regular:prod \
+		&& yarn run fpack:build:regular:dev
 
 build-examples: build-react-app-simple
 	@echo "Examples built."
