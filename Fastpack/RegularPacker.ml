@@ -10,7 +10,7 @@ module Visit = FastpackUtil.Visit
 
 
 
-let pack ?(with_runtime=true) ctx channel =
+let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
 
   let analyze _id filename source =
     let ((_, stmts, _) as program), _ = Parser.parse_source source in
@@ -469,7 +469,7 @@ let pack ?(with_runtime=true) ctx channel =
            | Some resolved ->
              let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
                | None ->
-                 let%lwt m = read_module ctx resolved in
+                 let%lwt m = read_module ctx cache resolved in
                  process { ctx with stack = req :: ctx.stack } graph m
                | Some m ->
                  Lwt.return m
@@ -606,7 +606,7 @@ var process = {env: {NODE_ENV: '%s'}};
   in
 
   let graph = DependencyGraph.empty () in
-  let%lwt entry = read_module ctx ctx.entry_filename in
+  let%lwt entry = read_module ctx cache ctx.entry_filename in
   let%lwt entry = process ctx graph entry in
   let%lwt _ = emit graph entry in
   Lwt.return_unit

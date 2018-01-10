@@ -182,6 +182,18 @@ module Context = struct
     ^ String.concat "\t\n" @@ List.map Dependency.to_string stack
 end
 
+module Cache = struct
+  module M = Map.Make(String)
+  
+  type t = {
+    get : string -> Module.t option;
+    dump : DependencyGraph.t -> unit;
+  }
+
+  let fake =
+    { get = (fun _ -> None); dump = (fun _ -> ())}
+end
+
 
 
 exception PackError of Context.t * Error.reason
@@ -198,30 +210,55 @@ let relative_name {Context. package_dir; _} filename =
       (length filename - length package_dir - 1)
   )
 
-let read_module (ctx : Context.t) filename =
+let read_module (ctx : Context.t) (cache : Cache.t) filename =
   let filename = abs_path ctx.package_dir filename in
 
   if not (FilePath.is_subdir filename ctx.package_dir)
   then raise (PackError (ctx, CannotLeavePackageDir filename));
 
-  let%lwt id, source =
-    match Str.string_match (Str.regexp "^builtin:") filename 0 with
-    | true ->
-      (* TODO: handle builtins *)
-      Lwt.return (filename, "")
-    | false ->
-      let%lwt source =
-        try%lwt
-          Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
-        with Unix.Unix_error _ ->
-          raise (PackError (ctx, CannotReadModule filename))
-      in
-      Lwt.return (Module.make_id (relative_name ctx filename), source)
+  let st_mtime' () =
+    let%lwt {st_mtime; _} =
+      try%lwt
+        Lwt_unix.stat filename
+      with Unix.Unix_error _ ->
+        raise (PackError (ctx, CannotReadModule filename))
+    in
+    Lwt.return st_mtime
   in
-  Lwt.return {
-    Module.
-    id;
-    filename = filename;
-    workspace = Workspace.of_string source;
-    scope = FastpackUtil.Scope.empty;
-  }
+
+  let source' () =
+    let%lwt source =
+      try%lwt
+        Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
+      with Unix.Unix_error _ ->
+        raise (PackError (ctx, CannotReadModule filename))
+    in
+    Lwt.return source
+  in
+
+  let make_module st_mtime source =
+    {
+      Module.
+      id = Module.make_id (relative_name ctx filename);
+      filename = filename;
+      st_mtime;
+      dependencies = [];
+      cached = false;
+      digest = Digest.string source;
+      workspace = Workspace.of_string source;
+      scope = FastpackUtil.Scope.empty;
+    }
+  in
+
+  match Str.string_match (Str.regexp "^builtin:") filename 0 with
+  | true ->
+    (* TODO: handle builtins *)
+    Lwt.return @@ make_module 0.0 ""
+  | false ->
+    match cache.get filename with
+    | Some _ ->
+      Error.ie "Cache is not implemented yet"
+    | None ->
+      let%lwt st_mtime = st_mtime' () in
+      let%lwt source = source' () in
+      Lwt.return @@ make_module st_mtime source

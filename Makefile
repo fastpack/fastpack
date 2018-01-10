@@ -12,11 +12,11 @@ install:
 	@esy install
 
 train: build-dev
-	#@esy x fpack_test --train $(FPACK_TEST_PATH)
+	@#@esy x fpack_test --train $(FPACK_TEST_PATH)
 	@_build/default/bin/fpack_test.exe --train $(FPACK_TEST_PATH)
 
 test: build-dev
-	# @esy x fpack_test $(FPACK_TEST_PATH)
+	@#@esy x fpack_test $(FPACK_TEST_PATH)
 	@_build/default/bin/fpack_test.exe $(FPACK_TEST_PATH)
 
 fetch:

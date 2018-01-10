@@ -10,6 +10,19 @@ type t = {
   (** Absolute module filename *)
   filename : string;
 
+  (** Module source digest *)
+  digest : string;
+
+  (** ST_MTIME  of the filename *)
+  st_mtime : float;
+
+  (** List of previously colleacted dependencies.
+   * Will be populated for cached modules only *)
+  dependencies : Dependency.t list;
+
+  (** If module is cached *)
+  cached : bool;
+
   (** Module source along with transformations applied *)
   workspace : t DependencyMap.t Workspace.t;
 

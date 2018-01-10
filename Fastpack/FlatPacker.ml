@@ -21,7 +21,7 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let pack ?(with_runtime=true) (ctx : Context.t) channel =
+let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
 
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
@@ -528,7 +528,7 @@ let pack ?(with_runtime=true) (ctx : Context.t) channel =
                let%lwt dep_module =
                  match DependencyGraph.lookup_module graph resolved with
                  | None ->
-                   let%lwt m = read_module ctx resolved in
+                   let%lwt m = read_module ctx cache resolved in
                    let%lwt m =
                      process { ctx with stack = req :: ctx.stack } graph m
                    in
@@ -600,7 +600,7 @@ let pack ?(with_runtime=true) (ctx : Context.t) channel =
     in
 
     let graph = DependencyGraph.empty () in
-    let%lwt entry = read_module ctx ctx.entry_filename in
+    let%lwt entry = read_module ctx cache ctx.entry_filename in
     let%lwt entry = process ctx graph entry in
     let%lwt dynamic_deps =
       Lwt_list.map_s
