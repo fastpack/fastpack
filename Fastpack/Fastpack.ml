@@ -183,21 +183,21 @@ let prepare_and_pack cl_options =
     let output_file = abs_path package_dir output in
     let%lwt () = makedirs @@ FilePath.dirname output_file in
     let transpile_f = build_transpile_f options in
+    let mode =
+      match options.mode with
+      | Some mode -> mode
+      | None -> Error.ie "mode is not set"
+    in
     let%lwt pack_f =
       match options.bundle with
       | Some Regular ->
-        let%lwt cache = Cache.create package_dir "some_prefix" input in
+        let%lwt cache = Cache.create package_dir (Mode.to_string mode) input in
         Lwt.return
         @@ RegularPacker.pack ~with_runtime:true ~cache:cache
       | Some Flat ->
         Lwt.return
         @@ FlatPacker.pack ~with_runtime:true ~cache:Cache.fake
       | None -> Error.ie "Unexpected Packer"
-    in
-    let mode =
-      match options.mode with
-      | Some mode -> mode
-      | None -> Error.ie "mode is not set"
     in
     let target =
       match options.target with

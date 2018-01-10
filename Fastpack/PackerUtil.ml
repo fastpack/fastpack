@@ -195,18 +195,30 @@ module Context = struct
 end
 
 module Cache = struct
+
   module M = Map.Make(String)
   
   type t = {
     get : string -> Module.t option;
-    dump : DependencyGraph.t -> unit;
+    dump : DependencyGraph.t -> unit Lwt.t;
+    get_channel : string -> int -> Lwt_io.output_channel;
+  }
+
+  type entry = {
+    id : string;
+    digest : string;
+    st_mtime : float;
+    dependencies : Dependency.t list;
+    source : string;
   }
 
   let fake =
-    { get = (fun _ -> None); dump = (fun _ -> ())}
+    { get = (fun _ -> None);
+      dump = (fun _ -> Lwt.return_unit);
+      get_channel = (fun _ _ -> Lwt_io.null)
+    }
 
-  let create ?(_load=true) package_dir prefix filename =
-    (* generate safe filename *)
+  let create_dir package_dir =
     let try_dir dir =
       try%lwt
         let%lwt stat = Lwt_unix.stat dir in
@@ -216,26 +228,98 @@ module Cache = struct
       with Unix.Unix_error _ ->
         Lwt.return_none
     in
-    let%lwt cache_dir =
-      match%lwt try_dir (FilePath.concat package_dir "node_modules") with
-      | Some dir ->
-        let dir = FilePath.concat dir ".cache/fpack" in
-        makedirs dir
-        >> Lwt.return dir
-      | None ->
-        let dir = FilePath.concat package_dir ".cache/fpack" in
-        makedirs dir
-        >> Lwt.return dir
-    in
-    let cache_filename =
-      filename
-      |> String.replace ~sub:"/" ~by:"__"
-      |> String.replace ~sub:"." ~by:"___"
-      |> Printf.sprintf "%s-%s.cache" prefix
-      |> FilePath.concat cache_dir
-    in
+    match%lwt try_dir (FilePath.concat package_dir "node_modules") with
+    | Some dir ->
+      let dir = FilePath.concat dir ".cache/fpack" in
+      makedirs dir
+      >> Lwt.return dir
+    | None ->
+      let dir = FilePath.concat package_dir ".cache/fpack" in
+      makedirs dir
+      >> Lwt.return dir
+
+  let cache_filename cache_dir prefix filename =
+    filename
+    |> String.replace ~sub:"/" ~by:"__"
+    |> String.replace ~sub:"." ~by:"___"
+    |> Printf.sprintf "%s-%s.cache" prefix
+    |> FilePath.concat cache_dir
+
+  let create package_dir prefix filename =
+    let%lwt cache_dir = create_dir package_dir in
+    let cache_filename = cache_filename cache_dir prefix filename in
     let () = debug (fun m -> m "Cache filename: %s" cache_filename) in
-    Lwt.return fake
+
+    let%lwt modules =
+      match%lwt Lwt_unix.file_exists cache_filename with
+      | true ->
+        Lwt_io.with_file
+          ~mode:Lwt_io.Input
+          ~flags:Unix.[O_RDONLY]
+          cache_filename
+          (fun ch -> (Lwt_io.read_value ch : entry M.t Lwt.t))
+      | false ->
+        Lwt.return @@ (M.empty : entry M.t)
+    in
+
+    let channels = ref M.empty in
+    let get_channel filename length =
+      let bytes = Lwt_bytes.create (length * 2) in
+      let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
+      channels := M.add filename (bytes, channel) !channels;
+      channel
+    in
+
+    let get filename =
+      match M.get filename modules with
+      | None ->
+        None
+      | Some { id; digest; st_mtime; dependencies; source; } ->
+        Some { Module.
+          id;
+          filename;
+          digest;
+          st_mtime;
+          dependencies;
+          cached = true;
+          workspace = Workspace.of_string source;
+          scope = FastpackUtil.Scope.empty;
+        }
+    in
+
+    let dump graph =
+      let modules =
+        Hashtbl.fold
+          (fun
+            filename
+            ({ id; digest; st_mtime; dependencies; _ } : Module.t)
+            modules ->
+             let source =
+               match M.get filename !channels with
+               | None ->
+                 Error.ie ("Channel not found for: " ^ filename)
+               | Some (bytes, ch) ->
+                 Lwt_bytes.to_string
+                 @@ Lwt_bytes.extract bytes 0
+                 @@ Int64.to_int
+                 @@ Lwt_io.position ch
+             in
+             M.add
+               filename
+               { id; digest; st_mtime; dependencies; source }
+               modules
+          )
+          graph.DependencyGraph.modules
+          M.empty
+      in
+      Lwt_io.with_file
+        ~mode:Lwt_io.Output
+        ~perm:0o640
+        ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+        cache_filename
+        (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] modules)
+    in
+    Lwt.return {get; dump; get_channel}
 end
 
 
@@ -299,8 +383,15 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
     Lwt.return @@ make_module 0.0 ""
   | false ->
     match cache.get filename with
-    | Some _ ->
-      Error.ie "Cache is not implemented yet"
+    | Some cached_module ->
+      let%lwt st_mtime = st_mtime' () in
+      if cached_module.st_mtime = st_mtime
+      then Lwt.return cached_module
+      else
+        let%lwt source = source' () in
+        if cached_module.digest = Digest.string source
+        then Lwt.return cached_module
+        else Lwt.return @@ make_module st_mtime source
     | None ->
       let%lwt st_mtime = st_mtime' () in
       let%lwt source = source' () in

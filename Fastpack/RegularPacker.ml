@@ -443,23 +443,29 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
 
   (* Gather dependencies *)
   let rec process ({Context. transpile; _} as ctx) graph (m : Module.t) =
-    let source = m.Module.workspace.Workspace.value in
-    (* TODO: reafctor this *)
-    let transpiled =
-      try
-        transpile ctx m.filename source
-      with
-      | FlowParser.Parse_error.Error args ->
-        raise (PackError (ctx, CannotParseFile (m.filename, args)))
+    let m =
+      if (not m.cached) then begin
+        let source = m.Module.workspace.Workspace.value in
+        (* TODO: reafctor this *)
+        let transpiled =
+          try
+            transpile ctx m.filename source
+          with
+          | FlowParser.Parse_error.Error args ->
+            raise (PackError (ctx, CannotParseFile (m.filename, args)))
+        in
+        let (workspace, dependencies, scope) =
+          try
+              analyze m.id m.filename transpiled
+          with
+          | FlowParser.Parse_error.Error args ->
+            raise (PackError (ctx, CannotParseFile (m.filename, args)))
+        in
+        { m with workspace; scope; dependencies; }
+      end
+      else
+        m
     in
-    let (workspace, dependencies, scope) =
-      try
-          analyze m.id m.filename transpiled
-      with
-      | FlowParser.Parse_error.Error args ->
-        raise (PackError (ctx, CannotParseFile (m.filename, args)))
-    in
-    let m = { m with workspace; scope; } in
     DependencyGraph.add_module graph m;
     let%lwt missing = Lwt_list.filter_map_s (
         fun req ->
@@ -477,7 +483,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
              DependencyGraph.add_dependency graph m (req, Some dep_module);
              Lwt.return_none
           )
-      ) dependencies
+      ) m.dependencies
     in
     match missing with
     | [] -> Lwt.return m
@@ -592,6 +598,10 @@ var process = {env: {NODE_ENV: '%s'}};
                 "\"%s\": function(module, exports, __fastpack_require__) {\n"
                 m.id)
         >> Workspace.write channel workspace ctx
+        >> Workspace.write
+          (cache.get_channel m.filename (String.length workspace.Workspace.value))
+          workspace
+          ctx 
         >> emit "},\n"
         >> Lwt.return seen
     in
@@ -609,6 +619,7 @@ var process = {env: {NODE_ENV: '%s'}};
   let%lwt entry = read_module ctx cache ctx.entry_filename in
   let%lwt entry = process ctx graph entry in
   let%lwt _ = emit graph entry in
+  let%lwt () = cache.dump graph in
   Lwt.return_unit
 
 
