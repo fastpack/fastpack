@@ -51,7 +51,6 @@ And execute commands from there.
 - [x] Fastpack: import statements handling
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [ ] FastpackTranspiler: spread operator in try/catch clause
-- [ ] FastpackTranspiler: the transpile function
 - [ ] FlatPacker: turn dynamic dependency into static if needed
 - [ ] FlatPacker: add runtime
 - [ ] RegularPacker: __es6Module flag

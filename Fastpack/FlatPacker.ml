@@ -503,7 +503,7 @@ let pack ?(with_runtime=true) (ctx : Context.t) channel =
       let source = m.Module.workspace.Workspace.value in
       let (workspace, static_deps, scope) =
         try
-            analyze m.id m.filename (transpile m.filename source)
+            analyze m.id m.filename (transpile ctx m.filename source)
         with
         | FlowParser.Parse_error.Error args ->
           raise (PackError (ctx, CannotParseFile (m.filename, args)))

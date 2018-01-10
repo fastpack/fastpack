@@ -431,7 +431,7 @@ let pack ?(with_runtime=true) ctx channel =
     (* TODO: reafctor this *)
     let transpiled =
       try
-        transpile m.filename source
+        transpile ctx m.filename source
       with
       | FlowParser.Parse_error.Error args ->
         raise (PackError (ctx, CannotParseFile (m.filename, args)))
@@ -476,6 +476,7 @@ let pack ?(with_runtime=true) ctx channel =
        TODO: Give them proper credits!
     *)
     Lwt_io.write out (Printf.sprintf "
+var process = {env: {NODE_ENV: 'production'}};
 (function(modules) {
   // The module cache
   var installedModules = {};

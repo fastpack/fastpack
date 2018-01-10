@@ -79,7 +79,7 @@ let pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir channel
   let ctx = { Context.
     entry_filename;
     package_dir;
-    transpile = transpile_f package_dir;
+    transpile = transpile_f;
     stack = [];
     mode;
     target;
@@ -111,6 +111,43 @@ let rec makedirs dir =
     match stat.st_kind with
     | Lwt_unix.S_DIR -> Lwt.return_unit
     | _ -> failwith (dir ^ "is not a directory")
+
+
+let build_transpile_f
+    { transpile_react_jsx; transpile_class;
+      transpile_flow; transpile_object_spread; _ } =
+  let react_jsx = CCOpt.get_or ~default:[] transpile_react_jsx in
+  let object_spread = CCOpt.get_or ~default:[] transpile_object_spread in
+  let cls = CCOpt.get_or ~default:[] transpile_class in
+  let flow = CCOpt.get_or ~default:[] transpile_flow in
+  match react_jsx, object_spread, cls, flow with
+  | [], [], [], [] ->
+    fun _ _ s -> s
+  | _ ->
+    let react_jsx = List.map Str.regexp react_jsx in
+    let object_spread = List.map Str.regexp object_spread in
+    let cls = List.map Str.regexp cls in
+    let flow = List.map Str.regexp flow in
+    let test regexps filename transpiler =
+      if List.exists (fun r -> Str.string_match r filename 0) regexps
+      then [transpiler]
+      else []
+    in
+    fun ctx filename source ->
+      let open FastpackTranspiler in
+      let filename = relative_name ctx filename in
+      let transpilers =
+        List.flatten [
+          test flow filename StripFlow.transpile;
+          test react_jsx filename ReactJSX.transpile;
+          test cls filename Class.transpile;
+          test object_spread filename ObjectSpread.transpile;
+        ]
+      in
+      match transpilers with
+      | [] -> source
+      | _ -> transpile_source transpilers source
+
 
 let prepare_and_pack cl_options =
   let%lwt current_dir = Lwt_unix.getcwd () in
@@ -156,7 +193,7 @@ let prepare_and_pack cl_options =
     let entry_filename = abs_path package_dir input in
     let output_file = abs_path package_dir output in
     let%lwt () = makedirs @@ FilePath.dirname output_file in
-    let transpile_f = fun _ _ s -> s in
+    let transpile_f = build_transpile_f options in
     let pack_f =
       match options.bundle with
       | Some Regular -> RegularPacker.pack

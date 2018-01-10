@@ -23,11 +23,12 @@ module Context = struct
   type t = {
     entry_filename : string;
     package_dir : string;
-    transpile : string -> string -> string;
+    transpile : transpile;
     stack : Dependency.t list;
     mode : Mode.t;
     target : Target.t;
   }
+  and transpile = t -> string -> string -> string
 
   let to_string { package_dir; stack; mode; _ } =
     Printf.sprintf "Working directory: %s\n" package_dir

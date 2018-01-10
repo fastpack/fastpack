@@ -26,6 +26,10 @@ fetch:
 build-react-app-simple:
 	@cd examples/react-app-simple && yarn install
 
+test-react-app-simple: build-dev
+	@cd examples/react-app-simple \
+		&& yarn run fpack:build:regular
+
 build-examples: build-react-app-simple
 	@echo "Examples built."
 
