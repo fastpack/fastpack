@@ -15,95 +15,97 @@ module Mode = struct
     | Development -> "development"
     | Test -> "test"
 
+  let is_matched expr mode =
+    match expr with
+    | (_, E.Binary {
+        left = (_, E.Literal { value = L.String value; _});
+        right = (_, E.Member {
+          _object = (_, E.Member {
+            _object = (_, E.Identifier (_, "process"));
+            property = E.Member.PropertyIdentifier (_, "env");
+            computed = false;
+          });
+          property = E.Member.PropertyIdentifier (_, "NODE_ENV");
+          computed = false;
+        });
+        operator;
+      })
+    | (_, E.Binary {
+        left = (_, E.Member {
+          _object = (_, E.Member {
+            _object = (_, E.Identifier (_, "process"));
+            property = E.Member.PropertyIdentifier (_, "env");
+            computed = false;
+          });
+          property = E.Member.PropertyIdentifier (_, "NODE_ENV");
+          computed = false;
+        });
+        right = (_, E.Literal { value = L.String value; _});
+        operator;
+      }) ->
+      begin
+        match operator with
+        | E.Binary.Equal | E.Binary.StrictEqual ->
+          Some (value = to_string mode)
+        | E.Binary.NotEqual | E.Binary.StrictNotEqual ->
+          Some (value <> to_string mode)
+        | _ ->
+          None
+      end
+    | _ ->
+      None
+
   let patch_statement
       { Workspace. remove; _ }
       mode
       {Visit. parents; _ }
       (stmt_loc, stmt) =
     match parents with
-    (** TODO: swap left/right as well **)
     | (Visit.APS.Statement (loc, S.If {
-        test = (_, E.Binary {
-          left = (_, E.Literal { value = L.String value; _});
-          right = (_, E.Member {
-            _object = (_, E.Member {
-              _object = (_, E.Identifier (_, "process"));
-              property = E.Member.PropertyIdentifier (_, "env");
-              computed = false;
-            });
-            property = E.Member.PropertyIdentifier (_, "NODE_ENV");
-            computed = false;
-          });
-          operator;
-        });
-        consequent = (consequent_loc, consequent);
-        alternate;
-      })) :: _
-    | (Visit.APS.Statement (loc, S.If {
-        test = (_, E.Binary {
-          left = (_, E.Member {
-            _object = (_, E.Member {
-              _object = (_, E.Identifier (_, "process"));
-              property = E.Member.PropertyIdentifier (_, "env");
-              computed = false;
-            });
-            property = E.Member.PropertyIdentifier (_, "NODE_ENV");
-            computed = false;
-          });
-          right = (_, E.Literal { value = L.String value; _});
-          operator;
-        });
+        test;
         consequent = (consequent_loc, consequent);
         alternate;
       })) :: _ ->
-      let is_matched =
-        match operator with
-        | E.Binary.Equal
-        | E.Binary.StrictEqual ->
-          if value = to_string mode then `True else `False
+      begin
+        match is_matched test mode with
+        | None ->
+          Visit.Continue
+        | Some is_matched ->
+          if (consequent_loc, consequent) = (stmt_loc, stmt) then begin
+            match is_matched with
+            (* patch test & alternate *)
+            | true ->
+              remove
+                loc.Loc.start.offset
+                (consequent_loc.Loc.start.offset - loc.Loc.start.offset);
+              begin
+                match alternate with
+                | None -> ()
+                | Some (alternate_loc, _) ->
+                  remove
+                    consequent_loc.Loc._end.offset
+                    (alternate_loc.Loc._end.offset - consequent_loc.Loc._end.offset)
+              end;
+              Visit.Continue
 
-        | E.Binary.NotEqual
-        | E.Binary.StrictNotEqual ->
-          if value <> to_string mode then `True else `False
-
-        | _ -> `Continue
-      in
-      if (consequent_loc, consequent) = (stmt_loc, stmt) then begin
-        let () =
-          match is_matched with
-          (* patch test & alternate *)
-          | `True ->
-            remove
-              loc.Loc.start.offset
-              (consequent_loc.Loc.start.offset - loc.Loc.start.offset);
-            begin
-              match alternate with
-              | None -> ()
-              | Some (alternate_loc, _) ->
-                remove
-                  consequent_loc.Loc._end.offset
-                  (alternate_loc.Loc._end.offset - consequent_loc.Loc._end.offset)
-            end
-          (* patch test & consequent *)
-          | `False ->
-            let patch_end =
-              match alternate with
-              | None -> loc.Loc._end.offset
-              | Some (alternate_loc, _) -> alternate_loc.Loc.start.offset
-            in
-            remove
-              loc.Loc.start.offset
-              (patch_end - loc.Loc.start.offset);
-          (* do not patch *)
-          | `Continue ->
-            ()
-        in
-        if is_matched = `True then Visit.Continue else Visit.Break
+            (* patch test & consequent *)
+            | false ->
+              let patch_end =
+                match alternate with
+                | None -> loc.Loc._end.offset
+                | Some (alternate_loc, _) -> alternate_loc.Loc.start.offset
+              in
+              remove
+                loc.Loc.start.offset
+                (patch_end - loc.Loc.start.offset);
+              Visit.Break
+          end
+          else begin
+            if (not is_matched) then Visit.Continue else Visit.Break
+          end
       end
-      else begin
-        if is_matched = `False then Visit.Continue else Visit.Break
-      end
-    | _ -> Visit.Continue
+    | _ ->
+      Visit.Continue
 end
 
 module Target = struct
