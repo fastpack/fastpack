@@ -8,3 +8,4 @@ yarn-error.log
 tags
 examples/*/fpack-test/*.js
 .DS_Store
+fpack-test
