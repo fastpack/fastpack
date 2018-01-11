@@ -5,48 +5,54 @@ EXAMPLE="examples/$1"
 ENTRY_POINT="$2"
 FLAGS="${@:3}"
 
+TC='\033[0;34m'
 C='\033[0;32m'
 NC='\033[0m'
 
 cd $EXAMPLE
 rm -rf fpack-test
 
-echo "${C}Regular / Production / Cache Purged${NC}"
-time $FPACK $ENTRY_POINT $FLAGS \
+run() {
+    echo "${C}$1${NC}"
+    time $FPACK $ENTRY_POINT $FLAGS ${@:2}
+    echo ""
+}
+
+echo "${TC}==========================================================${NC}"
+echo "${TC}$1${NC}"
+echo "${TC}==========================================================${NC}"
+echo ""
+
+
+run "Regular / Production / Cache Purged" \
     --purge-cache \
     -o fpack-test/regular.prod.purge.js \
     --bundle regular \
     --mode production
-echo "${C}Regular / Development / Cache Purged${NC}"
-time $FPACK $ENTRY_POINT $FLAGS \
+run "Regular / Development / Cache Purged" \
     --purge-cache \
     -o fpack-test/regular.dev.purge.js \
     --bundle regular \
     --mode development
-echo "${C}Regular / Production / Cache Used${NC}"
-time $FPACK $ENTRY_POINT $FLAGS \
+run "Regular / Production / Cache Used" \
     -o fpack-test/regular.prod.cache.js \
     --bundle regular \
     --mode production
-echo "${C}Regular / Development / Cache Used${NC}"
-time $FPACK $ENTRY_POINT $FLAGS \
+run "Regular / Development / Cache Used" \
     -o fpack-test/regular.dev.cache.js \
     --bundle regular \
     --mode development
-echo "${C}Regular / Production / Cache Ignored${NC}"
-time $FPACK $ENTRY_POINT $FLAGS \
+run "Regular / Production / Cache Ignored" \
     --no-cache \
     -o fpack-test/regular.prod.no-cache.js \
     --bundle regular \
     --mode production
-echo "${C}Regular / Development / Cache Ignored${NC}"
-time $FPACK $ENTRY_POINT $FLAGS \
+run "Regular / Development / Cache Ignored" \
     --no-cache \
     -o fpack-test/regular.dev.no-cache.js \
     --bundle regular \
     --mode development
-echo "${C}Flat / Production${NC}"
-time $FPACK $ENTRY_POINT $FLAGS \
+run "Flat / Production" \
     --purge-cache \
     -o fpack-test/flat.prod.js \
     --bundle flat \

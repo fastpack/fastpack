@@ -57,3 +57,10 @@ try {
   let f = 1;
 }
 
+function S() {
+  var S1 = 1;
+}
+
+(function() {
+  var SS1 = 1;
+})();

@@ -195,5 +195,5 @@ let () =
   in
 
   (* Logs.set_level (Some Logs.Debug); *)
-  (* Logs.set_reporter (Logs_fmt.reporter ()); *)
+  Logs.set_reporter (Logs_fmt.reporter ());
   Term.exit @@ Term.eval (run_t, info)

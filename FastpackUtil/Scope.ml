@@ -7,6 +7,8 @@ module L = Ast.Literal
 module SL = Ast.StringLiteral
 module M = Map.Make(String)
 
+type scope_type = BlockScope | FunctionScope
+
 type t = {
   parent : t option;
   bindings : binding M.t;
@@ -272,7 +274,7 @@ let of_function_block stmts =
     level := !level - 1
   in
 
-  let visit_statement _ctx ((_, stmt) as node) =
+  let visit_statement _ ((_, stmt) as node) =
     match stmt with
     | S.ImportDeclaration { importKind = S.ImportDeclaration.ImportValue; _} ->
       add_bindings node;
@@ -371,9 +373,14 @@ let of_function_block stmts =
     | _ -> Visit.Continue
   in
 
+  let visit_expression _ _ =
+    Visit.Break
+  in
+
   let handler = {
     Visit.default_visit_handler with
     visit_statement;
+    visit_expression;
     enter_statement;
     leave_statement;
   } in
@@ -389,7 +396,6 @@ let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
     | [] | (AstParentStack.Function _) :: _ ->
       of_function_block body
     | _ ->
-      (* TODO: account for names in try/catch *)
       let init =
         match parents with
         | (AstParentStack.Statement (_, S.Try { handler = Some (

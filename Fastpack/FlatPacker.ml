@@ -21,6 +21,23 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
+let global_runtime = "
+var process = {env: {NODE_ENV: 'production'}};
+"
+
+let runtime = "
+var __fastpack_cache__ = {};
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+    if (__fastpack_cache__[f.name].default === undefined) {
+      __fastpack_cache__[f.name].default = __fastpack_cache__[f.name]
+    }
+  }
+  return __fastpack_cache__[f.name];
+}
+"
+
 let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
 
   (* internal top-level bindings in the file *)
@@ -179,7 +196,6 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
         (* Static dependencies *)
         let static_deps = ref [] in
         let add_static_dep request =
-          let () = debug (fun m -> m "ADDDEP: %s %s" request filename) in
           let dep = {
             Dependency.
             request;
@@ -250,7 +266,6 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
             requested_from_filename = filename
           }
           in
-          let () = debug (fun m -> m "DEP: %s %s " source filename) in
           let m = MDM.get dep dep_map in
           match m with
           | None ->
@@ -260,7 +275,6 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
             | None ->
               gen_ext_namespace_binding m.Module.id
             | Some remote ->
-              let () = debug (fun m -> m "- REMOTE: %s " remote) in
               let names =
                 Scope.get_exports m.scope
                 |> List.filter
@@ -271,7 +285,6 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
                 (* TODO: distinguish between es6 & cjs modules
                  * es6: error
                  * cjs: namespace.name *)
-                (* failwith ("Name " ^ remote ^ " not found in module " ^ m.Module.filename) *)
                 Printf.sprintf
                   "%s.%s"
                   (gen_ext_namespace_binding m.Module.id)
@@ -572,47 +585,53 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
     let emit graph entry =
       let emit bytes = Lwt_io.write channel bytes in
       let emit_module dep_map m =
-        let emit_wrapper_start, emit_wrapper_end =
-          if with_wrapper && entry.Module.filename = m.Module.filename then
-            (fun () ->
-               emit @@ "\nfunction " ^ gen_wrapper_binding m.Module.filename ^ "() {\n"
-            ),
-            (fun () ->
-               emit
-               @@ Printf.sprintf "\nreturn %s;\n}\n"
-               @@ gen_ext_namespace_binding m.Module.id
-            )
-          else
-            (fun () -> emit ""), (fun () -> emit "")
-        in
         debug (fun m_ -> m_ "Emitting: %s" m.Module.filename);
-        emit (if with_runtime then "" else "") (* TODO: add real runtime here *)
-        >> emit (Printf.sprintf "\n/* %s */\n\n" m.id)
-        >> emit_wrapper_start ()
+        emit (Printf.sprintf "\n/* %s */\n\n" m.id)
         >> Workspace.write channel m.Module.workspace dep_map
-        >>= (fun _ -> emit_wrapper_end ())
+        >>= (fun _ -> Lwt.return_unit)
       in
-      DependencyGraph.sort graph entry
-      |> Lwt_list.fold_left_s
-        (fun dependency_map m ->
-          let%lwt () = emit_module dependency_map m in
-          !resolved_requests
-          |> DM.bindings
-          |> List.filter (fun (_, value) -> value = m.filename)
-          |> List.fold_left (fun acc (k, _) -> MDM.add k m acc) dependency_map
-          |> Lwt.return
-        )
-        (!resolved_requests
-         |> DM.bindings
-         |> List.filter (fun (_, filename) -> has_module filename)
-         |> List.fold_left
-           (fun modules (dep, filename) ->
-              match get_module filename with
-              | Some m -> MDM.add dep m modules
-              | None -> failwith "Should not happen"
-           )
-          modules
-        )
+
+      let emit_wrapper_start, emit_wrapper_end =
+        if with_wrapper then
+          (fun () ->
+             emit @@ "\nfunction " ^ gen_wrapper_binding entry.Module.filename ^ "() {\n"
+          ),
+          (fun () ->
+             emit
+             @@ Printf.sprintf "\nreturn %s;\n}\n"
+             @@ gen_ext_namespace_binding entry.Module.id
+          )
+        else
+          (fun () -> emit ""), (fun () -> emit "")
+      in
+
+      let%lwt () = emit_wrapper_start () in
+      let%lwt () = emit (if with_runtime then runtime else "") in
+      let%lwt modules =
+        DependencyGraph.sort graph entry
+        |> Lwt_list.fold_left_s
+          (fun dependency_map m ->
+            let%lwt () = emit_module dependency_map m in
+            !resolved_requests
+            |> DM.bindings
+            |> List.filter (fun (_, value) -> value = m.filename)
+            |> List.fold_left (fun acc (k, _) -> MDM.add k m acc) dependency_map
+            |> Lwt.return
+          )
+          (!resolved_requests
+           |> DM.bindings
+           |> List.filter (fun (_, filename) -> has_module filename)
+           |> List.fold_left
+             (fun modules (dep, filename) ->
+                match get_module filename with
+                | Some m -> MDM.add dep m modules
+                | None -> failwith "Should not happen"
+             )
+            modules
+          )
+      in
+      let%lwt () = emit_wrapper_end () in
+      Lwt.return modules
     in
 
     let graph = DependencyGraph.empty () in
@@ -662,4 +681,5 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
         in
         Lwt.return_unit
   in
+  let%lwt () = Lwt_io.write channel global_runtime in
   pack ctx MDM.empty

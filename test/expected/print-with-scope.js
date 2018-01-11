@@ -2,6 +2,7 @@
 A -> Import A from 'namedTest' [3:8 - 3:9]
 C -> Import B from 'namedTest' [3:16 - 3:17]
 F -> Function [7:9 - 7:10]
+S -> Function [60:9 - 60:10]
 X -> Import default from 'defaultTest' [1:7 - 1:8]
 Y -> Import * from 'namespaceTest' [2:12 - 2:13]
 a -> Var [exported as a] [5:4 - 5:5]
@@ -106,3 +107,14 @@ e3 -> Let [54:20 - 54:22]
   let f = 1;
   
 }
+function S()/* SCOPE:  */ {/* SCOPE: S1 -> Var [61:6 - 61:8] */
+
+  var S1 = 1;
+  
+}
+(function ()/* SCOPE:  */ {/* SCOPE: SS1 -> Var [65:6 - 65:9] */
+
+  var SS1 = 1;
+  
+}
+)();
