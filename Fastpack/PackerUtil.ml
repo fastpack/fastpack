@@ -198,7 +198,9 @@ end
 module Cache = struct
 
   module M = Map.Make(String)
-  
+
+  type strategy = Normal | Purge | Ignore
+
   type t = {
     get : string -> Module.t option;
     dump : DependencyGraph.t -> unit Lwt.t;
@@ -246,32 +248,7 @@ module Cache = struct
     |> Printf.sprintf "%s-%s.cache" prefix
     |> FilePath.concat cache_dir
 
-  let create package_dir prefix filename =
-    let%lwt cache_dir = create_dir package_dir in
-    let cache_filename = cache_filename cache_dir prefix filename in
-    let () = debug (fun m -> m "Cache filename: %s" cache_filename) in
-
-    let%lwt modules =
-      match%lwt Lwt_unix.file_exists cache_filename with
-      | true ->
-        Lwt_io.with_file
-          ~mode:Lwt_io.Input
-          ~flags:Unix.[O_RDONLY]
-          cache_filename
-          (fun ch -> (Lwt_io.read_value ch : entry M.t Lwt.t))
-      | false ->
-        Lwt.return @@ (M.empty : entry M.t)
-    in
-
-    (* let channels = ref M.empty in *)
-    (* let get_channel filename length = *)
-    (*   (1* TODO: unsafe - this is based on the length of the source *1) *)
-    (*   let bytes = Lwt_bytes.create (length * 200) in *)
-    (*   let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in *)
-    (*   channels := M.add filename (bytes, channel) !channels; *)
-    (*   channel *)
-    (* in *)
-
+  let cache cache_filename modules =
     let sources = ref M.empty in
     let add_source filename source =
       sources := M.add filename source !sources;
@@ -324,6 +301,34 @@ module Cache = struct
         (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] modules)
     in
     Lwt.return { get; dump; add_source }
+
+  let create package_dir prefix filename =
+    let%lwt cache_dir = create_dir package_dir in
+    let cache_filename = cache_filename cache_dir prefix filename in
+
+    let%lwt modules =
+      match%lwt Lwt_unix.file_exists cache_filename with
+      | true ->
+        Lwt_io.with_file
+          ~mode:Lwt_io.Input
+          ~flags:Unix.[O_RDONLY]
+          cache_filename
+          (fun ch -> (Lwt_io.read_value ch : entry M.t Lwt.t))
+      | false ->
+        Lwt.return @@ (M.empty : entry M.t)
+    in
+    cache cache_filename modules
+
+  let purge package_dir prefix filename =
+    let%lwt cache_dir = create_dir package_dir in
+    let cache_filename = cache_filename cache_dir prefix filename in
+    let%lwt () =
+      match%lwt Lwt_unix.file_exists cache_filename with
+      | true -> Lwt_unix.unlink cache_filename
+      | false -> Lwt.return_unit
+    in
+    cache cache_filename M.empty
+
 end
 
 

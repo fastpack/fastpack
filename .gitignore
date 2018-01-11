@@ -7,3 +7,4 @@ yarn-error.log
 .merlin
 tags
 examples/*/fpack-test/*.js
+.DS_Store

@@ -112,8 +112,7 @@ let () =
       let%lwt output = Lwt_process.(pread @@ shell cmd) in
       Lwt.finalize
         (fun () -> print output)
-        (fun () -> Lwt.return_unit)
-        (* (fun () -> Lwt_unix.unlink temp_file) *)
+        (fun () -> Lwt_unix.unlink temp_file)
     in
 
     let save_data message filename data =

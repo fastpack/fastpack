@@ -9,6 +9,7 @@ let () =
         bundle
         mode
         target
+        cache
         transpile_all
         transpile_react_jsx
         transpile_flow
@@ -23,6 +24,7 @@ let () =
             bundle;
             mode;
             target;
+            cache = Some cache;
           }
         in
         let options =
@@ -115,6 +117,15 @@ let () =
       Arg.(value & opt (some target) None & info ["target"] ~docv ~doc)
     in
 
+    let cache_t =
+        let open Fastpack.Cache in
+        let doc = "Purge cache at startup" in
+        let purge = Purge, Arg.info ["purge-cache"] ~doc in
+        let doc = "Do not use cache at all" in
+        let ignore = Ignore, Arg.info ["no-cache"] ~doc in
+        Arg.(value & vflag Normal [purge; ignore])
+    in
+
     let transpile_all =
       let doc =
         "[Experimental] Apply all transpilers to files matching $(docv)"
@@ -167,6 +178,7 @@ let () =
         $ bundle_t
         $ mode_t
         $ target_t
+        $ cache_t
         $ transpile_all
         $ transpile_react_jsx
         $ transpile_flow

@@ -2,6 +2,7 @@
 module Error = Error
 module Mode = PackerUtil.Mode
 module Target = PackerUtil.Target
+module Cache = PackerUtil.Cache
 module Context = PackerUtil.Context
 module RegularPacker = RegularPacker
 module FlatPacker = FlatPacker
@@ -20,11 +21,12 @@ let string_of_error ctx error =
     (Error.to_string error)
 
 type options = {
-  input: string option;
-  output: string option;
+  input : string option;
+  output : string option;
   bundle : bundle option;
-  mode: Mode.t option;
-  target: Target.t option;
+  mode : Mode.t option;
+  target : Target.t option;
+  cache : Cache.strategy option;
   transpile_react_jsx : string list option;
   transpile_class : string list option;
   transpile_flow : string list option;
@@ -37,6 +39,7 @@ let empty_options = {
     bundle = None;
     mode = None;
     target = None;
+    cache = None;
     transpile_react_jsx = None;
     transpile_class = None;
     transpile_flow = None;
@@ -50,6 +53,7 @@ let default_options =
     bundle = Some Regular;
     mode = Some Production;
     target = Some Application;
+    cache = Some Normal;
     transpile_react_jsx = None;
     transpile_class = None;
     transpile_flow = None;
@@ -69,6 +73,7 @@ let merge_options o1 o2 =
     bundle = merge o1.bundle o2.bundle;
     mode = merge o1.mode o2.mode;
     target = merge o1.target o2.target;
+    cache = merge o1.cache o2.cache;
     transpile_react_jsx = merge o1.transpile_react_jsx o2.transpile_react_jsx;
     transpile_flow = merge o1.transpile_flow o2.transpile_flow;
     transpile_class = merge o1.transpile_class o2.transpile_class;
@@ -188,21 +193,32 @@ let prepare_and_pack cl_options =
       | Some mode -> mode
       | None -> Error.ie "mode is not set"
     in
+    let target =
+      match options.target with
+      | Some target -> target
+      | None -> Error.ie "target is not set"
+    in
     let%lwt pack_f =
       match options.bundle with
       | Some Regular ->
-        let%lwt cache = Cache.create package_dir (Mode.to_string mode) input in
+        let cache_prefix = (Mode.to_string mode) in
+        let%lwt cache =
+          match options.cache with
+          | Some Cache.Normal ->
+            Cache.create package_dir cache_prefix input
+          | Some Cache.Purge ->
+            Cache.purge package_dir cache_prefix input
+          | Some Cache.Ignore ->
+            Lwt.return Cache.fake
+          | None ->
+            Error.ie "Cache strategy is not set"
+        in
         Lwt.return
         @@ RegularPacker.pack ~with_runtime:true ~cache:cache
       | Some Flat ->
         Lwt.return
         @@ FlatPacker.pack ~with_runtime:true ~cache:Cache.fake
       | None -> Error.ie "Unexpected Packer"
-    in
-    let target =
-      match options.target with
-      | Some target -> target
-      | None -> Error.ie "target is not set"
     in
     Lwt_io.with_file
       ~mode:Lwt_io.Output
