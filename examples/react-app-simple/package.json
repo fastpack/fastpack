@@ -11,8 +11,6 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject",
-    "fpack:build:regular:prod": "time ../../_build/default/bin/fpack.exe src/index.js -o fpack-test/regular.prod.js --bundle regular --mode production --transpile-react-jsx '^src'",
-    "fpack:build:regular:dev": "time ../../_build/default/bin/fpack.exe src/index.js -o fpack-test/regular.dev.js --bundle regular --mode development --transpile-react-jsx '^src'"
+    "eject": "react-scripts eject"
   }
 }

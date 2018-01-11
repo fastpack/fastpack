@@ -23,19 +23,25 @@ fetch:
 	git submodule init
 	git submodule update
 
+# EXAMPLES
+
+## Simple CRA-based application
+
 build-react-app-simple:
 	@cd examples/react-app-simple && yarn install
 
 test-react-app-simple: build-dev
-	@cd examples/react-app-simple \
-		&& yarn run fpack:build:regular:prod \
-		&& yarn run fpack:build:regular:dev
+	@scripts/test-example.sh \
+		react-app-simple \
+		src/index.js \
+		--transpile-all '^src'
 
 build-examples: build-react-app-simple
 	@echo "Examples built."
 
 clean-examples:
 	@rm -rf examples/react-app-simple/node_modules
+
 
 bootstrap: fetch install build build-examples
 
