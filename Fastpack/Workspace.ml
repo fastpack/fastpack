@@ -97,16 +97,24 @@ let write out w ctx =
   (* let () = print_endline "----" in *)
   (* let _ = print_patches patches in *)
   (* let () = print_endline "----" in *)
-  let rec write_patch offset value patches =
+  let rec write_patch offset value patches content =
     match patches with
     | [] ->
-      Lwt_io.write_from_exactly out value offset (String.length value - offset)
+      let length = String.length value - offset in
+      let%lwt () = Lwt_io.write_from_exactly out value offset length in
+      Lwt.return (content ^ String.sub value offset length)
     | patch::patches ->
-      let%lwt () = Lwt_io.write_from_exactly out value offset (patch.offset_start - offset) in
-      let%lwt () = Lwt_io.write out (patch.patch ctx) in
-      write_patch patch.offset_end value patches
+      let length = patch.offset_start - offset in
+      let%lwt () = Lwt_io.write_from_exactly out value offset length in
+      let patch_content = patch.patch ctx in
+      let%lwt () = Lwt_io.write out patch_content in
+      write_patch
+        patch.offset_end
+        value
+        patches
+        (content ^ String.sub value offset length ^ patch_content)
   in
-  write_patch 0 w.value patches
+  write_patch 0 w.value patches ""
 
 let to_string w ctx =
   let patches = List.rev w.patches in

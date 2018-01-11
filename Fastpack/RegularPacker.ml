@@ -8,6 +8,8 @@ module Parser = FastpackUtil.Parser
 module Scope = FastpackUtil.Scope
 module Visit = FastpackUtil.Visit
 
+let debug = Logs.debug
+
 
 
 let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
@@ -594,16 +596,15 @@ var process = {env: {NODE_ENV: '%s'}};
             (ctx, seen)
             dependencies
         in
-        emit (Printf.sprintf
-                "\"%s\": function(module, exports, __fastpack_require__) {\n"
-                m.id)
-        >> Workspace.write channel workspace ctx
-        >> Workspace.write
-          (cache.get_channel m.filename (String.length workspace.Workspace.value))
-          workspace
-          ctx 
-        >> emit "},\n"
-        >> Lwt.return seen
+        let%lwt () =
+          emit (Printf.sprintf
+                  "\"%s\": function(module, exports, __fastpack_require__) {\n"
+                  m.id)
+        in
+        let%lwt content = Workspace.write channel workspace ctx in
+        let () = cache.add_source m.filename content in
+        let%lwt () = emit "},\n" in
+        Lwt.return seen
     in
 
     (if with_runtime

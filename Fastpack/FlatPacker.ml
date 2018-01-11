@@ -1,5 +1,5 @@
 open PackerUtil
-(* open Lwt.Infix *)
+open Lwt.Infix
 
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
@@ -574,7 +574,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
         >> emit (Printf.sprintf "\n/* %s */\n\n" m.id)
         >> emit_wrapper_start ()
         >> Workspace.write channel m.Module.workspace dep_map
-        >> emit_wrapper_end ()
+        >>= (fun _ -> emit_wrapper_end ())
       in
       DependencyGraph.sort graph entry
       |> Lwt_list.fold_left_s

@@ -194,6 +194,7 @@ module Context = struct
     ^ String.concat "\t\n" @@ List.map Dependency.to_string stack
 end
 
+
 module Cache = struct
 
   module M = Map.Make(String)
@@ -201,7 +202,7 @@ module Cache = struct
   type t = {
     get : string -> Module.t option;
     dump : DependencyGraph.t -> unit Lwt.t;
-    get_channel : string -> int -> Lwt_io.output_channel;
+    add_source : string -> string -> unit;
   }
 
   type entry = {
@@ -215,7 +216,7 @@ module Cache = struct
   let fake =
     { get = (fun _ -> None);
       dump = (fun _ -> Lwt.return_unit);
-      get_channel = (fun _ _ -> Lwt_io.null)
+      add_source = (fun _ _ -> ())
     }
 
   let create_dir package_dir =
@@ -262,12 +263,18 @@ module Cache = struct
         Lwt.return @@ (M.empty : entry M.t)
     in
 
-    let channels = ref M.empty in
-    let get_channel filename length =
-      let bytes = Lwt_bytes.create (length * 2) in
-      let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-      channels := M.add filename (bytes, channel) !channels;
-      channel
+    (* let channels = ref M.empty in *)
+    (* let get_channel filename length = *)
+    (*   (1* TODO: unsafe - this is based on the length of the source *1) *)
+    (*   let bytes = Lwt_bytes.create (length * 200) in *)
+    (*   let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in *)
+    (*   channels := M.add filename (bytes, channel) !channels; *)
+    (*   channel *)
+    (* in *)
+
+    let sources = ref M.empty in
+    let add_source filename source =
+      sources := M.add filename source !sources;
     in
 
     let get filename =
@@ -295,14 +302,11 @@ module Cache = struct
             ({ id; digest; st_mtime; dependencies; _ } : Module.t)
             modules ->
              let source =
-               match M.get filename !channels with
+               match M.get filename !sources with
                | None ->
-                 Error.ie ("Channel not found for: " ^ filename)
-               | Some (bytes, ch) ->
-                 Lwt_bytes.to_string
-                 @@ Lwt_bytes.extract bytes 0
-                 @@ Int64.to_int
-                 @@ Lwt_io.position ch
+                 Error.ie ("Source not cached for: " ^ filename)
+               | Some source ->
+                 source
              in
              M.add
                filename
@@ -319,7 +323,7 @@ module Cache = struct
         cache_filename
         (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] modules)
     in
-    Lwt.return {get; dump; get_channel}
+    Lwt.return { get; dump; add_source }
 end
 
 
