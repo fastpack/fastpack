@@ -405,3 +405,10 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
       let%lwt st_mtime = st_mtime' () in
       let%lwt source = source' () in
       Lwt.return @@ make_module st_mtime source
+
+
+let is_ignored_request request =
+  List.exists
+    (fun e -> String.suffix ~suf:("." ^ e) request)
+    ["css"; "less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg";
+     "gif"; "ttf"]

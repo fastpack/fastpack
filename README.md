@@ -50,7 +50,9 @@ And execute commands from there.
 - [x] FastpackTranspiler: export statements [zindel]
 - [x] Fastpack: import statements handling
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
-- [ ] RegularPacker: incremental builds
+- [x] RegularPacker: incremental builds
+
+- [ ] RegularPacker: add better API for cache (will enable watch mode later on)
 - [ ] FastpackTranspiler: spread operator in try/catch clause
 - [ ] FlatPacker: turn dynamic dependency into static if needed
 - [ ] FlatPacker: add runtime

@@ -179,6 +179,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
         (* Static dependencies *)
         let static_deps = ref [] in
         let add_static_dep request =
+          let () = debug (fun m -> m "ADDDEP: %s %s" request filename) in
           let dep = {
             Dependency.
             request;
@@ -242,13 +243,14 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
             | None -> None
         in
 
-        let rec resolve_import dep_map {Scope. source; remote } =
+        let rec resolve_import dep_map filename {Scope. source; remote } =
           let dep = {
             Dependency.
             request = source;
             requested_from_filename = filename
           }
           in
+          let () = debug (fun m -> m "DEP: %s %s " source filename) in
           let m = MDM.get dep dep_map in
           match m with
           | None ->
@@ -258,6 +260,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
             | None ->
               gen_ext_namespace_binding m.Module.id
             | Some remote ->
+              let () = debug (fun m -> m "- REMOTE: %s " remote) in
               let names =
                 Scope.get_exports m.scope
                 |> List.filter
@@ -265,10 +268,17 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
               in
               match names with
               | [] ->
-                failwith ("Name " ^ remote ^ " not found in module " ^ m.Module.filename)
+                (* TODO: distinguish between es6 & cjs modules
+                 * es6: error
+                 * cjs: namespace.name *)
+                (* failwith ("Name " ^ remote ^ " not found in module " ^ m.Module.filename) *)
+                Printf.sprintf
+                  "%s.%s"
+                  (gen_ext_namespace_binding m.Module.id)
+                  remote
               | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
                 match typ with
-                | Scope.Import import -> resolve_import dep_map import
+                | Scope.Import import -> resolve_import dep_map m.filename import
                 | _ -> name_of_binding m.id name binding
         in
 
@@ -280,7 +290,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
               (fun dep_map ->
                  match binding.typ with
                  | Scope.Import import ->
-                   resolve_import dep_map import
+                   resolve_import dep_map filename import
                  | _ ->
                    name_of_binding module_id name binding
               )
@@ -397,8 +407,13 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
             Visit.Continue;
 
           | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
-            let _ = add_static_dep request in
-            remove_loc loc;
+            if (not @@ is_ignored_request request)
+            then begin
+              let _ = add_static_dep request in
+              remove_loc loc;
+            end
+            else
+              remove_loc loc;
             Visit.Continue;
 
           | S.ForIn {left = S.ForIn.LeftPattern pattern; _}
@@ -537,6 +552,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
                      Lwt.return m
                    end
                  | Some m ->
+                   let () = add_resolved_request req resolved in
                    Lwt.return m
                in
                let () =

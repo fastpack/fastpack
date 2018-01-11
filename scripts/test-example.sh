@@ -45,15 +45,22 @@ time $FPACK $ENTRY_POINT $FLAGS \
     -o fpack-test/regular.dev.no-cache.js \
     --bundle regular \
     --mode development
+echo "${C}Flat / Production${NC}"
+time $FPACK $ENTRY_POINT $FLAGS \
+    --purge-cache \
+    -o fpack-test/flat.prod.js \
+    --bundle flat \
+    --mode production
 
 INDEX="fpack-test/index.html"
 cat <<HTML > $INDEX
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>${FILE}</title>
+    <title>$1</title>
   </head>
   <body>
+    <h2>$1</h2>
     <ul>
 HTML
 

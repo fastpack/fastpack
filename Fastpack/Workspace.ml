@@ -97,24 +97,29 @@ let write out w ctx =
   (* let () = print_endline "----" in *)
   (* let _ = print_patches patches in *)
   (* let () = print_endline "----" in *)
-  let rec write_patch offset value patches content =
+  let rec write_patch b_offset u_offset value patches content =
     match patches with
     | [] ->
-      let length = String.length value - offset in
-      let%lwt () = Lwt_io.write_from_exactly out value offset length in
-      Lwt.return (content ^ String.sub value offset length)
-    | patch::patches ->
-      let length = patch.offset_start - offset in
-      let%lwt () = Lwt_io.write_from_exactly out value offset length in
+      let u_length = BatUTF8.length value - u_offset in
+      let chunk = BatUTF8.sub value u_offset u_length in
+      let%lwt () = Lwt_io.write_from_exactly out value b_offset (String.length chunk) in
+      Lwt.return (content ^ chunk)
+    | patch :: patches ->
+      let u_length = patch.offset_start - u_offset in
+      let chunk = BatUTF8.sub value u_offset u_length in
+      let b_length = String.length chunk in
+      let%lwt () = Lwt_io.write_from_exactly out value b_offset b_length in
       let patch_content = patch.patch ctx in
       let%lwt () = Lwt_io.write out patch_content in
+      let patched_chunk = BatUTF8.sub value patch.offset_start (patch.offset_end - patch.offset_start) in
       write_patch
+        (b_offset + b_length + String.length patched_chunk)
         patch.offset_end
         value
         patches
-        (content ^ String.sub value offset length ^ patch_content)
+        (content ^ chunk ^ patch_content)
   in
-  write_patch 0 w.value patches ""
+  write_patch 0 0 w.value patches ""
 
 let to_string w ctx =
   let patches = List.rev w.patches in

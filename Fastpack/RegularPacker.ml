@@ -87,7 +87,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
         requested_from_filename = filename;
       } in
       begin
-        dependencies := dep::!dependencies;
+        dependencies := dep :: !dependencies;
         dep
       end
     in
@@ -180,13 +180,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
               default;
               _;
             } ->
-            let is_skipped =
-              List.exists
-                (fun e -> String.suffix ~suf:("." ^ e) request)
-                ["css"; "less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg";
-                 "gif"; "ttf"]
-            in
-            if is_skipped
+            if is_ignored_request request
             then remove_loc loc
             else
               let dep = add_dependency request in

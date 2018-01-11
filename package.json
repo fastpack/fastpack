@@ -47,6 +47,7 @@
     "@opam/yojson": "1.4.0",
     "@opam/logs": "0.6.2",
     "@opam/fmt": "0.8.5",
+    "@opam/batteries": "2.8.0",
     "ocaml": "~4.4.0"
   }
 }

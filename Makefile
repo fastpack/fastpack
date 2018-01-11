@@ -36,6 +36,8 @@ test-react-app-simple: build-dev
 		src/index.js \
 		--transpile-all '^src'
 
+
+
 build-examples: build-react-app-simple
 	@echo "Examples built."
 
@@ -47,3 +49,4 @@ bootstrap: fetch install build build-examples
 
 clean: clean-examples
 	@rm -rf _build/ node_modules/
+
