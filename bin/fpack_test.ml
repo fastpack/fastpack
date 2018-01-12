@@ -216,7 +216,16 @@ let () =
       Arg.(required & pos 0 (some dir) None & info [] ~docv:"TEST_PATH" ~doc)
     in
 
-    let test_all_t path train =
+    let debug_t =
+      let doc = "Print debug output" in
+      Arg.(value & flag & info ["d"; "debug"] ~doc)
+    in
+
+    let test_all_t path train debug =
+      if debug then begin
+        Logs.set_level (Some Logs.Debug);
+        Logs.set_reporter (Logs_fmt.reporter ());
+      end;
       let total = List.length tests in
       let (ok, message) =
         match test_all path train with
@@ -233,7 +242,7 @@ let () =
           `Error (false, message)
       )
     in
-    Term.(const test_all_t $ path $ train)
+    Term.(const test_all_t $ path $ train $ debug_t)
   in
 
   let info =
@@ -243,6 +252,4 @@ let () =
     Term.info "fpack_test" ~version:"preview" ~doc ~exits:Term.default_exits
   in
 
-  (* Logs.set_level (Some Logs.Debug); *)
-  Logs.set_reporter (Logs_fmt.reporter ());
   Term.exit @@ Term.eval (run_t, info)

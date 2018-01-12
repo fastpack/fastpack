@@ -57,6 +57,7 @@ And execute commands from there.
 - [x] RegularPacker: `import` expressions should be Promises
 - [x] FlatPacker: Support 'development', 'production', 'test' modes
 - [x] Fastpack: use temporary file when writing the bundle
+- [x] `--debug` writes to stderr (1)
 
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
 - [ ] RegularPacker: add better API for cache (will enable watch mode later on)
@@ -66,7 +67,6 @@ And execute commands from there.
       export statement
 - [ ] FlatPacker / RegularPacker: set `__DEV__` variable based on mode
 - [ ] Use combinators for error output for nicer formatting? (2)
-- [ ] `--debug` writes to stderr (1)
 - [ ] FastpackTranspiler: JSXFragment, SpreadChild (1)
 - [ ] Documentation / Domain (1)
 - [ ] Fastpack: handle static files (2)

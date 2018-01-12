@@ -10,12 +10,17 @@ let () =
         mode
         target
         cache
+        debug
         transpile_all
         transpile_react_jsx
         transpile_flow
         transpile_class
         transpile_object_spread
       =
+      if debug then begin
+        Logs.set_level (Some Logs.Debug);
+        Logs.set_reporter (Logs_fmt.reporter ());
+      end;
       try
         let options =
           { Fastpack.empty_options with
@@ -126,6 +131,11 @@ let () =
         Arg.(value & vflag Normal [purge; ignore])
     in
 
+    let debug_t =
+      let doc = "Print debug output" in
+      Arg.(value & flag & info ["d"; "debug"] ~doc)
+    in
+
     let transpile_all =
       let doc =
         "[Experimental] Apply all transpilers to files matching $(docv)"
@@ -179,6 +189,7 @@ let () =
         $ mode_t
         $ target_t
         $ cache_t
+        $ debug_t
         $ transpile_all
         $ transpile_react_jsx
         $ transpile_flow
@@ -194,6 +205,4 @@ let () =
     Term.info "fpack" ~version:"preview" ~doc ~exits:Term.default_exits
   in
 
-  (* Logs.set_level (Some Logs.Debug); *)
-  Logs.set_reporter (Logs_fmt.reporter ());
   Term.exit @@ Term.eval (run_t, info)
