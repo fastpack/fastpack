@@ -33,12 +33,12 @@ let pack ~mode pack_f entry_filename _ =
 let pack_regular_prod =
   pack
     ~mode:Fastpack.Mode.Production
-    (Fastpack.RegularPacker.pack ~with_runtime:false)
+    (Fastpack.RegularPacker.pack ~with_runtime:true)
 
 let pack_regular_dev =
   pack
     ~mode:Fastpack.Mode.Development
-    (Fastpack.RegularPacker.pack ~with_runtime:false)
+    (Fastpack.RegularPacker.pack ~with_runtime:true)
 
 let pack_flat =
   pack
@@ -69,7 +69,8 @@ let tests = [
   ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat);
   ("pack_regular_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
   ("pack_regular_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
-  ("pack_flat_all_static/index.js", "pack_flat_all_static.js", pack_flat);
+  ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat);
+  ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
   (* ("current.js", "", print ~with_scope:false); *)
 ]
 

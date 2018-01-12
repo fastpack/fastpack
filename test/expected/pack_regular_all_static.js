@@ -1,5 +1,5 @@
 
-var process = {env: {NODE_ENV: 'development'}};
+var process = {env: {NODE_ENV: 'production'}};
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -53,56 +53,43 @@ var process = {env: {NODE_ENV: 'development'}};
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
-"dev": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports = {dev: true};
+"b": function(module, exports, __fastpack_require__, __fastpack_import__) {
+console.log('side effect of b');
+module.exports = function() {console.log('b')};
+},
+"a": function(module, exports, __fastpack_require__, __fastpack_import__) {
+const b = __fastpack_require__(/* "./b" */ "b");
+
+module.exports = function() {
+  console.log('b in a');
+  b();
+};
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
+const a = __fastpack_require__(/* "./a" */ "a");
 
-let p;
+(function() {
+  __fastpack_import__(/* "./b" */ "b").then(b => {
+    console.log('b in promise');
+    b();
+  })
 
-// if-then-no-else
+  let b = __fastpack_require__(/* "./b" */ "b");
+  a();
+  console.log('b in index');
+  b();
+})();
 
-
-
-
-
-
-
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-// if-then-else
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-
-// alternative statement
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-// logical AND expression
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-// conditional operator
-p = __fastpack_require__(/* "./dev" */ "dev");
+/*
+$ node <bundle.js>
+side effect of b
+b in a
+b
+b in index
+b
+b in promise
+b
+*/
 },
 
 })

@@ -42,41 +42,40 @@ And execute commands from there.
 
 ### MVP
 
-- [x] FastpackTraspiler: jsx [andeypopp]
-- [x] FastpackTraspiler: flow - remove annotations [zindel]
-- [x] FastpackTraspiler: class syntax, properties, decorators [zindel]
+- [x] FastpackTranspiler: jsx [andeypopp]
+- [x] FastpackTranspiler: flow - remove annotations [zindel]
+- [x] FastpackTranspiler: class syntax, properties, decorators [zindel]
 - [x] Fastpack: Verify printer correctness (use babel-generator) [zindel]
 - [x] Fastpack: JavaScript runtime - add require statement [zindel]
 - [x] FastpackTranspiler: export statements [zindel]
 - [x] Fastpack: import statements handling
-- [x] FastpackTraspiler: object spread, rest operators [zindel]
+- [x] FastpackTranspiler: object spread, rest operators [zindel]
 - [x] RegularPacker: incremental builds
 - [x] RegularPacker / FlatPacker: __es6Module flag
 - [x] FlatPacker: turn dynamic dependency into static if needed
+- [x] FlatPacker: add runtime
+- [x] RegularPacker: `import` expressions should be Promises
 
 - [ ] FlatPacker: Support 'development', 'production', 'test' modes
 - [ ] RegularPacker: add better API for cache (will enable watch mode later on)
 - [ ] FastpackTranspiler: spread operator in try/catch clause
-- [ ] FlatPacker: add runtime
-- [ ] RegularPacker: `import` expressions should be Promises
-- [ ] Fastpack: `--target [ app | es6 | cjs ]` for the last export statement
+- [ ] FastpackTranspiler: add runtime
+- [ ] Fastpack: use temporary file when writing the bundle
+- [ ] FlatPacker / RegularPacker : `--target [ app | es6 | cjs ]` for the last
+      export statement
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
   - [ ] Use combinators for error output for nicer formatting?
 - [ ] `--debug` writes to stderr (1)
-- [ ] FastpackTraspiler: JSXFragment, SpreadChild (1)
+- [ ] FastpackTranspiler: JSXFragment, SpreadChild (1)
 - [ ] Documentation / Domain (1)
 - [ ] Fastpack: handle static files (2)
 - [ ] Fastpack: export URLs for static files (2)
 - [ ] Support external command execution for LESS/SASS/other processing
 - [ ] Source maps [andreypopp, in progress] (2)
 - [ ] CSS support in import statements (webpack ICSS)? (2)
-- [ ] FastpackTraspiler: PrivateName, PrivateField
+- [ ] FastpackTranspiler: PrivateName, PrivateField
 
 ### Heap
 
-- [x] FastpackTraspiler / patch model - how to process node by 2 different
-      transpilers, i.e. spread operations and then remove flow type annotations
-- [x] support AST variable scope and check collisions with tmp_vars
-- [ ] Think of Workspace.make_patcher API
 - [ ] Think of integration with Flow
 - [ ] Implement rest operator for try/catch statements when flow parser suppots it

@@ -122,9 +122,15 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
 
     let define_binding = Printf.sprintf "const %s = %s;" in
 
-    let fastpack_require id filename =
+    let fastpack_require id request =
       Printf.sprintf "__fastpack_require__(/* \"%s\" */ \"%s\")"
-        filename
+        request
+        id
+    in
+
+    let fastpack_import id request =
+      Printf.sprintf "__fastpack_import__(/* \"%s\" */ \"%s\")"
+        request
         id
     in
 
@@ -389,7 +395,14 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
               );
             Visit.Continue
 
-        | E.Import (_, E.Literal { value = L.String request; _ })
+        | E.Import (_, E.Literal { value = L.String request; _ }) ->
+          let dep = add_dependency request in
+          patch_loc_with loc (fun ctx ->
+              let {Module. id = module_id; _} = get_module dep ctx in
+              fastpack_import module_id dep.request
+            );
+          Visit.Break
+
         | E.Call {
             callee = (_, E.Identifier (_, "require"));
             arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
@@ -528,13 +541,29 @@ var process = {env: {NODE_ENV: '%s'}};
     };
 
     // Execute the module function
-    modules[moduleId].call(module.exports, module, module.exports, __fastpack_require__);
+    modules[moduleId].call(
+      module.exports,
+      module,
+      module.exports,
+      __fastpack_require__,
+      __fastpack_import__
+    );
 
     // Flag the module as loaded
     module.l = true;
 
     // Return the exports of the module
     return module.exports;
+  }
+
+  function __fastpack_import__(moduleId) {
+    return new Promise((resolve, reject) => {
+      try {
+        resolve(__fastpack_require__(moduleId));
+      } catch (e) {
+        reject(e);
+      }
+    });
   }
 
   // expose the modules object
@@ -573,9 +602,10 @@ var process = {env: {NODE_ENV: '%s'}};
             dependencies
         in
         let%lwt () =
-          emit (Printf.sprintf
-                  "\"%s\": function(module, exports, __fastpack_require__) {\n"
-                  m.id)
+          emit
+          @@ Printf.sprintf
+            "\"%s\": function(module, exports, __fastpack_require__, __fastpack_import__) {\n"
+            m.id
         in
         let%lwt content = Workspace.write channel workspace ctx in
         let () = cache.add_source m.filename content in
