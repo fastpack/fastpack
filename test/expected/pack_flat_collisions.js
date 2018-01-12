@@ -1,6 +1,5 @@
 
 var process = {env: {NODE_ENV: 'production'}};
-
 var __fastpack_cache__ = {};
 function __fastpack_require__(f) {
   if (__fastpack_cache__[f.name] === undefined) {
@@ -11,6 +10,7 @@ function __fastpack_require__(f) {
   }
   return __fastpack_cache__[f.name];
 }
+
 
 /* a */
 

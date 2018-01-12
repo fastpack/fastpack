@@ -29,6 +29,12 @@ const $lib2 = __fastpack_require__(/* "./z" */ "z");
 
 exports.default = {a: $lib1.a, updateA: $lib1.updateA, Z: $lib2.default};
 },
+"cjs": function(module, exports, __fastpack_require__) {
+
+module.exports = function() {
+  console.log('cjs');
+}
+},
 "x": function(module, exports, __fastpack_require__) {
 const ZModule = __fastpack_require__(/* "./z" */ "z");
 
@@ -93,9 +99,15 @@ __fastpack_require__(/* "./yz" */ "yz");
 __fastpack_require__(/* "./yz_reimport.js" */ "yz_reimport");
 
 
+const $lib1 = __fastpack_require__(/* "./cjs" */ "cjs");
+
 const util = __fastpack_require__(/* "./util" */ "util");
+
 if (true) {
   let yz = __fastpack_require__(/* "./yz" */ "yz");
+}
+else {
+  $lib1();
 }
 
 },

@@ -23,9 +23,6 @@ type binding_type = Collision
 
 let runtime = "
 var process = {env: {NODE_ENV: 'production'}};
-"
-
-let wrapper_runtime = "
 var __fastpack_cache__ = {};
 function __fastpack_require__(f) {
   if (__fastpack_cache__[f.name] === undefined) {
@@ -36,6 +33,9 @@ function __fastpack_require__(f) {
   }
   return __fastpack_cache__[f.name];
 }
+"
+
+let wrapper_runtime = "
 "
 
 let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
