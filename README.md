@@ -63,6 +63,7 @@ And execute commands from there.
 - [ ] Fastpack: use temporary file when writing the bundle
 - [ ] FlatPacker / RegularPacker : `--target [ app | es6 | cjs ]` for the last
       export statement
+- [ ] FlatPacker / RegularPacker: set `__DEV__` variable based on mode
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
   - [ ] Use combinators for error output for nicer formatting?
 - [ ] `--debug` writes to stderr (1)
