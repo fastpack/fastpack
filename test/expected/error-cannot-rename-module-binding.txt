@@ -3,7 +3,6 @@ Working directory: /.../test/error-cannot-rename-module-binding
 Mode: production
 Call stack:
 
-
 Cannot rename module binding:
 (3:9) - (3:10): a
 Import Request: './a' from file: index.js

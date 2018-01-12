@@ -191,11 +191,13 @@ module Context = struct
   and transpile = t -> string -> string -> string
 
   let to_string { package_dir; stack; mode; _ } =
+    let stack =
+      List.map (Dependency.to_string ~dir:(Some package_dir)) stack
+    in
     Printf.sprintf "Working directory: %s\n" package_dir
     ^ Printf.sprintf "Mode: %s" (Mode.to_string mode)
-    ^ "\nCall stack:\n"
-    ^ String.concat "\t\n"
-      @@ List.map (Dependency.to_string ~dir:(Some package_dir)) stack
+    ^ "\nCall stack:"
+    ^ (if (List.length stack = 0) then "" else "\n\t" ^ String.concat "\t\n" stack)
 end
 
 

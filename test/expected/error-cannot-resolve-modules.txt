@@ -1,0 +1,8 @@
+
+Working directory: /.../test/error-cannot-resolve-modules
+Mode: production
+Call stack:
+Cannot resolve modules:
+	'./c' from file: index.js
+	'./b' from file: index.js
+	'./a' from file: index.js

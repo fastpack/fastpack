@@ -17,13 +17,16 @@ let to_string package_dir error =
   | CannotReadModule filename ->
     "Cannot read file: " ^ filename
 
-  | CannotLeavePackageDir _ ->
-    "CannotLeavePackageDir"
+  | CannotLeavePackageDir filename ->
+    Printf.sprintf
+      "%s is out of the working directory\n"
+      filename
 
   | CannotResolveModules modules ->
-    "Cannot resolve modules:\n"
-    ^ String.concat "\n\t"
-      @@ List.map (Dependency.to_string ~dir:(Some package_dir)) modules
+    "Cannot resolve modules:\n\t"
+    ^ (String.concat "\n\t"
+       @@ List.map (Dependency.to_string ~dir:(Some package_dir)) modules)
+    ^ "\n"
 
   | CannotParseFile (filename, errors) ->
     let format_error (loc, error) =

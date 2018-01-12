@@ -83,6 +83,16 @@ let tests = [
     "error-parse.txt",
     pack_regular_prod
   );
+  (
+    "error-cannot-resolve-modules/index.js",
+    "error-cannot-resolve-modules.txt",
+    pack_regular_prod
+  );
+  (
+    "error-cannot-leave-package-dir/index.js",
+    "error-cannot-leave-package-dir.txt",
+    pack_regular_prod
+  );
   (* ("current.js", "", transpile); *)
 ]
 

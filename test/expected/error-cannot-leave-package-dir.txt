@@ -1,0 +1,6 @@
+
+Working directory: /.../test/error-cannot-leave-package-dir
+Mode: production
+Call stack:
+	'./a' from file: index.js
+/.../test/LeavePackageDir.js is out of the working directory
