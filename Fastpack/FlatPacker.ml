@@ -21,29 +21,7 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let runtime = "
-var process = {env: {NODE_ENV: 'production'}};
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
-"
-
-let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
+let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
@@ -153,7 +131,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
           let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
           let workspace = ref (Workspace.of_string source) in
-          let {Workspace.
+          let ({ Workspace.
                 patch;
                 sub_loc;
                 patch_loc;
@@ -162,7 +140,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
                 remove_loc;
                 remove;
                 _
-              } = Workspace.make_patcher workspace
+              } as patcher) = Workspace.make_patcher workspace
           in
 
           let patch_binding ?(typ=None) name (binding : Scope.binding) =
@@ -421,120 +399,133 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
             | _ -> stmt_level := !stmt_level - 1;
           in
 
-          let visit_statement _ (loc, stmt) =
-            match stmt with
-            | S.ExportNamedDeclaration { source = Some _; _ }
-            | S.ExportNamedDeclaration { specifiers = Some _; _ }->
-              remove_loc loc;
-              Visit.Break;
-
-            | S.ExportDefaultDeclaration {
-                declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _);
-                _ } ->
-              patch
-                loc.Loc.start.offset
-                (expr_loc.Loc.start.offset - loc.Loc.start.offset)
-              @@ Printf.sprintf "const %s = "
-              @@ gen_ext_binding module_id "default";
-              Visit.Continue
-
-            | S.ExportDefaultDeclaration {
-                declaration = S.ExportDefaultDeclaration.Declaration (stmt_loc, _);
-                _ }
-            | S.ExportNamedDeclaration { declaration = Some (stmt_loc, _); _ } ->
-              remove
-                loc.Loc.start.offset
-                (stmt_loc.Loc.start.offset - loc.Loc.start.offset);
-              Visit.Continue;
-
-            | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
-              if (not @@ is_ignored_request request)
-              then begin
-                let _ = add_static_dep request in
+          let visit_statement visit_ctx (loc, stmt) =
+            let action =
+              Mode.patch_statement patcher ctx.Context.mode visit_ctx (loc, stmt)
+            in
+            match action with
+            | Visit.Break ->
+              Visit.Break
+            | Visit.Continue ->
+              match stmt with
+              | S.ExportNamedDeclaration { source = Some _; _ }
+              | S.ExportNamedDeclaration { specifiers = Some _; _ }->
                 remove_loc loc;
-              end
-              else
-                remove_loc loc;
-              Visit.Continue;
-
-            | S.ForIn {left = S.ForIn.LeftPattern pattern; _}
-            | S.ForOf {left = S.ForOf.LeftPattern pattern; _} ->
-              patch_pattern pattern;
-              Visit.Continue;
-
-            | _ ->
-              Visit.Continue
-          in
-
-          let visit_expression _ (loc, expr) =
-            match expr with
-            (* patch shorthands, since we will be doing renaming *)
-            | E.Object { properties } ->
-                properties
-                |> List.iter
-                  (fun prop ->
-                     match prop with
-                      | E.Object.Property (loc, E.Object.Property.Init {
-                          key = E.Object.Property.Identifier (_, name) ;
-                          shorthand = true;
-                          _
-                        })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
-                      | _ -> ()
-                  );
-                Visit.Continue
-
-            (* static imports *)
-            | E.Call {
-                callee = (_, E.Identifier (_, "require"));
-                arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
-              } when !stmt_level = 1 ->
-                let dep = add_static_dep request in
-                patch_loc_with loc
-                  (fun dep_map ->
-                     match MDM.get dep dep_map with
-                     | None ->
-                       failwith ("Cannot resolve request: " ^ request)
-                     | Some m ->
-                       Printf.sprintf "(%s)" @@ gen_ext_namespace_binding m.id
-                  );
                 Visit.Break;
 
-            (* dynamic imports *)
-            | E.Call {
-                callee = (_, E.Identifier (_, "require"));
-                arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
-              } when !stmt_level > 1 ->
-              let dep = add_dynamic_dep ctx request filename in
-              patch_dynamic_dep loc dep "__fastpack_require__";
-              Visit.Break;
+              | S.ExportDefaultDeclaration {
+                  declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _);
+                  _ } ->
+                patch
+                  loc.Loc.start.offset
+                  (expr_loc.Loc.start.offset - loc.Loc.start.offset)
+                @@ Printf.sprintf "const %s = "
+                @@ gen_ext_binding module_id "default";
+                Visit.Continue
 
-            | E.Import (_, E.Literal { value = L.String request; _ }) ->
-              let dep = add_dynamic_dep ctx request filename in
-              patch_dynamic_dep loc dep "__fastpack_import__";
-              Visit.Break;
+              | S.ExportDefaultDeclaration {
+                  declaration = S.ExportDefaultDeclaration.Declaration (stmt_loc, _);
+                  _ }
+              | S.ExportNamedDeclaration { declaration = Some (stmt_loc, _); _ } ->
+                remove
+                  loc.Loc.start.offset
+                  (stmt_loc.Loc.start.offset - loc.Loc.start.offset);
+                Visit.Continue;
+
+              | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
+                if (not @@ is_ignored_request request)
+                then begin
+                  let _ = add_static_dep request in
+                  remove_loc loc;
+                end
+                else
+                  remove_loc loc;
+                Visit.Continue;
+
+              | S.ForIn {left = S.ForIn.LeftPattern pattern; _}
+              | S.ForOf {left = S.ForOf.LeftPattern pattern; _} ->
+                patch_pattern pattern;
+                Visit.Continue;
+
+              | _ ->
+                Visit.Continue
+          in
+
+          let visit_expression visit_ctx (loc, expr) =
+            let action =
+              Mode.patch_expression patcher ctx.Context.mode visit_ctx (loc,expr)
+            in
+            match action with
+            | Visit.Break -> Visit.Break
+            | Visit.Continue ->
+              match expr with
+              (* patch shorthands, since we will be doing renaming *)
+              | E.Object { properties } ->
+                  properties
+                  |> List.iter
+                    (fun prop ->
+                       match prop with
+                        | E.Object.Property (loc, E.Object.Property.Init {
+                            key = E.Object.Property.Identifier (_, name) ;
+                            shorthand = true;
+                            _
+                          })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
+                        | _ -> ()
+                    );
+                  Visit.Continue
+
+              (* static imports *)
+              | E.Call {
+                  callee = (_, E.Identifier (_, "require"));
+                  arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
+                } when !stmt_level = 1 ->
+                  let dep = add_static_dep request in
+                  patch_loc_with loc
+                    (fun dep_map ->
+                       match MDM.get dep dep_map with
+                       | None ->
+                         failwith ("Cannot resolve request: " ^ request)
+                       | Some m ->
+                         Printf.sprintf "(%s)" @@ gen_ext_namespace_binding m.id
+                    );
+                  Visit.Break;
+
+              (* dynamic imports *)
+              | E.Call {
+                  callee = (_, E.Identifier (_, "require"));
+                  arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
+                } when !stmt_level > 1 ->
+                let dep = add_dynamic_dep ctx request filename in
+                patch_dynamic_dep loc dep "__fastpack_require__";
+                Visit.Break;
+
+              | E.Import (_, E.Literal { value = L.String request; _ }) ->
+                let dep = add_dynamic_dep ctx request filename in
+                patch_dynamic_dep loc dep "__fastpack_import__";
+                Visit.Break;
 
 
-            | E.Member {
-                _object = (_, E.Identifier (_, "module"));
-                property = E.Member.PropertyIdentifier (_, "exports");
-                _
-              } ->
-              patch_namespace loc;
-              Visit.Break;
+              | E.Member {
+                  _object = (_, E.Identifier (_, "module"));
+                  property = E.Member.PropertyIdentifier (_, "exports");
+                  _
+                } ->
+                patch_namespace loc;
+                Visit.Break;
 
-            (* replace identifiers *)
-            | E.Identifier ((loc, name) as id) ->
-              if (name = "exports")
-              then patch_namespace loc
-              else patch_identifier id;
-              Visit.Break;
+              (* replace identifiers *)
+              | E.Identifier ((loc, name) as id) ->
+                if (name = "exports")
+                then patch_namespace loc
+                else patch_identifier id;
+                Visit.Break;
 
-            | E.Assignment { left; _ } ->
-              patch_pattern left;
-              Visit.Continue
+              | E.Assignment { left; _ } ->
+                patch_pattern left;
+                Visit.Continue
 
-            | _ ->
-              Visit.Continue;
+              | _ ->
+                Visit.Continue;
           in
 
           let handler = {
@@ -714,5 +705,29 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
           in
           Lwt.return_unit
   in
-  let%lwt () = Lwt_io.write channel (if with_runtime then runtime else "") in
+  let%lwt () =
+    Lwt_io.write channel
+    @@ Printf.sprintf "
+var process = {env: {NODE_ENV: '%s'}};
+var __fastpack_cache__ = {};
+
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+  }
+  return __fastpack_cache__[f.name];
+}
+
+function __fastpack_import__(f) {
+  return new Promise((resolve, reject) => {
+    try {
+      resolve(__fastpack_require__(f));
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+"
+    @@ Mode.to_string ctx.mode
+  in
   pack ctx MDM.empty

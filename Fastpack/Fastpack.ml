@@ -214,10 +214,10 @@ let prepare_and_pack cl_options =
             Error.ie "Cache strategy is not set"
         in
         Lwt.return
-        @@ RegularPacker.pack ~with_runtime:true ~cache:cache
+        @@ RegularPacker.pack ~cache:cache
       | Some Flat ->
         Lwt.return
-        @@ FlatPacker.pack ~with_runtime:true ~cache:Cache.fake
+        @@ FlatPacker.pack ~cache:Cache.fake
       | None -> Error.ie "Unexpected Packer"
     in
     Lwt_io.with_file

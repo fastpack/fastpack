@@ -53,10 +53,13 @@ run "Regular / Development / Cache Ignored" \
     --bundle regular \
     --mode development
 run "Flat / Production" \
-    --purge-cache \
     -o fpack-test/flat.prod.js \
     --bundle flat \
     --mode production
+run "Flat / Development" \
+    -o fpack-test/flat.dev.js \
+    --bundle flat \
+    --mode development
 
 INDEX="fpack-test/index.html"
 cat <<HTML > $INDEX

@@ -33,14 +33,19 @@ let pack ~mode pack_f entry_filename _ =
 let pack_regular_prod =
   pack
     ~mode:Fastpack.Mode.Production
-    (Fastpack.RegularPacker.pack ~with_runtime:true)
+    Fastpack.RegularPacker.pack
 
 let pack_regular_dev =
   pack
     ~mode:Fastpack.Mode.Development
-    (Fastpack.RegularPacker.pack ~with_runtime:true)
+    Fastpack.RegularPacker.pack
 
-let pack_flat =
+let pack_flat_prod =
+  pack
+    ~mode:Fastpack.Mode.Production
+    (Fastpack.FlatPacker.pack)
+
+let pack_flat_dev =
   pack
     ~mode:Fastpack.Mode.Development
     (Fastpack.FlatPacker.pack)
@@ -65,12 +70,14 @@ let tests = [
   ("print.js", "", print ~with_scope:false);
   ("print-with-scope.js", "", print ~with_scope:true);
   ("pack/index.js", "pack.js", pack_regular_prod);
-  ("pack_flat/index.js", "pack_flat.js", pack_flat);
-  ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat);
-  ("pack_regular_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
-  ("pack_regular_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
-  ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat);
+  ("pack_flat/index.js", "pack_flat.js", pack_flat_prod);
+  ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat_prod);
+  ("pack_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
+  ("pack_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
+  ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat_prod);
   ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
+  ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
+  ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
   (* ("current.js", "", print ~with_scope:false); *)
 ]
 

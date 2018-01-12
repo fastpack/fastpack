@@ -12,7 +12,7 @@ let debug = Logs.debug
 
 
 
-let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
+let pack ?(cache=Cache.fake) ctx channel =
 
   let analyze _id filename source =
     let ((_, stmts, _) as program), _ = Parser.parse_source source in
@@ -613,9 +613,7 @@ var process = {env: {NODE_ENV: '%s'}};
         Lwt.return seen
     in
 
-    (if with_runtime
-     then emit_runtime channel entry.Module.id
-     else emit @@ "/* Entry point: " ^ entry.Module.id ^ " */\n")
+    emit_runtime channel entry.Module.id
     >> emit "({\n"
     >> emit_module entry
     >>= (fun _ -> emit "\n})\n")
