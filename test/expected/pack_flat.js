@@ -1,4 +1,17 @@
 
+var process = {env: {NODE_ENV: 'production'}};
+
+var __fastpack_cache__ = {};
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+    if (__fastpack_cache__[f.name].default === undefined) {
+      __fastpack_cache__[f.name].default = __fastpack_cache__[f.name]
+    }
+  }
+  return __fastpack_cache__[f.name];
+}
+
 /* a */
 
 
@@ -61,10 +74,21 @@ console.log($e__a__a2, $n__d, $e__default_declaration__default, Expression);
 
 const $n__index = {};
 
+function $w__c() {
+
+var __fastpack_cache__ = {};
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+    if (__fastpack_cache__[f.name].default === undefined) {
+      __fastpack_cache__[f.name].default = __fastpack_cache__[f.name]
+    }
+  }
+  return __fastpack_cache__[f.name];
+}
+
 /* c */
 
-
-function $w__c() {
 let $n__c;
 let $i__c__cInternal1 = 100;
 let $i__c__cInternal2 = 200;
@@ -91,10 +115,21 @@ Object.assign($n__c, {c1: $i__c__c1, c2: $i__c__c2, c3: $i__c__c3});
 return $n__c;
 }
 
+function $w__b() {
+
+var __fastpack_cache__ = {};
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+    if (__fastpack_cache__[f.name].default === undefined) {
+      __fastpack_cache__[f.name].default = __fastpack_cache__[f.name]
+    }
+  }
+  return __fastpack_cache__[f.name];
+}
+
 /* b */
 
-
-function $w__b() {
 
 
 function $e__b__b1() {
@@ -112,10 +147,21 @@ const $n__b = {default: $e__b__default, b1: $e__b__b1, b2: $e__b__b2};
 return $n__b;
 }
 
+function $w__e() {
+
+var __fastpack_cache__ = {};
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+    if (__fastpack_cache__[f.name].default === undefined) {
+      __fastpack_cache__[f.name].default = __fastpack_cache__[f.name]
+    }
+  }
+  return __fastpack_cache__[f.name];
+}
+
 /* e */
 
-
-function $w__e() {
 console.log('"e" is imported');
 
 const $n__e = {};

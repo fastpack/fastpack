@@ -1,4 +1,17 @@
 
+var process = {env: {NODE_ENV: 'production'}};
+
+var __fastpack_cache__ = {};
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+    if (__fastpack_cache__[f.name].default === undefined) {
+      __fastpack_cache__[f.name].default = __fastpack_cache__[f.name]
+    }
+  }
+  return __fastpack_cache__[f.name];
+}
+
 /* a */
 
 let $e__a__a1 = 1;

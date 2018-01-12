@@ -36,6 +36,11 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
         } as patcher) = Workspace.make_patcher workspace
     in
 
+    let length = BatUTF8.length source in
+    patch length 0
+    @@ Printf.sprintf ";module.__esModule = %s;"
+    @@ if is_es_module stmts then "true" else "false";
+
     let program_scope = Scope.of_program stmts Scope.empty in
     let scopes = ref [program_scope] in
     let top_scope () = List.hd !scopes in
@@ -164,6 +169,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
     let leave_statement _ _ =
       pop_scope ()
     in
+
 
     let visit_statement visit_ctx ((loc: Loc.t), stmt) =
       let action =
@@ -421,17 +427,19 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
           Visit.Continue;
     in
 
-    let handler = {
-      Visit.default_visit_handler with
-      visit_statement;
-      visit_expression;
-      enter_function;
-      leave_function;
-      enter_block;
-      leave_block;
-      enter_statement;
-      leave_statement;
-    } in
+    let handler =
+      {
+        Visit.default_visit_handler with
+        visit_statement;
+        visit_expression;
+        enter_function;
+        leave_function;
+        enter_block;
+        leave_block;
+        enter_statement;
+        leave_statement;
+      }
+    in
     Visit.visit handler program;
 
     (!workspace, !dependencies, program_scope)
@@ -520,8 +528,8 @@ var process = {env: {NODE_ENV: '%s'}};
     module.l = true;
 
     // TODO: is it sustainable?
-    if(module.exports.default === undefined) {
-      module.exports.default = module.exports;
+    if(!module.__esModule) {
+     module.exports.default = module.exports;
     }
 
     // Return the exports of the module

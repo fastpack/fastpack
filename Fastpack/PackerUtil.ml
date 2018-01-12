@@ -1,4 +1,10 @@
 
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
+module S = Ast.Statement
+module E = Ast.Expression
+module L = Ast.Literal
+
 let debug = Logs.debug
 
 let rec makedirs dir =
@@ -13,11 +19,6 @@ let rec makedirs dir =
 
 module Mode = struct
   module Visit = FastpackUtil.Visit
-  module Ast = FlowParser.Ast
-  module Loc = FlowParser.Loc
-  module S = Ast.Statement
-  module E = Ast.Expression
-  module L = Ast.Literal
 
   type t = Production | Development | Test
 
@@ -412,3 +413,16 @@ let is_ignored_request request =
     (fun e -> String.suffix ~suf:("." ^ e) request)
     ["css"; "less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg";
      "gif"; "ttf"]
+
+let is_es_module stmts =
+  (* TODO: what if module has only import() expression? *)
+  let import_or_export ((_, stmt) : Loc.t S.t) =
+    match stmt with
+    | S.ExportDefaultDeclaration _
+    | S.ExportNamedDeclaration _
+    | S.ImportDeclaration _ ->
+      true
+    | _ ->
+      false
+  in
+  List.exists import_or_export stmts

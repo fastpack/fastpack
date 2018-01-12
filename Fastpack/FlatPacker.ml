@@ -21,11 +21,11 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let global_runtime = "
+let runtime = "
 var process = {env: {NODE_ENV: 'production'}};
 "
 
-let runtime = "
+let wrapper_runtime = "
 var __fastpack_cache__ = {};
 function __fastpack_require__(f) {
   if (__fastpack_cache__[f.name] === undefined) {
@@ -606,7 +606,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
       in
 
       let%lwt () = emit_wrapper_start () in
-      let%lwt () = emit (if with_runtime then runtime else "") in
+      let%lwt () = emit wrapper_runtime in
       let%lwt modules =
         DependencyGraph.sort graph entry
         |> Lwt_list.fold_left_s
@@ -681,5 +681,5 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
         in
         Lwt.return_unit
   in
-  let%lwt () = Lwt_io.write channel global_runtime in
+  let%lwt () = Lwt_io.write channel (if with_runtime then runtime else "") in
   pack ctx MDM.empty
