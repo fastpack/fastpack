@@ -226,12 +226,24 @@ let prepare_and_pack cl_options =
         @@ FlatPacker.pack ~cache:Cache.fake
       | None -> Error.ie "Unexpected Packer"
     in
-    Lwt_io.with_file
-      ~mode:Lwt_io.Output
-      ~perm:0o640
-      ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
-      output_file
-      @@ pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir
+    let temp_file = Filename.temp_file "" ".bundle.js" in
+    Lwt.finalize
+      (fun () ->
+        let%lwt _ =
+          Lwt_io.with_file
+            ~mode:Lwt_io.Output
+            ~perm:0o640
+            ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+            temp_file
+          @@ pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir
+        in
+        Lwt_unix.rename temp_file output_file
+      )
+      (fun () ->
+         if%lwt Lwt_unix.file_exists temp_file
+         then Lwt_unix.unlink temp_file
+      )
+
   | _ ->
     Error.ie "input / output are not provided"
 

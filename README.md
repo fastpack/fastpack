@@ -56,11 +56,11 @@ And execute commands from there.
 - [x] FlatPacker: add runtime
 - [x] RegularPacker: `import` expressions should be Promises
 - [x] FlatPacker: Support 'development', 'production', 'test' modes
+- [x] Fastpack: use temporary file when writing the bundle
 
 - [ ] RegularPacker: add better API for cache (will enable watch mode later on)
 - [ ] FastpackTranspiler: spread operator in try/catch clause
 - [ ] FastpackTranspiler: add runtime
-- [ ] Fastpack: use temporary file when writing the bundle
 - [ ] FlatPacker / RegularPacker : `--target [ app | es6 | cjs ]` for the last
       export statement
 - [ ] FlatPacker / RegularPacker: set `__DEV__` variable based on mode
