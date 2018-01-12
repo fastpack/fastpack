@@ -36,11 +36,6 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
         } as patcher) = Workspace.make_patcher workspace
     in
 
-    let length = BatUTF8.length source in
-    patch length 0
-    @@ Printf.sprintf ";module.__esModule = %s;"
-    @@ if is_es_module stmts then "true" else "false";
-
     let program_scope = Scope.of_program stmts Scope.empty in
     let scopes = ref [program_scope] in
     let top_scope () = List.hd !scopes in
@@ -405,22 +400,33 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
               fastpack_require module_id dep.request
             );
           Visit.Break
+
         | E.Identifier (loc, name) ->
           let () =
             match get_binding name with
             | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
               patch_loc_with
                 loc
-                (fun _ ->
+                (fun ctx ->
                    match get_module_binding source with
                    | Some module_binding ->
-                     module_binding ^ "." ^ remote
+                     let m =
+                       get_module
+                         { Dependency.
+                           request = source;
+                           requested_from_filename = filename }
+                         ctx
+                     in
+                     if (m.Module.es_module || remote <> "default")
+                     then module_binding ^ "." ^ remote
+                     else module_binding
                    | None ->
                      (* TODO: provide better error report*)
                      failwith ("Usage of binding before import " ^ name ^ " " ^ source ^ " " ^ remote ^ " " ^ filename ^ " " ^ (string_of_int loc.start.offset) ^ " " ^ (string_of_int loc._end.offset))
                 )
             | _ -> ()
           in Visit.Break;
+
         | E.Import _ ->
           failwith "import(_) is supported only with the constant argument"
         | _ ->
@@ -442,7 +448,7 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
     in
     Visit.visit handler program;
 
-    (!workspace, !dependencies, program_scope)
+    (!workspace, !dependencies, program_scope, is_es_module stmts)
   in
 
   (* Gather dependencies *)
@@ -458,14 +464,14 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) ctx channel =
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))
         in
-        let (workspace, dependencies, scope) =
+        let (workspace, dependencies, scope, es_module) =
           try
               analyze m.id m.filename transpiled
           with
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))
         in
-        { m with workspace; scope; dependencies; }
+        { m with workspace; scope; dependencies; es_module }
       end
       else
         m
@@ -527,11 +533,6 @@ var process = {env: {NODE_ENV: '%s'}};
     // Flag the module as loaded
     module.l = true;
 
-    // TODO: is it sustainable?
-    if(!module.__esModule) {
-     module.exports.default = module.exports;
-    }
-
     // Return the exports of the module
     return module.exports;
   }
@@ -542,33 +543,6 @@ var process = {env: {NODE_ENV: '%s'}};
   // expose the module cache
   __fastpack_require__.c = installedModules;
 
-  // define getter function for harmony exports
-  __fastpack_require__.d = function(exports, name, getter) {
-    if(!__fastpack_require__.o(exports, name)) {
-      Object.defineProperty(exports, name, {
-        configurable: false,
-        enumerable: true,
-        get: getter
-      });
-    }
-  };
-
-  // getDefaultExport function for compatibility with non-harmony modules
-  __fastpack_require__.n = function(module) {
-    var getter = module && module.__esModule ?
-      function getDefault() { return module['default']; } :
-      function getModuleExports() { return module; };
-    __fastpack_require__.d(getter, 'a', getter);
-    return getter;
-  };
-
-  // Object.prototype.hasOwnProperty.call
-  __fastpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-
-  // Public path
-  __fastpack_require__.p = '';
-
-  // Load entry module and return exports
   return __fastpack_require__(__fastpack_require__.s = '%s');
 })
 " (Mode.to_string ctx.mode) entry_id)

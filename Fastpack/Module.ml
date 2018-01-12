@@ -23,6 +23,9 @@ type t = {
   (** If module is cached *)
   cached : bool;
 
+  (** EcmaScript 6 Module *)
+  es_module : bool;
+
   (** Module source along with transformations applied *)
   workspace : t DependencyMap.t Workspace.t;
 

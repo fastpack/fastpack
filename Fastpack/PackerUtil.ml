@@ -212,6 +212,7 @@ module Cache = struct
     id : string;
     digest : string;
     st_mtime : float;
+    es_module : bool;
     dependencies : Dependency.t list;
     source : string;
   }
@@ -259,13 +260,14 @@ module Cache = struct
       match M.get filename modules with
       | None ->
         None
-      | Some { id; digest; st_mtime; dependencies; source; } ->
+      | Some { id; digest; st_mtime; dependencies; source; es_module; } ->
         Some { Module.
           id;
           filename;
           digest;
           st_mtime;
           dependencies;
+          es_module;
           cached = true;
           workspace = Workspace.of_string source;
           scope = FastpackUtil.Scope.empty;
@@ -277,7 +279,7 @@ module Cache = struct
         Hashtbl.fold
           (fun
             filename
-            ({ id; digest; st_mtime; dependencies; _ } : Module.t)
+            ({ id; digest; st_mtime; dependencies; es_module; _ } : Module.t)
             modules ->
              let source =
                match M.get filename !sources with
@@ -288,7 +290,7 @@ module Cache = struct
              in
              M.add
                filename
-               { id; digest; st_mtime; dependencies; source }
+               { id; digest; st_mtime; dependencies; source; es_module }
                modules
           )
           graph.DependencyGraph.modules
@@ -380,6 +382,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
       filename = filename;
       st_mtime;
       dependencies = [];
+      es_module = false;
       cached = false;
       digest = Digest.string source;
       workspace = Workspace.of_string source;
