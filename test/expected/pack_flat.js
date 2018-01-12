@@ -4,13 +4,9 @@ var __fastpack_cache__ = {};
 function __fastpack_require__(f) {
   if (__fastpack_cache__[f.name] === undefined) {
     __fastpack_cache__[f.name] = f();
-    if (__fastpack_cache__[f.name].default === undefined) {
-      __fastpack_cache__[f.name].default = __fastpack_cache__[f.name]
-    }
   }
   return __fastpack_cache__[f.name];
 }
-
 
 /* a */
 
@@ -76,7 +72,6 @@ const $n__index = {};
 
 function $w__c() {
 
-
 /* c */
 
 let $n__c;
@@ -107,7 +102,6 @@ return $n__c;
 
 function $w__b() {
 
-
 /* b */
 
 
@@ -128,7 +122,6 @@ return $n__b;
 }
 
 function $w__e() {
-
 
 /* e */
 

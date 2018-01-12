@@ -40,7 +40,6 @@ let pack_regular_dev =
     ~mode:Fastpack.Mode.Development
     (Fastpack.RegularPacker.pack ~with_runtime:false)
 
-
 let pack_flat =
   pack
     ~mode:Fastpack.Mode.Development
@@ -70,6 +69,7 @@ let tests = [
   ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat);
   ("pack_regular_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
   ("pack_regular_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
+  ("pack_flat_all_static/index.js", "pack_flat_all_static.js", pack_flat);
   (* ("current.js", "", print ~with_scope:false); *)
 ]
 
