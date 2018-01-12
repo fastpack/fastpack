@@ -181,6 +181,30 @@ let rec map_statement ctx (loc, statement) =
       let cls = map_class ctx cls in
       Statement.ClassDeclaration cls
 
+    | Statement.ExportNamedDeclaration ({declaration = Some stmt; _} as e) ->
+      let stmt = map_statement ctx stmt in
+      Statement.ExportNamedDeclaration { e with declaration = Some stmt }
+
+    | Statement.ExportDefaultDeclaration ({
+        declaration = Statement.ExportDefaultDeclaration.Declaration stmt;
+        _
+      } as e) ->
+      let stmt = map_statement ctx stmt in
+      Statement.ExportDefaultDeclaration {
+        e with
+        declaration = Statement.ExportDefaultDeclaration.Declaration stmt
+      }
+
+    | Statement.ExportDefaultDeclaration ({
+        declaration = Statement.ExportDefaultDeclaration.Expression expr;
+        _
+      } as e) ->
+      let expr = map_expression ctx expr in
+      Statement.ExportDefaultDeclaration {
+        e with
+        declaration = Statement.ExportDefaultDeclaration.Expression expr
+      }
+
     | node -> node
   in
   ctx.handler.map_statement ctx.scope (loc, statement)

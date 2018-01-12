@@ -116,7 +116,9 @@ let build_transpile_f
   let flow = CCOpt.get_or ~default:[] transpile_flow in
   match react_jsx, object_spread, cls, flow with
   | [], [], [], [] ->
-    fun _ _ s -> s
+    fun _ filename s ->
+      Logs.debug (fun m -> m "No transpilers: %s" filename);
+      s
   | _ ->
     let react_jsx = List.map Str.regexp react_jsx in
     let object_spread = List.map Str.regexp object_spread in
@@ -139,8 +141,12 @@ let build_transpile_f
         ]
       in
       match transpilers with
-      | [] -> source
-      | _ -> transpile_source transpilers source
+      | [] ->
+        Logs.debug (fun m -> m "Transpilers didn't match: %s" filename);
+        source
+      | _ ->
+        Logs.debug (fun m -> m "Transpilers %d: %s" (List.length transpilers) filename);
+        transpile_source transpilers source
 
 
 let prepare_and_pack cl_options =

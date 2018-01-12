@@ -55,8 +55,8 @@ And execute commands from there.
 - [x] FlatPacker: turn dynamic dependency into static if needed
 - [x] FlatPacker: add runtime
 - [x] RegularPacker: `import` expressions should be Promises
+- [x] FlatPacker: Support 'development', 'production', 'test' modes
 
-- [ ] FlatPacker: Support 'development', 'production', 'test' modes
 - [ ] RegularPacker: add better API for cache (will enable watch mode later on)
 - [ ] FastpackTranspiler: spread operator in try/catch clause
 - [ ] FastpackTranspiler: add runtime

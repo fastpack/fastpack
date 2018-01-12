@@ -414,6 +414,20 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 Visit.Break;
 
               | S.ExportDefaultDeclaration {
+                  declaration = S.ExportDefaultDeclaration.Declaration (
+                      expr_loc,
+                      S.FunctionDeclaration _
+                  );
+                  _
+                }
+              | S.ExportDefaultDeclaration {
+                  declaration = S.ExportDefaultDeclaration.Declaration (
+                      expr_loc,
+                      S.ClassDeclaration _
+                  );
+                  _
+                }
+              | S.ExportDefaultDeclaration {
                   declaration = S.ExportDefaultDeclaration.Expression (expr_loc, _);
                   _ } ->
                 patch

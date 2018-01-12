@@ -285,3 +285,8 @@ import {V1} from "foo";
 import {V4} from "foo";
 import 'foo';
 export { x };
+export function getIteratorFn(maybeIterable) {
+  return null;
+  
+}
+;

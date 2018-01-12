@@ -239,3 +239,7 @@ export interface foo5 { p: number }
 export interface foo6<T> { p: T }
 import 'foo';
 export {x};
+
+export function getIteratorFn(maybeIterable: ?any): ?() => ?Iterator<*> {
+  return null;
+}

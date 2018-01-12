@@ -50,17 +50,17 @@ let pack_flat_dev =
     ~mode:Fastpack.Mode.Development
     (Fastpack.FlatPacker.pack)
 
-let pack_stdout entry_filename _ =
-  let pack' () =
-    Fastpack.pack
-      ~pack_f:(Fastpack.FlatPacker.pack)
-      ~mode:Fastpack.Mode.Production
-      ~target:Fastpack.Target.Application
-      ~transpile_f:(fun _ _ p -> p)
-      ~entry_filename
-      ~package_dir:(Filename.dirname entry_filename)
-      Lwt_io.stdout
-  in Lwt_main.run (pack' ()); ""
+(* let pack_stdout entry_filename _ = *)
+(*   let pack' () = *)
+(*     Fastpack.pack *)
+(*       ~pack_f:(Fastpack.FlatPacker.pack) *)
+(*       ~mode:Fastpack.Mode.Production *)
+(*       ~target:Fastpack.Target.Application *)
+(*       ~transpile_f:(fun _ _ p -> p) *)
+(*       ~entry_filename *)
+(*       ~package_dir:(Filename.dirname entry_filename) *)
+(*       Lwt_io.stdout *)
+(*   in Lwt_main.run (pack' ()); "" *)
 
 let tests = [
   ("transpile-object-spread.js", "", transpile);
@@ -78,7 +78,7 @@ let tests = [
   ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
   ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
   ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
-  (* ("current.js", "", print ~with_scope:false); *)
+  (* ("current.js", "", transpile); *)
 ]
 
 let () =

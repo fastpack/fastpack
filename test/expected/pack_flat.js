@@ -46,7 +46,7 @@ const $n__d = {d1: $e__d__d1, d2: $e__d__d2};
 
 /* default_declaration */
 
-function $e__default_declaration__default(x) {};
+const $e__default_declaration__default = function $e__default_declaration__default(x) {};
 function $e__default_declaration__g() {return $e__default_declaration__default(1)}
 
 const $n__default_declaration = {default: $e__default_declaration__default, g: $e__default_declaration__g};
