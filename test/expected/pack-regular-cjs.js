@@ -1,6 +1,6 @@
 
 var process = {env: {NODE_ENV: 'production'}};
-(function(modules) {
+module.exports = (function(modules) {
   // The module cache
   var installedModules = {};
 
@@ -53,43 +53,21 @@ var process = {env: {NODE_ENV: 'production'}};
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
-"b": function(module, exports, __fastpack_require__, __fastpack_import__) {
-console.log('side effect of b');
-module.exports = function() {console.log('b')};
-},
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const b = __fastpack_require__(/* "./b" */ "b");
+let a = 1;
+Object.defineProperty(exports, "a", {get: () => a});
 
-module.exports = function() {
-  console.log('b in a');
-  b();
-};
+function changeA() { a = a + 1}
+Object.defineProperty(exports, "changeA", {get: () => changeA});
+;
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const a = __fastpack_require__(/* "./a" */ "a");
+const $lib1 = __fastpack_require__(/* "./a" */ "a");
+Object.defineProperty(exports, "a", {get: () => $lib1.a}); Object.defineProperty(exports, "changeA", {get: () => $lib1.changeA});
+let index = 1;
+Object.defineProperty(exports, "index", {get: () => index});
 
-(function() {
-  __fastpack_import__(/* "./b" */ "b").then(b => {
-    console.log('b in promise');
-    b();
-  })
-
-  let b = __fastpack_require__(/* "./b" */ "b");
-  a();
-  console.log('b in index');
-  b();
-})();
-
-/*
-$ node <bundle.js>
-side effect of b
-b in a
-b
-b in index
-b
-b in promise
-b
-*/
+exports.default = function() {console.log('Hello, world!')};
 },
 
 });

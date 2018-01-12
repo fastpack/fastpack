@@ -1,0 +1,5 @@
+
+Working directory: /.../test/pack-target
+Mode: production
+Call stack:
+EcmaScript6 target is not supported for the regular packer - use flat
