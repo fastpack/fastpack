@@ -9,16 +9,17 @@ module FlatPacker = FlatPacker
 
 
 open PackerUtil
-exception PackError = PackerUtil.PackError
 
 type bundle = Regular | Flat
 
+
+exception PackError = PackerUtil.PackError
 
 let string_of_error ctx error =
   Printf.sprintf
     "\n%s\n%s"
     (Context.to_string ctx)
-    (Error.to_string error)
+    (Error.to_string ctx.package_dir error)
 
 type options = {
   input : string option;

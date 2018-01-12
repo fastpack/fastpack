@@ -1,0 +1,8 @@
+
+Working directory: /.../test/error-parse
+Mode: production
+Call stack:
+'./a' from file: index.js
+Parse Error
+File: a.js
+	(1:15) - (1:16): Unexpected token ;

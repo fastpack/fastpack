@@ -15,7 +15,9 @@ let rec makedirs dir =
   | Some stat ->
     match stat.st_kind with
     | Lwt_unix.S_DIR -> Lwt.return_unit
-    | _ -> failwith (dir ^ "is not a directory")
+    | _ ->
+      Error.ie
+      @@ Printf.sprintf "'%s' expected to be a directory" dir
 
 module Mode = struct
   module Visit = FastpackUtil.Visit
@@ -192,7 +194,8 @@ module Context = struct
     Printf.sprintf "Working directory: %s\n" package_dir
     ^ Printf.sprintf "Mode: %s" (Mode.to_string mode)
     ^ "\nCall stack:\n"
-    ^ String.concat "\t\n" @@ List.map Dependency.to_string stack
+    ^ String.concat "\t\n"
+      @@ List.map (Dependency.to_string ~dir:(Some package_dir)) stack
 end
 
 

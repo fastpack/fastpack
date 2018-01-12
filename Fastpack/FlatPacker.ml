@@ -272,7 +272,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             let m = MDM.get dep dep_map in
             match m with
             | None ->
-              failwith ("Cannot find module: " ^ source ^ " from " ^ filename)
+              raise (PackError (ctx, CannotResolveModules [dep]))
             | Some m ->
               match remote with
               | None ->
@@ -518,6 +518,11 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 patch_dynamic_dep loc dep "__fastpack_import__";
                 Visit.Break;
 
+              | E.Import _ ->
+                let msg =
+                  "import(_) is supported only with the constant argument"
+                in
+                raise (PackError (ctx, NotImplemented (Some loc, msg)))
 
               | E.Member {
                   _object = (_, E.Identifier (_, "module"));
@@ -663,7 +668,9 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                (fun modules (dep, filename) ->
                   match get_module filename with
                   | Some m -> MDM.add dep m modules
-                  | None -> failwith "Should not happen"
+                  | None ->
+                    Error.ie ("Module should be found. See previous step: "
+                              ^ filename)
                )
               modules
             )
@@ -712,7 +719,10 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                    in
                    Lwt.return (StringSet.add entry_filename seen)
                | None ->
-                 failwith "Never happens!"
+                 Error.ie (
+                   "At this point all dependency requests should be resolved: "
+                ) 
+
             )
             StringSet.empty
             dynamic_deps

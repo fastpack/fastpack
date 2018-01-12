@@ -73,10 +73,11 @@ let pack ?(cache=Cache.fake) ctx channel =
       end
     in
 
-    let get_module dep ctx =
-      match Module.DependencyMap.get dep ctx with
+    let get_module dep dep_map =
+      match Module.DependencyMap.get dep dep_map with
       | Some m -> m
-      | None -> failwith ("Module node found: " ^ dep.request)
+      | None ->
+        raise (PackError (ctx, CannotResolveModules [dep]))
     in
 
     let add_dependency request =
@@ -92,7 +93,7 @@ let pack ?(cache=Cache.fake) ctx channel =
       end
     in
 
-    let get_local_name local =
+    let get_local_name (loc, local) =
       match get_binding local with
       | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
         begin
@@ -100,23 +101,27 @@ let pack ?(cache=Cache.fake) ctx channel =
              | Some module_binding ->
                module_binding ^ "." ^ remote
              | None ->
-               (* TODO: provide better error report*)
-               failwith ("Usage of binding before import")
+               let dep = {
+                 Dependency.
+                 request = source;
+                 requested_from_filename = filename;
+               } in
+               raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
         end
-      | _ -> local (* failwith ("Binding not found: " ^ local); *)
+      | _ -> local
     in
 
     let exports_from_specifiers =
       List.map
         (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
-                  local = (_, local);
+                  local = (loc, local);
                   exported }) ->
            let exported =
              match exported with
              | Some (_, name) -> name
              | None -> local
            in
-           exported, get_local_name local
+           exported, get_local_name (loc, local)
         )
     in
 
@@ -420,28 +425,28 @@ let pack ?(cache=Cache.fake) ctx channel =
             | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
               patch_loc_with
                 loc
-                (fun ctx ->
+                (fun dep_map ->
+                   let dep =
+                     { Dependency.
+                       request = source;
+                       requested_from_filename = filename }
+                   in
                    match get_module_binding source with
                    | Some module_binding ->
-                     let m =
-                       get_module
-                         { Dependency.
-                           request = source;
-                           requested_from_filename = filename }
-                         ctx
-                     in
+                     let m = get_module dep dep_map in
                      if (m.Module.es_module || remote <> "default")
                      then module_binding ^ "." ^ remote
                      else module_binding
                    | None ->
-                     (* TODO: provide better error report*)
-                     failwith ("Usage of binding before import " ^ name ^ " " ^ source ^ " " ^ remote ^ " " ^ filename ^ " " ^ (string_of_int loc.start.offset) ^ " " ^ (string_of_int loc._end.offset))
+                     raise (PackError (ctx, CannotRenameModuleBinding (loc, name, dep)))
                 )
             | _ -> ()
           in Visit.Break;
 
         | E.Import _ ->
-          failwith "import(_) is supported only with the constant argument"
+          let msg = "import(_) is supported only with the constant argument" in
+          raise (PackError (ctx, NotImplemented (Some loc, msg)))
+
         | _ ->
           Visit.Continue;
     in

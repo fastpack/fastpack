@@ -28,7 +28,14 @@ let pack ~mode pack_f entry_filename _ =
        @@ Lwt_bytes.extract bytes 0
        @@ Int64.to_int
        @@ Lwt_io.position ch
-  in Lwt_main.run (pack' ())
+  in
+  try
+    Lwt_main.run (pack' ())
+  with
+  | Fastpack.PackError (ctx, error) ->
+    let cwd = Unix.getcwd () in
+    Fastpack.string_of_error ctx error
+    |> String.replace ~sub:cwd ~by:"/..."
 
 let pack_regular_prod =
   pack
@@ -50,18 +57,6 @@ let pack_flat_dev =
     ~mode:Fastpack.Mode.Development
     (Fastpack.FlatPacker.pack)
 
-(* let pack_stdout entry_filename _ = *)
-(*   let pack' () = *)
-(*     Fastpack.pack *)
-(*       ~pack_f:(Fastpack.FlatPacker.pack) *)
-(*       ~mode:Fastpack.Mode.Production *)
-(*       ~target:Fastpack.Target.Application *)
-(*       ~transpile_f:(fun _ _ p -> p) *)
-(*       ~entry_filename *)
-(*       ~package_dir:(Filename.dirname entry_filename) *)
-(*       Lwt_io.stdout *)
-(*   in Lwt_main.run (pack' ()); "" *)
-
 let tests = [
   ("transpile-object-spread.js", "", transpile);
   ("transpile-class.js", "", transpile);
@@ -78,6 +73,16 @@ let tests = [
   ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
   ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
   ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
+  (
+    "error-cannot-rename-module-binding/index.js",
+    "error-cannot-rename-module-binding.txt",
+    pack_regular_prod
+  );
+  (
+    "error-parse/index.js",
+    "error-parse.txt",
+    pack_regular_prod
+  );
   (* ("current.js", "", transpile); *)
 ]
 
@@ -228,6 +233,6 @@ let () =
     Term.info "fpack_test" ~version:"preview" ~doc ~exits:Term.default_exits
   in
 
-  Logs.set_level (Some Logs.Debug);
+  (* Logs.set_level (Some Logs.Debug); *)
   Logs.set_reporter (Logs_fmt.reporter ());
   Term.exit @@ Term.eval (run_t, info)
