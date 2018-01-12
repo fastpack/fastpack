@@ -27,15 +27,9 @@ var __fastpack_cache__ = {};
 function __fastpack_require__(f) {
   if (__fastpack_cache__[f.name] === undefined) {
     __fastpack_cache__[f.name] = f();
-    if (__fastpack_cache__[f.name].default === undefined) {
-      __fastpack_cache__[f.name].default = __fastpack_cache__[f.name]
-    }
   }
   return __fastpack_cache__[f.name];
 }
-"
-
-let wrapper_runtime = "
 "
 
 let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
@@ -275,24 +269,27 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
             | None ->
               gen_ext_namespace_binding m.Module.id
             | Some remote ->
-              let names =
-                Scope.get_exports m.scope
-                |> List.filter
-                  (fun (name, _, _) -> name = remote)
-              in
-              match names with
-              | [] ->
-                (* TODO: distinguish between es6 & cjs modules
-                 * es6: error
-                 * cjs: namespace.name *)
+              match m.Module.es_module, remote with
+              | false, "default" ->
+                gen_ext_namespace_binding m.Module.id
+              | false, remote ->
                 Printf.sprintf
                   "%s.%s"
                   (gen_ext_namespace_binding m.Module.id)
                   remote
-              | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
-                match typ with
-                | Scope.Import import -> resolve_import dep_map m.filename import
-                | _ -> name_of_binding m.id name binding
+              | true, remote ->
+                let names =
+                  Scope.get_exports m.scope
+                  |> List.filter
+                    (fun (name, _, _) -> name = remote)
+                in
+                match names with
+                | [] ->
+                  failwith ("Cannot find name " ^ remote ^ " in module " ^ m.Module.filename)
+                | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
+                  match typ with
+                  | Scope.Import import -> resolve_import dep_map m.filename import
+                  | _ -> name_of_binding m.id name binding
         in
 
         let patch_identifier (loc, name) =
@@ -525,18 +522,24 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
           if (not !has_namespace_binding) then add_namespace_binding ();
         end;
 
-        (!workspace, !static_deps, program_scope)
+        (!workspace, !static_deps, program_scope, is_es_module stmts)
       in
 
       let source = m.Module.workspace.Workspace.value in
-      let (workspace, static_deps, scope) =
+      let (workspace, static_deps, scope, es_module) =
         try
             analyze m.id m.filename (transpile ctx m.filename source)
         with
         | FlowParser.Parse_error.Error args ->
           raise (PackError (ctx, CannotParseFile (m.filename, args)))
       in
-      let m = { m with workspace; scope; } in
+      let m = {
+        m with
+        workspace;
+        scope;
+        dependencies = static_deps;
+        es_module;
+      } in
       DependencyGraph.add_module graph m;
 
       (* check all static dependecies *)
@@ -606,7 +609,6 @@ let pack ?(with_runtime=true) ?(cache=Cache.fake) (ctx : Context.t) channel =
       in
 
       let%lwt () = emit_wrapper_start () in
-      let%lwt () = emit wrapper_runtime in
       let%lwt modules =
         DependencyGraph.sort graph entry
         |> Lwt_list.fold_left_s

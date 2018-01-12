@@ -51,21 +51,20 @@ And execute commands from there.
 - [x] Fastpack: import statements handling
 - [x] FastpackTraspiler: object spread, rest operators [zindel]
 - [x] RegularPacker: incremental builds
+- [x] RegularPacker / FlatPacker: __es6Module flag
 
-- [ ] RegularPacker / FlatPacker: __es6Module flag
+- [ ] FlatPacker: turn dynamic dependency into static if needed
+- [ ] FlatPacker: Support 'development', 'production', 'test' modes
 - [ ] RegularPacker: add better API for cache (will enable watch mode later on)
 - [ ] FastpackTranspiler: spread operator in try/catch clause
-- [ ] FlatPacker: turn dynamic dependency into static if needed
 - [ ] FlatPacker: add runtime
 - [ ] RegularPacker: `import` expressions should be Promises
-- [ ] FlatPacker: Support 'development', 'production', 'test' modes
 - [ ] Fastpack: `--target [ app | es6 | cjs ]` for the last export statement
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
   - [ ] Use combinators for error output for nicer formatting?
 - [ ] `--debug` writes to stderr (1)
 - [ ] FastpackTraspiler: JSXFragment, SpreadChild (1)
 - [ ] Documentation / Domain (1)
-- [ ] Fastpack: Incremental builds (2)
 - [ ] Fastpack: handle static files (2)
 - [ ] Fastpack: export URLs for static files (2)
 - [ ] Support external command execution for LESS/SASS/other processing
