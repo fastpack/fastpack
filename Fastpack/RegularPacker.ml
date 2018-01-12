@@ -14,6 +14,12 @@ let debug = Logs.debug
 
 let pack ?(cache=Cache.fake) ctx channel =
 
+  if (ctx.Context.target = Target.EcmaScript6)
+  then raise (PackError (ctx, NotImplemented (
+      None, "EcmaScript6 target is not supported "
+            ^ "for the regular packer - use flat\n"
+    )));
+
   let analyze _id filename source =
     let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
@@ -519,15 +525,14 @@ let pack ?(cache=Cache.fake) ctx channel =
   in
 
   (* emit required runtime *)
-  let emit_runtime out entry_id =
+  let emit_runtime out prefix entry_id =
     (**
-       I just copy-pasted that piece of code from webpack
-
-       TODO: Give them proper credits!
+       TODO: Give webpack team proper credits!
     *)
-    Lwt_io.write out (Printf.sprintf "
+    Lwt_io.write out
+    @@ Printf.sprintf "
 var process = {env: {NODE_ENV: '%s'}};
-(function(modules) {
+%s(function(modules) {
   // The module cache
   var installedModules = {};
 
@@ -579,7 +584,7 @@ var process = {env: {NODE_ENV: '%s'}};
 
   return __fastpack_require__(__fastpack_require__.s = '%s');
 })
-" (Mode.to_string ctx.mode) entry_id)
+" (Mode.to_string ctx.mode) prefix entry_id
   in
 
   let emit graph entry =
@@ -590,20 +595,18 @@ var process = {env: {NODE_ENV: '%s'}};
       else
         let seen = StringSet.add m.Module.id seen in
         let workspace = m.Module.workspace in
-        let ctx = Module.DependencyMap.empty in
+        let dep_map = Module.DependencyMap.empty in
         let dependencies = DependencyGraph.lookup_dependencies graph m in
-        let%lwt (ctx, seen) = Lwt_list.fold_left_s
-            (fun (ctx, seen) (dep, m) ->
+        let%lwt (dep_map, seen) = Lwt_list.fold_left_s
+            (fun (dep_map, seen) (dep, m) ->
                match m with
                | None ->
-                 let%lwt () = Lwt_io.write Lwt_io.stderr "None" in
-                 (* TODO: emit stub module for the missing dep *)
-                 Lwt.return (ctx, seen)
+                 Lwt.return (dep_map, seen)
                | Some m ->
                  let%lwt seen = emit_module ~seen:seen m in
-                 let ctx = Module.DependencyMap.add dep m ctx in
-                 Lwt.return (ctx, seen))
-            (ctx, seen)
+                 let dep_map = Module.DependencyMap.add dep m dep_map in
+                 Lwt.return (dep_map, seen))
+            (dep_map, seen)
             dependencies
         in
         let%lwt () =
@@ -612,16 +615,24 @@ var process = {env: {NODE_ENV: '%s'}};
             "\"%s\": function(module, exports, __fastpack_require__, __fastpack_import__) {\n"
             m.id
         in
-        let%lwt content = Workspace.write channel workspace ctx in
+        let%lwt content = Workspace.write channel workspace dep_map in
         let () = cache.add_source m.filename content in
         let%lwt () = emit "},\n" in
         Lwt.return seen
     in
 
-    emit_runtime channel entry.Module.id
+    let export =
+      match ctx.target with
+      | Target.CommonJS ->
+        "module.exports = "
+      | _ ->
+        ""
+    in
+
+    emit_runtime channel export entry.Module.id
     >> emit "({\n"
     >> emit_module entry
-    >>= (fun _ -> emit "\n})\n")
+    >>= (fun _ -> emit "\n});\n")
     >> Lwt.return_unit
   in
 

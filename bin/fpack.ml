@@ -89,8 +89,8 @@ let () =
       let docv = "[ regular | flat ]" in
       let bundle =
         Arg.enum [
-          "regular", Fastpack.Regular;
-          "flat", Fastpack.Flat;
+          "regular", Fastpack.Bundle.Regular;
+          "flat", Fastpack.Bundle.Flat;
         ]
       in
       Arg.(value & opt (some bundle) None & info ["bundle"] ~docv ~doc)

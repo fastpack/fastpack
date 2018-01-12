@@ -11,14 +11,14 @@ let transpile _ =
     FastpackTranspiler.ObjectSpread.transpile;
   ]
 
-let pack ~mode pack_f entry_filename _ =
+let pack ~mode ~target pack_f entry_filename _ =
   let pack' () =
     let bytes = Lwt_bytes.create 20000000 in
     let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
     Fastpack.pack
       ~pack_f
       ~mode
-      ~target:Fastpack.Target.Application
+      ~target
       ~transpile_f:(fun _ _ p -> p)
       ~entry_filename
       ~package_dir:(Filename.dirname entry_filename)
@@ -40,22 +40,38 @@ let pack ~mode pack_f entry_filename _ =
 let pack_regular_prod =
   pack
     ~mode:Fastpack.Mode.Production
+    ~target:Fastpack.Target.Application
     Fastpack.RegularPacker.pack
 
 let pack_regular_dev =
   pack
     ~mode:Fastpack.Mode.Development
+    ~target:Fastpack.Target.Application
     Fastpack.RegularPacker.pack
 
 let pack_flat_prod =
   pack
     ~mode:Fastpack.Mode.Production
+    ~target:Fastpack.Target.Application
     (Fastpack.FlatPacker.pack)
 
 let pack_flat_dev =
   pack
     ~mode:Fastpack.Mode.Development
+    ~target:Fastpack.Target.Application
     (Fastpack.FlatPacker.pack)
+
+let pack_regular_cjs =
+  pack
+    ~mode:Fastpack.Mode.Production
+    ~target:Fastpack.Target.CommonJS
+    Fastpack.RegularPacker.pack
+
+let pack_regular_es6 =
+  pack
+    ~mode:Fastpack.Mode.Production
+    ~target:Fastpack.Target.EcmaScript6
+    Fastpack.RegularPacker.pack
 
 let tests = [
   ("transpile-object-spread.js", "", transpile);
@@ -73,6 +89,8 @@ let tests = [
   ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
   ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
   ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
+  ("pack-target/index.js", "pack-regular-cjs.js", pack_regular_cjs);
+  ("pack-target/index.js", "error-pack-regular-es6.txt", pack_regular_es6);
   (
     "error-cannot-rename-module-binding/index.js",
     "error-cannot-rename-module-binding.txt",

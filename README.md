@@ -59,16 +59,18 @@ And execute commands from there.
 - [x] Fastpack: use temporary file when writing the bundle
 - [x] `--debug` writes to stderr (1)
 
+- [ ] FlatPacker : `--target [ app | es6 | cjs ]` for the last export statement
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
 - [ ] RegularPacker: add better API for cache (will enable watch mode later on)
 - [ ] FastpackTranspiler: spread operator in try/catch clause
 - [ ] FastpackTranspiler: add runtime
-- [ ] FlatPacker / RegularPacker : `--target [ app | es6 | cjs ]` for the last
-      export statement
 - [ ] FlatPacker / RegularPacker: set `__DEV__` variable based on mode
-- [ ] Use combinators for error output for nicer formatting? (2)
+- [ ] FlatPacker / RegularPacker: what to do with the `process` global?
+- [ ] FlatPacker / RegularPacker: builtin modules?
 - [ ] FastpackTranspiler: JSXFragment, SpreadChild (1)
 - [ ] Documentation / Domain (1)
+
+- [ ] Use combinators for error output for nicer formatting? (2)
 - [ ] Fastpack: handle static files (2)
 - [ ] Fastpack: export URLs for static files (2)
 - [ ] Support external command execution for LESS/SASS/other processing

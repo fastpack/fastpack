@@ -10,7 +10,14 @@ module FlatPacker = FlatPacker
 
 open PackerUtil
 
-type bundle = Regular | Flat
+module Bundle = struct
+  type t = Regular | Flat
+
+  let to_string bundle =
+    match bundle with
+    | Regular -> "Regular"
+    | Flat -> "Flat"
+end
 
 
 exception PackError = PackerUtil.PackError
@@ -24,7 +31,7 @@ let string_of_error ctx error =
 type options = {
   input : string option;
   output : string option;
-  bundle : bundle option;
+  bundle : Bundle.t option;
   mode : Mode.t option;
   target : Target.t option;
   cache : Cache.strategy option;
@@ -51,7 +58,7 @@ let default_options =
   {
     input = Some "index.js";
     output = Some "./bundle/bundle.js";
-    bundle = Some Regular;
+    bundle = Some Bundle.Regular;
     mode = Some Production;
     target = Some Application;
     cache = Some Normal;
@@ -207,7 +214,7 @@ let prepare_and_pack cl_options =
     in
     let%lwt pack_f =
       match options.bundle with
-      | Some Regular ->
+      | Some Bundle.Regular ->
         let cache_prefix = (Mode.to_string mode) in
         let%lwt cache =
           match options.cache with
@@ -222,7 +229,7 @@ let prepare_and_pack cl_options =
         in
         Lwt.return
         @@ RegularPacker.pack ~cache:cache
-      | Some Flat ->
+      | Some Bundle.Flat ->
         Lwt.return
         @@ FlatPacker.pack ~cache:Cache.fake
       | None -> Error.ie "Unexpected Packer"
