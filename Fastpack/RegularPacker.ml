@@ -320,7 +320,7 @@ let pack ?(cache=Cache.fake) ctx channel =
             patch_loc_with
               loc
               (fun ctx ->
-                let {Module. id = module_id; exports; _} = 
+                let {Module. id = module_id; exports; _} =
                   get_module dep ctx
                 in
                 let exports_from binding =

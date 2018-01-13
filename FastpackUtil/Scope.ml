@@ -262,6 +262,29 @@ let of_function_block stmts =
       (fun (name, remote) -> bindings := export_binding name remote !bindings)
   in
 
+  let reexports = ref [] in
+  let add_reexports source =
+    List.iter
+      (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
+                local = (loc, name);
+                exported }) ->
+         let exported =
+           match exported with
+           | Some (_, name) -> name
+           | None -> name
+         in
+         let binding = {
+           typ = Import { source; remote = Some name };
+           loc;
+           shorthand = false;
+           exported = Some exported;
+         }
+         in
+         reexports := (exported, Some exported, binding) :: !reexports;
+      )
+  in
+
+
   let export_default = ref false in
   let level = ref 0 in
 
@@ -369,6 +392,15 @@ let of_function_block stmts =
         Visit.Break
       end
 
+    | S.ExportNamedDeclaration {
+        exportKind = S.ExportValue;
+        declaration = None;
+        specifiers = Some (S.ExportNamedDeclaration.ExportSpecifiers specifiers);
+        source = Some (_, { value = source; _ });
+      } ->
+      add_reexports source specifiers;
+      Visit.Break
+
     | _ -> Visit.Continue
   in
 
@@ -386,14 +418,14 @@ let of_function_block stmts =
   let () =
     Visit.visit handler ([], stmts, [])
   in
-  !export_default, !bindings
+  !export_default, (List.rev !reexports), !bindings
 
 
 let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
   let bindings =
     match parents with
     | [] | (AstParentStack.Function _) :: _ ->
-      let _, bindings = of_function_block body in
+      let _, _, bindings = of_function_block body in
       bindings
     | _ ->
       let init =
@@ -439,8 +471,8 @@ let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
   { bindings; parent = Some scope; }
 
 let of_program stmts =
-  let export_default, bindings = of_function_block stmts in
-  let scope = { bindings; parent = Some (empty) } in
+  let export_default, reexports, bindings = of_function_block stmts in
+  let scope = { bindings; parent = Some empty } in
   let named_default = ref false in
   let exports =
     scope.bindings
@@ -468,8 +500,7 @@ let of_program stmts =
        }) :: exports
     else exports
   in
-  (scope, exports)
-
+  (scope, exports @ reexports)
 
 
 let rec get_binding name { bindings; parent; _ } =
