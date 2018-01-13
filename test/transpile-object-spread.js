@@ -126,3 +126,10 @@ for ({x, ...y} of iterator) {}
 for (var {x, ...y} of iterator) {}
 for ({x, ...y} of iterator) console.log(x);
 for (var {x, ...y} of iterator) console.log(x);
+
+// try
+try {
+  throw ({x: 1, y: 2, z: 3})
+} catch({x, ...rest}) {
+  console.log(x, rest);
+}

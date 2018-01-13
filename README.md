@@ -62,8 +62,8 @@ And execute commands from there.
 - [x] FlatPacker / RegularPacker: process.env.NODE_ENV is replaced with constant
 - [x] FlatPacker / RegularPacker: set boolean `__DEV__` global based on mode
 - [x] RegularPacker: add better API for cache (will enable watch mode later on)
+- [x] FastpackTranspiler: spread operator in try/catch clause
 
-- [ ] FastpackTranspiler: spread operator in try/catch clause
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
 - [ ] FastpackTranspiler: add runtime
 - [ ] FlatPacker / RegularPacker: builtin modules?

@@ -396,6 +396,7 @@ module TranspileObjectSpreadRest = struct
       AstHelper.call func []
   end
 
+
   module Function = struct
     let test {F. params = (_, { params; rest }); _} =
       List.exists Pattern.test params
@@ -588,6 +589,39 @@ module TranspileObjectSpreadRest = struct
 
   end
 
+  module Try = struct
+    let test ((_,{ param; _ }) : Loc.t S.Try.CatchClause.t) =
+      Pattern.test param
+
+    let transpile context scope
+        (loc, {S.Try.CatchClause. body = (body_loc, { body }); param }) =
+      let name = context.Context.gen_binding scope in
+      let new_param =
+        (Loc.none, P.Identifier {
+            name = (Loc.none, name);
+            typeAnnotation = None;
+            optional = false
+        })
+      in
+      let body =
+        (Loc.none,
+         S.VariableDeclaration (
+           VariableDeclaration.transpile context scope {
+             S.VariableDeclaration.
+             kind = S.VariableDeclaration.Let;
+             declarations = [
+               Loc.none, { S.VariableDeclaration.Declarator.
+                 id = param;
+                 init = Some (AstHelper.e_identifier name);
+               }
+             ]
+           }
+         )
+        ) :: body
+      in
+      loc, {S.Try.CatchClause. param = new_param; body = (body_loc, { body }) }
+  end
+
   module ForOf = struct
 
     let test {S.ForOf. left; _ } =
@@ -693,6 +727,9 @@ let transpile context program =
 
       | S.ForOf for_ when T.ForOf.test for_ ->
         T.ForOf.transpile context scope for_
+
+      | S.Try ({ handler = Some handler; _ } as stmt) when T.Try.test handler ->
+        S.Try { stmt with handler = Some (T.Try.transpile context scope handler)}
 
       | _ -> node
     in

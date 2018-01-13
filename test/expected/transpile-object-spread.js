@@ -240,3 +240,13 @@ for (var __fpack__37 of iterator)
     console.log(x);
     
   }
+// try
+try {
+  throw {x: 1, y: 2, z: 3};
+  
+} catch (__fpack__38) {
+  let {x} = __fpack__38,
+    rest = $__fpack__.omitProps(__fpack__38, ["x"]);
+  console.log(x, rest);
+  
+}
