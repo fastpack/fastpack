@@ -57,9 +57,8 @@ module.exports = (function(modules) {
 let a = 1;
 Object.defineProperty(exports, "a", {get: () => a});
 
-function changeA() { a = a + 1}
-Object.defineProperty(exports, "changeA", {get: () => changeA});
-;
+function f() { a = a + 1};
+Object.defineProperty(exports, "changeA", {get: () => f});
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./a" */ "a");

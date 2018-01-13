@@ -277,7 +277,8 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                     )
                   |> String.concat ""
                 | Target.CommonJS ->
-                  Error.ie "CJS not implemented!"
+                  Printf.sprintf "module.exports = %s;\n"
+                  @@ gen_ext_namespace_binding module_id
               )
           in
 
