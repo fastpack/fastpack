@@ -37,80 +37,87 @@ let pack ~mode ~target pack_f entry_filename _ =
     Fastpack.string_of_error ctx error
     |> String.replace ~sub:cwd ~by:"/..."
 
-let pack_regular_prod =
-  pack
-    ~mode:Fastpack.Mode.Production
-    ~target:Fastpack.Target.Application
-    Fastpack.RegularPacker.pack
+(* let pack_regular_prod = *)
+(*   pack *)
+(*     ~mode:Fastpack.Mode.Production *)
+(*     ~target:Fastpack.Target.Application *)
+(*     Fastpack.RegularPacker.pack *)
 
-let pack_regular_dev =
-  pack
-    ~mode:Fastpack.Mode.Development
-    ~target:Fastpack.Target.Application
-    Fastpack.RegularPacker.pack
+(* let pack_regular_dev = *)
+(*   pack *)
+(*     ~mode:Fastpack.Mode.Development *)
+(*     ~target:Fastpack.Target.Application *)
+(*     Fastpack.RegularPacker.pack *)
 
-let pack_flat_prod =
-  pack
-    ~mode:Fastpack.Mode.Production
-    ~target:Fastpack.Target.Application
-    (Fastpack.FlatPacker.pack)
+(* let pack_flat_prod = *)
+(*   pack *)
+(*     ~mode:Fastpack.Mode.Production *)
+(*     ~target:Fastpack.Target.Application *)
+(*     (Fastpack.FlatPacker.pack) *)
 
-let pack_flat_dev =
-  pack
-    ~mode:Fastpack.Mode.Development
-    ~target:Fastpack.Target.Application
-    (Fastpack.FlatPacker.pack)
+(* let pack_flat_dev = *)
+(*   pack *)
+(*     ~mode:Fastpack.Mode.Development *)
+(*     ~target:Fastpack.Target.Application *)
+(*     (Fastpack.FlatPacker.pack) *)
 
-let pack_regular_cjs =
-  pack
-    ~mode:Fastpack.Mode.Production
-    ~target:Fastpack.Target.CommonJS
-    Fastpack.RegularPacker.pack
+(* let pack_regular_cjs = *)
+(*   pack *)
+(*     ~mode:Fastpack.Mode.Production *)
+(*     ~target:Fastpack.Target.CommonJS *)
+(*     Fastpack.RegularPacker.pack *)
 
-let pack_regular_es6 =
+(* let pack_regular_es6 = *)
+(*   pack *)
+(*     ~mode:Fastpack.Mode.Production *)
+(*     ~target:Fastpack.Target.EcmaScript6 *)
+(*     Fastpack.RegularPacker.pack *)
+
+let pack_flat_es6 =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.EcmaScript6
-    Fastpack.RegularPacker.pack
+    Fastpack.FlatPacker.pack
 
 let tests = [
-  ("transpile-object-spread.js", "", transpile);
-  ("transpile-class.js", "", transpile);
-  ("transpile-react-jsx.js", "", transpile);
-  ("transpile-strip-flow.js", "", transpile);
-  ("print.js", "", print ~with_scope:false);
-  ("print-with-scope.js", "", print ~with_scope:true);
-  ("pack/index.js", "pack.js", pack_regular_prod);
-  ("pack_flat/index.js", "pack_flat.js", pack_flat_prod);
-  ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat_prod);
-  ("pack_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
-  ("pack_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
-  ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat_prod);
-  ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
-  ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
-  ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
-  ("pack-target/index.js", "pack-regular-cjs.js", pack_regular_cjs);
-  ("pack-target/index.js", "error-pack-regular-es6.txt", pack_regular_es6);
-  (
-    "error-cannot-rename-module-binding/index.js",
-    "error-cannot-rename-module-binding.txt",
-    pack_regular_prod
-  );
-  (
-    "error-parse/index.js",
-    "error-parse.txt",
-    pack_regular_prod
-  );
-  (
-    "error-cannot-resolve-modules/index.js",
-    "error-cannot-resolve-modules.txt",
-    pack_regular_prod
-  );
-  (
-    "error-cannot-leave-package-dir/index.js",
-    "error-cannot-leave-package-dir.txt",
-    pack_regular_prod
-  );
+  (* ("transpile-object-spread.js", "", transpile); *)
+  (* ("transpile-class.js", "", transpile); *)
+  (* ("transpile-react-jsx.js", "", transpile); *)
+  (* ("transpile-strip-flow.js", "", transpile); *)
+  (* ("print.js", "", print ~with_scope:false); *)
+  (* ("print-with-scope.js", "", print ~with_scope:true); *)
+  (* ("pack/index.js", "pack.js", pack_regular_prod); *)
+  (* ("pack_flat/index.js", "pack_flat.js", pack_flat_prod); *)
+  (* ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat_prod); *)
+  (* ("pack_mode/index.js", "pack_regular_prod.js", pack_regular_prod); *)
+  (* ("pack_mode/index.js", "pack_regular_dev.js", pack_regular_dev); *)
+  (* ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat_prod); *)
+  (* ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod); *)
+  (* ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod); *)
+  (* ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev); *)
+  (* ("pack-target/index.js", "pack-regular-cjs.js", pack_regular_cjs); *)
+  (* ("pack-target/index.js", "error-pack-regular-es6.txt", pack_regular_es6); *)
+  (* ( *)
+  (*   "error-cannot-rename-module-binding/index.js", *)
+  (*   "error-cannot-rename-module-binding.txt", *)
+  (*   pack_regular_prod *)
+  (* ); *)
+  (* ( *)
+  (*   "error-parse/index.js", *)
+  (*   "error-parse.txt", *)
+  (*   pack_regular_prod *)
+  (* ); *)
+  (* ( *)
+  (*   "error-cannot-resolve-modules/index.js", *)
+  (*   "error-cannot-resolve-modules.txt", *)
+  (*   pack_regular_prod *)
+  (* ); *)
+  (* ( *)
+  (*   "error-cannot-leave-package-dir/index.js", *)
+  (*   "error-cannot-leave-package-dir.txt", *)
+  (*   pack_regular_prod *)
+  (* ); *)
+  ("pack-target/index.js", "pack-flat-es6.js", pack_flat_es6);
   (* ("current.js", "", transpile); *)
 ]
 

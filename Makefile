@@ -17,7 +17,7 @@ train: build-dev
 
 test: build-dev
 	@#@esy x fpack_test $(FPACK_TEST_PATH)
-	@_build/default/bin/fpack_test.exe $(FPACK_TEST_PATH)
+	@_build/default/bin/fpack_test.exe -d $(FPACK_TEST_PATH)
 
 fetch:
 	git submodule init

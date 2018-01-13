@@ -408,7 +408,17 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
               Visit.Break
             | Visit.Continue ->
               match stmt with
-              | S.ExportNamedDeclaration { source = Some _; _ }
+              | S.ExportNamedDeclaration { source = Some (_, { value = request; _}); _ }
+              | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
+                if (not @@ is_ignored_request request)
+                then begin
+                  let _ = add_static_dep request in
+                  remove_loc loc;
+                end
+                else
+                  remove_loc loc;
+                Visit.Continue;
+
               | S.ExportNamedDeclaration { specifiers = Some _; _ }->
                 remove_loc loc;
                 Visit.Break;
@@ -446,15 +456,6 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                   (stmt_loc.Loc.start.offset - loc.Loc.start.offset);
                 Visit.Continue;
 
-              | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
-                if (not @@ is_ignored_request request)
-                then begin
-                  let _ = add_static_dep request in
-                  remove_loc loc;
-                end
-                else
-                  remove_loc loc;
-                Visit.Continue;
 
               | S.ForIn {left = S.ForIn.LeftPattern pattern; _}
               | S.ForOf {left = S.ForOf.LeftPattern pattern; _} ->
@@ -721,7 +722,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                | None ->
                  Error.ie (
                    "At this point all dependency requests should be resolved: "
-                ) 
+                )
 
             )
             StringSet.empty
