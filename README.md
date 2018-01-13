@@ -61,13 +61,14 @@ And execute commands from there.
 - [x] FlatPacker : `--target [ app | es6 | cjs ]` for the last export statement
 - [x] FlatPacker / RegularPacker: process.env.NODE_ENV is replaced with constant
 - [x] FlatPacker / RegularPacker: set boolean `__DEV__` global based on mode
+- [x] RegularPacker: add better API for cache (will enable watch mode later on)
 
-- [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
-- [ ] RegularPacker: add better API for cache (will enable watch mode later on)
 - [ ] FastpackTranspiler: spread operator in try/catch clause
+- [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
 - [ ] FastpackTranspiler: add runtime
 - [ ] FlatPacker / RegularPacker: builtin modules?
 - [ ] FastpackTranspiler: JSXFragment, SpreadChild (1)
+- [ ] Configuration options in package.json (1?)
 - [ ] Documentation / Domain (1)
 
 - [ ] Use combinators for error output for nicer formatting? (2)

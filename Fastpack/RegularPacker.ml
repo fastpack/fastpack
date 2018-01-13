@@ -618,7 +618,7 @@ var __DEV__ = %s;
             m.id
         in
         let%lwt content = Workspace.write channel workspace dep_map in
-        let () = cache.add_source m.filename content in
+        let () = cache.add m content in
         let%lwt () = emit "},\n" in
         Lwt.return seen
     in
@@ -642,7 +642,7 @@ var __DEV__ = %s;
   let%lwt entry = read_module ctx cache ctx.entry_filename in
   let%lwt entry = process ctx graph entry in
   let%lwt _ = emit graph entry in
-  let%lwt () = cache.dump graph in
+  let%lwt () = cache.dump () in
   Lwt.return_unit
 
 

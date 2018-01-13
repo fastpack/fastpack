@@ -222,8 +222,8 @@ module Cache = struct
 
   type t = {
     get : string -> Module.t option;
-    dump : DependencyGraph.t -> unit Lwt.t;
-    add_source : string -> string -> unit;
+    dump : unit -> unit Lwt.t;
+    add : Module.t -> string -> unit;
   }
 
   type entry = {
@@ -238,7 +238,7 @@ module Cache = struct
   let fake =
     { get = (fun _ -> None);
       dump = (fun _ -> Lwt.return_unit);
-      add_source = (fun _ _ -> ())
+      add = (fun _ _ -> ())
     }
 
   let create_dir package_dir =
@@ -269,13 +269,22 @@ module Cache = struct
     |> FilePath.concat cache_dir
 
   let cache cache_filename modules =
-    let sources = ref M.empty in
-    let add_source filename source =
-      sources := M.add filename source !sources;
+
+    let modules = ref modules in
+
+    let add (m : Module.t) source =
+      modules :=
+        M.add
+          m.filename
+          { id = m.id; digest = m.digest; st_mtime = m.st_mtime;
+            dependencies = m.dependencies; es_module = m.es_module;
+            source
+          }
+          !modules;
     in
 
     let get filename =
-      match M.get filename modules with
+      match M.get filename !modules with
       | None ->
         None
       | Some { id; digest; st_mtime; dependencies; source; es_module; } ->
@@ -293,36 +302,15 @@ module Cache = struct
         }
     in
 
-    let dump graph =
-      let modules =
-        Hashtbl.fold
-          (fun
-            filename
-            ({ id; digest; st_mtime; dependencies; es_module; _ } : Module.t)
-            modules ->
-             let source =
-               match M.get filename !sources with
-               | None ->
-                 Error.ie ("Source not cached for: " ^ filename)
-               | Some source ->
-                 source
-             in
-             M.add
-               filename
-               { id; digest; st_mtime; dependencies; source; es_module }
-               modules
-          )
-          graph.DependencyGraph.modules
-          M.empty
-      in
+    let dump () =
       Lwt_io.with_file
         ~mode:Lwt_io.Output
         ~perm:0o640
         ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
         cache_filename
-        (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] modules)
+        (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] !modules)
     in
-    Lwt.return { get; dump; add_source }
+    Lwt.return { get; dump; add }
 
   let create package_dir prefix filename =
     let%lwt cache_dir = create_dir package_dir in
