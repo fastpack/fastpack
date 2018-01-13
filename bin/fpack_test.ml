@@ -125,6 +125,8 @@ let tests = [
   );
   ("pack-target/index.js", "pack-flat-es6.js", pack_flat_es6);
   ("pack-target/index.js", "pack-flat-cjs.js", pack_flat_cjs);
+  ("pack-utf8/index.js", "pack-flat-utf8.js", pack_flat_dev);
+  ("pack-utf8/index.js", "pack-regular-utf8.js", pack_regular_prod);
   (* ("current.js", "", transpile); *)
 ]
 
