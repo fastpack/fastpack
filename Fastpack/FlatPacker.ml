@@ -172,20 +172,69 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             end
           in
 
+          let rec resolve_import dep_map filename {Scope. source; remote } =
+            let dep = {
+              Dependency.
+              request = source;
+              requested_from_filename = filename
+            }
+            in
+            let m = MDM.get dep dep_map in
+            match m with
+            | None ->
+              raise (PackError (ctx, CannotResolveModules [dep]))
+            | Some m ->
+              match remote with
+              | None ->
+                gen_ext_namespace_binding m.Module.id
+              | Some remote ->
+                match m.Module.es_module, remote with
+                | false, "default" ->
+                  gen_ext_namespace_binding m.Module.id
+                | false, remote ->
+                  Printf.sprintf
+                    "%s.%s"
+                    (gen_ext_namespace_binding m.Module.id)
+                    remote
+                | true, remote ->
+                  let names =
+                    m.exports
+                    |> List.filter
+                      (fun (name, _, _) -> name = remote)
+                  in
+                  match names with
+                  | [] ->
+                    failwith ("Cannot find name " ^ remote ^ " in module " ^ m.Module.filename)
+                  | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
+                    match typ with
+                    | Scope.Import import -> resolve_import dep_map m.filename import
+                    | _ -> name_of_binding m.id name binding
+          in
+
           let add_namespace_binding () =
             patch_with (String.length source) 0
-              (fun _ ->
+              (fun dep_map ->
                 let expr =
                   exports
                   |> List.map
                     (fun (exported_name, internal_name, binding) ->
-                       match internal_name with
-                       | Some internal_name ->
-                         Printf.sprintf "%s: %s" exported_name
-                         @@ name_of_binding module_id internal_name binding
-                       | None ->
-                         Printf.sprintf "default: %s"
-                         @@ gen_ext_binding module_id "default"
+                       let value =
+                         match binding.Scope.typ with
+                         | Scope.Import import ->
+                           resolve_import dep_map filename import
+                         | _ ->
+                           match internal_name with
+                           | Some internal_name ->
+                             name_of_binding module_id internal_name binding
+                           | None ->
+                             gen_ext_binding module_id "default"
+                       in
+                       let key =
+                         match internal_name with
+                         | Some _ -> exported_name
+                         | None -> "default"
+                       in
+                       Printf.sprintf "%s: %s" key value
                     )
                   |> String.concat ", "
                   |> Printf.sprintf "{%s}"
@@ -193,6 +242,42 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 Printf.sprintf "\nconst %s = %s;\n"
                   (gen_ext_namespace_binding module_id)
                   expr
+              )
+          in
+
+          let add_target_export () =
+            patch_with (String.length source) 0
+              (fun dep_map ->
+                match ctx.target with
+                | Target.Application ->
+                  ""
+                | Target.EcmaScript6 ->
+                  exports
+                  |> List.map
+                    (fun (exported_name, internal_name, binding) ->
+                       let value =
+                         match binding.Scope.typ with
+                         | Scope.Import import ->
+                           resolve_import dep_map filename import
+                         | _ ->
+                           match internal_name with
+                           | Some internal_name ->
+                             name_of_binding module_id internal_name binding
+                           | None ->
+                             gen_ext_binding module_id "default"
+                       in
+                       let key =
+                         match internal_name with
+                         | Some _ -> exported_name
+                         | None -> "default"
+                       in
+                       if key = "default"
+                       then Printf.sprintf "export default %s;\n" value
+                       else Printf.sprintf "export {%s as %s};\n" value key
+                    )
+                  |> String.concat ""
+                | Target.CommonJS ->
+                  Error.ie "CJS not implemented!"
               )
           in
 
@@ -260,45 +345,6 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
               match top_level_binding with
               | Some top_level -> if b == top_level then Some b else None
               | None -> None
-          in
-
-          let rec resolve_import dep_map filename {Scope. source; remote } =
-            let dep = {
-              Dependency.
-              request = source;
-              requested_from_filename = filename
-            }
-            in
-            let m = MDM.get dep dep_map in
-            match m with
-            | None ->
-              raise (PackError (ctx, CannotResolveModules [dep]))
-            | Some m ->
-              match remote with
-              | None ->
-                gen_ext_namespace_binding m.Module.id
-              | Some remote ->
-                match m.Module.es_module, remote with
-                | false, "default" ->
-                  gen_ext_namespace_binding m.Module.id
-                | false, remote ->
-                  Printf.sprintf
-                    "%s.%s"
-                    (gen_ext_namespace_binding m.Module.id)
-                    remote
-                | true, remote ->
-                  let names =
-                    m.exports
-                    |> List.filter
-                      (fun (name, _, _) -> name = remote)
-                  in
-                  match names with
-                  | [] ->
-                    failwith ("Cannot find name " ^ remote ^ " in module " ^ m.Module.filename)
-                  | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
-                    match typ with
-                    | Scope.Import import -> resolve_import dep_map m.filename import
-                    | _ -> name_of_binding m.id name binding
           in
 
           let patch_identifier (loc, name) =
@@ -562,6 +608,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           begin
             Visit.visit handler program;
             if (not !has_namespace_binding) then add_namespace_binding ();
+            if (filename = ctx.entry_filename) then add_target_export ();
           end;
 
           (!workspace,
