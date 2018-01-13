@@ -493,7 +493,7 @@ and map_expression_or_spread ctx item = match item with
 
 let map handler (loc, statements, comments) =
   let ctx = {
-    scope = Scope.of_program statements Scope.empty;
+    scope = fst @@ Scope.of_program statements;
     parents = [];
     handler
   }

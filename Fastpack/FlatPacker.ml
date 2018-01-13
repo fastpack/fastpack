@@ -149,7 +149,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             then patch binding.loc.start.offset 0 @@ name ^ ": "
           in
 
-          let program_scope = Scope.of_program stmts Scope.empty in
+          let program_scope, exports = Scope.of_program stmts in
           let () =
             Scope.iter
               (fun (name, binding) ->
@@ -176,7 +176,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             patch_with (String.length source) 0
               (fun _ ->
                 let expr =
-                  Scope.get_exports program_scope
+                  exports
                   |> List.map
                     (fun (exported_name, internal_name, binding) ->
                        match internal_name with
@@ -288,7 +288,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                     remote
                 | true, remote ->
                   let names =
-                    Scope.get_exports m.scope
+                    m.exports
                     |> List.filter
                       (fun (name, _, _) -> name = remote)
                   in
@@ -564,11 +564,15 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             if (not !has_namespace_binding) then add_namespace_binding ();
           end;
 
-          (!workspace, !static_deps, program_scope, is_es_module stmts)
+          (!workspace,
+           !static_deps,
+           program_scope,
+           exports,
+           is_es_module stmts)
         in
 
         let source = m.Module.workspace.Workspace.value in
-        let (workspace, static_deps, scope, es_module) =
+        let (workspace, static_deps, scope, exports, es_module) =
           try
               analyze m.id m.filename (transpile ctx m.filename source)
           with
@@ -579,6 +583,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           m with
           workspace;
           scope;
+          exports;
           dependencies = static_deps;
           es_module;
         } in

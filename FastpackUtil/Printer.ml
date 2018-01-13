@@ -1335,7 +1335,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     emit_list emit_statement statements
   in
 
-  let ctx = emit_scope (Scope.of_program statements) {
+  let ctx = emit_scope (fun _ -> fst @@ Scope.of_program statements) {
     buf = Buffer.create 1024;
     indent = 0;
     comments = comments;

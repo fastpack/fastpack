@@ -31,6 +31,9 @@ type t = {
 
   (** Module scope *)
   scope: FastpackUtil.Scope.t;
+
+  (** Module exports *)
+  exports: (string * string option * FastpackUtil.Scope.binding) list;
 }
 
 (*

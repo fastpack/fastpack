@@ -12,7 +12,6 @@ type scope_type = BlockScope | FunctionScope
 type t = {
   parent : t option;
   bindings : binding M.t;
-  export_default : bool;
 }
 and binding = {
   typ : typ;
@@ -32,7 +31,7 @@ and import = {
   remote: string option;
 }
 
-let empty = { bindings = M.empty; parent = None; export_default = false }
+let empty = { bindings = M.empty; parent = None }
 
 let string_of_binding { typ; loc; exported; _ } =
   (match typ with
@@ -242,7 +241,7 @@ let of_statement _ ((_, stmt) as node) scope =
       M.empty
   in
   if bindings != M.empty
-  then { empty with bindings; parent = Some scope }
+  then { bindings; parent = Some scope }
   else scope
 
 
@@ -391,10 +390,11 @@ let of_function_block stmts =
 
 
 let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
-  let export_default, bindings =
+  let bindings =
     match parents with
     | [] | (AstParentStack.Function _) :: _ ->
-      of_function_block body
+      let _, bindings = of_function_block body in
+      bindings
     | _ ->
       let init =
         match parents with
@@ -408,7 +408,6 @@ let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
         | _ ->
           M.empty
       in
-      false,
       body
       |> List.map
         (fun ((_, stmt) as node) ->
@@ -422,7 +421,7 @@ let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
       |> List.concat
       |> gather_bindings ~init:(Some init)
   in
-  { bindings; parent = Some scope; export_default }
+  { bindings; parent = Some scope }
 
 let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
   let bindings =
@@ -437,10 +436,40 @@ let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
        | None -> []
       )
   in
-  { empty with bindings; parent = Some scope; }
+  { bindings; parent = Some scope; }
 
 let of_program stmts =
-  of_block [] (Loc.none, { S.Block. body = stmts; })
+  let export_default, bindings = of_function_block stmts in
+  let scope = { bindings; parent = Some (empty) } in
+  let named_default = ref false in
+  let exports =
+    scope.bindings
+    |> M.bindings
+    |> List.filter_map
+      (fun (name, ({ exported; _ } as binding)) ->
+         match exported with
+         | Some exported ->
+           if exported = "default" then named_default := true;
+           Some (exported, Some name, binding)
+         | None ->
+           None
+      )
+  in
+  let exports =
+    if export_default && (not !named_default)
+    then
+      ("default",
+       None,
+       {
+         typ = Const;
+         loc = Loc.none;
+         exported = Some "default";
+         shorthand = false
+       }) :: exports
+    else exports
+  in
+  (scope, exports)
+
 
 
 let rec get_binding name { bindings; parent; _ } =
@@ -454,33 +483,6 @@ let has_binding name scope =
 
 let bindings scope =
   scope.bindings |> M.bindings
-
-let get_exports scope =
-  let named_default = ref false in
-  let exports =
-    scope.bindings
-    |> M.bindings
-    |> List.filter_map
-      (fun (name, ({ exported; _ } as binding)) ->
-         match exported with
-         | Some exported ->
-           if exported = "default" then named_default := true;
-           Some(exported, Some name, binding)
-         | None ->
-           None
-      )
-  in
-  if scope.export_default && (not !named_default)
-  then
-    ("default",
-     None,
-     {
-       typ = Const;
-       loc = Loc.none;
-       exported = Some "default";
-       shorthand = false
-     }) :: exports
-  else exports
 
 let iter f scope =
   scope.bindings

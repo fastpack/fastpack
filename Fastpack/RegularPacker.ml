@@ -42,7 +42,7 @@ let pack ?(cache=Cache.fake) ctx channel =
         } as patcher) = Workspace.make_patcher workspace
     in
 
-    let program_scope = Scope.of_program stmts Scope.empty in
+    let program_scope, exports = Scope.of_program stmts in
     let scopes = ref [program_scope] in
     let top_scope () = List.hd !scopes in
     let push_scope scope =
@@ -320,9 +320,11 @@ let pack ?(cache=Cache.fake) ctx channel =
             patch_loc_with
               loc
               (fun ctx ->
-                let {Module. id = module_id; scope; _} = get_module dep ctx in
+                let {Module. id = module_id; exports; _} = 
+                  get_module dep ctx
+                in
                 let exports_from binding =
-                  Scope.get_exports scope
+                  exports
                   |> List.map (fun (name, _, _) -> name, binding ^ "." ^ name)
                 in
                 match get_module_binding dep.request with
@@ -472,7 +474,7 @@ let pack ?(cache=Cache.fake) ctx channel =
     in
     Visit.visit handler program;
 
-    (!workspace, !dependencies, program_scope, is_es_module stmts)
+    (!workspace, !dependencies, program_scope, exports, is_es_module stmts)
   in
 
   (* Gather dependencies *)
@@ -488,14 +490,14 @@ let pack ?(cache=Cache.fake) ctx channel =
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))
         in
-        let (workspace, dependencies, scope, es_module) =
+        let (workspace, dependencies, scope, exports, es_module) =
           try
               analyze m.id m.filename transpiled
           with
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))
         in
-        { m with workspace; scope; dependencies; es_module }
+        { m with workspace; scope; exports; dependencies; es_module }
       end
       else
         m

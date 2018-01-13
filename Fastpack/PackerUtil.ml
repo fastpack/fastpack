@@ -276,6 +276,7 @@ module Cache = struct
           cached = true;
           workspace = Workspace.of_string source;
           scope = FastpackUtil.Scope.empty;
+          exports = []
         }
     in
 
@@ -392,6 +393,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
       digest = Digest.string source;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
+      exports = []
     }
   in
 
