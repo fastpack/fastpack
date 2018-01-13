@@ -212,7 +212,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           in
 
           let add_namespace_binding () =
-            patch_with (String.length source) 0
+            patch_with (BatUTF8.length source) 0
               (fun dep_map ->
                 let expr =
                   exports
@@ -246,7 +246,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           in
 
           let add_target_export () =
-            patch_with (String.length source) 0
+            patch_with (BatUTF8.length source) 0
               (fun dep_map ->
                 match ctx.target with
                 | Target.Application ->

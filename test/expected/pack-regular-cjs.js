@@ -1,5 +1,5 @@
 
-var process = {env: {NODE_ENV: 'production'}};
+var __DEV__ = false;
 module.exports = (function(modules) {
   // The module cache
   var installedModules = {};

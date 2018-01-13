@@ -1,5 +1,5 @@
 
-var process = {env: {NODE_ENV: 'development'}};
+var __DEV__ = true;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
