@@ -103,6 +103,7 @@ p = __fastpack_require__(/* "./prod" */ "prod");
 
 // conditional operator
 p = __fastpack_require__(/* "./prod" */ "prod");
+console.log("production");
 },
 
 });

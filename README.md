@@ -58,14 +58,14 @@ And execute commands from there.
 - [x] FlatPacker: Support 'development', 'production', 'test' modes
 - [x] Fastpack: use temporary file when writing the bundle
 - [x] `--debug` writes to stderr (1)
+- [x] FlatPacker : `--target [ app | es6 | cjs ]` for the last export statement
+- [x] FlatPacker / RegularPacker: process.env.NODE_ENV is replaced with constant
+- [x] FlatPacker / RegularPacker: set boolean `__DEV__` global based on mode
 
-- [ ] FlatPacker : `--target [ app | es6 | cjs ]` for the last export statement
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
 - [ ] RegularPacker: add better API for cache (will enable watch mode later on)
 - [ ] FastpackTranspiler: spread operator in try/catch clause
 - [ ] FastpackTranspiler: add runtime
-- [ ] FlatPacker / RegularPacker: set `__DEV__` variable based on mode
-- [ ] FlatPacker / RegularPacker: what to do with the `process` global?
 - [ ] FlatPacker / RegularPacker: builtin modules?
 - [ ] FastpackTranspiler: JSXFragment, SpreadChild (1)
 - [ ] Documentation / Domain (1)

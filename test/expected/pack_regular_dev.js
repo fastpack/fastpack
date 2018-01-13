@@ -103,6 +103,7 @@ p = __fastpack_require__(/* "./dev" */ "dev");
 
 // conditional operator
 p = __fastpack_require__(/* "./dev" */ "dev");
+console.log("development");
 },
 
 });

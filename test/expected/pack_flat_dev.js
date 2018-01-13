@@ -71,6 +71,7 @@ $i__index__p = __fastpack_require__($w__dev);
 
 // conditional operator
 $i__index__p = ($n__dev);
+console.log("development");
 
 const $n__index = {};
 function $w__dev() {return $n__dev;}

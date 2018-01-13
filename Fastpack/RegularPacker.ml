@@ -533,7 +533,7 @@ let pack ?(cache=Cache.fake) ctx channel =
     *)
     Lwt_io.write out
     @@ Printf.sprintf "
-var process = {env: {NODE_ENV: '%s'}};
+var __DEV__ = %s;
 %s(function(modules) {
   // The module cache
   var installedModules = {};
@@ -586,7 +586,7 @@ var process = {env: {NODE_ENV: '%s'}};
 
   return __fastpack_require__(__fastpack_require__.s = '%s');
 })
-" (Mode.to_string ctx.mode) prefix entry_id
+" (if ctx.mode = Mode.Development then "true" else "false") prefix entry_id
   in
 
   let emit graph entry =

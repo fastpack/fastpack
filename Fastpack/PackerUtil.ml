@@ -126,10 +126,10 @@ module Mode = struct
       Visit.Continue
 
   let patch_expression
-      { Workspace. remove; _ }
+      { Workspace. remove; patch_loc; _ }
       mode
       {Visit. parents; _ }
-      (expr_loc, _) =
+      (expr_loc, expr) =
     match parents with
     | (Visit.APS.Expression (loc, E.Conditional {
         test;
@@ -166,7 +166,20 @@ module Mode = struct
       end
 
     | _ ->
-      Visit.Continue
+      match expr with
+      | E.Member {
+          _object = (_, E.Member {
+            _object = (_, E.Identifier (_, "process"));
+            property = E.Member.PropertyIdentifier (_, "env");
+            computed = false;
+          });
+          property = E.Member.PropertyIdentifier (_, "NODE_ENV");
+          computed = false;
+        } ->
+        patch_loc expr_loc @@ "\"" ^ to_string mode ^ "\"";
+        Visit.Break;
+      | _ ->
+        Visit.Continue
 end
 
 module Target = struct

@@ -71,6 +71,7 @@ $i__index__p = __fastpack_require__($w__prod);
 
 // conditional operator
 $i__index__p = ($n__prod);
+console.log("production");
 
 const $n__index = {};
 function $w__prod() {return $n__prod;}
