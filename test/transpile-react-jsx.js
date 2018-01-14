@@ -26,3 +26,20 @@
 <div>
   X {some} Y
 </div>;
+
+<>some thing</>;
+
+<>
+  <div />
+  <a />
+</>;
+
+<><div /> <a /></>;
+
+<div>
+  <>oops</>
+</div>;
+
+<div>
+  <><div /><div /></>
+</div>;

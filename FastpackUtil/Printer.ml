@@ -845,8 +845,11 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> emit_template_literal tmpl_lit
       | E.JSXElement element ->
         ctx |> emit_jsx_element element
-      | E.JSXFragment _ ->
-        failwith "JSXFragment is not supported"
+      | E.JSXFragment { frag_openingElement = _; frag_closingElement = _; frag_children } ->
+        ctx
+        |> emit "<>"
+        |> emit_jsx_children frag_children
+        |> emit "</>"
       | E.Class cls ->
         ctx |> emit_class cls
       | E.TypeCast _ ->
@@ -857,6 +860,29 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     ctx
     |> emit_if parens (emit ")")
     |> pop_parent_expr (loc, expression)
+
+  and emit_jsx_expression_container { J.ExpressionContainer. expression } ctx =
+    ctx
+    |> emit "{"
+    |> (match expression with
+        | J.ExpressionContainer.Expression expr ->
+          emit_expression ~parens:false expr
+        | J.ExpressionContainer.EmptyExpression _ ->
+          emit_none
+        )
+    |> emit "}"
+
+  and emit_jsx_children children ctx =
+    ctx
+    |> emit_list
+      (fun (_, child) ->
+         match child with
+         | J.Text { raw; _ } -> emit raw
+         | J.ExpressionContainer expr -> emit_jsx_expression_container expr
+         | J.Element element -> emit_jsx_element element
+         | J.Fragment _ | J.SpreadChild _ -> failwith "Fragment/SpreadChild are not implemented"
+      )
+      children
 
   and emit_jsx_element {
       openingElement = (_, { J.Opening.  name; selfClosing; attributes; });
@@ -891,17 +917,6 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
       | J.MemberExpression expr ->
         emit_member_expression expr
     in
-    let emit_expression_container { J.ExpressionContainer. expression } ctx =
-      ctx
-      |> emit "{"
-      |> (match expression with
-          | J.ExpressionContainer.Expression expr ->
-            emit_expression ~parens:false expr
-          | J.ExpressionContainer.EmptyExpression _ ->
-            emit_none
-         )
-      |> emit "}"
-    in
     ctx
     |> emit "<"
     |> emit_name name
@@ -925,7 +940,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
                    | J.Attribute.Literal (loc, lit) ->
                      emit_literal (loc, lit)
                    | J.Attribute.ExpressionContainer (_, expr) ->
-                     emit_expression_container expr
+                     emit_jsx_expression_container expr
                   )
              )
              value
@@ -938,15 +953,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
       attributes
     |> emit_if selfClosing (emit "/")
     |> emit ">"
-    |> emit_list
-      (fun (_, child) ->
-         match child with
-         | J.Text { raw; _ } -> emit raw
-         | J.ExpressionContainer expr -> emit_expression_container expr
-         | J.Element element -> emit_jsx_element element
-         | J.Fragment _ | J.SpreadChild _ -> failwith "Fragment/SpreadChild are not implemented"
-      )
-      children
+    |> emit_jsx_children children
     |> emit_if_some
       (fun _ ctx -> ctx |> emit "</" |> emit_name name |> emit ">")
       closingElement

@@ -1,10 +1,16 @@
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
 
+module E = Ast.Expression
+module I = Ast.Identifier
+
 let transpile _context program =
+
+  let null_expression =
+    Loc.none, E.Literal { value = Ast.Literal.Null; raw = "null"; }
+  in
+
   let map_expression _scope ((loc, node) : Loc.t Ast.Expression.t) =
-    let module E = Ast.Expression in
-    let module I = Ast.Identifier in
     let open Ast.JSX in
 
     (** Transpile JSX elememnt name *)
@@ -41,10 +47,6 @@ let transpile _context program =
 
     (** Transpile JSX attributes *)
     let transpile_attributes (attributes : Loc.t Opening.attribute list) =
-
-      let null_expression =
-        Loc.none, E.Literal { value = Ast.Literal.Null; raw = "null"; }
-      in
 
       let empty_object_literal =
         Loc.none, E.Object { properties = [] }
@@ -141,7 +143,9 @@ let transpile _context program =
           | Text { value; raw } ->
             let raw = trim_text raw in
             (loc, E.Literal { value = Ast.Literal.String value; raw = ("'" ^ raw ^ "'"); })
-          | Fragment _ | SpreadChild _ -> failwith "Fragment/SpreadChild are not implemented"
+          | Fragment fragment ->
+            (loc, transpile_fragment fragment)
+          | SpreadChild _ -> failwith "Fragment/SpreadChild are not implemented"
         in
         E.Expression expr
       in
@@ -157,11 +161,35 @@ let transpile _context program =
           };
         arguments = (transpile_name name)::(transpile_attributes attributes)::(transpile_children children)
       }
+
+    and transpile_fragment { frag_openingElement = _; frag_closingElement = _; frag_children } =
+      let elements =
+        frag_children
+        |> transpile_children
+      in
+
+      let name = E.Expression (loc, E.Member {
+          _object = Loc.none, E.Identifier (Loc.none, "React");
+          property = E.Member.PropertyIdentifier (Loc.none, "Fragment");
+          computed = false;
+        })
+      in
+
+      E.Call {
+        callee = Loc.none, E.Member {
+            computed = false;
+            _object = Loc.none, E.Identifier (Loc.none, "React");
+            property = E.Member.PropertyIdentifier (Loc.none, "createElement");
+          };
+        arguments = name::(E.Expression null_expression)::elements
+      }
     in
 
     let node = match node with
       | E.JSXElement element ->
         transpile_element element
+      | E.JSXFragment fragment ->
+        transpile_fragment fragment
       | node -> node
     in
     (loc, node)

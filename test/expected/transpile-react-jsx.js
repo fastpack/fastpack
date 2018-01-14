@@ -11,3 +11,8 @@ React.createElement("div", null, 'X ', some);
 React.createElement("div", null, 'X ', some, ' Y');
 React.createElement("div", null, ' X ', some, ' Y ');
 React.createElement("div", null, '  X ', some, ' Y');
+React.createElement(React.Fragment, null, 'some thing');
+React.createElement(React.Fragment, null, '', React.createElement("div", null), '', React.createElement("a", null), '');
+React.createElement(React.Fragment, null, React.createElement("div", null), '', React.createElement("a", null));
+React.createElement("div", null, '', React.createElement(React.Fragment, null, 'oops'), '');
+React.createElement("div", null, '', React.createElement(React.Fragment, null, React.createElement("div", null), React.createElement("div", null)), '');
