@@ -299,19 +299,26 @@ and visit_expression ctx ((loc, expression) as expr) =
       | E.Member.PropertyIdentifier _ -> ()
       | E.Member.PropertyPrivateName _ -> ()
       end;
+
     | E.Yield { argument; delegate = _delegate } ->
       visit_if_some ctx visit_expression argument
+
+    | E.Class cls ->
+      visit_class ctx cls
+
+    | E.TemplateLiteral { expressions; _ } ->
+      visit_list ctx visit_expression expressions
+
+    | E.TaggedTemplate { tag; quasi = (_, { expressions; _}) } ->
+      visit_expression ctx tag;
+      visit_list ctx visit_expression expressions
 
     | E.Comprehension _ -> ()
     | E.Generator _ -> ()
     | E.Identifier _ -> ()
     | E.Literal _ -> ()
-    | E.TemplateLiteral _ -> ()
-    | E.TaggedTemplate _ -> ()
     | E.JSXElement _ -> ()
     | E.JSXFragment _ -> ()
-    | E.Class cls ->
-      visit_class ctx cls
     | E.TypeCast _ -> ()
     | E.MetaProperty _ -> ()
 
