@@ -335,6 +335,24 @@ and map_expression ctx (loc, expression) =
       let cls = map_class ctx cls in
       Expression.Class cls
 
+    | Expression.TemplateLiteral ({ expressions; _ } as template) ->
+      Expression.TemplateLiteral {
+        template with
+        expressions = map_list ctx map_expression expressions
+      }
+
+    | Expression.TaggedTemplate {
+        tag;
+        quasi = (quasi_loc, ({ expressions; _} as quasi))
+      } ->
+      Expression.TaggedTemplate {
+        tag = map_expression ctx tag;
+        quasi = (quasi_loc, {
+            quasi with
+            expressions = map_list ctx map_expression expressions
+        })
+      }
+
     | node -> node
   in
   ctx.handler.map_expression ctx.scope (loc, expression)
