@@ -37,6 +37,15 @@ test-react-app-simple: build-dev
 		--transpile-all '^src'
 
 
+## Tranpiling Test
+
+test-transpile: build-dev
+	@scripts/test-example.sh \
+		transpile \
+		src/index.js \
+		-d --transpile-all '^src'
+
+
 
 build-examples: build-react-app-simple
 	@echo "Examples built."

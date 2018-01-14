@@ -3,6 +3,55 @@ module StripFlow = StripFlow
 module Class = Class
 module ObjectSpread = ObjectSpread
 
+let runtime = "
+function applyDecorator(decorator, proto, property, descriptor) {
+  let ret = decorator(proto, property, descriptor);
+  // TODO: assert all descriptor properties;
+  return ret;
+}
+
+function decorateProperty(cls, property, decorators) {
+  let proto = cls.prototype;
+  let descriptor = Object.assign(
+    {},
+    Object.getOwnPropertyDescriptor(proto, property)
+  );
+
+  // TODO: Babel also accounts for descriptor.initializer. Is it needed?
+  descriptor = decorators.reverse().reduce(
+    (descriptor, decorator) => applyDecorator(decorator, proto, property, descriptor),
+    descriptor
+  );
+
+  Object.defineProperty(proto, property, descriptor);
+}
+
+module.exports = {
+  defineClass(cls, statics, classDecorators, propertyDecorators) {
+    propertyDecorators.forEach(
+      ({method, decorators}) => decorateProperty(cls, method, decorators)
+    );
+
+    statics.forEach(({name, value}) =>
+      Object.defineProperty(cls, name, {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: value
+      })
+    );
+    let _cls = cls;
+    classDecorators = classDecorators.reverse();
+    for(let i = 0; i < classDecorators.length; i++) {
+      _cls = classDecorators[i](_cls);
+    }
+    return _cls;
+
+    //return classDecorators.reverse().reduce(decorator => decorator(cls), cls);
+  }
+};
+"
+
 (** Transpile Ast.program node using a list of transpilers *)
 let transpile transpilers program =
   let context = Context.create () in

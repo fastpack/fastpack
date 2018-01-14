@@ -64,8 +64,8 @@ And execute commands from there.
 - [x] RegularPacker: add better API for cache (will enable watch mode later on)
 - [x] FastpackTranspiler: spread operator in try/catch clause
 
-- [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
 - [ ] FastpackTranspiler: add runtime
+- [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
 - [ ] FlatPacker / RegularPacker: builtin modules?
 - [ ] FastpackTranspiler: JSXFragment, SpreadChild (1)
 - [ ] Configuration options in package.json (1?)

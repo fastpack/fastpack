@@ -43,6 +43,7 @@ type t = {
  * @ => AT$$
  * . => $$DOT$$
  * - => $$_$$
+ * : => $$COLON$$
  * *)
 
 let make_id filename =
@@ -53,6 +54,7 @@ let make_id filename =
      else filename)
     |> replace ~sub:"node_modules" ~by:"NM$"
     |> replace ~sub:"@" ~by:"AT$$"
+    |> replace ~sub:":" ~by:"$$COLON$$"
     |> replace ~sub:"." ~by:"DOT$$"
     |> replace ~sub:"-" ~by:"$$_$$"
     |> replace ~sub:"/" ~by:"$"

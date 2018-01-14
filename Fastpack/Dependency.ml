@@ -7,7 +7,7 @@ type t = {
 
 let resolve request =
   match request.request with
-  | "util" | "fs" | "tty" | "net" | "events" ->
+  | "util" | "fs" | "tty" | "net" | "events" | "__fastpack_runtime__" ->
     Lwt.return_some ("builtin:" ^ request.request)
   | _ ->
     let basedir = FilePath.dirname request.requested_from_filename in

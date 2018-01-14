@@ -349,44 +349,24 @@ let abs_path dir filename =
   FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute dir filename
 
 let relative_name {Context. package_dir; _} filename =
-  String.(
-    sub
-      filename
-      (length package_dir + 1)
-      (length filename - length package_dir - 1)
-  )
+  match Str.string_match (Str.regexp "^builtin:") filename 0 with
+  | true ->
+    filename
+  | false ->
+    String.(
+      sub
+        filename
+        (length package_dir + 1)
+        (length filename - length package_dir - 1)
+    )
 
 let read_module (ctx : Context.t) (cache : Cache.t) filename =
-  let filename = abs_path ctx.package_dir filename in
 
-  if not (FilePath.is_subdir filename ctx.package_dir)
-  then raise (PackError (ctx, CannotLeavePackageDir filename));
-
-  let st_mtime' () =
-    let%lwt {st_mtime; _} =
-      try%lwt
-        Lwt_unix.stat filename
-      with Unix.Unix_error _ ->
-        raise (PackError (ctx, CannotReadModule filename))
-    in
-    Lwt.return st_mtime
-  in
-
-  let source' () =
-    let%lwt source =
-      try%lwt
-        Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
-      with Unix.Unix_error _ ->
-        raise (PackError (ctx, CannotReadModule filename))
-    in
-    Lwt.return source
-  in
-
-  let make_module st_mtime source =
+  let make_module id filename st_mtime source =
     {
       Module.
-      id = Module.make_id (relative_name ctx filename);
-      filename = filename;
+      id;
+      filename;
       st_mtime;
       dependencies = [];
       es_module = false;
@@ -398,11 +378,43 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
     }
   in
 
-  match Str.string_match (Str.regexp "^builtin:") filename 0 with
-  | true ->
+  match filename with
+  | "builtin:util"
+  | "builtin:fs"
+  | "builtin:tty"
+  | "builtin:net"
+  | "builtin:events" ->
     (* TODO: handle builtins *)
-    Lwt.return @@ make_module 0.0 ""
-  | false ->
+    Lwt.return @@ make_module (Module.make_id filename) filename 0.0 ""
+
+  | "builtin:__fastpack_runtime__" ->
+    Lwt.return @@ make_module (Module.make_id filename) filename 0.0 FastpackTranspiler.runtime
+
+  | _ ->
+    let filename = abs_path ctx.package_dir filename in
+
+    if not (FilePath.is_subdir filename ctx.package_dir)
+    then raise (PackError (ctx, CannotLeavePackageDir filename));
+
+    let st_mtime' () =
+      let%lwt {st_mtime; _} =
+        try%lwt
+          Lwt_unix.stat filename
+        with Unix.Unix_error _ ->
+          raise (PackError (ctx, CannotReadModule filename))
+      in
+      Lwt.return st_mtime
+    in
+
+    let source' () =
+      let%lwt source =
+        try%lwt
+          Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
+        with Unix.Unix_error _ ->
+          raise (PackError (ctx, CannotReadModule filename))
+      in
+      Lwt.return source
+    in
     match cache.get filename with
     | Some cached_module ->
       let%lwt st_mtime = st_mtime' () in
@@ -412,11 +424,21 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
         let%lwt source = source' () in
         if cached_module.digest = Digest.string source
         then Lwt.return cached_module
-        else Lwt.return @@ make_module st_mtime source
+        else Lwt.return
+          @@ make_module
+            (Module.make_id @@ relative_name ctx filename)
+            filename
+            st_mtime
+            source
     | None ->
       let%lwt st_mtime = st_mtime' () in
       let%lwt source = source' () in
-      Lwt.return @@ make_module st_mtime source
+      Lwt.return
+      @@ make_module
+        (Module.make_id @@ relative_name ctx filename)
+        filename
+        st_mtime
+        source
 
 
 let is_ignored_request request =
