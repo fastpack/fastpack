@@ -69,13 +69,13 @@ p = __fastpack_require__(/* "./prod" */ "prod");
 
 p = __fastpack_require__(/* "./prod" */ "prod");
 
+{}
 
+{}
 
+{}
 
-
-
-
-
+{}
 
 // if-then-else
 p = __fastpack_require__(/* "./prod" */ "prod");
@@ -104,6 +104,10 @@ p = __fastpack_require__(/* "./prod" */ "prod");
 // conditional operator
 p = __fastpack_require__(/* "./prod" */ "prod");
 console.log("production");
+
+// bug
+if (true) {} else {console.log("prod!")}
+if (false) {} else {}
 },
 
 });

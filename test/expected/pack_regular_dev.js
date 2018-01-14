@@ -61,13 +61,13 @@ module.exports = {dev: true};
 let p;
 
 // if-then-no-else
+{}
 
+{}
 
+{}
 
-
-
-
-
+{}
 
 p = __fastpack_require__(/* "./dev" */ "dev");
 
@@ -104,6 +104,10 @@ p = __fastpack_require__(/* "./dev" */ "dev");
 // conditional operator
 p = __fastpack_require__(/* "./dev" */ "dev");
 console.log("development");
+
+// bug
+if (true) {} else {}
+if (false) {} else {console.log("dev!")}
 },
 
 });

@@ -74,7 +74,7 @@ module Mode = struct
       None
 
   let patch_statement
-      { Workspace. remove; _ }
+      { Workspace. remove; patch_loc; _ }
       mode
       {Visit. parents; _ }
       (stmt_loc, _) =
@@ -108,14 +108,15 @@ module Mode = struct
 
             (* patch test & consequent *)
             | false ->
-              let patch_end =
+              let () =
                 match alternate with
-                | None -> loc.Loc._end.offset
-                | Some (alternate_loc, _) -> alternate_loc.Loc.start.offset
+                | None ->
+                  patch_loc loc "{}"
+                | Some (alternate_loc, _) ->
+                  remove
+                    loc.Loc.start.offset
+                    (alternate_loc.Loc.start.offset - loc.Loc.start.offset);
               in
-              remove
-                loc.Loc.start.offset
-                (patch_end - loc.Loc.start.offset);
               Visit.Break
           end
           else begin

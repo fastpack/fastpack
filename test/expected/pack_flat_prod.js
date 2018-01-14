@@ -37,13 +37,13 @@ $i__index__p = __fastpack_require__($w__prod);
 
 $i__index__p = __fastpack_require__($w__prod);
 
+{}
 
+{}
 
+{}
 
-
-
-
-
+{}
 
 // if-then-else
 $i__index__p = __fastpack_require__($w__prod);
@@ -72,6 +72,10 @@ $i__index__p = __fastpack_require__($w__prod);
 // conditional operator
 $i__index__p = ($n__prod);
 console.log("production");
+
+// bug
+if (true) {} else {console.log("prod!")}
+if (false) {} else {}
 
 const $n__index = {};
 function $w__prod() {return $n__prod;}

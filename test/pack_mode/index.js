@@ -83,3 +83,7 @@ else
 // conditional operator
 p = process.env.NODE_ENV == "production" ? require("./prod") : require("./dev");
 console.log(process.env.NODE_ENV);
+
+// bug
+if (true) {} else if (process.env.NODE_ENV == "production") {console.log("prod!")}
+if (false) {} else if (process.env.NODE_ENV == "development") {console.log("dev!")}

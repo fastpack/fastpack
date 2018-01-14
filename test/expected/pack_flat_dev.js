@@ -29,13 +29,13 @@ let $n__dev;$n__dev = {dev: true};
 let $i__index__p;
 
 // if-then-no-else
+{}
 
+{}
 
+{}
 
-
-
-
-
+{}
 
 $i__index__p = __fastpack_require__($w__dev);
 
@@ -72,6 +72,10 @@ $i__index__p = __fastpack_require__($w__dev);
 // conditional operator
 $i__index__p = ($n__dev);
 console.log("development");
+
+// bug
+if (true) {} else {}
+if (false) {} else {console.log("dev!")}
 
 const $n__index = {};
 function $w__dev() {return $n__dev;}
