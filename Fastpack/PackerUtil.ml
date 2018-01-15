@@ -280,7 +280,7 @@ module Cache = struct
     filename
     |> String.replace ~sub:"/" ~by:"__"
     |> String.replace ~sub:"." ~by:"___"
-    |> Printf.sprintf "%s-%s.cache" prefix
+    |> Printf.sprintf "%s-%s-%s.cache" prefix Version.github_commit
     |> FilePath.concat cache_dir
 
   let cache cache_filename modules =
