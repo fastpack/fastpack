@@ -65,11 +65,10 @@ And execute commands from there.
 - [x] FlatPacker / RegularPacker: set boolean `__DEV__` global based on mode
 - [x] RegularPacker: add better API for cache (will enable watch mode later on)
 - [x] FastpackTranspiler: spread operator in try/catch clause
+- [x] FastpackTranspiler: add runtime
 
-- [ ] FastpackTranspiler: add runtime
 - [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
 - [ ] FlatPacker / RegularPacker: builtin modules?
-- [ ] FastpackTranspiler: JSXFragment, SpreadChild (1)
 - [ ] Configuration options in package.json (1?)
 - [ ] Documentation / Domain (1)
 
@@ -80,6 +79,8 @@ And execute commands from there.
 - [ ] Source maps [andreypopp, in progress] (2)
 - [ ] CSS support in import statements (webpack ICSS)? (2)
 - [ ] FastpackTranspiler: PrivateName, PrivateField
+- [ ] FastpackTranspiler: SpreadChild (2, in case we support something
+  else than React)
 
 ### Heap
 

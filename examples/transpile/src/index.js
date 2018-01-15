@@ -35,10 +35,20 @@ class Greeting {
   }
 }
 
-let alice = new Greeting("Alice");
+const { person1, person2, ...others } = {
+  person1: "Alice",
+  person2: "Bob",
+  person3: "Jim",
+  person4: "Jane"
+};
+
+let alice = new Greeting(person1);
 alice.greet();
-let bob = new Greeting("Bob");
+let bob = new Greeting(person2);
 bob.greet();
 document.getElementById(
   "root"
-).innerHTML = `<pre>${Greeting.greetings.join("")}</pre>`;
+).innerHTML = `<pre>
+${Greeting.greetings.join("")}
+Others: ${JSON.stringify(others)}
+</pre>`;

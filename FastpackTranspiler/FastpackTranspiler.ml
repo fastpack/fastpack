@@ -27,6 +27,16 @@ function decorateProperty(cls, property, decorators) {
 }
 
 module.exports = {
+  omitProps(target, props) {
+    let ret = {};
+    for(let prop in target) {
+      if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {
+        ret[prop] = target[prop];
+      }
+    }
+    return ret;
+  },
+
   defineClass(cls, statics, classDecorators, propertyDecorators) {
     propertyDecorators.forEach(
       ({method, decorators}) => decorateProperty(cls, method, decorators)
