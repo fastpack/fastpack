@@ -233,7 +233,7 @@ module Cache = struct
 
   module M = Map.Make(String)
 
-  type strategy = Normal | Purge | Ignore
+  type strategy = Normal | Ignore
 
   type t = {
     get : string -> Module.t option;
@@ -343,16 +343,6 @@ module Cache = struct
         Lwt.return @@ (M.empty : entry M.t)
     in
     cache cache_filename modules
-
-  let purge package_dir prefix filename =
-    let%lwt cache_dir = create_dir package_dir in
-    let cache_filename = cache_filename cache_dir prefix filename in
-    let%lwt () =
-      match%lwt Lwt_unix.file_exists cache_filename with
-      | true -> Lwt_unix.unlink cache_filename
-      | false -> Lwt.return_unit
-    in
-    cache cache_filename M.empty
 
 end
 

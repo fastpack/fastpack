@@ -34,7 +34,7 @@ test-react-app-simple: build-dev
 	@scripts/test-example.sh \
 		react-app-simple \
 		src/index.js \
-		--transpile-all '^src'
+		--transpile '^src'
 
 
 ## Tranpiling Test
@@ -43,7 +43,7 @@ test-transpile: build-dev
 	@scripts/test-example.sh \
 		transpile \
 		src/index.js \
-		-d --transpile-all '^src'
+		-d --transpile '^src'
 
 
 

@@ -24,42 +24,15 @@ echo "${TC}==========================================================${NC}"
 echo ""
 
 
-run "Regular / Production / Cache Purged" \
-    --purge-cache \
-    -o fpack-test/regular.prod.purge.js \
-    --bundle regular \
-    --mode production
-run "Regular / Development / Cache Purged" \
-    --purge-cache \
-    -o fpack-test/regular.dev.purge.js \
-    --bundle regular \
-    --mode development
-run "Regular / Production / Cache Used" \
-    -o fpack-test/regular.prod.cache.js \
-    --bundle regular \
-    --mode production
-run "Regular / Development / Cache Used" \
-    -o fpack-test/regular.dev.cache.js \
-    --bundle regular \
-    --mode development
-run "Regular / Production / Cache Ignored" \
+run "Development / With Cache" \
+    -o fpack-test/dev.cache.js \
+    --development
+run "Development / No Cache" \
+    -o fpack-test/dev.no-cache.js \
     --no-cache \
-    -o fpack-test/regular.prod.no-cache.js \
-    --bundle regular \
-    --mode production
-run "Regular / Development / Cache Ignored" \
-    --no-cache \
-    -o fpack-test/regular.dev.no-cache.js \
-    --bundle regular \
-    --mode development
-run "Flat / Production" \
-    -o fpack-test/flat.prod.js \
-    --bundle flat \
-    --mode production
-run "Flat / Development" \
-    -o fpack-test/flat.dev.js \
-    --bundle flat \
-    --mode development
+    --development
+run "Production" \
+    -o fpack-test/flat.prod.js
 
 INDEX="fpack-test/index.html"
 cat <<HTML > $INDEX

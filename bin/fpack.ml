@@ -6,16 +6,11 @@ let () =
     let run
         input
         output
-        bundle
         mode
         target
         cache
         debug
-        transpile_all
-        transpile_react_jsx
-        transpile_flow
-        transpile_class
-        transpile_object_spread
+        transpile
       =
       if debug then begin
         Logs.set_level (Some Logs.Debug);
@@ -23,45 +18,14 @@ let () =
       end;
       try
         let options =
-          { Fastpack.empty_options with
+          { Fastpack. 
             input;
             output;
-            bundle;
-            mode;
+            mode = Some mode;
             target;
             cache = Some cache;
+            transpile = Some transpile;
           }
-        in
-        let options =
-          match transpile_all with
-          | [] -> options
-          | patterns ->
-            { options with
-              transpile_react_jsx = Some patterns;
-              transpile_flow = Some patterns;
-              transpile_class = Some patterns;
-              transpile_object_spread = Some patterns;
-            }
-        in
-        let options =
-          match transpile_react_jsx with
-          | [] -> options
-          | patterns -> { options with transpile_react_jsx = Some patterns}
-        in
-        let options =
-          match transpile_flow with
-          | [] -> options
-          | patterns -> { options with transpile_flow = Some patterns}
-        in
-        let options =
-          match transpile_class with
-          | [] -> options
-          | patterns -> { options with transpile_class = Some patterns}
-        in
-        let options =
-          match transpile_object_spread with
-          | [] -> options
-          | patterns -> { options with transpile_object_spread = Some patterns}
         in
         `Ok (Fastpack.pack_main options)
       with
@@ -82,31 +46,11 @@ let () =
       Arg.(value & opt (some string) None & info ["o"; "output"] ~docv ~doc)
     in
 
-    let bundle_t =
-      let doc =
-        "Bundle type [ regular / flat ] (fastpack.flat in package.json)"
-      in
-      let docv = "[ regular | flat ]" in
-      let bundle =
-        Arg.enum [
-          "regular", Fastpack.Bundle.Regular;
-          "flat", Fastpack.Bundle.Flat;
-        ]
-      in
-      Arg.(value & opt (some bundle) None & info ["bundle"] ~docv ~doc)
-    in
-
     let mode_t =
-      let doc = "process.env.NODE_ENV (fastpack.mode in package.json)" in
-      let docv = "[ production | development | test ]" in
-      let mode =
-        Arg.enum [
-          "production", Fastpack.Mode.Production;
-          "development", Fastpack.Mode.Development;
-          "test", Fastpack.Mode.Test;
-        ]
-      in
-      Arg.(value & opt (some mode) None & info ["mode"] ~docv ~doc)
+      let open Fastpack.Mode in
+      let doc = "Build bundle for development" in
+      let development = Development, Arg.info ["development"] ~doc in
+      Arg.(value & vflag Production [development])
     in
 
     let target_t =
@@ -124,11 +68,9 @@ let () =
 
     let cache_t =
         let open Fastpack.Cache in
-        let doc = "Purge cache at startup" in
-        let purge = Purge, Arg.info ["purge-cache"] ~doc in
         let doc = "Do not use cache at all" in
         let ignore = Ignore, Arg.info ["no-cache"] ~doc in
-        Arg.(value & vflag Normal [purge; ignore])
+        Arg.(value & vflag Normal [ignore])
     in
 
     let debug_t =
@@ -136,65 +78,27 @@ let () =
       Arg.(value & flag & info ["d"; "debug"] ~doc)
     in
 
-    let transpile_all =
+    let transpile_t =
       let doc =
-        "[Experimental] Apply all transpilers to files matching $(docv)"
+        "[Experimental] Apply transpilers to files matching $(docv) the regular expression. "
+        ^ "Currently available transpilers are: stripping Flow types, "
+        ^ "object spread & rest opertions, class properties (including statics), "
+        ^ "class/method decorators, and React-assumed JSX conversion. "
         ^ "\n(fastpack.transpile_all in package.json)"
       in
       let docv = "PATTERN" in
       Arg.(value & opt_all string [] & info ["transpile-all"] ~docv ~doc)
     in
 
-    let transpile_react_jsx =
-      let doc =
-        "[Experimental] Apply React JSX transpiler to files matching $(docv)"
-        ^ "\n(fastpack.transpile_react_jsx in package.json)"
-      in
-      let docv = "PATTERN" in
-      Arg.(value & opt_all string [] & info ["transpile-react-jsx"] ~docv ~doc)
-    in
-
-    let transpile_flow =
-      let doc =
-        "[Experimental] Apply Flow transpiler to files matching $(docv)"
-        ^ "\n(fastpack.transpile_flow in package.json)"
-      in
-      let docv = "PATTERN" in
-      Arg.(value & opt_all string [] & info ["transpile-flow"] ~docv ~doc)
-    in
-
-    let transpile_class =
-      let doc =
-        "[Experimental] Apply `class` syntax transpiler to files matching $(docv)"
-        ^ "\n(fastpack.transpile_class in package.json)"
-      in
-      let docv = "PATTERN" in
-      Arg.(value & opt_all string [] & info ["transpile-class"] ~docv ~doc)
-    in
-
-    let transpile_object_spread =
-      let doc =
-        "[Experimental] Apply `...` syntax transpiler to files matching $(docv)"
-        ^ "\n(fastpack.transpile_object_spread in package.json)"
-      in
-      let docv = "PATTERN" in
-      Arg.(value & opt_all string [] & info ["transpile-object-spread"] ~docv ~doc)
-    in
-
     Term.(ret (
         const run
         $ input_t
         $ output_t
-        $ bundle_t
         $ mode_t
         $ target_t
         $ cache_t
         $ debug_t
-        $ transpile_all
-        $ transpile_react_jsx
-        $ transpile_flow
-        $ transpile_class
-        $ transpile_object_spread
+        $ transpile_t
     ))
   in
 
