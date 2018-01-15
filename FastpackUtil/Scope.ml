@@ -119,7 +119,7 @@ let names_of_pattern node =
 let export_binding name remote bindings =
   match M.get name bindings with
   | Some { typ = Argument; _ } ->
-    failwith ("Cannot export Argument: " ^ name)
+    Error.ie ("Cannot export Argument: " ^ name)
   | Some ({ exported = None; _ } as binding) ->
     M.add name { binding with exported = Some remote } bindings
   | Some { exported = Some _; _ } ->
