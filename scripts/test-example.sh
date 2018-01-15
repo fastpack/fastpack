@@ -14,7 +14,8 @@ rm -rf fpack-test
 
 run() {
     echo "${C}$1${NC}"
-    time $FPACK $ENTRY_POINT $FLAGS ${@:2}
+    time $FPACK $ENTRY_POINT -o fpack-test $FLAGS ${@:3}
+    mv fpack-test/index.js fpack-test/$2
     echo ""
 }
 
@@ -24,15 +25,9 @@ echo "${TC}==========================================================${NC}"
 echo ""
 
 
-run "Development / With Cache" \
-    -o fpack-test/dev.cache.js \
-    --development
-run "Development / No Cache" \
-    -o fpack-test/dev.no-cache.js \
-    --no-cache \
-    --development
-run "Production" \
-    -o fpack-test/flat.prod.js
+run "Development / With Cache" dev.cache.js --development
+run "Development / No Cache" dev.no-cache.js --no-cache --development
+run "Production" prod.js
 
 INDEX="fpack-test/index.html"
 cat <<HTML > $INDEX

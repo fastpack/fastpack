@@ -158,7 +158,9 @@ let prepare_and_pack cl_options =
   match options.input, options.output with
   | Some input, Some output ->
     let entry_filename = abs_path package_dir input in
-    let output_file = abs_path package_dir output in
+    let output_file =
+      abs_path package_dir @@ FilePath.concat output "index.js"
+    in
     let%lwt () = makedirs @@ FilePath.dirname output_file in
     let transpile_f = build_transpile_f options in
     let target =

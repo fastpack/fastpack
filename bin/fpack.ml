@@ -18,7 +18,7 @@ let () =
       end;
       try
         let options =
-          { Fastpack. 
+          { Fastpack.
             input;
             output;
             mode = Some mode;
@@ -35,14 +35,19 @@ let () =
 
 
     let input_t =
-      let doc = "Entry point JavaScript file (main in package.json)" in
+      let doc =
+        "Entry point JavaScript file (fastpack.input in package.json)"
+      in
       let docv = "INPUT" in
       Arg.(value & pos 0 (some string) None & info [] ~docv ~doc)
     in
 
     let output_t =
-      let doc = "Output JavaScript file (fastpack.output in package.json)" in
-      let docv = "OUTPUT" in
+      let doc =
+        "Output Directory (fastpack.output in package.json). "
+        ^ "The target bundle will be $(docv)/index.js"
+      in
+      let docv = "DIR" in
       Arg.(value & opt (some string) None & info ["o"; "output"] ~docv ~doc)
     in
 
@@ -80,14 +85,14 @@ let () =
 
     let transpile_t =
       let doc =
-        "[Experimental] Apply transpilers to files matching $(docv) the regular expression. "
+        "Apply transpilers to files matching $(docv) the regular expression. "
         ^ "Currently available transpilers are: stripping Flow types, "
         ^ "object spread & rest opertions, class properties (including statics), "
         ^ "class/method decorators, and React-assumed JSX conversion. "
-        ^ "\n(fastpack.transpile_all in package.json)"
+        ^ "\n(fastpack.transpile in package.json)"
       in
       let docv = "PATTERN" in
-      Arg.(value & opt_all string [] & info ["transpile-all"] ~docv ~doc)
+      Arg.(value & opt_all string [] & info ["transpile"] ~docv ~doc)
     in
 
     Term.(ret (
