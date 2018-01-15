@@ -35,6 +35,8 @@ let add_dependency graph (m : Module.t) (dep : (Dependency.t * Module.t option))
   | _ ->
     ()
 
+exception Cycle of string list
+
 let sort graph entry =
   let modules = ref [] in
   let seen_globally = ref (StringSet.empty) in
@@ -48,11 +50,8 @@ let sort graph entry =
   let rec sort seen m =
     match List.mem m.Module.filename seen with
     | true ->
-      let s = String.concat "\n" (m.Module.filename :: "" :: "" :: seen) in
-      begin
-        Printf.printf "%s\n\n" s;
-        failwith s;
-      end;
+      let filenames = m.Module.filename :: seen in
+      raise (Cycle filenames)
     | false ->
       match check_module m with
       | true -> ()

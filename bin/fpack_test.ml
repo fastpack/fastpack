@@ -103,6 +103,10 @@ let tests = [
   ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
   ("pack-target/index.js", "pack-regular-cjs.js", pack_regular_cjs);
   ("pack-target/index.js", "error-pack-regular-es6.txt", pack_regular_es6);
+  ("pack-target/index.js", "pack-flat-es6.js", pack_flat_es6);
+  ("pack-target/index.js", "pack-flat-cjs.js", pack_flat_cjs);
+  ("pack-utf8/index.js", "pack-flat-utf8.js", pack_flat_dev);
+  ("pack-utf8/index.js", "pack-regular-utf8.js", pack_regular_prod);
   (
     "error-cannot-rename-module-binding/index.js",
     "error-cannot-rename-module-binding.txt",
@@ -123,10 +127,11 @@ let tests = [
     "error-cannot-leave-package-dir.txt",
     pack_regular_prod
   );
-  ("pack-target/index.js", "pack-flat-es6.js", pack_flat_es6);
-  ("pack-target/index.js", "pack-flat-cjs.js", pack_flat_cjs);
-  ("pack-utf8/index.js", "pack-flat-utf8.js", pack_flat_dev);
-  ("pack-utf8/index.js", "pack-regular-utf8.js", pack_regular_prod);
+  (
+    "error-dependency-cycle/index.js",
+    "error-dependency-cycle.txt",
+    pack_flat_prod
+  );
   (* ("current.js", "", transpile); *)
 ]
 

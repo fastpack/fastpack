@@ -7,6 +7,7 @@ type reason =
   | CannotParseFile of string * ((Loc.t * FlowParser.Parse_error.t) list)
   | NotImplemented of Loc.t option * string
   | CannotRenameModuleBinding of Loc.t * string * Dependency.t
+  | DependencyCycle of string list
 
 let loc_to_string {Loc. start; _end; _} =
   Printf.sprintf "(%d:%d) - (%d:%d):"
@@ -57,5 +58,12 @@ the code.
     (loc_to_string loc)
     id
     (Dependency.to_string ~dir:(Some package_dir) dep)
+
+  | DependencyCycle filenames ->
+    Printf.sprintf "Dependency cycle detected:\n\t%s\n"
+    @@ String.concat "\n\t"
+    @@ List.map
+      (fun filename -> String.replace ~sub:(package_dir ^ "/") ~by:"" filename)
+      filenames
 
 let ie = FastpackUtil.Error.ie

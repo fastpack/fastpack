@@ -705,7 +705,14 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
         let%lwt () = emit_wrapper_start () in
         let%lwt modules =
-          DependencyGraph.sort graph entry
+          let sorted =
+            try
+              DependencyGraph.sort graph entry
+            with
+            | DependencyGraph.Cycle filenames ->
+              raise (PackError (ctx, DependencyCycle filenames))
+          in
+          sorted
           |> Lwt_list.fold_left_s
             (fun dependency_map m ->
               let%lwt () = emit_module dependency_map m in
