@@ -21,7 +21,7 @@ function __fastpack_import__(f) {
 
 /* dev */
 
-let $n__dev;$n__dev = {dev: true};
+let $n__dev = {};$n__dev = {dev: true};
 
 /* index */
 
@@ -37,37 +37,37 @@ let $i__index__p;
 
 {}
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
 // if-then-else
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
 
 // alternative statement
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
 // logical AND expression
-$i__index__p = __fastpack_require__($w__dev);
+$i__index__p = ($n__dev);
 
 // conditional operator
 $i__index__p = ($n__dev);
@@ -78,4 +78,3 @@ if (true) {} else {}
 if (false) {} else {console.log("dev!")}
 
 const $n__index = {};
-function $w__dev() {return $n__dev;}

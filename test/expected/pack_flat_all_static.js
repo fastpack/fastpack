@@ -21,12 +21,12 @@ function __fastpack_import__(f) {
 
 /* b */
 
-let $n__b;console.log('side effect of b');
+let $n__b = {};console.log('side effect of b');
 $n__b = function() {console.log('b')};
 
 /* a */
 
-let $n__a;const $i__a__b = ($n__b);
+let $n__a = {};const $i__a__b = ($n__b);
 
 $n__a = function() {
   console.log('b in a');
@@ -43,7 +43,7 @@ const $i__index__a = ($n__a);
     b();
   })
 
-  let b = __fastpack_require__($w__b);
+  let b = ($n__b);
   $i__index__a();
   console.log('b in index');
   b();

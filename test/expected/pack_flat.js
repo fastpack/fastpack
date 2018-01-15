@@ -83,36 +83,6 @@ const $n__index = {};
 
 function $w__c() {
 
-/* c */
-
-let $n__c;
-let $i__c__cInternal1 = 100;
-let $i__c__cInternal2 = 200;
-
-function $i__c__c1() {
-  let b = __fastpack_require__($w__b);
-  let cInternal2 = 300;
-  return b.b1() + b.b2() + $i__c__cInternal1 + cInternal2;
-}
-
-function $i__c__c2() {
-  let b = __fastpack_require__($w__b);
-  return b.default.b1() + b.default.b2() + $i__c__cInternal2;
-}
-
-function $i__c__c3() {
-  ({cInternal1: $i__c__cInternal1, cInternal2: $i__c__cInternal2} = {cInternal1: $i__c__cInternal2, cInternal2: $i__c__cInternal1});
-  [$i__c__cInternal1, $i__c__cInternal2] = [1,2];
-  $i__c__cInternal1 = null;
-}
-
-Object.assign($n__c, {c1: $i__c__c1, c2: $i__c__c2, c3: $i__c__c3});
-
-return $n__c;
-}
-
-function $w__b() {
-
 /* b */
 
 
@@ -129,7 +99,32 @@ const $e__b__default = {b1: $e__b__b1, b2: $e__b__b2, b3: $e__a__a1};
 
 const $n__b = {default: $e__b__default, b1: $e__b__b1, b2: $e__b__b2};
 
-return $n__b;
+/* c */
+
+let $n__c = {};
+let $i__c__cInternal1 = 100;
+let $i__c__cInternal2 = 200;
+
+function $i__c__c1() {
+  let b = ($n__b);
+  let cInternal2 = 300;
+  return b.b1() + b.b2() + $i__c__cInternal1 + cInternal2;
+}
+
+function $i__c__c2() {
+  let b = ($n__b);
+  return b.default.b1() + b.default.b2() + $i__c__cInternal2;
+}
+
+function $i__c__c3() {
+  ({cInternal1: $i__c__cInternal1, cInternal2: $i__c__cInternal2} = {cInternal1: $i__c__cInternal2, cInternal2: $i__c__cInternal1});
+  [$i__c__cInternal1, $i__c__cInternal2] = [1,2];
+  $i__c__cInternal1 = null;
+}
+
+Object.assign($n__c, {c1: $i__c__c1, c2: $i__c__c2, c3: $i__c__c3});
+
+return $n__c;
 }
 
 function $w__e() {

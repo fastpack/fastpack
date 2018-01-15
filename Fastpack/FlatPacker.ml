@@ -166,7 +166,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             patch_loc loc @@ gen_ext_namespace_binding module_id;
             if (not !has_namespace_binding) then begin
               patch 0 0
-              @@ Printf.sprintf "let %s;"
+              @@ Printf.sprintf "let %s = {};"
               @@ gen_ext_namespace_binding module_id;
               has_namespace_binding := true;
             end
@@ -540,7 +540,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
               | E.Call {
                   callee = (_, E.Identifier (_, "require"));
                   arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
-                } when !stmt_level = 1 ->
+                } ->
                   let dep = add_static_dep request in
                   patch_loc_with loc
                     (fun dep_map ->
@@ -553,13 +553,13 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                   Visit.Break;
 
               (* dynamic imports *)
-              | E.Call {
-                  callee = (_, E.Identifier (_, "require"));
-                  arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
-                } when !stmt_level > 1 ->
-                let dep = add_dynamic_dep ctx request filename in
-                patch_dynamic_dep loc dep "__fastpack_require__";
-                Visit.Break;
+              (* | E.Call { *)
+              (*     callee = (_, E.Identifier (_, "require")); *)
+              (*     arguments = [E.Expression (_, E.Literal { value = L.String request; _ })] *)
+              (*   } when !stmt_level > 1 -> *)
+              (*   let dep = add_dynamic_dep ctx request filename in *)
+              (*   patch_dynamic_dep loc dep "__fastpack_require__"; *)
+              (*   Visit.Break; *)
 
               | E.Import (_, E.Literal { value = L.String request; _ }) ->
                 let dep = add_dynamic_dep ctx request filename in
