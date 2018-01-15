@@ -8,7 +8,7 @@ module L = Ast.Literal
 let debug = Logs.debug
 
 let rec makedirs dir =
-  match%lwt FastpackResolver.stat_option dir with
+  match%lwt FastpackUtil.NodeResolve.stat_option dir with
   | None ->
     let%lwt () = makedirs (FilePath.dirname dir) in
     Lwt_unix.mkdir dir 0o777

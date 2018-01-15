@@ -1,7 +1,0 @@
-(jbuild_version 1)
-
-(library
- ((name        FastpackResolver)
-  (public_name FastpackResolver)
-  (libraries (lwt.unix fileutils yojson))
-  (preprocess (pps (lwt.ppx)))))

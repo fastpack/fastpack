@@ -3,6 +3,6 @@
 (library
  ((name        Fastpack)
   (public_name Fastpack)
-  (libraries (FastpackUtil FastpackResolver FastpackTranspiler lwt.unix logs logs.cli logs.lwt logs.top fmt fileutils yojson containers str batteries FlowParser))
+  (libraries (FastpackUtil FastpackTranspiler lwt.unix logs logs.cli logs.lwt logs.top fmt fileutils yojson containers str batteries FlowParser))
   (flags (:standard "-open" "Containers"))
   (preprocess (pps (lwt.ppx)))))
