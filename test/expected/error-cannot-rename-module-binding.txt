@@ -1,7 +1,10 @@
 
-Working directory: /.../test/error-cannot-rename-module-binding
+Working Directory: /.../test/error-cannot-rename-module-binding
+Entry Point: index.js
 Mode: production
-Call stack:
+Call Stack: (empty)
+Processing File: index.js
+
 
 Cannot rename module binding:
 (3:9) - (3:10): a

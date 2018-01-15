@@ -125,6 +125,8 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
       let rec process ({Context. transpile; _} as ctx) graph (m : Module.t) =
 
+        let ctx = { ctx with current_filename = m.filename } in
+
         let analyze module_id filename source =
           debug (fun m -> m "Analyzing: %s" filename);
 
@@ -204,7 +206,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                   in
                   match names with
                   | [] ->
-                    failwith ("Cannot find name " ^ remote ^ " in module " ^ m.Module.filename)
+                    raise (PackError (ctx, CannotFindExportedName (remote, m.filename)))
                   | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
                     match typ with
                     | Scope.Import import -> resolve_import dep_map m.filename import
@@ -546,7 +548,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                     (fun dep_map ->
                        match MDM.get dep dep_map with
                        | None ->
-                         failwith ("Cannot resolve request: " ^ request)
+                         raise (PackError (ctx, CannotResolveModules [dep]))
                        | Some m ->
                          Printf.sprintf "(%s)" @@ gen_ext_namespace_binding m.id
                     );

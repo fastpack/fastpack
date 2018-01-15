@@ -479,6 +479,7 @@ let pack ?(cache=Cache.fake) ctx channel =
 
   (* Gather dependencies *)
   let rec process ({Context. transpile; _} as ctx) graph (m : Module.t) =
+    let ctx = { ctx with current_filename = m.filename } in
     let m =
       if (not m.cached) then begin
         let source = m.Module.workspace.Workspace.value in

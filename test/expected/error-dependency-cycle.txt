@@ -1,7 +1,10 @@
 
-Working directory: /.../test/error-dependency-cycle
+Working Directory: /.../test/error-dependency-cycle
+Entry Point: index.js
 Mode: production
-Call stack:
+Call Stack: (empty)
+Processing File: index.js
+
 Dependency cycle detected:
 	a.js
 	c.js

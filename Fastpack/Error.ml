@@ -8,6 +8,7 @@ type reason =
   | NotImplemented of Loc.t option * string
   | CannotRenameModuleBinding of Loc.t * string * Dependency.t
   | DependencyCycle of string list
+  | CannotFindExportedName of string * string
 
 let loc_to_string {Loc. start; _end; _} =
   Printf.sprintf "(%d:%d) - (%d:%d):"
@@ -65,5 +66,12 @@ the code.
     @@ List.map
       (fun filename -> String.replace ~sub:(package_dir ^ "/") ~by:"" filename)
       filenames
+
+  | CannotFindExportedName (name, filename) ->
+    let filename = String.replace ~sub:(package_dir ^ "/") ~by:"" filename in
+    Printf.sprintf
+      "Cannot find exported name '%s' in module '%s'\n"
+      name
+      filename
 
 let ie = FastpackUtil.Error.ie

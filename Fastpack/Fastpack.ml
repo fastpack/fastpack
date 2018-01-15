@@ -94,6 +94,7 @@ let pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir channel
     package_dir;
     transpile = transpile_f;
     stack = [];
+    current_filename = entry_filename;
     mode;
     target;
   }

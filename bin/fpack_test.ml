@@ -132,6 +132,11 @@ let tests = [
     "error-dependency-cycle.txt",
     pack_flat_prod
   );
+  (
+    "error-cannot-find-exported-name/index.js",
+    "error-cannot-find-exported-name.txt",
+    pack_flat_prod
+  );
   (* ("current.js", "", transpile); *)
 ]
 

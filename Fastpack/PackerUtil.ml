@@ -198,20 +198,34 @@ module Context = struct
     entry_filename : string;
     package_dir : string;
     transpile : transpile;
+    current_filename : string;
     stack : Dependency.t list;
     mode : Mode.t;
     target : Target.t;
   }
   and transpile = t -> string -> string -> string
 
-  let to_string { package_dir; stack; mode; _ } =
-    let stack =
-      List.map (Dependency.to_string ~dir:(Some package_dir)) stack
+  let to_string { entry_filename; package_dir; stack; mode; current_filename; _ } =
+    let relative filename =
+      String.replace ~sub:(package_dir ^ "/") ~by:"" filename
     in
-    Printf.sprintf "Working directory: %s\n" package_dir
-    ^ Printf.sprintf "Mode: %s" (Mode.to_string mode)
-    ^ "\nCall stack:"
-    ^ (if (List.length stack = 0) then "" else "\n\t" ^ String.concat "\t\n" stack)
+    let stack =
+      stack
+      |> List.map (Dependency.to_string ~dir:(Some package_dir))
+      |> String.concat "\t\n"
+    in
+    Printf.([
+        sprintf "Working Directory: %s" package_dir;
+        sprintf "Entry Point: %s" @@ relative entry_filename;
+        sprintf "Mode: %s" (Mode.to_string mode);
+        "Call Stack:" ^ if stack <> ""
+                        then sprintf "\n\t%s" stack
+                        else " (empty)";
+        sprintf "Processing File: %s" @@ relative current_filename;
+      ])
+    |> List.fold_left
+      (fun acc part -> if part <> "" then acc ^ part ^ "\n" else acc)
+      ""
 end
 
 
