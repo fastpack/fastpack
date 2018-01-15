@@ -1,4 +1,5 @@
 
+module Version = Version
 module Error = Error
 module Mode = PackerUtil.Mode
 module Target = PackerUtil.Target

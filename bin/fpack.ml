@@ -202,7 +202,11 @@ let () =
     let doc =
       "Pack JavaScript code into a single bundle"
     in
-    Term.info "fpack" ~version:"preview" ~doc ~exits:Term.default_exits
+    let version = Fastpack.Version.(
+        Printf.sprintf "%s (Commit: %s)" version github_commit
+      )
+    in
+    Term.info "fpack" ~version ~doc ~exits:Term.default_exits
   in
 
   Term.exit @@ Term.eval (run_t, info)
