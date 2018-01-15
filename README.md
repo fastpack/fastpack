@@ -1,5 +1,7 @@
 # fastpack
 
+[![Build Status](https://travis-ci.org/fastpack/fastpack.svg?branch=master)](https://travis-ci.org/fastpack/fastpack)
+
 Pack JS code into a single bundle fast & easy.
 
 ## Development
