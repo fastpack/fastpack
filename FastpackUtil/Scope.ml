@@ -31,6 +31,25 @@ and import = {
   remote: string option;
 }
 
+type reason =
+  | NamingCollision of string * Loc.t * Loc.t
+
+exception ScopeError of reason
+
+let error_to_string (error : reason) =
+  let loc_to_string {Loc. start; _end; _} =
+    Printf.sprintf "(%d:%d) - (%d:%d)"
+      start.line start.column _end.line _end.column
+  in
+  match error with
+  | NamingCollision (name, loc, prev_loc) ->
+    Printf.sprintf
+      "Naming Collision: name '%s' at %s is already defined at %s\n"
+      name
+      (loc_to_string loc)
+      (loc_to_string prev_loc)
+
+
 let empty = { bindings = M.empty; parent = None }
 
 let string_of_binding { typ; loc; exported; _ } =
@@ -118,9 +137,8 @@ let update_bindings loc name typ shorthand (bindings : binding M.t)=
     M.add name { exported = None; loc; typ; shorthand } bindings
   | Some { typ = Var; _}, Function ->
     bindings
-  | _ ->
-    (* TODO: track the Loc.t of bindings and raise the nice error *)
-    failwith ("Naming collision: " ^ name)
+  | Some { loc = prev_loc; _ }, _ ->
+    raise (ScopeError (NamingCollision (name, loc, prev_loc)))
 
 let names_of_node ((_, node) : Loc.t S.t) =
   let type_of_kind kind =

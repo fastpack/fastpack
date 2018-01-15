@@ -137,6 +137,11 @@ let tests = [
     "error-cannot-find-exported-name.txt",
     pack_flat_prod
   );
+  (
+    "error-scope-naming-collision/index.js",
+    "error-scope-naming-collision.txt",
+    pack_flat_prod
+  );
   (* ("current.js", "", transpile); *)
 ]
 

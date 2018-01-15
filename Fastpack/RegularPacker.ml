@@ -490,6 +490,8 @@ let pack ?(cache=Cache.fake) ctx channel =
           with
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))
+          | Scope.ScopeError reason ->
+            raise (PackError (ctx, ScopeError reason))
         in
         let (workspace, dependencies, scope, exports, es_module) =
           try
@@ -497,6 +499,8 @@ let pack ?(cache=Cache.fake) ctx channel =
           with
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))
+          | Scope.ScopeError reason ->
+            raise (PackError (ctx, ScopeError reason))
         in
         { m with workspace; scope; exports; dependencies; es_module }
       end

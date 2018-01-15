@@ -628,6 +628,8 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           with
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))
+          | Scope.ScopeError reason ->
+            raise (PackError (ctx, ScopeError reason))
         in
         let m = {
           m with

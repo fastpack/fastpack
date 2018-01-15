@@ -15,6 +15,9 @@ module APS = AstParentStack
 
 let debug = Logs.debug
 
+let ie error =
+  Error.ie @@ "Printer Error: " ^ error
+
 (** Printer context *)
 type printer_ctx = {
   (** Current indentation level *)
@@ -110,10 +113,10 @@ module Parens = struct
     | E.TemplateLiteral _
     | E.This -> 100
 
-    | E.TypeCast _ -> failwith "Precedence: TypeCast is not supported"
-    | E.Generator _ -> failwith "Precedence: Generator is not supported"
-    | E.Comprehension _ -> failwith "Precedence: Comprehension is not supported"
-    | E.MetaProperty _ -> failwith "Precedence: MetaProperty is not supported"
+    | E.TypeCast _ -> ie "Precedence: TypeCast is not supported"
+    | E.Generator _ -> ie "Precedence: Generator is not supported"
+    | E.Comprehension _ -> ie "Precedence: Comprehension is not supported"
+    | E.MetaProperty _ -> ie "Precedence: MetaProperty is not supported"
 
   let is_required ((loc : Loc.t), node) { comments; parents;  _ } =
     let has_comments =
@@ -155,12 +158,13 @@ module Parens = struct
         false
 end
 
+
 let fail_if cond message =
-  if cond then failwith message else ()
+  if cond then ie message else ()
 
 let fail_if_some option message =
   match option with
-  | Some _ -> failwith message
+  | Some _ -> ie message
   | None -> ()
 
 let push_parent_stmt stmt ctx =
@@ -611,25 +615,29 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
               emit_expression expr)
         |> emit_semicolon_and_newline
       | S.InterfaceDeclaration _ ->
-        failwith "Interface declaration is not supported"
+        ie "Interface declaration is not supported"
       | S.TypeAlias _ ->
-        failwith "TypeAlias is not supported"
+        ie "TypeAlias is not supported"
       | S.DeclareVariable _ ->
-        failwith "DeclareVariable is not supported"
+        ie "DeclareVariable is not supported"
       | S.DeclareFunction _ ->
-        failwith "DeclareFunction is not supported"
+        ie "DeclareFunction is not supported"
       | S.DeclareClass _ ->
-        failwith "DeclareClass is not supported"
+        ie "DeclareClass is not supported"
       | S.DeclareModule _ ->
-        failwith "DeclareModule is not supported"
+        ie "DeclareModule is not supported"
       | S.DeclareModuleExports _ ->
-        failwith "DeclareModuleExports is not supported"
+        ie "DeclareModuleExports is not supported"
       | S.DeclareExportDeclaration _ ->
-        failwith "DeclareExportDeclaration is not supported"
-      | S.DeclareInterface _ -> failwith "DeclareInterface not supported"
-      | S.DeclareTypeAlias _ -> failwith "DeclareTypeAlias not supported"
-      | S.DeclareOpaqueType _ -> failwith "DeclareOpaqueType not supported"
-      | S.OpaqueType _ -> failwith "OpaqueType not supported"
+        ie "DeclareExportDeclaration is not supported"
+      | S.DeclareInterface _ ->
+        ie "DeclareInterface not supported"
+      | S.DeclareTypeAlias _ ->
+        ie "DeclareTypeAlias not supported"
+      | S.DeclareOpaqueType _ ->
+        ie "DeclareOpaqueType not supported"
+      | S.OpaqueType _ ->
+        ie "OpaqueType not supported"
     in
     ctx |> pop_parent_stmt (loc, statement)
 
@@ -717,7 +725,6 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
           (emit_expression ~parens:false)
           expressions
       | E.Unary { operator; prefix=_prefix; argument } ->
-        (* fail_if prefix "Unary: prefix is not supported"; *)
         ctx
         |> (match operator with
             | E.Unary.Minus -> emit "-"
@@ -830,9 +837,9 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> (if delegate then emit "yield* " else emit "yield ")
         |> emit_if_some emit_expression argument
       | E.Comprehension _ ->
-        failwith "Comprehension is not supported"
+        ie "Comprehension is not supported"
       | E.Generator _ ->
-        failwith "Generator is not supported"
+        ie "Generator is not supported"
       | E.Identifier (_, name) ->
         ctx |> emit name
       | E.Literal lit ->
@@ -853,9 +860,9 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
       | E.Class cls ->
         ctx |> emit_class cls
       | E.TypeCast _ ->
-        failwith "TypeCast is not supported"
+        ie "TypeCast is not supported"
       | E.MetaProperty _ ->
-        failwith "MetaProperty is not supported"
+        ie "MetaProperty is not supported"
     in
     ctx
     |> emit_if parens (emit ")")
@@ -880,7 +887,8 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
          | J.Text { raw; _ } -> emit raw
          | J.ExpressionContainer expr -> emit_jsx_expression_container expr
          | J.Element element -> emit_jsx_element element
-         | J.Fragment _ | J.SpreadChild _ -> failwith "Fragment/SpreadChild are not implemented"
+         | J.Fragment _ | J.SpreadChild _ ->
+           ie "Fragment/SpreadChild are not implemented"
       )
       children
 
@@ -1003,7 +1011,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> emit_if_some emit_expression value
         |> emit_semicolon
       | C.Body.PrivateField _ ->
-        failwith "Class PrivateField is not implemented"
+        ie "Class PrivateField is not implemented"
     in
     begin
       fail_if
@@ -1276,7 +1284,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     | T.Exists -> emit "*" ctx
 
   and emit_object_type (_loc, _value) _ctx =
-    failwith "emit_object_type: not implemented"
+    ie "emit_object_type: not implemented"
 
   and emit_type_generic_identifier id ctx =
     match id with
@@ -1295,7 +1303,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     |> emit_if_some emit_type_parameter_instantiation typeParameters
 
   and emit_function_type (_loc, _value) _ctx =
-    failwith "emit_function_type: not implemented"
+    ie "emit_function_type: not implemented"
 
   and emit_type_parameter (loc, value) ctx =
     let { T.ParameterDeclaration.TypeParam.

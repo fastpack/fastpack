@@ -1,4 +1,5 @@
 module Loc = FlowParser.Loc
+module Scope = FastpackUtil.Scope
 
 type reason =
   | CannotReadModule of string
@@ -9,6 +10,7 @@ type reason =
   | CannotRenameModuleBinding of Loc.t * string * Dependency.t
   | DependencyCycle of string list
   | CannotFindExportedName of string * string
+  | ScopeError of Scope.reason
 
 let loc_to_string {Loc. start; _end; _} =
   Printf.sprintf "(%d:%d) - (%d:%d):"
@@ -73,5 +75,8 @@ the code.
       "Cannot find exported name '%s' in module '%s'\n"
       name
       filename
+
+  | ScopeError reason ->
+    Scope.error_to_string reason
 
 let ie = FastpackUtil.Error.ie

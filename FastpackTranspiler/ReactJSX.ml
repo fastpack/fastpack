@@ -145,7 +145,7 @@ let transpile _context program =
             (loc, E.Literal { value = Ast.Literal.String value; raw = ("'" ^ raw ^ "'"); })
           | Fragment fragment ->
             (loc, transpile_fragment fragment)
-          | SpreadChild _ -> failwith "Fragment/SpreadChild are not implemented"
+          | SpreadChild _ -> failwith "SpreadChild are not implemented"
         in
         E.Expression expr
       in
