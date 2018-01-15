@@ -16,7 +16,7 @@ type t = {
 and binding = {
   typ : typ;
   loc : Loc.t;
-  exported : string option;
+  exported : string list option;
   shorthand : bool;
 }
 and typ = Import of import
@@ -33,6 +33,7 @@ and import = {
 
 type reason =
   | NamingCollision of string * Loc.t * Loc.t
+  | PreviouslyUndefinedExport of string
 
 exception ScopeError of reason
 
@@ -48,6 +49,9 @@ let error_to_string (error : reason) =
       name
       (loc_to_string loc)
       (loc_to_string prev_loc)
+  | PreviouslyUndefinedExport name ->
+    Printf.sprintf "Cannot export previously undefined name '%s'\n" name
+
 
 
 let empty = { bindings = M.empty; parent = None }
@@ -66,7 +70,7 @@ let string_of_binding { typ; loc; exported; _ } =
   )
   ^ (match exported with
      | None -> ""
-     | Some name -> Printf.sprintf " [exported as %s]" name)
+     | Some names -> Printf.sprintf " [exported as %s]" @@ String.concat ", " names)
   ^ Loc.(Printf.sprintf
            " [%d:%d - %d:%d]"
            loc.start.line
@@ -121,11 +125,13 @@ let export_binding name remote bindings =
   | Some { typ = Argument; _ } ->
     Error.ie ("Cannot export Argument: " ^ name)
   | Some ({ exported = None; _ } as binding) ->
-    M.add name { binding with exported = Some remote } bindings
-  | Some { exported = Some _; _ } ->
-    failwith ("Cannot export twice: " ^ name)
+    M.add name { binding with exported = Some [remote] } bindings
+  | Some ({ exported = Some names; _ } as binding) ->
+    if List.mem remote names
+    then Error.ie @@ "Cannot export twice: " ^ name (* Flow parser handles this*)
+    else M.add name { binding with exported = Some (remote :: names) } bindings
   | None ->
-    failwith ("Cannot export previously undefined name: " ^ name)
+    raise @@ ScopeError (PreviouslyUndefinedExport name)
 
 let update_bindings loc name typ shorthand (bindings : binding M.t)=
   match M.get name bindings, typ with
@@ -138,7 +144,7 @@ let update_bindings loc name typ shorthand (bindings : binding M.t)=
   | Some { typ = Var; _}, Function ->
     bindings
   | Some { loc = prev_loc; _ }, _ ->
-    raise (ScopeError (NamingCollision (name, loc, prev_loc)))
+    raise @@ ScopeError (NamingCollision (name, loc, prev_loc))
 
 let names_of_node ((_, node) : Loc.t S.t) =
   let type_of_kind kind =
@@ -295,7 +301,7 @@ let of_function_block stmts =
            typ = Import { source; remote = Some name };
            loc;
            shorthand = false;
-           exported = Some exported;
+           exported = Some [exported];
          }
          in
          reexports := (exported, Some exported, binding) :: !reexports;
@@ -499,24 +505,40 @@ let of_program stmts =
       (fun (name, ({ exported; _ } as binding)) ->
          match exported with
          | Some exported ->
-           if exported = "default" then named_default := true;
-           Some (exported, Some name, binding)
+           Some (
+             List.map
+               (fun e ->
+                  if e = "default" then named_default := true;
+                  (e, Some name, binding)
+               )
+               exported
+           )
          | None ->
            None
       )
+    |> List.flatten
   in
   let exports =
-    if export_default && (not !named_default)
-    then
+    (if export_default && (not !named_default)
+     then
       ("default",
        None,
        {
          typ = Const;
          loc = Loc.none;
-         exported = Some "default";
+         exported = Some ["default"];
          shorthand = false
        }) :: exports
-    else exports
+     else exports
+    ) |> List.map
+      (fun (exp, internal, binding) ->
+         let exported =
+           match binding.exported with
+           | Some exported -> Some (List.sort compare exported)
+           | None -> None
+         in
+         (exp, internal, { binding with exported })
+      )
   in
   (scope, exports @ reexports)
 

@@ -107,7 +107,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
         | Some Collision -> gen_collision_binding module_id name
         | None ->
           match binding.exported with
-          | Some exported -> gen_ext_binding module_id exported
+          | Some exported -> gen_ext_binding module_id @@ String.concat "_" exported
           | None -> gen_int_binding module_id name
       in
 

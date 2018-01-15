@@ -142,6 +142,11 @@ let tests = [
     "error-scope-naming-collision.txt",
     pack_flat_prod
   );
+  (
+    "error-scope-previously-undefined-export/index.js",
+    "error-scope-previously-undefined-export.txt",
+    pack_flat_prod
+  );
   (* ("current.js", "", transpile); *)
 ]
 
