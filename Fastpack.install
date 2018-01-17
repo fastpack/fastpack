@@ -57,4 +57,5 @@ bin: [
 ]
 doc: [
   "_build/install/default/doc/Fastpack/README.md"
+  "_build/install/default/doc/Fastpack/LICENSE.txt"
 ]

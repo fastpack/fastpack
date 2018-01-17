@@ -52,4 +52,5 @@ lib: [
 ]
 doc: [
   "_build/install/default/doc/FastpackUtil/README.md"
+  "_build/install/default/doc/FastpackUtil/LICENSE.txt"
 ]

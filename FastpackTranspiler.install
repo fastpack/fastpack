@@ -36,4 +36,5 @@ lib: [
 ]
 doc: [
   "_build/install/default/doc/FastpackTranspiler/README.md"
+  "_build/install/default/doc/FastpackTranspiler/LICENSE.txt"
 ]

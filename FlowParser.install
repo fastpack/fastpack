@@ -103,4 +103,5 @@ lib: [
 ]
 doc: [
   "_build/install/default/doc/FlowParser/README.md"
+  "_build/install/default/doc/FlowParser/LICENSE.txt"
 ]
