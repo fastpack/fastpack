@@ -185,7 +185,7 @@ let () =
     let show_diff name actual =
       let temp_file = Filename.temp_file "" ".result.js" in
       let _ = write_file temp_file actual in
-      let cmd = "colordiff " ^ name ^ " " ^ temp_file in
+      let cmd = "git diff --color " ^ name ^ " " ^ temp_file in
       let%lwt output = Lwt_process.(pread @@ shell cmd) in
       Lwt.finalize
         (fun () -> print output)
