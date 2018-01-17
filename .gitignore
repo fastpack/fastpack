@@ -10,5 +10,3 @@ examples/*/fpack-test/*.js
 examples/*/.cache
 .DS_Store
 fpack-test
-esy.lock
-flow/
