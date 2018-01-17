@@ -17,10 +17,16 @@ module Helper = struct
       literal_str name
     | E.Object.Property.Literal (_, lit) ->
       lit
-    | E.Object.Property.PrivateName _ ->
-      failwith "TODO: PrivateName"
-    | E.Object.Property.Computed _ ->
-      failwith "Computed properties are not supported here"
+    | E.Object.Property.PrivateName (loc, _) ->
+      raise (Error.TranspilerError (
+        loc,
+        "PrivateName is not implemented yet"
+      ))
+    | E.Object.Property.Computed (loc, _) ->
+      raise (Error.TranspilerError (
+        loc,
+        "Computed properties are not supported here"
+      ))
 
   let op_value_to_expr value =
     match value with
@@ -169,7 +175,7 @@ module Transform = struct
                       typeParameters = None;
                   })
                 }))
-          | _ -> failwith "Only constructor is expected here"
+          | _ -> Error.ie "Only constructor is expected here"
         in
         let (body_loc, _) = cls.body in
         let body =
@@ -249,7 +255,7 @@ let transpile {Context. require_runtime; _ } program =
           require_runtime ();
           let_stmt ~loc name
             @@ Transform.wrap_class cls statics classDecorators decorators
-        | _ -> failwith "should not happen"
+        | _ -> Error.ie "Unexpected result of the transform_class"
       end
     | _ -> (loc, stmt)
   in

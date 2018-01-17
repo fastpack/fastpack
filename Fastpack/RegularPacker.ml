@@ -490,6 +490,8 @@ let pack ?(cache=Cache.fake) ctx channel =
           with
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))
+          | FastpackTranspiler.Error.TranspilerError error ->
+            raise (PackError (ctx, TranspilerError error))
           | Scope.ScopeError reason ->
             raise (PackError (ctx, ScopeError reason))
         in

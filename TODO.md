@@ -2,6 +2,21 @@
 
 ### MVP
 
+
+- [ ] UI/UX (error reporting, config) [zindel] (1)
+- [ ] `--postprocess` option
+- [ ] Documentation / Domain (1)
+
+- [ ] Configuration options in package.json (2?)
+- [ ] Use combinators for error output for nicer formatting? (2)
+- [ ] Fastpack: handle static files (2)
+- [ ] Fastpack: export URLs for static files (2)
+- [ ] Support external command execution for LESS/SASS/other processing
+- [ ] CSS support in import statements (webpack ICSS)? (2)
+- [ ] FastpackTranspiler: PrivateName, PrivateField
+- [ ] FastpackTranspiler: SpreadChild (2, in case we support something
+  else than React)
+
 - [x] FastpackTranspiler: jsx [andeypopp]
 - [x] FastpackTranspiler: flow - remove annotations [zindel]
 - [x] FastpackTranspiler: class syntax, properties, decorators [zindel]
@@ -24,23 +39,10 @@
 - [x] RegularPacker: add better API for cache (will enable watch mode later on)
 - [x] FastpackTranspiler: spread operator in try/catch clause
 - [x] FastpackTranspiler: add runtime
-
-- [ ] UI/UX (error reporting, config) [zindel, in progress] (1)
-- [ ] FlatPacker / RegularPacker: builtin modules?
-- [ ] Configuration options in package.json (1?)
-- [ ] Documentation / Domain (1)
-
-- [ ] Use combinators for error output for nicer formatting? (2)
-- [ ] Fastpack: handle static files (2)
-- [ ] Fastpack: export URLs for static files (2)
-- [ ] Support external command execution for LESS/SASS/other processing
-- [ ] Source maps [andreypopp, in progress] (2)
-- [ ] CSS support in import statements (webpack ICSS)? (2)
-- [ ] FastpackTranspiler: PrivateName, PrivateField
-- [ ] FastpackTranspiler: SpreadChild (2, in case we support something
-  else than React)
+- [x] FlatPacker / RegularPacker: builtin modules (just empty files are used atm)?
 
 ### Heap
 
+- [ ] Source maps (2)
 - [ ] Think of integration with Flow
 - [ ] Implement rest operator for try/catch statements when flow parser suppots it

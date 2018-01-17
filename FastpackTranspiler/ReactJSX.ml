@@ -41,8 +41,9 @@ let transpile _context program =
             property = E.Member.PropertyIdentifier (aux_property property);
             computed = false;
           })
-      | NamespacedName _ ->
-        failwith "Namespaced tags are not supported. ReactJSX is not XML"
+      | NamespacedName (loc, _) ->
+        raise (Error.TranspilerError (
+          loc, "Namespaced tags are not supported. ReactJSX is not XML"))
     in
 
     (** Transpile JSX attributes *)
@@ -81,8 +82,11 @@ let transpile _context program =
                  let key = match name with
                    | Attribute.Identifier (loc, { name }) ->
                      E.Object.Property.Literal (loc, { value = Ast.Literal.String name; raw = name })
-                   | Attribute.NamespacedName _ ->
-                     failwith "Namespaced tags are not supported. ReactJSX is not XML"
+                   | Attribute.NamespacedName (loc, _) ->
+                     raise (Error.TranspilerError (
+                       loc,
+                        "Namespaced tags are not supported. ReactJSX is not XML"
+                     ))
                  in
                  let value = match value with
                    | None ->
@@ -91,8 +95,11 @@ let transpile _context program =
                      loc, E.Literal lit
                    | Some (Attribute.ExpressionContainer (_loc, { expression = ExpressionContainer.Expression expr })) ->
                      expr
-                   | Some (Attribute.ExpressionContainer (_loc, { expression = ExpressionContainer.EmptyExpression _ })) ->
-                     failwith "Found EmptyExpression container"
+                   | Some (Attribute.ExpressionContainer (loc, { expression = ExpressionContainer.EmptyExpression _ })) ->
+                     raise (Error.TranspilerError (
+                       loc,
+                       "Found EmptyExpression container"
+                     ))
                  in
                  let prop = E.Object.Property (
                      loc, E.Object.Property.Init { key; value; shorthand = false }
@@ -123,7 +130,6 @@ let transpile _context program =
 
     let rec transpile_children children =
       let trim_text text =
-        (** TODO: Lookup how babel does this as there are some subtle nuances *)
         let is_not_empty_line line =
           String.trim line <> ""
         in
@@ -139,13 +145,20 @@ let transpile _context program =
           | ExpressionContainer { expression = ExpressionContainer.Expression expression } ->
             expression
           | ExpressionContainer { expression = ExpressionContainer.EmptyExpression _ } ->
-            failwith "Found EmptyExpression container"
+            raise (Error.TranspilerError (
+              loc,
+              "Found EmptyExpression container"
+            ))
           | Text { value; raw } ->
             let raw = trim_text raw in
             (loc, E.Literal { value = Ast.Literal.String value; raw = ("'" ^ raw ^ "'"); })
           | Fragment fragment ->
             (loc, transpile_fragment fragment)
-          | SpreadChild _ -> failwith "SpreadChild are not implemented"
+          | SpreadChild _ ->
+            raise (Error.TranspilerError (
+              loc,
+              "SpreadChild are not implemented"
+            ))
         in
         E.Expression expr
       in

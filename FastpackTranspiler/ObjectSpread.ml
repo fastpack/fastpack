@@ -240,7 +240,11 @@ module TranspileObjectSpreadRest = struct
               AstHelper.e_literal_str name
             | P.Object.Property.Computed (_, E.Identifier (_, name)) ->
               AstHelper.e_identifier name
-            | _ -> failwith "Unexpected Object.Property.Computed expression"
+            | P.Object.Property.Computed (loc, _) ->
+              raise (Error.TranspilerError (
+                loc,
+                "Unexpected non-identifier Object.Property.Computed"
+              ))
           in
           omit_keys := expr :: !omit_keys
         in
@@ -584,8 +588,11 @@ module TranspileObjectSpreadRest = struct
           left = left_declaration Loc.none S.VariableDeclaration.Let;
           body = prepend_stmt stmt
         }
-      | _ ->
-        failwith "Unexpected ForIn: more than one declaration"
+      | S.ForIn.LeftDeclaration (loc, _) ->
+        raise (Error.TranspilerError (
+          loc,
+          "Unexpected ForIn: more than one declaration"
+        ))
 
   end
 
@@ -699,8 +706,11 @@ module TranspileObjectSpreadRest = struct
           left = left_declaration Loc.none S.VariableDeclaration.Let;
           body = prepend_stmt stmt
         }
-      | _ ->
-        failwith "Unexpected ForOf: more than one declaration"
+      | S.ForOf.LeftDeclaration (loc, _) ->
+        raise (Error.TranspilerError (
+          loc,
+          "Unexpected ForOf: more than one declaration"
+        ))
 
   end
 

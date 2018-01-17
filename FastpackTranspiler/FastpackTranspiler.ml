@@ -1,3 +1,4 @@
+module Error = Error
 module ReactJSX = ReactJSX
 module StripFlow = StripFlow
 module Class = Class
