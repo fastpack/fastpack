@@ -63,7 +63,10 @@ Object.defineProperty(exports, "a2", {get: () => a2});
 let a3 = "哈囉世界";
 Object.defineProperty(exports, "a3", {get: () => a3});
 
-exports.default = {a1: a1, a2: a2, a3: a3};
+let a4 = "💩";
+Object.defineProperty(exports, "a4", {get: () => a4});
+
+exports.default = {a1: a1, a2: a2, a3: a3, a4: a4};
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./a" */ "a");
