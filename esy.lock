@@ -21,16 +21,6 @@
   peerDependencies:
     ocaml " >= 4.2.0"
 
-"@opam/base-num@*":
-  version "0.0.0-base"
-  uid "9b4a87a6a60b3610f11feedfc1db228a"
-  resolved "@opam/base-num@0.0.0-base-9b4a87a6a60b3610f11feedfc1db228a.tgz"
-  dependencies:
-    "@esy-ocaml/esy-installer" "^0.0.0"
-    "@esy-ocaml/substs" "^0.0.1"
-  peerDependencies:
-    ocaml " < 4.6.0"
-
 "@opam/base-threads@*":
   version "0.0.0-base"
   uid "5601b815938b487242834ca2ddd7e3fc"
@@ -50,19 +40,6 @@
     "@esy-ocaml/substs" "^0.0.1"
   peerDependencies:
     ocaml "*"
-
-"@opam/batteries@2.8.0":
-  version "2.8.0"
-  uid "39188c7ebb5ba92eda3de7368427d7a1"
-  resolved "@opam/batteries@2.8.0-39188c7ebb5ba92eda3de7368427d7a1.tgz"
-  dependencies:
-    "@esy-ocaml/esy-installer" "^0.0.0"
-    "@esy-ocaml/substs" "^0.0.1"
-    "@opam/num" "*"
-    "@opam/ocamlbuild" "*"
-    "@opam/ocamlfind" " >= 1.5.3"
-  peerDependencies:
-    ocaml " >= 3.12.1  < 4.7.0"
 
 "@opam/biniou@ >= 1.2.0":
   version "1.2.0"
@@ -310,17 +287,6 @@
     "@opam/yojson" "*"
   peerDependencies:
     ocaml " >= 4.2.1  < 4.7.0"
-
-"@opam/num@*":
-  version "0.0.0"
-  uid "696a4831ec6187492c876688f2694403"
-  resolved "@opam/num@0.0.0-696a4831ec6187492c876688f2694403.tgz"
-  dependencies:
-    "@esy-ocaml/esy-installer" "^0.0.0"
-    "@esy-ocaml/substs" "^0.0.1"
-    "@opam/base-num" "*"
-  peerDependencies:
-    ocaml " < 4.6.0"
 
 "@opam/ocaml-migrate-parsetree@ >= 0.7.0", "@opam/ocaml-migrate-parsetree@*":
   version "1.0.7"

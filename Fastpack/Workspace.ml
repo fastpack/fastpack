@@ -6,6 +6,7 @@
 *)
 
 module Loc = FlowParser.Loc
+module UTF8 = FastpackUtil.UTF8
 
 type 'ctx t = {
 
@@ -100,18 +101,18 @@ let write out w ctx =
   let rec write_patch b_offset u_offset value patches content =
     match patches with
     | [] ->
-      let u_length = BatUTF8.length value - u_offset in
-      let chunk = BatUTF8.sub value u_offset u_length in
+      let u_length = UTF8.length value - u_offset in
+      let chunk = UTF8.sub value u_offset u_length in
       let%lwt () = Lwt_io.write_from_exactly out value b_offset (String.length chunk) in
       Lwt.return (content ^ chunk)
     | patch :: patches ->
       let u_length = patch.offset_start - u_offset in
-      let chunk = BatUTF8.sub value u_offset u_length in
+      let chunk = UTF8.sub value u_offset u_length in
       let b_length = String.length chunk in
       let%lwt () = Lwt_io.write_from_exactly out value b_offset b_length in
       let patch_content = patch.patch ctx in
       let%lwt () = Lwt_io.write out patch_content in
-      let patched_chunk = BatUTF8.sub value patch.offset_start (patch.offset_end - patch.offset_start) in
+      let patched_chunk = UTF8.sub value patch.offset_start (patch.offset_end - patch.offset_start) in
       write_patch
         (b_offset + b_length + String.length patched_chunk)
         patch.offset_end

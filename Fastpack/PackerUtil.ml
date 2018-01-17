@@ -464,3 +464,4 @@ let is_es_module stmts =
       false
   in
   List.exists import_or_export stmts
+

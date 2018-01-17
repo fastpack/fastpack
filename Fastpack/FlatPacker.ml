@@ -11,6 +11,7 @@ module P = Ast.Pattern
 module Parser = FastpackUtil.Parser
 module Scope = FastpackUtil.Scope
 module Visit = FastpackUtil.Visit
+module UTF8 = FastpackUtil.UTF8
 
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
@@ -214,7 +215,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           in
 
           let add_namespace_binding () =
-            patch_with (BatUTF8.length source) 0
+            patch_with (UTF8.length source) 0
               (fun dep_map ->
                 let expr =
                   exports
@@ -248,7 +249,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           in
 
           let add_target_export () =
-            patch_with (BatUTF8.length source) 0
+            patch_with (UTF8.length source) 0
               (fun dep_map ->
                 match ctx.target with
                 | Target.Application ->
