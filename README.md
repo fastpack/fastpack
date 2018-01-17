@@ -8,35 +8,49 @@ Pack JS code into a single bundle fast & easy.
 
 Make sure you have `esy` installed:
 
-    % npm install -g esy
+```bash
+npm install -g esy
+```
 
 Now install dependencies & build everything:
 
-    % make bootstrap
+```bash
+make bootstrap
+```
 
 Then to produce the executable:
 
-    % make build
+```bash
+make build
+```
 
 To run tests:
 
-    % make test
+```bash
+make test
+```
 
 To test compiled executables prepend with `esy x`:
 
-    % esy x fpack
+```bash
+esy x fpack
+```
 
 As merlin and others live inside sandboxed environment you'd want to execute
 your editor from inside it:
 
-    % esy vim
-    % esy nvim
-    % esy vscode
-    % esy sublime
+```bash
+esy vim
+esy nvim
+esy vscode
+esy sublime
+```
 
 Alternatively you can enter into sandboxed shell:
 
-    % esy shell
+```bash
+esy shell
+```
 
 And execute commands from there.
 
