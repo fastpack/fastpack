@@ -798,6 +798,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
   let%lwt () =
     Lwt_io.write channel
     @@ Printf.sprintf "
+(function() {
 var __DEV__ = %s;
 var __fastpack_cache__ = {};
 
@@ -820,4 +821,5 @@ function __fastpack_import__(f) {
 "
     @@ if ctx.mode = Mode.Development then "true" else "false"
   in
-  pack ctx MDM.empty
+  let%lwt () = pack ctx MDM.empty in
+  Lwt_io.write channel "})()"
