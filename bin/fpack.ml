@@ -11,6 +11,7 @@ let () =
         cache
         debug
         transpile
+        postprocess
       =
       if debug then begin
         Logs.set_level (Some Logs.Debug);
@@ -25,6 +26,7 @@ let () =
             target;
             cache = Some cache;
             transpile = Some transpile;
+            postprocess = Some postprocess;
           }
         in
         `Ok (Fastpack.pack_main options)
@@ -95,6 +97,16 @@ let () =
       Arg.(value & opt_all string [] & info ["transpile"] ~docv ~doc)
     in
 
+    let postprocess_t =
+      let doc =
+        "Apply shell command on a bundle file. The content of the bundle will"
+        ^ " be sent to STDIN and STDOUT output will be collected. If multiple"
+        ^ " commands are specified they will be applied in the order of appearance"
+      in
+      let docv = "COMMAND" in
+      Arg.(value & opt_all string [] & info ["postprocess"] ~docv ~doc)
+    in
+
     Term.(ret (
         const run
         $ input_t
@@ -104,6 +116,7 @@ let () =
         $ cache_t
         $ debug_t
         $ transpile_t
+        $ postprocess_t
     ))
   in
 

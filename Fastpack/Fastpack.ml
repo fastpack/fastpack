@@ -27,6 +27,7 @@ type options = {
   target : Target.t option;
   cache : Cache.strategy option;
   transpile : string list option;
+  postprocess : string list option;
 }
 
 let empty_options = {
@@ -36,6 +37,7 @@ let empty_options = {
     target = None;
     cache = None;
     transpile = None;
+    postprocess = None;
 }
 
 let default_options =
@@ -46,6 +48,7 @@ let default_options =
     target = Some Application;
     cache = Some Normal;
     transpile = None;
+    postprocess = None;
   }
 
 let merge_options o1 o2 =
@@ -62,6 +65,7 @@ let merge_options o1 o2 =
     target = merge o1.target o2.target;
     cache = merge o1.cache o2.cache;
     transpile = merge o1.transpile o2.transpile;
+    postprocess = merge o1.postprocess o2.postprocess;
   }
 
 let pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir channel =
@@ -195,6 +199,36 @@ let prepare_and_pack cl_options =
       | None ->
         Error.ie "mode is not set"
     in
+    let pack_and_postprocess ch =
+      let pack =
+        pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir
+      in
+      match options.postprocess with
+      | None | Some [] ->
+        pack ch
+      | Some processors ->
+        (* pack to memory *)
+        let bytes = Lwt_bytes.create 50000000 in
+        let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
+        let%lwt () = pack mem_ch in
+        let%lwt data =
+          Lwt_list.fold_left_s
+            (fun data cmd ->
+              let (stdin, stdout) = Unix.pipe () in
+              let%lwt () =
+                Lwt_process.(pwrite ~env:(Unix.environment ()) ~stdout:(`FD_move stdout) (shell cmd) data)
+              in
+              let stdin_ch = Lwt_io.of_unix_fd ~mode:Lwt_io.Input stdin in
+              Lwt_io.read stdin_ch
+            )
+            (Lwt_io.position mem_ch
+             |> Int64.to_int
+             |> Lwt_bytes.extract bytes 0
+             |> Lwt_bytes.to_string)
+            processors
+        in
+        Lwt_io.write ch data
+    in
     let temp_file = Filename.temp_file "" ".bundle.js" in
     Lwt.finalize
       (fun () ->
@@ -204,7 +238,7 @@ let prepare_and_pack cl_options =
             ~perm:0o640
             ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
             temp_file
-          @@ pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir
+            pack_and_postprocess
         in
         Lwt_unix.rename temp_file output_file
       )

@@ -13,7 +13,7 @@ let transpile _ =
 
 let pack ~mode ~target pack_f entry_filename _ =
   let pack' () =
-    let bytes = Lwt_bytes.create 20000000 in
+    let bytes = Lwt_bytes.create 50000000 in
     let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
     Fastpack.pack
       ~pack_f
