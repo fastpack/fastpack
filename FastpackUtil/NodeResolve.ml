@@ -2,6 +2,7 @@ module PackageJson = struct
   type t = {
     name : string;
     main : string option;
+    module_ : string option;
     browser : string option;
   }
 
@@ -10,8 +11,9 @@ module PackageJson = struct
     try
       let name = member "name" data |> to_string in
       let main = member "main" data |> to_string_option in
+      let module_ = member "module" data |> to_string_option in
       let browser = member "browser" data |> to_string_option in
-      Result.Ok { name; main; browser }
+      Result.Ok { name; main; module_; browser }
     with Type_error _ ->
       Result.Error "Error parsing package.json"
 
@@ -30,24 +32,30 @@ let stat_option path =
 let package_entry_point package_json_path =
   let package_path = FilePath.dirname package_json_path in
 
-  let%lwt main_value =
+  let%lwt module_value, main_value =
     let%lwt data = Lwt_io.with_file ~mode:Lwt_io.Input package_json_path Lwt_io.read in
     match PackageJson.of_string data with
     | Result.Ok package ->
-      Lwt.return package.PackageJson.main
+      Lwt.return (package.PackageJson.module_, package.PackageJson.main)
     | Result.Error _ ->
       (** TODO: missing error handling here *)
-      Lwt.return_none
+      Lwt.return (None, None)
   in
 
-  match main_value with
-  | Some main_value ->
-    let main_value =
-      main_value ^ if Filename.check_suffix main_value ".js" then "" else ".js"
-    in
-    Lwt.return (FilePath.concat package_path main_value)
-  | None ->
-    Lwt.return (FilePath.concat package_path "index.js")
+  let add_suffix m =
+      m ^ if Filename.check_suffix m ".js" then "" else ".js"
+  in
+
+  let entry_point =
+    match module_value, main_value with
+    | Some module_value, _ ->
+      add_suffix module_value
+    | None, Some main_value ->
+      add_suffix main_value
+    | None, None ->
+      "index.js"
+  in
+  Lwt.return @@ FilePath.concat package_path entry_point
 
 (** Try to resolve an absolute path *)
 let resolve_path path =

@@ -32,7 +32,7 @@ module Mode = struct
 
   let rec is_matched expr mode =
     match expr with
-    | (_, E.Logical { operator = E.Logical.And; left; _ }) ->
+    | (_, E.Logical { operator = E.Logical.Or; left; _ }) ->
       is_matched left mode
 
     | (_, E.Binary {
