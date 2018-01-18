@@ -10,6 +10,10 @@ let transpile _context program =
     Loc.none, E.Literal { value = Ast.Literal.Null; raw = "null"; }
   in
 
+  let true_expression =
+    Loc.none, E.Literal (FastpackUtil.AstHelper.literal_true)
+  in
+
   let map_expression _scope ((loc, node) : Loc.t Ast.Expression.t) =
     let open Ast.JSX in
 
@@ -90,7 +94,7 @@ let transpile _context program =
                  in
                  let value = match value with
                    | None ->
-                     null_expression
+                     true_expression
                    | Some (Attribute.Literal (loc, lit)) ->
                      loc, E.Literal lit
                    | Some (Attribute.ExpressionContainer (_loc, { expression = ExpressionContainer.Expression expr })) ->
