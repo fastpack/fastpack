@@ -190,7 +190,7 @@ let pack ?(cache=Cache.fake) ctx channel =
       match action with
       | Visit.Break ->
         Visit.Break
-      | Visit.Continue ->
+      | Visit.Continue visit_ctx ->
         let _ = match stmt with
           | S.ImportDeclaration {
               source = (_, { value = request; _ });
@@ -383,7 +383,7 @@ let pack ?(cache=Cache.fake) ctx channel =
                 (Printf.sprintf "\nexports.default = %s;\n" id);
 
           | _ -> ()
-        in Visit.Continue
+        in Visit.Continue visit_ctx
     in
 
     let visit_expression visit_ctx ((loc: Loc.t), expr) =
@@ -392,7 +392,7 @@ let pack ?(cache=Cache.fake) ctx channel =
       in
       match action with
       | Visit.Break -> Visit.Break
-      | Visit.Continue ->
+      | Visit.Continue visit_ctx ->
         match expr with
         | E.Object { properties } ->
             properties
@@ -406,7 +406,7 @@ let pack ?(cache=Cache.fake) ctx channel =
                     })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
                   | _ -> ()
               );
-            Visit.Continue
+            Visit.Continue visit_ctx
 
         | E.Import (_, E.Literal { value = L.String request; _ }) ->
           let dep = add_dependency request in
@@ -456,7 +456,7 @@ let pack ?(cache=Cache.fake) ctx channel =
           raise (PackError (ctx, NotImplemented (Some loc, msg)))
 
         | _ ->
-          Visit.Continue;
+          Visit.Continue visit_ctx;
     in
 
     let handler =

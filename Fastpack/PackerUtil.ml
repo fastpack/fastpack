@@ -76,7 +76,7 @@ module Mode = struct
   let patch_statement
       { Workspace. remove; patch_loc; _ }
       mode
-      {Visit. parents; _ }
+      ({Visit. parents; _ } as visit_ctx)
       (stmt_loc, _) =
     match parents with
     | (Visit.APS.Statement (loc, S.If {
@@ -87,7 +87,7 @@ module Mode = struct
       begin
         match is_matched test mode with
         | None ->
-          Visit.Continue
+          Visit.Continue visit_ctx
         | Some is_matched ->
           if consequent_loc = stmt_loc then begin
             match is_matched with
@@ -104,7 +104,7 @@ module Mode = struct
                     consequent_loc.Loc._end.offset
                     (alternate_loc.Loc._end.offset - consequent_loc.Loc._end.offset)
               end;
-              Visit.Continue
+              Visit.Continue visit_ctx
 
             (* patch test & consequent *)
             | false ->
@@ -120,16 +120,16 @@ module Mode = struct
               Visit.Break
           end
           else begin
-            if (not is_matched) then Visit.Continue else Visit.Break
+            if (not is_matched) then Visit.Continue visit_ctx else Visit.Break
           end
       end
     | _ ->
-      Visit.Continue
+      Visit.Continue visit_ctx
 
   let patch_expression
       { Workspace. remove; patch_loc; _ }
       mode
-      {Visit. parents; _ }
+      ({Visit. parents; _ } as visit_ctx)
       (expr_loc, expr) =
     match parents with
     | (Visit.APS.Expression (loc, E.Conditional {
@@ -140,7 +140,7 @@ module Mode = struct
       begin
         match is_matched test mode with
         | None ->
-          Visit.Continue
+          Visit.Continue visit_ctx
         | Some is_matched ->
           if consequent_loc = expr_loc then begin
             match is_matched with
@@ -152,7 +152,7 @@ module Mode = struct
               remove
                 consequent_loc.Loc._end.offset
                 (alternate_loc.Loc._end.offset - consequent_loc.Loc._end.offset);
-              Visit.Continue
+              Visit.Continue visit_ctx
 
             (* patch test & consequent *)
             | false ->
@@ -162,7 +162,7 @@ module Mode = struct
               Visit.Break
           end
           else begin
-            if (not is_matched) then Visit.Continue else Visit.Break
+            if (not is_matched) then Visit.Continue visit_ctx else Visit.Break
           end
       end
 
@@ -180,7 +180,7 @@ module Mode = struct
         patch_loc expr_loc @@ "\"" ^ to_string mode ^ "\"";
         Visit.Break;
       | _ ->
-        Visit.Continue
+        Visit.Continue visit_ctx
 end
 
 module Target = struct

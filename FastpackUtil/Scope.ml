@@ -320,7 +320,7 @@ let of_function_block stmts =
     level := !level - 1
   in
 
-  let visit_statement _ ((_, stmt) as node) =
+  let visit_statement visit_ctx ((_, stmt) as node) =
     match stmt with
     | S.ImportDeclaration { importKind = S.ImportDeclaration.ImportValue; _} ->
       add_bindings node;
@@ -355,7 +355,7 @@ let of_function_block stmts =
         kind = S.VariableDeclaration.Var; _
       }); _ } ->
       add_bindings node;
-      Visit.Continue
+      Visit.Continue visit_ctx
 
     | S.ExportDefaultDeclaration {
         declaration = S.ExportDefaultDeclaration.Declaration declaration;
@@ -425,7 +425,7 @@ let of_function_block stmts =
       add_reexports source specifiers;
       Visit.Break
 
-    | _ -> Visit.Continue
+    | _ -> Visit.Continue visit_ctx
   in
 
   let visit_expression _ _ =

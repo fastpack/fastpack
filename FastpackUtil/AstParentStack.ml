@@ -32,3 +32,11 @@ let rec top_expression stack =
   | [] -> None
   | (Expression expr) :: _ -> Some expr
   | _ :: tl -> top_expression tl
+
+let rec is_top_level stack =
+  match stack with
+  | [] -> true
+  | (Expression _) :: rest
+  | (Statement (_, S.Block _)) :: rest
+  | (Block _) :: rest -> is_top_level rest
+  | _ -> false

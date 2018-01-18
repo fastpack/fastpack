@@ -462,7 +462,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             match action with
             | Visit.Break ->
               Visit.Break
-            | Visit.Continue ->
+            | Visit.Continue visit_ctx ->
               match stmt with
               | S.ExportNamedDeclaration { source = Some (_, { value = request; _}); _ }
               | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
@@ -473,7 +473,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 end
                 else
                   remove_loc loc;
-                Visit.Continue;
+                Visit.Continue visit_ctx;
 
               | S.ExportNamedDeclaration { specifiers = Some _; _ }->
                 remove_loc loc;
@@ -501,7 +501,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                   (expr_loc.Loc.start.offset - loc.Loc.start.offset)
                 @@ Printf.sprintf "const %s = "
                 @@ gen_ext_binding module_id "default";
-                Visit.Continue
+                Visit.Continue visit_ctx
 
               | S.ExportDefaultDeclaration {
                   declaration = S.ExportDefaultDeclaration.Declaration (stmt_loc, _);
@@ -510,16 +510,16 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 remove
                   loc.Loc.start.offset
                   (stmt_loc.Loc.start.offset - loc.Loc.start.offset);
-                Visit.Continue;
+                Visit.Continue visit_ctx;
 
 
               | S.ForIn {left = S.ForIn.LeftPattern pattern; _}
               | S.ForOf {left = S.ForOf.LeftPattern pattern; _} ->
                 patch_pattern pattern;
-                Visit.Continue;
+                Visit.Continue visit_ctx
 
               | _ ->
-                Visit.Continue
+                Visit.Continue visit_ctx
           in
 
           let visit_expression visit_ctx (loc, expr) =
@@ -528,7 +528,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             in
             match action with
             | Visit.Break -> Visit.Break
-            | Visit.Continue ->
+            | Visit.Continue visit_ctx ->
               match expr with
               (* patch shorthands, since we will be doing renaming *)
               | E.Object { properties } ->
@@ -543,7 +543,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                           })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
                         | _ -> ()
                     );
-                  Visit.Continue
+                  Visit.Continue visit_ctx
 
               (* static imports *)
               | E.Call {
@@ -597,10 +597,10 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
               | E.Assignment { left; _ } ->
                 patch_pattern left;
-                Visit.Continue
+                Visit.Continue visit_ctx
 
               | _ ->
-                Visit.Continue;
+                Visit.Continue visit_ctx;
           in
 
           let handler = {

@@ -8,7 +8,7 @@ module F = Ast.Function
 module APS = AstParentStack
 
 
-type visit_action = Continue | Break
+type visit_action = Continue of ctx | Break
 
 
 and visit_handler = {
@@ -34,7 +34,7 @@ and ctx = {
   parents : APS.parent list;
 }
 
-let do_nothing _ _ = Continue
+let do_nothing ctx _ = Continue ctx
 let wrap_nothing _ _ = ()
 
 let default_visit_handler =
@@ -65,7 +65,7 @@ let rec visit_statement ctx ((loc, statement) : Loc.t S.t) =
   let () =
     match action with
     | Break -> ()
-    | Continue ->
+    | Continue ctx ->
       let ctx =
         { ctx with parents = APS.push_statement (loc, statement) ctx.parents }
       in
@@ -226,7 +226,7 @@ and visit_expression ctx ((loc, expression) as expr) =
   let action = ctx.handler.visit_expression ctx (loc, expression) in
   match action with
   | Break -> ()
-  | Continue ->
+  | Continue ctx ->
     let ctx = { ctx with parents = APS.push_expression expr ctx.parents } in
     match expression with
     | E.Import _ -> ()
@@ -325,7 +325,7 @@ and visit_expression ctx ((loc, expression) as expr) =
 and visit_pattern ctx ((_loc, pattern) as p : Loc.t P.t) =
   match ctx.handler.visit_pattern ctx p with
   | Break -> ()
-  | Continue ->
+  | Continue ctx ->
     match pattern with
 
     | P.Object { properties; typeAnnotation = _typeAnnotation } ->
@@ -392,7 +392,7 @@ and visit_function ctx (_, { F. params; body; _ } as func) =
   let () =
     match action with
     | Break -> ()
-    | Continue ->
+    | Continue ctx ->
       let ctx = { ctx with parents = APS.push_function func ctx.parents } in
       let (_, { F.Params. params; rest }) = params in
       visit_list ctx visit_pattern params;
@@ -413,7 +413,7 @@ and visit_block ctx ((_, { body }) as block) =
   let () =
     match visit_action with
     | Break -> ()
-    | Continue ->
+    | Continue ctx ->
       visit_list
         { ctx with parents = APS.push_block block ctx.parents }
         visit_statement
