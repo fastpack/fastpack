@@ -162,7 +162,14 @@ let transpile _context program =
         in
         E.Expression expr
       in
-      List.map transpile_child children
+      children
+      |> List.map transpile_child
+      |> List.filter
+        (fun child ->
+          match child with
+          | E.Expression (_, E.Literal { raw = "''"; _ }) -> false
+          | _ -> true
+        )
 
     and transpile_element { openingElement = (_, openingElement); children; _ } =
       let { Opening. name; attributes; _ } = openingElement in
