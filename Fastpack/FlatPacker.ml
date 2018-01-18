@@ -71,7 +71,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
     | true, m :: _ ->
       let wrapper =
         Printf.sprintf
-          "function %s() {return %s;}\n"
+          "function %s() {return %s.exports;}\n"
           (gen_wrapper_binding ctx.entry_filename)
           (gen_ext_namespace_binding m.Module.id)
       in
@@ -165,11 +165,15 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           in
 
           let has_namespace_binding = ref false in
-          let patch_namespace loc =
-            patch_loc loc @@ gen_ext_namespace_binding module_id;
+          let patch_namespace ?(add_exports=false) loc =
+            let patch_content =
+              gen_ext_namespace_binding module_id
+              ^ (if add_exports then ".exports" else "")
+            in
+            patch_loc loc patch_content;
             if (not !has_namespace_binding) then begin
               patch 0 0
-              @@ Printf.sprintf "let %s = {};"
+              @@ Printf.sprintf "let %s = { exports: {}};"
               @@ gen_ext_namespace_binding module_id;
               has_namespace_binding := true;
             end
@@ -189,14 +193,16 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             | Some m ->
               match remote with
               | None ->
-                gen_ext_namespace_binding m.Module.id
+                Printf.sprintf "%s.exports"
+                @@ gen_ext_namespace_binding m.Module.id
               | Some remote ->
                 match m.Module.es_module, remote with
                 | false, "default" ->
-                  gen_ext_namespace_binding m.Module.id
+                  Printf.sprintf "%s.exports"
+                  @@ gen_ext_namespace_binding m.Module.id
                 | false, remote ->
                   Printf.sprintf
-                    "%s.%s"
+                    "%s.exports.%s"
                     (gen_ext_namespace_binding m.Module.id)
                     remote
                 | true, remote ->
@@ -242,7 +248,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                   |> String.concat ", "
                   |> Printf.sprintf "{%s}"
                 in
-                Printf.sprintf "\nconst %s = %s;\n"
+                Printf.sprintf "\nconst %s = { exports: %s };\n"
                   (gen_ext_namespace_binding module_id)
                   expr
               )
@@ -280,7 +286,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                     )
                   |> String.concat ""
                 | Target.CommonJS ->
-                  Printf.sprintf "module.exports = %s;\n"
+                  Printf.sprintf "module.exports = %s.exports;\n"
                   @@ gen_ext_namespace_binding module_id
               )
           in
@@ -551,7 +557,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                        | None ->
                          raise (PackError (ctx, CannotResolveModules [dep]))
                        | Some m ->
-                         Printf.sprintf "(%s)" @@ gen_ext_namespace_binding m.id
+                         Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
                     );
                   Visit.Break;
 
@@ -575,19 +581,18 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 in
                 raise (PackError (ctx, NotImplemented (Some loc, msg)))
 
-              | E.Member {
-                  _object = (_, E.Identifier (_, "module"));
-                  property = E.Member.PropertyIdentifier (_, "exports");
-                  _
-                } ->
-                patch_namespace loc;
-                Visit.Break;
-
               (* replace identifiers *)
               | E.Identifier ((loc, name) as id) ->
-                if (name = "exports")
-                then patch_namespace loc
-                else patch_identifier id;
+                (* TODO: check those names in scope *)
+                let () =
+                  match name with
+                  | "module" ->
+                    patch_namespace loc
+                  | "exports" ->
+                    patch_namespace ~add_exports:true loc
+                  | _ ->
+                    patch_identifier id
+                in
                 Visit.Break;
 
               | E.Assignment { left; _ } ->
@@ -701,7 +706,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             ),
             (fun () ->
                emit
-               @@ Printf.sprintf "\nreturn %s;\n}\n"
+               @@ Printf.sprintf "\nreturn %s.exports;\n}\n"
                @@ gen_ext_namespace_binding entry.Module.id
             )
           else
@@ -822,4 +827,4 @@ function __fastpack_import__(f) {
     @@ if ctx.mode = Mode.Development then "true" else "false"
   in
   let%lwt () = pack ctx MDM.empty in
-  Lwt_io.write channel "})()"
+  Lwt_io.write channel "})()\n"

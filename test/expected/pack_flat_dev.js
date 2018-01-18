@@ -1,4 +1,5 @@
 
+(function() {
 var __DEV__ = true;
 var __fastpack_cache__ = {};
 
@@ -21,7 +22,7 @@ function __fastpack_import__(f) {
 
 /* dev */
 
-let $n__dev = {};$n__dev = {dev: true};
+let $n__dev = { exports: {}};$n__dev.exports = {dev: true};
 
 /* index */
 
@@ -37,44 +38,45 @@ let $i__index__p;
 
 {}
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
 // if-then-else
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
 
 // alternative statement
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
 // logical AND expression
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 
 // conditional operator
-$i__index__p = ($n__dev);
+$i__index__p = ($n__dev.exports);
 console.log("development");
 
 // bug
 if (true) {} else {}
 if (false) {} else {console.log("dev!")}
 
-const $n__index = {};
+const $n__index = { exports: {} };
+})()

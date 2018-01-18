@@ -1,4 +1,5 @@
 
+(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -65,13 +66,14 @@ catch({$w__x: $c__a__$w__x, ...$c__a__$c__y}) {
   console.log($c__a__$w__x, $c__a__$c__y);
 }
 
-const $n__a = {a1: $e__a__a1, a2: $e__a__a2};
+const $n__a = { exports: {a1: $e__a__a1, a2: $e__a__a2} };
 
 /* index */
 
 
 
-console.log($n__a);
+console.log($n__a.exports);
 
 
-const $n__index = {};
+const $n__index = { exports: {} };
+})()

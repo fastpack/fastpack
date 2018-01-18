@@ -1,4 +1,5 @@
 
+(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -25,7 +26,7 @@ let $e__a__a = 1;
 function $e__a__changeA() { $e__a__a = $e__a__a + 1};
 
 
-const $n__a = {a: $e__a__a, changeA: $e__a__changeA};
+const $n__a = { exports: {a: $e__a__a, changeA: $e__a__changeA} };
 
 /* index */
 
@@ -33,8 +34,9 @@ const $n__a = {a: $e__a__a, changeA: $e__a__changeA};
 let $e__index__index = 1;
 const $e__index__default = function() {console.log('Hello, world!')};
 
-const $n__index = {default: $e__index__default, index: $e__index__index, a: $e__a__a, changeA: $e__a__changeA};
+const $n__index = { exports: {default: $e__index__default, index: $e__index__index, a: $e__a__a, changeA: $e__a__changeA} };
 export default $e__index__default;
 export {$e__index__index as index};
 export {$e__a__a as a};
 export {$e__a__changeA as changeA};
+})()

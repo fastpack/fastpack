@@ -1,4 +1,5 @@
 
+(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -21,21 +22,21 @@ function __fastpack_import__(f) {
 
 /* b */
 
-let $n__b = {};console.log('side effect of b');
-$n__b = function() {console.log('b')};
+let $n__b = { exports: {}};console.log('side effect of b');
+$n__b.exports = function() {console.log('b')};
 
 /* a */
 
-let $n__a = {};const $i__a__b = ($n__b);
+let $n__a = { exports: {}};const $i__a__b = ($n__b.exports);
 
-$n__a = function() {
+$n__a.exports = function() {
   console.log('b in a');
   $i__a__b();
 };
 
 /* index */
 
-const $i__index__a = ($n__a);
+const $i__index__a = ($n__a.exports);
 
 (function() {
   __fastpack_import__($w__b).then(b => {
@@ -43,7 +44,7 @@ const $i__index__a = ($n__a);
     b();
   })
 
-  let b = ($n__b);
+  let b = ($n__b.exports);
   $i__index__a();
   console.log('b in index');
   b();
@@ -60,5 +61,6 @@ b in promise
 b
 */
 
-const $n__index = {};
-function $w__b() {return $n__b;}
+const $n__index = { exports: {} };
+function $w__b() {return $n__b.exports;}
+})()

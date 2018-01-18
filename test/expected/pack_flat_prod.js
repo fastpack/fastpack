@@ -1,4 +1,5 @@
 
+(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -21,7 +22,7 @@ function __fastpack_import__(f) {
 
 /* prod */
 
-let $n__prod = {};$n__prod = {prod: true};
+let $n__prod = { exports: {}};$n__prod.exports = {prod: true};
 
 /* index */
 
@@ -29,13 +30,13 @@ let $n__prod = {};$n__prod = {prod: true};
 let $i__index__p;
 
 // if-then-no-else
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
 {}
 
@@ -46,35 +47,36 @@ $i__index__p = ($n__prod);
 {}
 
 // if-then-else
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
 
 // alternative statement
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
 // logical AND expression
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 
 // conditional operator
-$i__index__p = ($n__prod);
+$i__index__p = ($n__prod.exports);
 console.log("production");
 
 // bug
 if (true) {} else {console.log("prod!")}
 if (false) {} else {}
 
-const $n__index = {};
+const $n__index = { exports: {} };
+})()
