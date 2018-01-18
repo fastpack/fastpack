@@ -24,6 +24,10 @@ function __fastpack_import__(f) {
 
 let $n__prod = { exports: {}};$n__prod.exports = {prod: true};
 
+/* dev */
+
+let $n__dev = { exports: {}};$n__dev.exports = {dev: true};
+
 /* index */
 
 
@@ -68,7 +72,10 @@ $i__index__p = ($n__prod.exports);
 $i__index__p = ($n__prod.exports);
 
 // logical AND expression
-$i__index__p = ($n__prod.exports);
+if ("production" == "production" && x && y && z)
+  $i__index__p = ($n__prod.exports);
+else
+  $i__index__p = ($n__dev.exports);
 
 // conditional operator
 $i__index__p = ($n__prod.exports);

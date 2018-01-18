@@ -56,6 +56,9 @@ var __DEV__ = false;
 "prod": function(module, exports, __fastpack_require__, __fastpack_import__) {
 module.exports = {prod: true};
 },
+"dev": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports = {dev: true};
+},
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 let p;
@@ -99,7 +102,10 @@ p = __fastpack_require__(/* "./prod" */ "prod");
 p = __fastpack_require__(/* "./prod" */ "prod");
 
 // logical AND expression
-p = __fastpack_require__(/* "./prod" */ "prod");
+if ("production" == "production" && x && y && z)
+  p = __fastpack_require__(/* "./prod" */ "prod");
+else
+  p = __fastpack_require__(/* "./dev" */ "dev");
 
 // conditional operator
 p = __fastpack_require__(/* "./prod" */ "prod");
