@@ -239,6 +239,7 @@ module Cache = struct
     get : string -> Module.t option;
     dump : unit -> unit Lwt.t;
     add : Module.t -> string -> unit;
+    loaded : bool;
   }
 
   type entry = {
@@ -253,7 +254,8 @@ module Cache = struct
   let fake =
     { get = (fun _ -> None);
       dump = (fun _ -> Lwt.return_unit);
-      add = (fun _ _ -> ())
+      add = (fun _ _ -> ());
+      loaded = false;
     }
 
   let create_dir package_dir =
@@ -285,6 +287,7 @@ module Cache = struct
 
   let cache cache_filename modules =
 
+    let loaded = modules <> M.empty in
     let modules = ref modules in
 
     let add (m : Module.t) source =
@@ -325,7 +328,7 @@ module Cache = struct
         cache_filename
         (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] !modules)
     in
-    Lwt.return { get; dump; add }
+    Lwt.return { get; dump; add; loaded }
 
   let create package_dir prefix filename =
     let%lwt cache_dir = create_dir package_dir in

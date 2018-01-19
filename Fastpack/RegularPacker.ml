@@ -650,6 +650,8 @@ var __DEV__ = %s;
   let%lwt entry = process ctx graph entry in
   let%lwt _ = emit graph entry in
   let%lwt () = cache.dump () in
-  Lwt.return_unit
+  Lwt.return (Hashtbl.length graph.DependencyGraph.modules,
+              cache.loaded,
+              "Mode: development.")
 
 

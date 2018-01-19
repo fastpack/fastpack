@@ -210,13 +210,19 @@ let prepare_and_pack cl_options =
         (* pack to memory *)
         let bytes = Lwt_bytes.create 50000000 in
         let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-        let%lwt () = pack mem_ch in
+        let%lwt ret = pack mem_ch in
         let%lwt data =
           Lwt_list.fold_left_s
             (fun data cmd ->
               let (stdin, stdout) = Unix.pipe () in
               let%lwt () =
-                Lwt_process.(pwrite ~env:(Unix.environment ()) ~stdout:(`FD_move stdout) (shell cmd) data)
+                Lwt_process.(
+                  pwrite
+                    ~env:(Unix.environment ())
+                    ~stdout:(`FD_move stdout)
+                    (shell cmd)
+                    data
+                )
               in
               let stdin_ch = Lwt_io.of_unix_fd ~mode:Lwt_io.Input stdin in
               Lwt_io.read stdin_ch
@@ -227,12 +233,13 @@ let prepare_and_pack cl_options =
              |> Lwt_bytes.to_string)
             processors
         in
-        Lwt_io.write ch data
+        let%lwt () = Lwt_io.write ch data in
+        Lwt.return ret
     in
     let temp_file = Filename.temp_file "" ".bundle.js" in
     Lwt.finalize
       (fun () ->
-        let%lwt _ =
+        let%lwt ret =
           Lwt_io.with_file
             ~mode:Lwt_io.Output
             ~perm:0o640
@@ -240,7 +247,8 @@ let prepare_and_pack cl_options =
             temp_file
             pack_and_postprocess
         in
-        Lwt_unix.rename temp_file output_file
+        let%lwt () = Lwt_unix.rename temp_file output_file in
+        Lwt.return ret
       )
       (fun () ->
          if%lwt Lwt_unix.file_exists temp_file

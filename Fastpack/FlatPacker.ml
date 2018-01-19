@@ -24,6 +24,8 @@ type binding_type = Collision
 
 let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
+  let total_modules = ref 0 in
+
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
     Printf.sprintf "$i__%s__%s" module_id name
@@ -829,6 +831,8 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             StringSet.empty
             dynamic_deps
           in
+          total_modules := !total_modules
+                           + (Hashtbl.length graph.DependencyGraph.modules);
           Lwt.return_unit
   in
   let%lwt () =
@@ -858,4 +862,5 @@ function __fastpack_import__(f) {
     @@ if ctx.mode = Mode.Development then "true" else "false"
   in
   let%lwt () = pack ctx MDM.empty in
-  Lwt_io.write channel "})()\n"
+  let%lwt () = Lwt_io.write channel "})()\n" in
+  Lwt.return (!total_modules, cache.loaded, "Mode: production")

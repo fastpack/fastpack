@@ -1,4 +1,5 @@
 let () =
+  let time = Unix.gettimeofday () in
   let open Cmdliner in
 
   let run_t =
@@ -13,6 +14,18 @@ let () =
         transpile
         postprocess
       =
+      let report (m, cache, message) =
+        let report () =
+          Printf.sprintf
+            "Packed in %.3fs. Number of modules: %d. Cache: %s. %s\n"
+            (Unix.gettimeofday () -. time)
+            m
+            (if cache then "yes" else "no")
+            message
+          |> Lwt_io.write Lwt_io.stdout
+        in
+          Lwt_main.run (report ())
+      in
       if debug then begin
         Logs.set_level (Some Logs.Debug);
         Logs.set_reporter (Logs_fmt.reporter ());
@@ -29,7 +42,7 @@ let () =
             postprocess = Some postprocess;
           }
         in
-        `Ok (Fastpack.pack_main options)
+        `Ok (Fastpack.pack_main options |> report)
       with
       | Fastpack.PackError (ctx, error) ->
         `Error (false, Fastpack.string_of_error ctx error)

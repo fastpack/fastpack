@@ -15,19 +15,21 @@ let pack ~mode ~target pack_f entry_filename _ =
   let pack' () =
     let bytes = Lwt_bytes.create 50000000 in
     let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-    Fastpack.pack
-      ~pack_f
-      ~mode
-      ~target
-      ~transpile_f:(fun _ _ p -> p)
-      ~entry_filename
-      ~package_dir:(Filename.dirname entry_filename)
-      ch
-    >> Lwt.return
-       @@ Lwt_bytes.to_string
-       @@ Lwt_bytes.extract bytes 0
-       @@ Int64.to_int
-       @@ Lwt_io.position ch
+    let%lwt _ =
+      Fastpack.pack
+        ~pack_f
+        ~mode
+        ~target
+        ~transpile_f:(fun _ _ p -> p)
+        ~entry_filename
+        ~package_dir:(Filename.dirname entry_filename)
+        ch
+    in
+    Lwt.return
+    @@ Lwt_bytes.to_string
+    @@ Lwt_bytes.extract bytes 0
+    @@ Int64.to_int
+    @@ Lwt_io.position ch
   in
   try
     Lwt_main.run (pack' ())
