@@ -50,8 +50,16 @@ let sort graph entry =
   let rec sort seen m =
     match List.mem m.Module.filename seen with
     | true ->
-      let filenames = m.Module.filename :: seen in
-      raise (Cycle filenames)
+      let prev_m =
+        match lookup_module graph (List.hd seen) with
+        | Some prev_m -> prev_m
+        | None -> Error.ie "DependencyGraph.sort - imporssible state"
+      in
+      if m.Module.es_module && prev_m.Module.es_module
+      then ()
+      else
+        let filenames = m.Module.filename :: seen in
+        raise (Cycle filenames)
     | false ->
       match check_module m with
       | true -> ()

@@ -147,6 +147,7 @@ let tests = [
     "error-scope-previously-undefined-export.txt",
     pack_flat_prod
   );
+  ("pack-flat-reexport/index.js", "pack-flat-reexport.js", pack_flat_prod);
   (* ("current.js", "", transpile); *)
 ]
 

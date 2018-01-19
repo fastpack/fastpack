@@ -89,8 +89,12 @@ let resolve_path path =
 (** Try to resolve an absolute path with different extensions *)
 let resolve_extensionless_path path =
   match%lwt resolve_path path with
-  | None -> resolve_path (path ^ ".js")
   | Some _ as res -> Lwt.return res
+  | None ->
+    match%lwt resolve_path (path ^ ".js") with
+    | Some _ as res -> Lwt.return res
+    | None -> resolve_path (path ^ ".json")
+
 
 (** Try to resolve a package *)
 let rec resolve_package package path basedir =

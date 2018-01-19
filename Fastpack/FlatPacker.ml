@@ -80,6 +80,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
     | _ ->
       let resolved_requests = ref DM.empty in
       let add_resolved_request req filename =
+        let filename = abs_path ctx.package_dir filename in
         resolved_requests := DM.add req filename !resolved_requests
       in
       let get_resolved_request req =
@@ -180,6 +181,11 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           in
 
           let rec resolve_import dep_map filename {Scope. source; remote } =
+            match source with
+            | "module" | "path" | "util" | "fs" | "tty" | "os" | "net" | "events" ->
+              Printf.sprintf "%s.exports"
+              @@ gen_ext_namespace_binding @@ "builtin:" ^ source
+            | _ ->
             let dep = {
               Dependency.
               request = source;
@@ -555,20 +561,24 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                     (fun dep_map ->
                        match MDM.get dep dep_map with
                        | None ->
-                         raise (PackError (ctx, CannotResolveModules [dep]))
+                         begin
+                         match dep.Dependency.request with
+                           (* TODO: this is super-ugly: fix builtins! *)
+                           | "os"
+                           | "tty"
+                           | "module"
+                           | "path"
+                           | "util"
+                           | "fs"
+                           | "net"
+                           | "events" ->
+                             Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
+                           | _ -> raise (PackError (ctx, CannotResolveModules [dep]))
+                         end
                        | Some m ->
                          Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
                     );
                   Visit.Break;
-
-              (* dynamic imports *)
-              (* | E.Call { *)
-              (*     callee = (_, E.Identifier (_, "require")); *)
-              (*     arguments = [E.Expression (_, E.Literal { value = L.String request; _ })] *)
-              (*   } when !stmt_level > 1 -> *)
-              (*   let dep = add_dynamic_dep ctx request filename in *)
-              (*   patch_dynamic_dep loc dep "__fastpack_require__"; *)
-              (*   Visit.Break; *)
 
               | E.Import (_, E.Literal { value = L.String request; _ }) ->
                 let dep = add_dynamic_dep ctx request filename in
@@ -629,13 +639,23 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
         let source = m.Module.workspace.Workspace.value in
         let (workspace, static_deps, scope, exports, es_module) =
-          try
-              analyze m.id m.filename (transpile ctx m.filename source)
-          with
-          | FlowParser.Parse_error.Error args ->
-            raise (PackError (ctx, CannotParseFile (m.filename, args)))
-          | Scope.ScopeError reason ->
-            raise (PackError (ctx, ScopeError reason))
+          match is_json m.filename with
+          | true ->
+            let workspace =
+              Workspace.of_string
+              @@ Printf.sprintf "const %s = %s;"
+                (gen_ext_namespace_binding m.id)
+                source
+            in
+            (workspace, [], Scope.empty, [], false)
+          | false ->
+            try
+                analyze m.id m.filename (transpile ctx m.filename source)
+            with
+            | FlowParser.Parse_error.Error args ->
+              raise (PackError (ctx, CannotParseFile (m.filename, args)))
+            | Scope.ScopeError reason ->
+              raise (PackError (ctx, ScopeError reason))
         in
         let m = {
           m with
@@ -734,14 +754,25 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             )
             (!resolved_requests
              |> DM.bindings
-             |> List.filter (fun (_, filename) -> has_module filename)
+             |> List.filter
+               (fun (_, filename) ->
+                  if has_module filename
+                  then true
+                  else
+                    match DependencyGraph.lookup_module graph filename with
+                    | Some m -> m.es_module
+                    | None -> false
+               )
              |> List.fold_left
                (fun modules (dep, filename) ->
                   match get_module filename with
                   | Some m -> MDM.add dep m modules
                   | None ->
-                    Error.ie ("Module should be found. See previous step: "
-                              ^ filename)
+                    match DependencyGraph.lookup_module graph filename with
+                    | Some m -> MDM.add dep m modules
+                    | None ->
+                      Error.ie ("Module should be found. See previous step: "
+                                ^ filename)
                )
               modules
             )

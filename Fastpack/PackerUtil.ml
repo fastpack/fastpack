@@ -384,6 +384,9 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
   in
 
   match filename with
+  | "builtin:os"
+  | "builtin:module"
+  | "builtin:path"
   | "builtin:util"
   | "builtin:fs"
   | "builtin:tty"
@@ -451,6 +454,10 @@ let is_ignored_request request =
     (fun e -> String.suffix ~suf:("." ^ e) request)
     ["css"; "less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg";
      "gif"; "ttf"]
+
+let is_json filename =
+  String.suffix ~suf:".json" filename
+
 
 let is_es_module stmts =
   (* TODO: what if module has only import() expression? *)

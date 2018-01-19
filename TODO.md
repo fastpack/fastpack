@@ -3,8 +3,8 @@
 ### MVP
 
 
-- [ ] UI/UX (error reporting, config) [zindel] (1)
-- [ ] `--postprocess` option
+- [ ] Report execution time, number of modules & cache usage
+- [ ] RegularPacker: handle json require
 - [ ] Documentation / Domain (1)
 
 - [ ] Configuration options in package.json (2?)
@@ -17,6 +17,8 @@
 - [ ] FastpackTranspiler: SpreadChild (2, in case we support something
   else than React)
 
+- [x] `--postprocess` option
+- [x] UI/UX (error reporting, config) [zindel] (1)
 - [x] FastpackTranspiler: jsx [andeypopp]
 - [x] FastpackTranspiler: flow - remove annotations [zindel]
 - [x] FastpackTranspiler: class syntax, properties, decorators [zindel]
