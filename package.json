@@ -5,7 +5,7 @@
   "main": "index.js",
   "esy": {
     "build": [
-      "jbuilder build --dev"
+      "jbuilder build"
     ],
     "install": [
       "jbuilder install --prefix=#{self.install}"
