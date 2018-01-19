@@ -10,8 +10,8 @@ The goal for fastpack is to provide fast and robust development time bundling
 for JavaScript applications which scales up to tens of thounsands of modules
 without sacrificing development experience.
 
-We want sub-1000ms bundle time and sub-100ms incremental rebundle time for large
-apps (around 2000 modules). We are almost there.
+We want sub-1000ms bundle time and sub-100ms incremental rebundle time for
+medium-sized applications (around 1000 modules). We are almost there.
 
 ## Installation
 
@@ -53,7 +53,7 @@ SYNOPSIS
 
 ARGUMENTS
        INPUT
-           Entry point JavaScript file (fastpack.input in package.json)
+           Entry point JavaScript file
 
 OPTIONS
        -d, --debug
@@ -71,8 +71,7 @@ OPTIONS
            Do not use cache at all
 
        -o DIR, --output=DIR
-           Output Directory (fastpack.output in package.json). The target
-           bundle will be DIR/index.js
+           Output Directory. The target bundle will be DIR/index.js
 
        --postprocess=COMMAND
            Apply shell command on a bundle file. The content of the bundle
@@ -81,17 +80,17 @@ OPTIONS
            of appearance
 
        --target=[ app | es6 | cjs ]
-           Deployment target (fastpack.target in package.json)
+           Deployment target.
 
        --transpile=PATTERN
            Apply transpilers to files matching PATTERN the regular expression.
            Currently available transpilers are: stripping Flow types, object
            spread & rest opertions, class properties (including statics),
            class/method decorators, and React-assumed JSX conversion.
-           (fastpack.transpile in package.json)
 
        --version
            Show version information.
+
 ```
 
 ## Development

@@ -51,7 +51,7 @@ let () =
 
     let input_t =
       let doc =
-        "Entry point JavaScript file (fastpack.input in package.json)"
+        "Entry point JavaScript file"
       in
       let docv = "INPUT" in
       Arg.(value & pos 0 (some string) None & info [] ~docv ~doc)
@@ -59,7 +59,7 @@ let () =
 
     let output_t =
       let doc =
-        "Output Directory (fastpack.output in package.json). "
+        "Output Directory. "
         ^ "The target bundle will be $(docv)/index.js"
       in
       let docv = "DIR" in
@@ -74,7 +74,7 @@ let () =
     in
 
     let target_t =
-      let doc = "Deployment target (fastpack.target in package.json)" in
+      let doc = "Deployment target." in
       let docv = "[ app | es6 | cjs ]" in
       let target =
         Arg.enum [
@@ -103,8 +103,7 @@ let () =
         "Apply transpilers to files matching $(docv) the regular expression. "
         ^ "Currently available transpilers are: stripping Flow types, "
         ^ "object spread & rest opertions, class properties (including statics), "
-        ^ "class/method decorators, and React-assumed JSX conversion. "
-        ^ "\n(fastpack.transpile in package.json)"
+        ^ "class/method decorators, and React-assumed JSX conversion."
       in
       let docv = "PATTERN" in
       Arg.(value & opt_all string [] & info ["transpile"] ~docv ~doc)
