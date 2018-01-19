@@ -55,15 +55,15 @@
     ocaml " >= 4.2.3"
 
 "@opam/camlp4@*":
-  version "4.4.0-1"
-  uid "23a27820715f20cfd24a5cce1c6df91f"
-  resolved "@opam/camlp4@4.4.0-1-23a27820715f20cfd24a5cce1c6df91f.tgz"
+  version "4.6.0-1"
+  uid ec9e71b1e73d101ab8ef9a66cc9035e7
+  resolved "@opam/camlp4@4.6.0-1-ec9e71b1e73d101ab8ef9a66cc9035e7.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"
     "@opam/ocamlbuild" "*"
   peerDependencies:
-    ocaml " >= 4.4.0  < 4.5.0"
+    ocaml " >= 4.6.0  < 4.7.0"
 
 "@opam/camomile@ >= 0.8.0", "@opam/camomile@*":
   version "0.8.7"
@@ -166,18 +166,19 @@
   peerDependencies:
     ocaml " >= 4.2.3"
 
-"@opam/fileutils@0.5.2":
-  version "0.5.2"
-  uid "08a71a68b1e72ab5fcc66b6acef2015e"
-  resolved "@opam/fileutils@0.5.2-08a71a68b1e72ab5fcc66b6acef2015e.tgz"
+"@opam/fileutils@*":
+  version "0.5.3"
+  uid ecb7c802306bb1d9373c78346c181541
+  resolved "@opam/fileutils@0.5.3-ecb7c802306bb1d9373c78346c181541.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"
+    "@opam/base-bytes" "*"
     "@opam/base-unix" "*"
     "@opam/ocamlbuild" "*"
     "@opam/ocamlfind" "*"
   peerDependencies:
-    ocaml " < 4.6.0"
+    ocaml "*"
 
 "@opam/fmt@0.8.5":
   version "0.8.5"
@@ -478,6 +479,6 @@
   peerDependencies:
     ocaml " >= 4.2.3"
 
-ocaml@~4.4.0:
-  version "4.4.2004"
-  resolved "https://registry.yarnpkg.com/ocaml/-/ocaml-4.4.2004.tgz#9b696ae98dd3f3487699beebe617fe3ad6e5dec6"
+ocaml@~4.6.0:
+  version "4.6.1"
+  resolved "https://registry.yarnpkg.com/ocaml/-/ocaml-4.6.1.tgz#8babea2c41a9f734313b4fc1841ec0963c9d7a07"
