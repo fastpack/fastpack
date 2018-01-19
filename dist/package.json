@@ -1,6 +1,6 @@
 {
   "name": "fpack",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Pack JS code into a single bundle fast & easy.",
   "bin": {
     "fpack": "fpack"

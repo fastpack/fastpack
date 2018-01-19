@@ -8,7 +8,7 @@ type t = {
 let iter_modules iter graph =
   Hashtbl.iter iter graph.modules
 
-let empty ?(size=200) () = {
+let empty ?(size=2000) () = {
   modules = Hashtbl.create size;
   dependencies = Hashtbl.create (size * 20);
   dependents = Hashtbl.create (size * 20);
