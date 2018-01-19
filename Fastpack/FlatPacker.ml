@@ -82,7 +82,11 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
     | _ ->
       let resolved_requests = ref DM.empty in
       let add_resolved_request req filename =
-        let filename = abs_path ctx.package_dir filename in
+        let filename =
+          if Str.string_match (Str.regexp "^builtin:") filename 0
+          then filename
+          else abs_path ctx.package_dir filename
+        in
         resolved_requests := DM.add req filename !resolved_requests
       in
       let get_resolved_request req =

@@ -4,7 +4,11 @@ BSB = ./node_modules/.bin/bsb
 .PHONY: build
 build:
 	$(BSB) -make-world
-	$(FPACK) ./src/index.bs.js --output ./build/index.js
+	$(FPACK) ./src/index.bs.js --dev --output ./build/
+
+build-production:
+	$(BSB) -make-world
+	$(FPACK) ./src/index.bs.js --output ./build/
 
 .PHONY: clean
 clean:
