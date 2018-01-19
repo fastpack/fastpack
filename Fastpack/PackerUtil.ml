@@ -202,6 +202,7 @@ module Context = struct
     stack : Dependency.t list;
     mode : Mode.t;
     target : Target.t;
+    resolver : FastpackUtil.NodeResolve.t;
   }
   and transpile = t -> string -> string -> string
 

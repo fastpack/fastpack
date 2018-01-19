@@ -5,13 +5,13 @@ type t = {
   requested_from_filename : string;
 }
 
-let resolve request =
+let resolve resolver request =
   match request.request with
   | "os"| "module" | "path" | "util" | "fs" | "tty" | "net" | "events" | "__fastpack_runtime__" ->
     Lwt.return_some ("builtin:" ^ request.request)
   | _ ->
     let basedir = FilePath.dirname request.requested_from_filename in
-    FastpackUtil.NodeResolve.resolve request.request basedir
+    resolver.FastpackUtil.NodeResolve.resolve request.request basedir
 
 let compare a b = compare
     (a.request, a.requested_from_filename)

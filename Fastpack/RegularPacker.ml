@@ -512,7 +512,7 @@ let pack ?(cache=Cache.fake) ctx channel =
     DependencyGraph.add_module graph m;
     let%lwt missing = Lwt_list.filter_map_s (
         fun req ->
-          (match%lwt Dependency.resolve req with
+          (match%lwt Dependency.resolve ctx.Context.resolver req with
            | None ->
              Lwt.return_some req
            | Some resolved ->
