@@ -1,3 +1,3 @@
 
-let version = "%%VERSION%%"
-let github_commit = "%%VCS_COMMIT_ID%%"
+let version = "0.0.3"
+let github_commit = "%%VERSION%%"
