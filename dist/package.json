@@ -1,0 +1,25 @@
+{
+  "name": "fpack",
+  "version": "0.0.1",
+  "description": "Pack JS code into a single bundle fast & easy.",
+  "bin": {
+    "fpack": "fpack"
+  },
+  "scripts": {
+    "postinstall": "make install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastpack/fastpack.git"
+  },
+  "author": [
+    "Oleksiy Golovko <alexei.golovko@gmail.com>",
+    "Andrey Popp <8mayday@gmail.com> (http://andreypopp.com/)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fastpack/fastpack/issues"
+  },
+  "homepage": "https://github.com/fastpack/fastpack#readme",
+  "dependencies": {}
+}

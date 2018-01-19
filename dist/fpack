@@ -1,0 +1,4 @@
+#!/usr/bin/env
+
+echo "Fastpack was not installed correctly"
+exit 1
