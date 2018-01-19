@@ -6,6 +6,7 @@ node_js:
   - "8"
 install:
   - travis_retry npm install -g esy@next
-  - travis_retry make fetch install build-dev
+  - travis_retry make fetch install
+  - travis_wait make build-dev
 script:
   - make test
