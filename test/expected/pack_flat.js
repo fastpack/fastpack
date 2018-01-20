@@ -47,10 +47,10 @@ const $n__d = { exports: {d1: $e__d__d1, d2: $e__d__d2} };
 
 /* default_declaration */
 
-const $e__default_declaration__default = function $e__default_declaration__default(x) {};
-function $e__default_declaration__g() {return $e__default_declaration__default(1)}
+function $i__default_declaration__f(x) {};const $e__default_declaration__default = $i__default_declaration__f;;
+function $e__default_declaration__g() {return $i__default_declaration__f(1)}
 
-const $n__default_declaration = { exports: {default: $e__default_declaration__default, g: $e__default_declaration__g} };
+const $n__default_declaration = { exports: {default: $i__default_declaration__f, g: $e__default_declaration__g} };
 
 /* index */
 

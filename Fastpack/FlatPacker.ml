@@ -115,7 +115,14 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
         | Some Collision -> gen_collision_binding module_id name
         | None ->
           match binding.exported with
-          | Some exported -> gen_ext_binding module_id @@ String.concat "_" exported
+          | Some exported ->
+            begin
+              match exported, binding.typ with
+              | (["default"], Scope.Function) when name <> "default" ->
+                gen_int_binding module_id name
+              | _ ->
+                gen_ext_binding module_id @@ String.concat "_" exported
+            end
           | None -> gen_int_binding module_id name
       in
 
@@ -494,6 +501,22 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
               | S.ExportDefaultDeclaration {
                   declaration = S.ExportDefaultDeclaration.Declaration (
                       expr_loc,
+                      S.FunctionDeclaration { id = Some (_, name); _ }
+                  );
+                  _
+                } ->
+                remove
+                  loc.Loc.start.offset
+                  (expr_loc.Loc.start.offset - loc.Loc.start.offset);
+                patch loc.Loc._end.offset 0
+                @@ Printf.sprintf ";const %s = %s;"
+                    (gen_ext_binding module_id "default")
+                    (gen_int_binding module_id name);
+                Visit.Continue visit_ctx;
+
+              | S.ExportDefaultDeclaration {
+                  declaration = S.ExportDefaultDeclaration.Declaration (
+                      expr_loc,
                       S.FunctionDeclaration _
                   );
                   _
@@ -603,9 +626,11 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 let () =
                   match name with
                   | "module" ->
-                    patch_namespace loc
+                    if not (Scope.has_binding "module" @@ top_scope ())
+                    then patch_namespace loc
                   | "exports" ->
-                    patch_namespace ~add_exports:true loc
+                    if not (Scope.has_binding "exports" @@ top_scope ())
+                    then patch_namespace ~add_exports:true loc
                   | _ ->
                     patch_identifier id
                 in
