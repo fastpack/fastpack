@@ -505,6 +505,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                   );
                   _
                 } ->
+                (* TODO: check named class as well *)
                 remove
                   loc.Loc.start.offset
                   (expr_loc.Loc.start.offset - loc.Loc.start.offset);

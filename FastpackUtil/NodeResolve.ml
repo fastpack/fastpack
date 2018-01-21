@@ -37,6 +37,16 @@ let stat_option path =
 
 let make () =
 
+  let path_cache = ref M.empty in
+  let file_exists path =
+    match M.get path !path_cache with
+    | Some value -> Lwt.return value
+    | None ->
+      let%lwt exists = Lwt_unix.file_exists path in
+      path_cache := M.add path exists !path_cache;
+      Lwt.return exists
+  in
+
 
   let package_entry_point package_json_path =
     let package_path = FilePath.dirname package_json_path in
@@ -84,13 +94,13 @@ let make () =
             (* Check if directory contains package.json and read entry point from
                there if any *)
             let package_json_path = FilePath.concat path "package.json" in
-            if%lwt Lwt_unix.file_exists package_json_path then
+            if%lwt file_exists package_json_path then
               let%lwt entry_point = package_entry_point package_json_path in
               Lwt.return_some entry_point
             else
               (** Check if directory contains index.js and return it if found *)
               let index_js_path = FilePath.concat path "index.js" in
-              if%lwt Lwt_unix.file_exists index_js_path then
+              if%lwt file_exists index_js_path then
                 Lwt.return_some index_js_path
               else
                 Lwt.return_none
@@ -117,36 +127,24 @@ let make () =
   in
 
 
-  (** Try to resolve a package *)
-  (** TODO: add package => path cache *)
-  let resolved_package = ref M.empty in
-  let resolve_package package path basedir =
-    match M.get package !resolved_package with
-    | Some path ->
-      Lwt.return path
-    | None ->
-      let rec resolve_package package path basedir =
-        let node_modules_path = FilePath.concat basedir "node_modules" in
-        let package_path = FilePath.concat node_modules_path package in
-        if%lwt Lwt_unix.file_exists node_modules_path then
-          if%lwt Lwt_unix.file_exists package_path then
-            match path with
-            | None -> resolve_extensionless_path package_path
-            | Some path -> resolve_extensionless_path (FilePath.concat package_path path)
-          else
-            let next_basedir = FilePath.dirname basedir in
-            if next_basedir == basedir
-            then Lwt.return_none
-            else resolve_package package path next_basedir
-        else
-          let next_basedir = FilePath.dirname basedir in
-          if next_basedir == basedir
-          then Lwt.return_none
-          else resolve_package package path next_basedir
-      in
-      let%lwt resolved = resolve_package package path basedir in
-      (* resolved_package := M.add package resolved !resolved_package; *)
-      Lwt.return resolved
+  let rec resolve_package package path basedir =
+    let node_modules_path = FilePath.concat basedir "node_modules" in
+    let package_path = FilePath.concat node_modules_path package in
+    if%lwt file_exists node_modules_path then
+      if%lwt file_exists package_path then
+        match path with
+        | None -> resolve_extensionless_path package_path
+        | Some path -> resolve_extensionless_path (FilePath.concat package_path path)
+      else
+        let next_basedir = FilePath.dirname basedir in
+        if next_basedir == basedir
+        then Lwt.return_none
+        else resolve_package package path next_basedir
+    else
+      let next_basedir = FilePath.dirname basedir in
+      if next_basedir == basedir
+      then Lwt.return_none
+      else resolve_package package path next_basedir
   in
 
   let resolve path basedir =
