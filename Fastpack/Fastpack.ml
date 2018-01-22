@@ -183,6 +183,7 @@ let prepare_and_pack cl_options =
           | Mode.Test
           | Mode.Development ->
             let cache_prefix =
+              (** TODO: account for abs path on the package_dir *)
               Mode.to_string mode ^ "--" ^ Target.to_string target
             in
             let%lwt cache =

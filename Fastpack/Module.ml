@@ -20,6 +20,9 @@ type t = {
    * Will be populated for cached modules only *)
   dependencies : Dependency.t list;
 
+  (** List of resolved dependencies, populated for cached modules *)
+  resolved_dependencies : (Dependency.t * string) list;
+
   (** If module is cached *)
   cached : bool;
 

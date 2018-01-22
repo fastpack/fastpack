@@ -509,28 +509,49 @@ let pack ?(cache=Cache.fake) ctx channel =
       else
         m
     in
-    DependencyGraph.add_module graph m;
-    let%lwt missing = Lwt_list.filter_map_s (
-        fun req ->
-          (match%lwt Dependency.resolve ctx.Context.resolver req with
-           | None ->
-             Lwt.return_some req
-           | Some resolved ->
-             let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
-               | None ->
-                 let%lwt m = read_module ctx cache resolved in
-                 process { ctx with stack = req :: ctx.stack } graph m
-               | Some m ->
-                 Lwt.return m
-             in
-             DependencyGraph.add_dependency graph m (req, Some dep_module);
-             Lwt.return_none
-          )
-      ) m.dependencies
+    let%lwt m =
+      if (not m.cached) then begin
+        let%lwt resolved =
+          Lwt_list.map_p
+            (fun req ->
+               let%lwt resolved = Dependency.resolve ctx.Context.resolver req in
+               Lwt.return (req, resolved)
+            )
+            m.dependencies
+        in
+        let missing, resolved_dependencies =
+          List.partition_map
+            (fun (req, resolved) ->
+               match resolved with
+               | None -> `Left req
+               | Some resolved -> `Right (req, resolved)
+            )
+            resolved
+        in
+        if missing <> [] then raise (PackError (ctx, CannotResolveModules missing));
+        Lwt.return { m with resolved_dependencies }
+      end
+      else
+        Lwt.return m
     in
-    match missing with
-    | [] -> Lwt.return m
-    | _ -> raise (PackError (ctx, CannotResolveModules missing))
+    DependencyGraph.add_module graph m;
+
+    let%lwt () =
+      Lwt_list.iter_s
+        (fun (req, resolved) ->
+          let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
+            | None ->
+              let%lwt m = read_module ctx cache resolved in
+              process { ctx with stack = req :: ctx.stack } graph m
+            | Some m ->
+              Lwt.return m
+          in
+          DependencyGraph.add_dependency graph m (req, Some dep_module);
+          Lwt.return_unit
+        )
+        m.resolved_dependencies
+    in
+    Lwt.return m
   in
 
   (* emit required runtime *)
