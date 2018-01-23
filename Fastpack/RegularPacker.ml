@@ -480,7 +480,7 @@ let pack ?(cache=Cache.fake) ctx channel =
   (* Gather dependencies *)
   let rec process ({Context. transpile; _} as ctx) graph (m : Module.t) =
     let ctx = { ctx with current_filename = m.filename } in
-    let m =
+    let m, dependencies =
       if (not m.cached) then begin
         let source = m.Module.workspace.Workspace.value in
         (* TODO: reafctor this *)
@@ -504,10 +504,10 @@ let pack ?(cache=Cache.fake) ctx channel =
           | Scope.ScopeError reason ->
             raise (PackError (ctx, ScopeError reason))
         in
-        { m with workspace; scope; exports; dependencies; es_module }
+        { m with workspace; scope; exports; es_module }, dependencies
       end
       else
-        m
+        m, []
     in
     let%lwt m =
       if (not m.cached) then begin
@@ -517,7 +517,7 @@ let pack ?(cache=Cache.fake) ctx channel =
                let%lwt resolved = Dependency.resolve ctx.Context.resolver req in
                Lwt.return (req, resolved)
             )
-            m.dependencies
+            dependencies
         in
         let missing, resolved_dependencies =
           List.partition_map

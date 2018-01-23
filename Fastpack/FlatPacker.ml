@@ -694,7 +694,6 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           workspace;
           scope;
           exports;
-          dependencies = static_deps;
           es_module;
         } in
         DependencyGraph.add_module graph m;

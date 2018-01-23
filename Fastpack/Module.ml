@@ -16,10 +16,6 @@ type t = {
   (** ST_MTIME  of the filename *)
   st_mtime : float;
 
-  (** List of previously colleacted dependencies.
-   * Will be populated for cached modules only *)
-  dependencies : Dependency.t list;
-
   (** List of resolved dependencies, populated for cached modules *)
   resolved_dependencies : (Dependency.t * string) list;
 

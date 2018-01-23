@@ -248,7 +248,6 @@ module Cache = struct
     digest : string;
     st_mtime : float;
     es_module : bool;
-    dependencies : Dependency.t list;
     resolved_dependencies : (Dependency.t * string) list;
     source : string;
   }
@@ -297,7 +296,6 @@ module Cache = struct
         M.add
           m.filename
           { id = m.id; digest = m.digest; st_mtime = m.st_mtime;
-            dependencies = m.dependencies;
             resolved_dependencies = m.resolved_dependencies;
             es_module = m.es_module;
             source
@@ -313,7 +311,6 @@ module Cache = struct
           id;
           digest;
           st_mtime;
-          dependencies;
           resolved_dependencies;
           source;
           es_module; } ->
@@ -322,7 +319,6 @@ module Cache = struct
           filename;
           digest;
           st_mtime;
-          dependencies;
           resolved_dependencies;
           es_module;
           cached = true;
@@ -388,7 +384,6 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
       id;
       filename;
       st_mtime;
-      dependencies = [];
       resolved_dependencies = [];
       es_module = false;
       cached = false;
