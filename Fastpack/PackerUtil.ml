@@ -8,7 +8,7 @@ module L = Ast.Literal
 let debug = Logs.debug
 
 let rec makedirs dir =
-  match%lwt FastpackUtil.NodeResolve.stat_option dir with
+  match%lwt NodeResolver.stat_option dir with
   | None ->
     let%lwt () = makedirs (FilePath.dirname dir) in
     Lwt_unix.mkdir dir 0o777
@@ -202,7 +202,7 @@ module Context = struct
     stack : Dependency.t list;
     mode : Mode.t;
     target : Target.t;
-    resolver : FastpackUtil.NodeResolve.t;
+    resolver : NodeResolver.t;
   }
   and transpile = t -> string -> string -> string
 

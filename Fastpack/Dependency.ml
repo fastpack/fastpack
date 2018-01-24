@@ -11,7 +11,7 @@ let resolve resolver request =
     Lwt.return_some ("builtin:" ^ request.request)
   | _ ->
     let basedir = FilePath.dirname request.requested_from_filename in
-    resolver.FastpackUtil.NodeResolve.resolve request.request basedir
+    resolver.NodeResolver.resolve request.request basedir
 
 let compare a b = compare
     (a.request, a.requested_from_filename)

@@ -77,7 +77,7 @@ let pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir channel
     current_filename = entry_filename;
     mode;
     target;
-    resolver = FastpackUtil.NodeResolve.make ()
+    resolver = NodeResolver.make ()
   }
   in
   pack_f ctx channel
