@@ -194,11 +194,6 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
           in
 
           let rec resolve_import dep_map filename {Scope. source; remote } =
-            match source with
-            | "module" | "path" | "util" | "fs" | "tty" | "os" | "net" | "events" ->
-              Printf.sprintf "%s.exports"
-              @@ gen_ext_namespace_binding @@ "builtin:" ^ source
-            | _ ->
             let dep = {
               Dependency.
               request = source;
@@ -591,20 +586,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                     (fun dep_map ->
                        match MDM.get dep dep_map with
                        | None ->
-                         begin
-                         match dep.Dependency.request with
-                           (* TODO: this is super-ugly: fix builtins! *)
-                           | "os"
-                           | "tty"
-                           | "module"
-                           | "path"
-                           | "util"
-                           | "fs"
-                           | "net"
-                           | "events" ->
-                             Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
-                           | _ -> raise (PackError (ctx, CannotResolveModules [dep]))
-                         end
+                         raise (PackError (ctx, CannotResolveModules [dep]))
                        | Some m ->
                          Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
                     );
@@ -623,15 +605,14 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
               (* replace identifiers *)
               | E.Identifier ((loc, name) as id) ->
-                (* TODO: check those names in scope *)
                 let () =
                   match name with
-                  | "module" ->
-                    if not (Scope.has_binding "module" @@ top_scope ())
-                    then patch_namespace loc
-                  | "exports" ->
-                    if not (Scope.has_binding "exports" @@ top_scope ())
-                    then patch_namespace ~add_exports:true loc
+                  | "module"
+                    when not (Scope.has_binding "module" @@ top_scope ()) ->
+                    patch_namespace loc
+                  | "exports"
+                    when not (Scope.has_binding "exports" @@ top_scope ()) ->
+                    patch_namespace ~add_exports:true loc
                   | _ ->
                     patch_identifier id
                 in

@@ -716,29 +716,33 @@ module TranspileObjectSpreadRest = struct
 
 end
 
-let transpile context program =
-  (* TODO: require_runtime *)
+let transpile ({Context. require_runtime; _ } as context) program =
   let map_statement scope ((loc, node) : Loc.t S.t) =
     let module T = TranspileObjectSpreadRest in
     let node = match node with
       | S.VariableDeclaration d when T.VariableDeclaration.test d ->
+        require_runtime ();
         S.VariableDeclaration (T.VariableDeclaration.transpile context scope d)
 
       (* Only consider initdeclaration here
        * expression is handled in `map_expression`*)
       | S.For ({init = Some (S.For.InitDeclaration (_, decl)); _} as node)
         when T.VariableDeclaration.test decl ->
+        require_runtime ();
         S.For {node with init = Some( S.For.InitDeclaration(
             Loc.none, T.VariableDeclaration.transpile context scope decl
           ))}
 
       | S.ForIn for_ when T.ForIn.test for_ ->
+        require_runtime ();
         T.ForIn.transpile context scope for_
 
       | S.ForOf for_ when T.ForOf.test for_ ->
+        require_runtime ();
         T.ForOf.transpile context scope for_
 
       | S.Try ({ handler = Some handler; _ } as stmt) when T.Try.test handler ->
+        require_runtime ();
         S.Try { stmt with handler = Some (T.Try.transpile context scope handler)}
 
       | _ -> node
@@ -749,9 +753,11 @@ let transpile context program =
   let map_expression scope ((loc, node) : Loc.t E.t) =
     let node = match node with
       | E.Object obj when TranspileObjectSpread.test obj ->
+        require_runtime ();
         snd (TranspileObjectSpread.transpile obj)
       | E.Assignment ({ operator = E.Assignment.Assign; _ } as obj)
         when TranspileObjectSpreadRest.Assignment.test obj ->
+        require_runtime ();
         snd (TranspileObjectSpreadRest.Assignment.transpile context scope obj)
       | node -> node
     in
@@ -760,7 +766,10 @@ let transpile context program =
 
   let map_function scope (loc, func) =
     if TranspileObjectSpreadRest.Function.test func
-    then (loc, TranspileObjectSpreadRest.Function.transpile context scope func)
+    then begin
+      require_runtime ();
+      (loc, TranspileObjectSpreadRest.Function.transpile context scope func)
+    end
     else (loc, func)
   in
 

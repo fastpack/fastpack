@@ -1,3 +1,4 @@
+const $__fpack__ = require("__fastpack_runtime__");
 /*
  * *********************** Object Spread Expressions ***********************
  */

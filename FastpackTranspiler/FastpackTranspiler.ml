@@ -4,6 +4,7 @@ module StripFlow = StripFlow
 module Class = Class
 module ObjectSpread = ObjectSpread
 
+(* TODO: make sure it is ES2015 compatible *)
 let runtime = "
 function applyDecorator(decorator, proto, property, descriptor) {
   let ret = decorator(proto, property, descriptor);

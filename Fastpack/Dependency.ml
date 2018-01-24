@@ -1,3 +1,5 @@
+module StringSet = Set.Make(String)
+
 type t = {
   (** Original request to a dependency *)
   request : string;
@@ -5,11 +7,26 @@ type t = {
   requested_from_filename : string;
 }
 
+let builtins =
+  StringSet.empty
+  |> StringSet.add "__fastpack_runtime__"
+  |> StringSet.add "os"
+  |> StringSet.add "module"
+  |> StringSet.add "path"
+  |> StringSet.add "util"
+  |> StringSet.add "fs"
+  |> StringSet.add "tty"
+  |> StringSet.add "net"
+  |> StringSet.add "events"
+
+let is_builtin module_request =
+  StringSet.mem module_request builtins
+
 let resolve resolver request =
-  match request.request with
-  | "os"| "module" | "path" | "util" | "fs" | "tty" | "net" | "events" | "__fastpack_runtime__" ->
+  match is_builtin request.request with
+  | true ->
     Lwt.return_some ("builtin:" ^ request.request)
-  | _ ->
+  | false ->
     let basedir = FilePath.dirname request.requested_from_filename in
     resolver.NodeResolver.resolve request.request basedir
 
