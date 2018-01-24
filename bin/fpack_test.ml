@@ -1,3 +1,9 @@
+
+type test = string * string * (string -> string -> string)
+type t = Test of test
+       | Skip of test
+       | Only of test
+
 let print ?(with_scope=false) _ source =
   let program, _ = FastpackUtil.Parser.parse_source source in
   let result = FastpackUtil.Printer.print ~with_scope program in
@@ -132,74 +138,74 @@ let pack_transpile_flat_prod =
     Fastpack.FlatPacker.pack
 
 let tests = [
-  ("transpile-object-spread.js", "", transpile);
-  ("transpile-class.js", "", transpile);
-  ("transpile-react-jsx.js", "", transpile);
-  ("transpile-strip-flow.js", "", transpile);
-  ("print.js", "", print ~with_scope:false);
-  ("print-with-scope.js", "", print ~with_scope:true);
-  ("pack/index.js", "pack.js", pack_regular_prod);
-  ("pack_flat/index.js", "pack_flat.js", pack_flat_prod);
-  ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat_prod);
-  ("pack_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
-  ("pack_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
-  ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat_prod);
-  ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
-  ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
-  ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
-  ("pack-target/index.js", "pack-regular-cjs.js", pack_regular_cjs);
-  ("pack-target/index.js", "error-pack-regular-es6.txt", pack_regular_es6);
-  ("pack-target/index.js", "pack-flat-es6.js", pack_flat_es6);
-  ("pack-target/index.js", "pack-flat-cjs.js", pack_flat_cjs);
-  ("pack-utf8/index.js", "pack-flat-utf8.js", pack_flat_dev);
-  ("pack-utf8/index.js", "pack-regular-utf8.js", pack_regular_prod);
-  (
+  Test ("transpile-object-spread.js", "", transpile);
+  Test ("transpile-class.js", "", transpile);
+  Test ("transpile-react-jsx.js", "", transpile);
+  Test ("transpile-strip-flow.js", "", transpile);
+  Test ("print.js", "", print ~with_scope:false);
+  Test ("print-with-scope.js", "", print ~with_scope:true);
+  Test ("pack/index.js", "pack.js", pack_regular_prod);
+  Test ("pack_flat/index.js", "pack_flat.js", pack_flat_prod);
+  Test ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat_prod);
+  Test ("pack_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
+  Test ("pack_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
+  Test ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat_prod);
+  Test ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
+  Test ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
+  Test ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
+  Test ("pack-target/index.js", "pack-regular-cjs.js", pack_regular_cjs);
+  Test ("pack-target/index.js", "error-pack-regular-es6.txt", pack_regular_es6);
+  Test ("pack-target/index.js", "pack-flat-es6.js", pack_flat_es6);
+  Test ("pack-target/index.js", "pack-flat-cjs.js", pack_flat_cjs);
+  Test ("pack-utf8/index.js", "pack-flat-utf8.js", pack_flat_dev);
+  Test ("pack-utf8/index.js", "pack-regular-utf8.js", pack_regular_prod);
+  Test (
     "error-cannot-rename-module-binding/index.js",
     "error-cannot-rename-module-binding.txt",
     pack_regular_prod
   );
-  (
+  Test (
     "error-parse/index.js",
     "error-parse.txt",
     pack_regular_prod
   );
-  (
+  Test (
     "error-cannot-resolve-modules/index.js",
     "error-cannot-resolve-modules.txt",
     pack_regular_prod
   );
-  (
+  Test (
     "error-cannot-leave-package-dir/index.js",
     "error-cannot-leave-package-dir.txt",
     pack_regular_prod
   );
-  (
+  Test (
     "error-dependency-cycle/index.js",
     "error-dependency-cycle.txt",
     pack_flat_prod
   );
-  (
+  Test (
     "error-cannot-find-exported-name/index.js",
     "error-cannot-find-exported-name.txt",
     pack_flat_prod
   );
-  (
+  Test (
     "error-scope-naming-collision/index.js",
     "error-scope-naming-collision.txt",
     pack_flat_prod
   );
-  (
+  Test (
     "error-scope-previously-undefined-export/index.js",
     "error-scope-previously-undefined-export.txt",
     pack_flat_prod
   );
-  ("pack-flat-reexport/index.js", "pack-flat-reexport.js", pack_flat_prod);
-  (
+  Test ("pack-flat-reexport/index.js", "pack-flat-reexport.js", pack_flat_prod);
+  Test (
     "pack-builtins/index.js",
     "pack-builtins-regular-dev.js",
     pack_transpile_regular_dev
   );
-  (
+  Test (
     "pack-builtins/index.js",
     "pack-builtins-flat-prod.js",
     pack_transpile_flat_prod
@@ -214,7 +220,7 @@ let () =
 
   let print s = Lwt_io.write Lwt_io.stderr (s ^ "\n") in
 
-  let test_all path train =
+  let test_all path train tests =
 
     let get_contents name =
       try%lwt
@@ -337,16 +343,46 @@ let () =
         Logs.set_level (Some Logs.Debug);
         Logs.set_reporter (Logs_fmt.reporter ());
       end;
-      let total = List.length tests in
+      let skipped, rest =
+        List.partition_map
+          (fun test ->
+             match test with
+             | Skip _ -> `Left test
+             | _ -> `Right test
+          )
+          tests
+      in
+      let only, rest =
+        List.partition_map
+          (fun test ->
+             match test with
+             | Only test -> `Left test
+             | Test test -> `Right test
+             | Skip _ ->
+               failwith "Internal Error: skipped tests should be filtered out."
+          )
+          rest
+      in
+      let rest = if List.length only > 0 then only else rest in
+      let total = List.length rest in
       let (ok, message) =
-        match test_all path train with
+        match test_all path train rest with
         | Some 0 ->
           (true, Printf.sprintf "OK. %d passed." total)
         | Some n ->
           (false,  Printf.sprintf "FAIL. %d failed of %d total." n total)
         | None   -> (false,  "Halted.")
       in(
-        Lwt_main.run (print @@ "\n" ^ message);
+        Lwt_main.run (
+          print
+          @@ "\n" ^ message
+             ^ (if List.length skipped > 0
+                then Printf.sprintf " %d skipped." @@ List.length skipped
+                else "")
+             ^ (if List.length only > 0
+                then " ONLY MODE, consider running all tests."
+                else "")
+        );
         if ok then
           `Ok message
         else
