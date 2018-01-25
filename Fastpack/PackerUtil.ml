@@ -272,12 +272,12 @@ module Cache = struct
     match%lwt try_dir (FilePath.concat package_dir "node_modules") with
     | Some dir ->
       let dir = FilePath.concat dir ".cache/fpack" in
-      makedirs dir
-      >> Lwt.return dir
+      let%lwt () = makedirs dir in
+      Lwt.return dir
     | None ->
       let dir = FilePath.concat package_dir ".cache/fpack" in
-      makedirs dir
-      >> Lwt.return dir
+      let%lwt () = makedirs dir in
+      Lwt.return dir
 
   let cache_filename cache_dir prefix filename =
     filename

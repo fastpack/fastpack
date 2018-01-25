@@ -2,7 +2,6 @@ module StringSet = Set.Make(String)
 module M = Map.Make(String)
 
 open PackerUtil
-open Lwt.Infix
 
 module Parser = FastpackUtil.Parser
 module Scope = FastpackUtil.Scope
@@ -659,11 +658,11 @@ var __DEV__ = %s;
         ""
     in
 
-    emit_runtime channel export entry.Module.id
-    >> emit "({\n"
-    >> emit_module entry
-    >>= (fun _ -> emit "\n});\n")
-    >> Lwt.return_unit
+    let%lwt () = emit_runtime channel export entry.Module.id in
+    let%lwt () = emit "({\n" in
+    let%lwt _ = emit_module entry in
+    let%lwt () = emit "\n});\n" in
+    Lwt.return_unit
   in
 
   let graph = DependencyGraph.empty () in

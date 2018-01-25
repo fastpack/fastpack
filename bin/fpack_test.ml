@@ -226,7 +226,8 @@ let () =
       try%lwt
         Lwt_io.(with_file ~mode:Input name read) >>= Lwt.return_some
       with Unix.Unix_error _ ->
-        print ("Error, while reading: " ^ name) >> Lwt.return_none
+        let%lwt () = print ("Error, while reading: " ^ name) in
+        Lwt.return_none
     in
 
     let write_file name data =
@@ -240,7 +241,7 @@ let () =
 
     let save_or_reject filename data answer =
       match answer with
-      | "y" -> write_file filename data >> Lwt.return_some true
+      | "y" -> let%lwt () = write_file filename data in Lwt.return_some true
       | "n" -> Lwt.return_some false
       | _ -> Lwt.return_none
     in
@@ -256,8 +257,8 @@ let () =
     in
 
     let save_data message filename data =
-      print (message ^ " [y(yes)/n(no)/<any key>(halt)]? ")
-      >> Lwt_io.(read_line stdin)
+      let%lwt () = print (message ^ " [y(yes)/n(no)/<any key>(halt)]? ") in
+      Lwt_io.(read_line stdin)
       >>= save_or_reject filename data
     in
 
@@ -268,8 +269,11 @@ let () =
         begin
           let result = f actual_fname content in
           match result = expected with
-          | true -> Lwt.return_some true
-          | false -> show_diff expect_fname result >> Lwt.return_some false
+          | true ->
+            Lwt.return_some true
+          | false ->
+            let%lwt () = show_diff expect_fname result in
+            Lwt.return_some false
         end
       | None -> Lwt.return_some false
     in
@@ -281,12 +285,13 @@ let () =
       | Some expected ->
         if result = expected
         then Lwt.return_some true
-        else show_diff expect_fname result
-          >> save_data "Replace old expectation" expect_fname result
+        else
+          let%lwt () = show_diff expect_fname result in
+          save_data "Replace old expectation" expect_fname result
       | None ->
-        print "New output:"
-        >> print result
-        >> save_data "Save new output" expect_fname result
+        let%lwt () = print "New output:" in
+        let%lwt () = print result in
+        save_data "Save new output" expect_fname result
     in
 
     let test_or_train_one title f content actual_fname expect_fname =

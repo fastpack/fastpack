@@ -5,6 +5,7 @@ module Mode = PackerUtil.Mode
 module Target = PackerUtil.Target
 module Cache = PackerUtil.Cache
 module Context = PackerUtil.Context
+module Preprocessor = Preprocessor
 module RegularPacker = RegularPacker
 module FlatPacker = FlatPacker
 

@@ -1,5 +1,4 @@
 open PackerUtil
-open Lwt.Infix
 
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
@@ -726,9 +725,9 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
         let emit bytes = Lwt_io.write channel bytes in
         let emit_module dep_map m =
           debug (fun m_ -> m_ "Emitting: %s" m.Module.filename);
-          emit (Printf.sprintf "\n/* %s */\n\n" m.id)
-          >> Workspace.write channel m.Module.workspace dep_map
-          >>= (fun _ -> Lwt.return_unit)
+          let%lwt () = emit (Printf.sprintf "\n/* %s */\n\n" m.id) in
+          let%lwt _ = Workspace.write channel m.Module.workspace dep_map in
+          Lwt.return_unit
         in
 
         let emit_wrapper_start, emit_wrapper_end =
