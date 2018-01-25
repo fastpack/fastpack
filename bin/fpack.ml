@@ -11,6 +11,7 @@ let () =
         target
         cache
         debug
+        _preprocess
         transpile
         postprocess
       =
@@ -98,6 +99,37 @@ let () =
       Arg.(value & flag & info ["d"; "debug"] ~doc)
     in
 
+    let preprocess_t =
+      let module P = Fastpack.Preprocessor in
+      let preprocess =
+        let parse s =
+          try
+            Result.Ok (false, P.of_string s)
+          with
+          | Failure msg ->
+            Result.Error (`Msg msg)
+        in
+        let print ppf (_, opt) =
+          Format.fprintf ppf "%s" (P.to_string opt)
+        in
+        Arg.conv (parse, print)
+      in
+      let doc =
+        "Preprocess modules matching the PATTERN with the PROCESSOR. Optionally,"
+        ^ " the processor may receive some OPTIONS in form: 'x=y&a=b'. There are"
+        ^ " 2 kinds of currently supported processors: 'builtin' and the "
+        ^ "Webpack loader. 'builtin' preprocessor provides the following "
+        ^ " transpilers: stripping Flow types, object spread & rest operators, "
+        ^ "class properties (including statics), class/method decorators, and "
+        ^ "React-assumed JSX conversion. 'builtin' may be skipped when setting "
+        ^ "this option, i.e. '\\\\.js\\$' and '\\\\.js\\$:builtin' are "
+        ^ "absolutely equal. An example of using the Webpack loader: "
+        ^ "'\\\\.js\\$:babel-loader?filename=.babelrc'."
+      in
+      let docv = "PATTERN:PROCESSOR?OPTIONS" in
+      Arg.(value & opt_all preprocess [] & info ["preprocess"] ~docv ~doc)
+    in
+
     let transpile_t =
       let doc =
         "Apply transpilers to files matching $(docv) the regular expression. "
@@ -127,6 +159,7 @@ let () =
         $ target_t
         $ cache_t
         $ debug_t
+        $ preprocess_t
         $ transpile_t
         $ postprocess_t
     ))
