@@ -433,28 +433,8 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
       in
       Lwt.return source
     in
-    match cache.get filename with
-    | Some cached_module ->
-      let%lwt st_mtime = st_mtime' () in
-      if cached_module.st_mtime = st_mtime
-      then Lwt.return cached_module
-      else
-        let%lwt source = source' () in
-        if cached_module.digest = Digest.string source
-        then Lwt.return cached_module
-        else
-          let { Preprocessor. process } = ctx.preprocessor in
-          let relname = relative_name ctx filename in
-          let source = process relname source in
-          Lwt.return
-          @@ make_module
-            (Module.make_id relname)
-            filename
-            st_mtime
-            source
-    | None ->
-      let%lwt st_mtime = st_mtime' () in
-      let%lwt source = source' () in
+
+    let preprocess_module filename st_mtime source =
       let { Preprocessor. process } = ctx.preprocessor in
       let relname = relative_name ctx filename in
       let source = process relname source in
@@ -464,6 +444,22 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
         filename
         st_mtime
         source
+    in
+
+    match cache.get filename with
+    | Some cached_module ->
+      let%lwt st_mtime = st_mtime' () in
+      if cached_module.st_mtime = st_mtime
+      then Lwt.return cached_module
+      else
+        let%lwt source = source' () in
+        if cached_module.digest = Digest.string source
+        then Lwt.return cached_module
+        else preprocess_module filename st_mtime source
+    | None ->
+      let%lwt st_mtime = st_mtime' () in
+      let%lwt source = source' () in
+      preprocess_module filename st_mtime source
 
 
 let is_ignored_request request =
