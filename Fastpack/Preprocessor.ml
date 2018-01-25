@@ -13,6 +13,12 @@ type config = {
   options : option_value M.t;
 }
 
+type process_f = string -> string * string list
+
+type t = {
+  process : string -> string -> string;
+}
+
 let config_re = Re_posix.compile_pat "^([^:]+)(:([a-zA-Z_][^?]+)(\\?(.*))?)?$"
 
 let of_string s =
@@ -88,3 +94,63 @@ let to_string { pattern_s; processor; options; _ } =
     pattern_s
     processor
     (if options <> "" then "?" ^ options else "")
+
+let empty s =
+  s, []
+
+let all_transpilers = FastpackTranspiler.[
+  StripFlow.transpile;
+  ReactJSX.transpile;
+  Class.transpile;
+  ObjectSpread.transpile;
+]
+
+let builtin source =
+  (* TODO: handle TranspilerError *)
+  FastpackTranspiler.transpile_source all_transpilers source, []
+
+let node _s =
+  failwith "Node preprocessor is not implemented"
+
+let make configs =
+
+  let processors = ref M.empty in
+
+  let get_processors filename =
+    match M.get filename !processors with
+    | Some processors -> processors
+    | None ->
+      let p =
+        configs
+        |> List.filter_map
+          (fun { pattern; processor; _ } ->
+            match Re.exec_opt pattern filename with
+            | None -> None
+            | Some _ ->
+              match processor with
+              | Builtin -> Some builtin
+              | Node _ -> failwith "Cannot build Node processor"
+          )
+      in
+      processors := M.add filename p !processors;
+      p
+  in
+
+  let process filename source =
+    (* TODO: add dependencies to the graph *)
+    let source, _ =
+      get_processors filename
+      |> List.fold_left
+        (fun (source, dependencies) processor ->
+           let source, new_dependencies = processor source in
+           source, dependencies @ new_dependencies
+        )
+        (source, [])
+    in
+    source
+  in
+
+  { process }
+
+
+

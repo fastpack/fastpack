@@ -17,7 +17,7 @@ let transpile _ =
     FastpackTranspiler.ObjectSpread.transpile;
   ]
 
-let pack ~mode ~target ~transpile_f pack_f entry_filename _ =
+let pack ~mode ~target ~preprocessor pack_f entry_filename _ =
   let pack' () =
     let bytes = Lwt_bytes.create 50000000 in
     let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
@@ -26,7 +26,7 @@ let pack ~mode ~target ~transpile_f pack_f entry_filename _ =
         ~pack_f
         ~mode
         ~target
-        ~transpile_f
+        ~preprocessor
         ~entry_filename
         ~package_dir:(Filename.dirname entry_filename)
         ch
@@ -49,92 +49,70 @@ let pack_regular_prod =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.Application
-    ~transpile_f:(fun _ _ p -> p)
+    ~preprocessor:(Fastpack.Preprocessor.make [])
     Fastpack.RegularPacker.pack
 
 let pack_regular_dev =
   pack
     ~mode:Fastpack.Mode.Development
     ~target:Fastpack.Target.Application
-    ~transpile_f:(fun _ _ p -> p)
+    ~preprocessor:(Fastpack.Preprocessor.make [])
     Fastpack.RegularPacker.pack
 
 let pack_flat_prod =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.Application
-    ~transpile_f:(fun _ _ p -> p)
+    ~preprocessor:(Fastpack.Preprocessor.make [])
     (Fastpack.FlatPacker.pack)
 
 let pack_flat_dev =
   pack
     ~mode:Fastpack.Mode.Development
     ~target:Fastpack.Target.Application
-    ~transpile_f:(fun _ _ p -> p)
+    ~preprocessor:(Fastpack.Preprocessor.make [])
     (Fastpack.FlatPacker.pack)
 
 let pack_regular_cjs =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.CommonJS
-    ~transpile_f:(fun _ _ p -> p)
+    ~preprocessor:(Fastpack.Preprocessor.make [])
     Fastpack.RegularPacker.pack
 
 let pack_regular_es6 =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.EcmaScript6
-    ~transpile_f:(fun _ _ p -> p)
+    ~preprocessor:(Fastpack.Preprocessor.make [])
     Fastpack.RegularPacker.pack
 
 let pack_flat_es6 =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.EcmaScript6
-    ~transpile_f:(fun _ _ p -> p)
+    ~preprocessor:(Fastpack.Preprocessor.make [])
     Fastpack.FlatPacker.pack
 
 let pack_flat_cjs =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.CommonJS
-    ~transpile_f:(fun _ _ p -> p)
+    ~preprocessor:(Fastpack.Preprocessor.make [])
     Fastpack.FlatPacker.pack
 
 let pack_transpile_regular_dev =
-  let open FastpackTranspiler in
-  let transpilers = [
-      StripFlow.transpile;
-      ReactJSX.transpile;
-      Class.transpile;
-      ObjectSpread.transpile;
-    ]
-  in
-  let transpile_f _ _ =
-    transpile_source transpilers
-  in
   pack
     ~mode:Fastpack.Mode.Development
     ~target:Fastpack.Target.Application
-    ~transpile_f
+    ~preprocessor:Fastpack.Preprocessor.(make [ of_string "^." ])
     Fastpack.RegularPacker.pack
 
 let pack_transpile_flat_prod =
-  let open FastpackTranspiler in
-  let transpilers = [
-      StripFlow.transpile;
-      ReactJSX.transpile;
-      Class.transpile;
-      ObjectSpread.transpile;
-    ]
-  in
-  let transpile_f _ _ =
-    transpile_source transpilers
-  in
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.Application
-    ~transpile_f
+    ~preprocessor:Fastpack.Preprocessor.(make [ of_string "^." ])
     Fastpack.FlatPacker.pack
 
 let tests = [

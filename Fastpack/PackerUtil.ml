@@ -197,14 +197,13 @@ module Context = struct
   type t = {
     entry_filename : string;
     package_dir : string;
-    transpile : transpile;
     current_filename : string;
     stack : Dependency.t list;
     mode : Mode.t;
     target : Target.t;
     resolver : NodeResolver.t;
+    preprocessor : Preprocessor.t;
   }
-  and transpile = t -> string -> string -> string
 
   let to_string { entry_filename; package_dir; stack; mode; current_filename; _ } =
     let relative filename =
@@ -443,18 +442,25 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
         let%lwt source = source' () in
         if cached_module.digest = Digest.string source
         then Lwt.return cached_module
-        else Lwt.return
+        else
+          let { Preprocessor. process } = ctx.preprocessor in
+          let relname = relative_name ctx filename in
+          let source = process relname source in
+          Lwt.return
           @@ make_module
-            (Module.make_id @@ relative_name ctx filename)
+            (Module.make_id relname)
             filename
             st_mtime
             source
     | None ->
       let%lwt st_mtime = st_mtime' () in
       let%lwt source = source' () in
+      let { Preprocessor. process } = ctx.preprocessor in
+      let relname = relative_name ctx filename in
+      let source = process relname source in
       Lwt.return
       @@ make_module
-        (Module.make_id @@ relative_name ctx filename)
+        (Module.make_id relname)
         filename
         st_mtime
         source

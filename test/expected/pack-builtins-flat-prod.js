@@ -22,47 +22,63 @@ function __fastpack_import__(f) {
 
 /* builtin$$COLON$$__fastpack_runtime__ */
 
-let $n__builtin$$COLON$$__fastpack_runtime__ = { exports: {}};function $i__builtin$$COLON$$__fastpack_runtime____applyDecorator(decorator, proto, property, descriptor) {
+let $n__builtin$$COLON$$__fastpack_runtime__ = { exports: {}};
+function $i__builtin$$COLON$$__fastpack_runtime____applyDecorator(decorator, proto, property, descriptor) {
   let ret = decorator(proto, property, descriptor);
   // TODO: assert all descriptor properties;
   return ret;
-  
 }
+
 function $i__builtin$$COLON$$__fastpack_runtime____decorateProperty(cls, property, decorators) {
   let proto = cls.prototype;
-  let descriptor = Object.assign({}, Object.getOwnPropertyDescriptor(proto, property));
+  let descriptor = Object.assign(
+    {},
+    Object.getOwnPropertyDescriptor(proto, property)
+  );
+
   // TODO: Babel also accounts for descriptor.initializer. Is it needed?
-  descriptor = decorators.reverse().reduce((descriptor, decorator) =>  $i__builtin$$COLON$$__fastpack_runtime____applyDecorator(decorator, proto, property, descriptor), descriptor);
+  descriptor = decorators.reverse().reduce(
+    (descriptor, decorator) => $i__builtin$$COLON$$__fastpack_runtime____applyDecorator(decorator, proto, property, descriptor),
+    descriptor
+  );
+
   Object.defineProperty(proto, property, descriptor);
-  
 }
-$n__builtin$$COLON$$__fastpack_runtime__.exports = {omitProps(target, props) {
-  let ret = {};
-  for (let prop in target)
-    {
-      if ((target.hasOwnProperty(prop) && props.indexOf(prop) == -1)) {
-        (ret[prop] = target[prop]);
-        
+
+$n__builtin$$COLON$$__fastpack_runtime__.exports = {
+  omitProps(target, props) {
+    let ret = {};
+    for(let prop in target) {
+      if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {
+        ret[prop] = target[prop];
       }
     }
-  return ret;
-  
-}
-, defineClass(cls, statics, classDecorators, propertyDecorators) {
-  (propertyDecorators.forEach(({method, decorators}) =>  $i__builtin$$COLON$$__fastpack_runtime____decorateProperty(cls, method, decorators)));
-  (statics.forEach(({name, value}) =>  Object.defineProperty(cls, name, {configurable: true, enumerable: true, writable: true, value: value})));
-  let _cls = cls;
-  (classDecorators = classDecorators.reverse());
-  for (let i = 0; (i < classDecorators.length); (i++))
-    {
-      (_cls = classDecorators[i](_cls));
-      
+    return ret;
+  },
+
+  defineClass(cls, statics, classDecorators, propertyDecorators) {
+    propertyDecorators.forEach(
+      ({method, decorators}) => $i__builtin$$COLON$$__fastpack_runtime____decorateProperty(cls, method, decorators)
+    );
+
+    statics.forEach(({name, value}) =>
+      Object.defineProperty(cls, name, {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: value
+      })
+    );
+    let _cls = cls;
+    classDecorators = classDecorators.reverse();
+    for(let i = 0; i < classDecorators.length; i++) {
+      _cls = classDecorators[i](_cls);
     }
-  return _cls;
-  
-}
+    return _cls;
+
+    //return classDecorators.reverse().reduce(decorator => decorator(cls), cls);
+  }
 };
-//return classDecorators.reverse().reduce(decorator => decorator(cls), cls);
 
 /* builtin$$COLON$$path */
 

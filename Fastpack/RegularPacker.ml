@@ -11,7 +11,7 @@ let debug = Logs.debug
 
 
 
-let pack ?(cache=Cache.fake) ctx channel =
+let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
   if (ctx.Context.target = Target.EcmaScript6)
   then raise (PackError (ctx, NotImplemented (
@@ -477,26 +477,26 @@ let pack ?(cache=Cache.fake) ctx channel =
   in
 
   (* Gather dependencies *)
-  let rec process ({Context. transpile; _} as ctx) graph (m : Module.t) =
+  let rec process (ctx : Context.t) graph (m : Module.t) =
     let ctx = { ctx with current_filename = m.filename } in
     let m, dependencies =
       if (not m.cached) then begin
         let source = m.Module.workspace.Workspace.value in
         (* TODO: reafctor this *)
-        let transpiled =
-          try
-            transpile ctx m.filename source
-          with
-          | FlowParser.Parse_error.Error args ->
-            raise (PackError (ctx, CannotParseFile (m.filename, args)))
-          | FastpackTranspiler.Error.TranspilerError error ->
-            raise (PackError (ctx, TranspilerError error))
-          | Scope.ScopeError reason ->
-            raise (PackError (ctx, ScopeError reason))
-        in
+        (* let transpiled = *)
+        (*   try *)
+        (*     transpile ctx m.filename source *)
+        (*   with *)
+        (*   | FlowParser.Parse_error.Error args -> *)
+        (*     raise (PackError (ctx, CannotParseFile (m.filename, args))) *)
+        (*   | FastpackTranspiler.Error.TranspilerError error -> *)
+        (*     raise (PackError (ctx, TranspilerError error)) *)
+        (*   | Scope.ScopeError reason -> *)
+        (*     raise (PackError (ctx, ScopeError reason)) *)
+        (* in *)
         let (workspace, dependencies, scope, exports, es_module) =
           try
-              analyze m.id m.filename transpiled
+              analyze m.id m.filename source
           with
           | FlowParser.Parse_error.Error args ->
             raise (PackError (ctx, CannotParseFile (m.filename, args)))

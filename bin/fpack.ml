@@ -11,8 +11,7 @@ let () =
         target
         cache
         debug
-        _preprocess
-        transpile
+        preprocess
         postprocess
       =
       let report (m, cache, message) =
@@ -39,7 +38,7 @@ let () =
             mode = Some mode;
             target;
             cache = Some cache;
-            transpile = Some transpile;
+            preprocess = Some (List.map snd preprocess);
             postprocess = Some postprocess;
           }
         in
@@ -130,17 +129,6 @@ let () =
       Arg.(value & opt_all preprocess [] & info ["preprocess"] ~docv ~doc)
     in
 
-    let transpile_t =
-      let doc =
-        "Apply transpilers to files matching $(docv) the regular expression. "
-        ^ "Currently available transpilers are: stripping Flow types, "
-        ^ "object spread & rest opertions, class properties (including statics), "
-        ^ "class/method decorators, and React-assumed JSX conversion."
-      in
-      let docv = "PATTERN" in
-      Arg.(value & opt_all string [] & info ["transpile"] ~docv ~doc)
-    in
-
     let postprocess_t =
       let doc =
         "Apply shell command on a bundle file. The content of the bundle will"
@@ -160,7 +148,6 @@ let () =
         $ cache_t
         $ debug_t
         $ preprocess_t
-        $ transpile_t
         $ postprocess_t
     ))
   in

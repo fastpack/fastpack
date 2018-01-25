@@ -27,7 +27,7 @@ type options = {
   mode : Mode.t option;
   target : Target.t option;
   cache : Cache.strategy option;
-  transpile : string list option;
+  preprocess : Preprocessor.config list option;
   postprocess : string list option;
 }
 
@@ -37,7 +37,7 @@ let empty_options = {
     mode = None;
     target = None;
     cache = None;
-    transpile = None;
+    preprocess = None;
     postprocess = None;
 }
 
@@ -48,7 +48,7 @@ let default_options =
     mode = Some Production;
     target = Some Application;
     cache = Some Normal;
-    transpile = None;
+    preprocess = None;
     postprocess = None;
   }
 
@@ -65,20 +65,20 @@ let merge_options o1 o2 =
     mode = merge o1.mode o2.mode;
     target = merge o1.target o2.target;
     cache = merge o1.cache o2.cache;
-    transpile = merge o1.transpile o2.transpile;
+    preprocess = merge o1.preprocess o2.preprocess;
     postprocess = merge o1.postprocess o2.postprocess;
   }
 
-let pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir channel =
+let pack ~pack_f ~mode ~target ~(preprocessor : Preprocessor.t) ~entry_filename ~package_dir channel =
   let ctx = { Context.
     entry_filename;
     package_dir;
-    transpile = transpile_f;
     stack = [];
     current_filename = entry_filename;
     mode;
     target;
-    resolver = NodeResolver.make ()
+    resolver = NodeResolver.make ();
+    preprocessor
   }
   in
   pack_f ctx channel
@@ -97,30 +97,6 @@ let find_package_root start_dir =
 
 let read_package_json_options _ =
   Lwt.return_none
-
-let build_transpile_f { transpile; _ } =
-  match transpile with
-  | None | Some [] ->
-    fun _ filename s ->
-      Logs.debug (fun m -> m "No transpilers: %s" filename);
-      s
-  | Some patterns ->
-    let open FastpackTranspiler in
-    let transpilers = [
-        StripFlow.transpile;
-        ReactJSX.transpile;
-        Class.transpile;
-        ObjectSpread.transpile;
-      ]
-    in
-    (* TODO: handle invalid regexp *)
-    let regexps = List.map Str.regexp patterns in
-    fun ctx filename source ->
-      let filename = relative_name ctx filename in
-      if List.exists (fun r -> Str.string_match r filename 0) regexps
-      then transpile_source transpilers source
-      else source
-
 
 let prepare_and_pack cl_options =
   let%lwt current_dir = Lwt_unix.getcwd () in
@@ -168,7 +144,11 @@ let prepare_and_pack cl_options =
       abs_path package_dir @@ FilePath.concat output "index.js"
     in
     let%lwt () = makedirs @@ FilePath.dirname output_file in
-    let transpile_f = build_transpile_f options in
+    let preprocessor =
+      match options.preprocess with
+      | None -> Preprocessor.make []
+      | Some preprocess -> Preprocessor.make preprocess
+    in
     let target =
       match options.target with
       | Some target -> target
@@ -204,7 +184,7 @@ let prepare_and_pack cl_options =
     in
     let pack_and_postprocess ch =
       let pack =
-        pack ~pack_f ~mode ~target ~transpile_f ~entry_filename ~package_dir
+        pack ~pack_f ~mode ~target ~preprocessor ~entry_filename ~package_dir
       in
       match options.postprocess with
       | None | Some [] ->

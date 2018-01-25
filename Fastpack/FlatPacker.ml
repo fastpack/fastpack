@@ -137,7 +137,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
         dep
       in
 
-      let rec process ({Context. transpile; _} as ctx) graph (m : Module.t) =
+      let rec process (ctx : Context.t) graph (m : Module.t) =
 
         let ctx = { ctx with current_filename = m.filename } in
 
@@ -662,7 +662,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             (workspace, [], Scope.empty, [], false)
           | false ->
             try
-                analyze m.id m.filename (transpile ctx m.filename source)
+                analyze m.id m.filename source
             with
             | FlowParser.Parse_error.Error args ->
               raise (PackError (ctx, CannotParseFile (m.filename, args)))
