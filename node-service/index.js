@@ -1,3 +1,6 @@
+const path = require('path');
+module.paths.unshift(path.join(process.cwd(), 'node_modules'));
+
 function handleError(e) {
   var message = e.message || e + "";
   var name = e.name || "UnknownError";
