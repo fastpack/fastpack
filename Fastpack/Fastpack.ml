@@ -44,7 +44,7 @@ let empty_options = {
 let default_options =
   {
     input = Some "index.js";
-    output = Some "./bundle/bundle.js";
+    output = Some "./bundle";
     mode = Some Production;
     target = Some Application;
     cache = Some Normal;
