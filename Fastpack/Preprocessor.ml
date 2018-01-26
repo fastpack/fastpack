@@ -16,7 +16,7 @@ type config = {
 type process_f = string -> string * string list
 
 type t = {
-  process : string -> string -> string * string list;
+  process : string -> string -> (string * string list) Lwt.t;
 }
 
 let config_re = Re_posix.compile_pat "^([^:]+)(:([a-zA-Z_][^?]+)(\\?(.*))?)?$"
@@ -107,7 +107,7 @@ let all_transpilers = FastpackTranspiler.[
 
 let builtin source =
   (* TODO: handle TranspilerError *)
-  FastpackTranspiler.transpile_source all_transpilers source, []
+  Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
 
 let node _s =
   failwith "Node preprocessor is not implemented"
@@ -137,16 +137,16 @@ let make configs =
   in
 
   let process filename source =
-    let source, build_dependencies =
-      get_processors filename
-      |> List.fold_left
+    let%lwt source, build_dependencies =
+      Lwt_list.fold_left_s
         (fun (source, dependencies) processor ->
-           let source, new_dependencies = processor source in
-           source, dependencies @ new_dependencies
+           let%lwt (source, new_dependencies) = processor source in
+           Lwt.return (source, dependencies @ new_dependencies)
         )
         (source, [])
+        (get_processors filename)
     in
-    source, build_dependencies
+    Lwt.return (source, build_dependencies)
   in
 
   { process }
