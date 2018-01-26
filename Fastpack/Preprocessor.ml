@@ -16,7 +16,7 @@ type config = {
 type process_f = string -> string * string list
 
 type t = {
-  process : string -> string -> string;
+  process : string -> string -> string * string list;
 }
 
 let config_re = Re_posix.compile_pat "^([^:]+)(:([a-zA-Z_][^?]+)(\\?(.*))?)?$"
@@ -137,8 +137,7 @@ let make configs =
   in
 
   let process filename source =
-    (* TODO: add dependencies to the graph *)
-    let source, _ =
+    let source, build_dependencies =
       get_processors filename
       |> List.fold_left
         (fun (source, dependencies) processor ->
@@ -147,7 +146,7 @@ let make configs =
         )
         (source, [])
     in
-    source
+    source, build_dependencies
   in
 
   { process }

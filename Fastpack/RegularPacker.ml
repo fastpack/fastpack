@@ -480,7 +480,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
   let rec process (ctx : Context.t) graph (m : Module.t) =
     let ctx = { ctx with current_filename = m.filename } in
     let m, dependencies =
-      if (not m.cached) then begin
+      if (not m.analyzed) then begin
         let source = m.Module.workspace.Workspace.value in
         (* TODO: reafctor this *)
         (* let transpiled = *)
@@ -509,7 +509,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
         m, []
     in
     let%lwt m =
-      if (not m.cached) then begin
+      if (not m.analyzed) then begin
         let%lwt resolved =
           Lwt_list.map_p
             (fun req ->
@@ -645,7 +645,7 @@ var __DEV__ = %s;
             m.id
         in
         let%lwt content = Workspace.write channel workspace dep_map in
-        let () = cache.add m content in
+        let () = cache.add m content true in
         let%lwt () = emit "},\n" in
         Lwt.return seen
     in

@@ -19,8 +19,11 @@ type t = {
   (** List of resolved dependencies, populated for cached modules *)
   resolved_dependencies : (Dependency.t * string) list;
 
+  (** List of build dependencies *)
+  build_dependencies : (string * float * string) list;
+
   (** If module is cached *)
-  cached : bool;
+  analyzed : bool;
 
   (** EcmaScript 6 Module *)
   es_module : bool;

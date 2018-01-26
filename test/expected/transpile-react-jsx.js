@@ -1,3 +1,4 @@
+import React from 'react';
 React.createElement("div", null);
 React.createElement("div", {className: "x"});
 React.createElement("div", {className: "x", y: 1});

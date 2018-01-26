@@ -238,7 +238,7 @@ module Cache = struct
   type t = {
     get : string -> Module.t option;
     dump : unit -> unit Lwt.t;
-    add : Module.t -> string -> unit;
+    add : Module.t -> string -> bool -> unit;
     loaded : bool;
   }
 
@@ -248,13 +248,15 @@ module Cache = struct
     st_mtime : float;
     es_module : bool;
     resolved_dependencies : (Dependency.t * string) list;
+    build_dependencies : (string * float * string) list;
     source : string;
+    analyzed : bool;
   }
 
   let fake =
     { get = (fun _ -> None);
       dump = (fun _ -> Lwt.return_unit);
-      add = (fun _ _ -> ());
+      add = (fun _ _ _ -> ());
       loaded = false;
     }
 
@@ -290,13 +292,15 @@ module Cache = struct
     let loaded = modules <> M.empty in
     let modules = ref modules in
 
-    let add (m : Module.t) source =
+    let add (m : Module.t) source analyzed =
       modules :=
         M.add
           m.filename
           { id = m.id; digest = m.digest; st_mtime = m.st_mtime;
             resolved_dependencies = m.resolved_dependencies;
+            build_dependencies = m.build_dependencies;
             es_module = m.es_module;
+            analyzed;
             source
           }
           !modules;
@@ -311,7 +315,9 @@ module Cache = struct
           digest;
           st_mtime;
           resolved_dependencies;
+          build_dependencies;
           source;
+          analyzed;
           es_module; } ->
         Some { Module.
           id;
@@ -319,8 +325,9 @@ module Cache = struct
           digest;
           st_mtime;
           resolved_dependencies;
+          build_dependencies;
           es_module;
-          cached = true;
+          analyzed;
           workspace = Workspace.of_string source;
           scope = FastpackUtil.Scope.empty;
           exports = []
@@ -375,17 +382,50 @@ let relative_name {Context. package_dir; _} filename =
         (length filename - length package_dir - 1)
     )
 
-let read_module (ctx : Context.t) (cache : Cache.t) filename =
+let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
 
-  let make_module id filename st_mtime source =
-    {
+    let st_mtime' filename =
+      let%lwt {st_mtime; _} =
+        try%lwt
+          Lwt_unix.stat filename
+        with Unix.Unix_error _ ->
+          raise (PackError (ctx, CannotReadModule filename))
+      in
+      Lwt.return st_mtime
+    in
+
+    let source' filename =
+      let%lwt source =
+        try%lwt
+          Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
+        with Unix.Unix_error _ ->
+          raise (PackError (ctx, CannotReadModule filename))
+      in
+      Lwt.return source
+    in
+
+  let make_module ?(build_dependencies=[]) id filename st_mtime source =
+    let%lwt build_dependencies =
+      Lwt_list.map_s
+        (fun filename ->
+           (** TODO: !!! Make sure to raise exceptions using Lwt *)
+           (** TODO: !!! Handle potential dependency cycles *)
+           (** TODO: !!! Modify ctx.stack when processing dependency *)
+           let filename = abs_path ctx.package_dir filename in
+           let%lwt m = read_module ctx cache filename in
+           Lwt.return Module.(m.filename, m.st_mtime, m.digest)
+        )
+        build_dependencies
+    in
+    Lwt.return {
       Module.
       id;
       filename;
       st_mtime;
       resolved_dependencies = [];
+      build_dependencies;
       es_module = false;
-      cached = false;
+      analyzed = false;
       digest = Digest.string source;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
@@ -403,10 +443,10 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
   | "builtin:net"
   | "builtin:events" ->
     (* TODO: handle builtins *)
-    Lwt.return @@ make_module (Module.make_id filename) filename 0.0 ""
+    make_module (Module.make_id filename) filename 0.0 ""
 
   | "builtin:__fastpack_runtime__" ->
-    Lwt.return @@ make_module (Module.make_id filename) filename 0.0 FastpackTranspiler.runtime
+    make_module (Module.make_id filename) filename 0.0 FastpackTranspiler.runtime
 
   | _ ->
     let filename = abs_path ctx.package_dir filename in
@@ -414,51 +454,57 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
     if not (FilePath.is_subdir filename ctx.package_dir)
     then raise (PackError (ctx, CannotLeavePackageDir filename));
 
-    let st_mtime' () =
-      let%lwt {st_mtime; _} =
-        try%lwt
-          Lwt_unix.stat filename
-        with Unix.Unix_error _ ->
-          raise (PackError (ctx, CannotReadModule filename))
-      in
-      Lwt.return st_mtime
-    in
-
-    let source' () =
-      let%lwt source =
-        try%lwt
-          Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
-        with Unix.Unix_error _ ->
-          raise (PackError (ctx, CannotReadModule filename))
-      in
-      Lwt.return source
-    in
 
     let preprocess_module filename st_mtime source =
       let { Preprocessor. process } = ctx.preprocessor in
       let relname = relative_name ctx filename in
-      let source = process relname source in
-      Lwt.return
-      @@ make_module
-        (Module.make_id relname)
-        filename
-        st_mtime
-        source
+      let source, build_dependencies = process relname source in
+      let%lwt m =
+        make_module
+          ~build_dependencies
+          (Module.make_id relname)
+          filename
+          st_mtime
+          source
+      in
+      cache.add m source false;
+      Lwt.return m
+    in
+
+    let build_dependencies_changed {Module. build_dependencies; _} =
+      Lwt_list.exists_s
+        (fun (filename, st_mtime, digest) ->
+           (** TODO: !!! Make sure to raise exceptions using Lwt *)
+           (** TODO: !!! Handle potential dependency cycles *)
+           (** TODO: !!! Modify ctx.stack when processing dependency *)
+           let%lwt (m : Module.t) = read_module ctx cache filename in
+           Lwt.return (m.st_mtime <> st_mtime ||
+                       m.st_mtime = st_mtime && m.digest <> digest)
+        )
+        build_dependencies
     in
 
     match cache.get filename with
     | Some cached_module ->
-      let%lwt st_mtime = st_mtime' () in
-      if cached_module.st_mtime = st_mtime
-      then Lwt.return cached_module
-      else
-        let%lwt source = source' () in
-        if cached_module.digest = Digest.string source
+      if%lwt build_dependencies_changed cached_module
+      then begin
+        let%lwt st_mtime = st_mtime' filename in
+        let%lwt source = source' filename in
+        preprocess_module filename st_mtime source
+      end
+      else begin
+        let%lwt st_mtime = st_mtime' filename in
+        if cached_module.st_mtime = st_mtime
         then Lwt.return cached_module
-        else preprocess_module filename st_mtime source
+        else
+          let%lwt source = source' filename in
+          if cached_module.digest = Digest.string source
+          then Lwt.return cached_module
+          else preprocess_module filename st_mtime source
+      end
     | None ->
-      let%lwt st_mtime = st_mtime' () in
-      let%lwt source = source' () in
+      let%lwt st_mtime = st_mtime' filename in
+      let%lwt source = source' filename in
       preprocess_module filename st_mtime source
 
 
