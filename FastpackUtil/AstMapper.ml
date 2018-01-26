@@ -11,18 +11,18 @@ module Function = Ast.Function
 
 module APS = AstParentStack
 
-type mapper = {
-  map_statement : Scope.t -> Loc.t Statement.t -> Loc.t Statement.t;
-  map_expression : Scope.t -> Loc.t Expression.t -> Loc.t Expression.t;
-  map_function : Scope.t -> (Loc.t * Loc.t Function.t) -> (Loc.t * Loc.t Function.t);
-  map_pattern : Scope.t -> Loc.t Pattern.t -> Loc.t Pattern.t;
-}
-
 type ctx = {
   handler : mapper;
   scope : Scope.t;
   parents : APS.parent list;
 }
+and mapper = {
+  map_statement : ctx -> Loc.t Statement.t -> Loc.t Statement.t;
+  map_expression : ctx -> Loc.t Expression.t -> Loc.t Expression.t;
+  map_function : ctx -> (Loc.t * Loc.t Function.t) -> (Loc.t * Loc.t Function.t);
+  map_pattern : ctx -> Loc.t Pattern.t -> Loc.t Pattern.t;
+}
+
 
 let do_nothing _ node =
   node
@@ -207,7 +207,7 @@ let rec map_statement ctx (loc, statement) =
 
     | node -> node
   in
-  ctx.handler.map_statement ctx.scope (loc, statement)
+  ctx.handler.map_statement ctx (loc, statement)
 
 and map_class ctx ({Class. body = (body_loc, { body }); superClass; _} as n) =
   (** TODO: handle `classDecorators` *)
@@ -355,7 +355,7 @@ and map_expression ctx (loc, expression) =
 
     | node -> node
   in
-  ctx.handler.map_expression ctx.scope (loc, expression)
+  ctx.handler.map_expression ctx (loc, expression)
 
 and map_pattern ctx (loc, pattern) =
   let pattern = match pattern with
@@ -398,7 +398,7 @@ and map_pattern ctx (loc, pattern) =
       Pattern.Expression expr
     | node -> node
 
-  in ctx.handler.map_pattern ctx.scope (loc, pattern)
+  in ctx.handler.map_pattern ctx (loc, pattern)
 
 and map_pattern_property_key ctx key =
   match key with
@@ -470,7 +470,7 @@ and map_function
         body = body
       })
   in
-  ctx.handler.map_function ctx.scope (loc, f)
+  ctx.handler.map_function ctx (loc, f)
 
 and map_function_body ctx body =
   match body with

@@ -717,7 +717,7 @@ module TranspileObjectSpreadRest = struct
 end
 
 let transpile ({Context. require_runtime; _ } as context) program =
-  let map_statement scope ((loc, node) : Loc.t S.t) =
+  let map_statement {AstMapper. scope; _} ((loc, node) : Loc.t S.t) =
     let module T = TranspileObjectSpreadRest in
     let node = match node with
       | S.VariableDeclaration d when T.VariableDeclaration.test d ->
@@ -750,7 +750,7 @@ let transpile ({Context. require_runtime; _ } as context) program =
     loc, node
   in
 
-  let map_expression scope ((loc, node) : Loc.t E.t) =
+  let map_expression {AstMapper. scope; _} ((loc, node) : Loc.t E.t) =
     let node = match node with
       | E.Object obj when TranspileObjectSpread.test obj ->
         require_runtime ();
@@ -764,7 +764,7 @@ let transpile ({Context. require_runtime; _ } as context) program =
     loc, node
   in
 
-  let map_function scope (loc, func) =
+  let map_function {AstMapper. scope; _} (loc, func) =
     if TranspileObjectSpreadRest.Function.test func
     then begin
       require_runtime ();

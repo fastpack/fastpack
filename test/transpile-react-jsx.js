@@ -43,3 +43,15 @@
 <div>
   <><div /><div /></>
 </div>;
+
+const App = ({ components }) => (
+  <div>
+    {components.map((Comp, i) => (
+      <div key={i}>
+        <Comp />
+      </div>
+    ))}
+  </div>
+);
+
+<X component={true ? <Comp1 /> : <Comp2 />}/>

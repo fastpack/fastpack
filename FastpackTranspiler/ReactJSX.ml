@@ -4,7 +4,9 @@ module Loc = FlowParser.Loc
 module E = Ast.Expression
 module I = Ast.Identifier
 
-let transpile _context program =
+module AstMapper = FastpackUtil.AstMapper
+
+let transpile _ program =
 
   let null_expression =
     Loc.none, E.Literal { value = Ast.Literal.Null; raw = "null"; }
@@ -14,7 +16,7 @@ let transpile _context program =
     Loc.none, E.Literal (FastpackUtil.AstHelper.literal_true)
   in
 
-  let map_expression _scope ((loc, node) : Loc.t Ast.Expression.t) =
+  let map_expression context ((loc, node) : Loc.t Ast.Expression.t) =
     let open Ast.JSX in
 
     (** Transpile JSX elememnt name *)
@@ -98,7 +100,7 @@ let transpile _context program =
                    | Some (Attribute.Literal (loc, lit)) ->
                      loc, E.Literal lit
                    | Some (Attribute.ExpressionContainer (_loc, { expression = ExpressionContainer.Expression expr })) ->
-                     expr
+                     AstMapper.map_expression context expr
                    | Some (Attribute.ExpressionContainer (loc, { expression = ExpressionContainer.EmptyExpression _ })) ->
                      raise (Error.TranspilerError (
                        loc,
@@ -147,7 +149,7 @@ let transpile _context program =
           | Element element ->
             (loc, transpile_element element)
           | ExpressionContainer { expression = ExpressionContainer.Expression expression } ->
-            expression
+            AstMapper.map_expression context expression
           | ExpressionContainer { expression = ExpressionContainer.EmptyExpression _ } ->
             raise (Error.TranspilerError (
               loc,
@@ -220,8 +222,8 @@ let transpile _context program =
   in
 
   let mapper = {
-    FastpackUtil.AstMapper.default_mapper with
+    AstMapper.default_mapper with
     map_expression;
   } in
 
-  FastpackUtil.AstMapper.map mapper program
+  AstMapper.map mapper program
