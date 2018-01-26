@@ -17,6 +17,7 @@ type process_f = string -> string * string list
 
 type t = {
   process : string -> string -> (string * string list) Lwt.t;
+  finalize : unit -> unit;
 }
 
 let config_re = Re_posix.compile_pat "^([^:]+)(:([a-zA-Z_][^?]+)(\\?(.*))?)?$"
@@ -95,8 +96,6 @@ let to_string { pattern_s; processor; options; _ } =
     processor
     (if options <> "" then "?" ^ options else "")
 
-let empty s =
-  s, []
 
 let all_transpilers = FastpackTranspiler.[
   StripFlow.transpile;
@@ -109,10 +108,62 @@ let builtin source =
   (* TODO: handle TranspilerError *)
   Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
 
-let node _s =
-  failwith "Node preprocessor is not implemented"
+let empty =
+  { process = (fun _ s -> Lwt.return (s, [])); finalize = (fun () -> ())}
+
+let transpile_all =
+  { process = (fun _ s -> builtin s); finalize = (fun () -> ()) }
+
+module NodeServer = struct
+  let cmd =
+    "node /Users/zindel/ocaml/fastpack/node-service/index.js"
+
+  let make () =
+    let (fp_in, node_out) = Unix.pipe () in
+    let (node_in, fp_out) = Unix.pipe () in
+    let fp_in_ch  = Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in in
+    let fp_out_ch  = Lwt_io.of_unix_fd ~mode:Lwt_io.Output fp_out in
+    let process_none =
+      Lwt_process.(
+        open_process_none
+          ~env:(Array.append (Unix.environment ()) [|"NODE_PATH=/Users/zindel/ocaml/react-example/node_modules"|])
+          ~stdin:(`FD_move node_in)
+          ~stdout:(`FD_move node_out)
+          (shell cmd)
+      )
+    in
+
+    let process loader options source =
+      let options =
+        options
+        |> M.bindings
+        |> List.map
+          (fun (key, value) ->
+             key,
+             match value with
+             | Boolean value -> `Bool value
+             | Number value -> `Float value
+             | String value -> `String value
+          )
+      in
+      let message =
+        `Assoc [
+          ("loader", `String loader);
+          ("params", `Assoc options);
+          ("source", `String source)
+        ]
+      in
+      let%lwt () = Lwt_io.write fp_out_ch (Yojson.to_string message ^ "\n") in
+      let%lwt line = Lwt_io.read_line fp_in_ch in
+      let () = Printf.printf "%s\n" line in
+      Lwt.return (line, [])
+    in
+    Lwt.return (process, process_none)
+end
 
 let make configs =
+
+  let%lwt (node_server, node_process) = NodeServer.make () in
 
   let processors = ref M.empty in
 
@@ -123,13 +174,13 @@ let make configs =
       let p =
         configs
         |> List.filter_map
-          (fun { pattern; processor; _ } ->
+          (fun { pattern; processor; options; _ } ->
             match Re.exec_opt pattern filename with
             | None -> None
             | Some _ ->
               match processor with
               | Builtin -> Some builtin
-              | Node _ -> failwith "Cannot build Node processor"
+              | Node loader -> Some (node_server loader options)
           )
       in
       processors := M.add filename p !processors;
@@ -149,7 +200,11 @@ let make configs =
     Lwt.return (source, build_dependencies)
   in
 
-  { process }
+  let finalize () =
+    node_process#terminate
+  in
+
+  Lwt.return { process; finalize }
 
 
 

@@ -144,7 +144,7 @@ let prepare_and_pack cl_options =
       abs_path package_dir @@ FilePath.concat output "index.js"
     in
     let%lwt () = makedirs @@ FilePath.dirname output_file in
-    let preprocessor =
+    let%lwt preprocessor =
       match options.preprocess with
       | None -> Preprocessor.make []
       | Some preprocess -> Preprocessor.make preprocess
@@ -234,8 +234,9 @@ let prepare_and_pack cl_options =
         Lwt.return ret
       )
       (fun () ->
+         let () = preprocessor.Preprocessor.finalize () in
          if%lwt Lwt_unix.file_exists temp_file
-         then Lwt_unix.unlink temp_file
+         then Lwt_unix.unlink temp_file;
       )
 
   | _ ->

@@ -456,7 +456,7 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
 
 
     let preprocess_module filename st_mtime source =
-      let { Preprocessor. process } = ctx.preprocessor in
+      let { Preprocessor. process; _ } = ctx.preprocessor in
       let relname = relative_name ctx filename in
       let%lwt source, build_dependencies = process relname source in
       let%lwt m =
