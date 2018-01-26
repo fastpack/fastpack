@@ -60,7 +60,7 @@ let () =
     let output_t =
       let doc =
         "Output Directory. "
-        ^ "The target bundle will be $(docv)/index.js"
+        ^ "The target bundle will be $(docv)/index.js. 'bundle' is used by default"
       in
       let docv = "DIR" in
       Arg.(value & opt (some string) None & info ["o"; "output"] ~docv ~doc)
