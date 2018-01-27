@@ -273,7 +273,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 match ctx.target with
                 | Target.Application ->
                   ""
-                | Target.EcmaScript6 ->
+                | Target.ESM ->
                   exports
                   |> List.map
                     (fun (exported_name, internal_name, binding) ->
