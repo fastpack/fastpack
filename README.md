@@ -79,7 +79,7 @@ OPTIONS
            multiple commands are specified they will be applied in the order
            of appearance
 
-       --target=[ app | es6 | cjs ]
+       --target=[ app | esm | cjs ]
            Deployment target.
 
        --transpile=PATTERN

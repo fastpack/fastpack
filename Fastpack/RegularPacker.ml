@@ -13,7 +13,7 @@ let debug = Logs.debug
 
 let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
-  if (ctx.Context.target = Target.EcmaScript6)
+  if (ctx.Context.target = Target.ESM)
   then raise (PackError (ctx, NotImplemented (
       None, "EcmaScript6 target is not supported "
             ^ "for the regular packer - use flat\n"
