@@ -23,7 +23,7 @@ type binding_type = Collision
 
 let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
-  let total_modules = ref 0 in
+  let total_modules = ref [] in
 
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
@@ -840,8 +840,10 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             StringSet.empty
             dynamic_deps
           in
-          total_modules := !total_modules
-                           + (Hashtbl.length graph.DependencyGraph.modules);
+          total_modules := List.concat [
+            !total_modules;
+            (Hashtbl.keys_list graph.DependencyGraph.modules);
+          ];
           Lwt.return_unit
   in
   let%lwt () =

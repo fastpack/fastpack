@@ -1,0 +1,7 @@
+{
+  "modulesPaths": [
+    "/Users/trysound/host/fastpack/test/cli/stats-json/index.js",
+    "/Users/trysound/host/fastpack/test/cli/stats-json/dep2.js",
+    "/Users/trysound/host/fastpack/test/cli/stats-json/dep1.js"
+  ]
+}
