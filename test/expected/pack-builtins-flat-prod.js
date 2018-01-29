@@ -108,7 +108,7 @@ const {delimiter: $i__index__delimiter} = $i__index__path,
 console.log($i__index__path, $i__index__module, $i__index__delimiter, $i__index__rest, $i__index__esm);
 // The following test makes sure that builtin transpiler strips type annotations
 // from inside JSX
-const $i__index__Component = props =>  React.createElement("div", null, item =>  {
+const $i__index__Component = props => React.createElement("div", null, item => {
     
   }
   );

@@ -19,6 +19,9 @@ test: build-dev
 	@#@esy x fpack_test $(FPACK_TEST_PATH)
 	@_build/default/bin/fpack_test.exe $(FPACK_TEST_PATH)
 
+test-jest: build-dev
+	cd test; yarn; yarn jest
+
 fetch:
 	git submodule init
 	git submodule update
@@ -44,7 +47,6 @@ test-transpile: build-dev
 		transpile \
 		src/index.js \
 		-d --transpile '^src'
-
 
 
 build-examples: build-react-app-simple
