@@ -22,7 +22,7 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
+let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
 
   let total_modules = ref [] in
 

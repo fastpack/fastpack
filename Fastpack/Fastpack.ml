@@ -171,7 +171,7 @@ let prepare_and_pack cl_options =
         let%lwt pack_f =
           match mode with
           | Mode.Production ->
-            Lwt.return @@ FlatPacker.pack ~cache:Cache.fake
+            Lwt.return @@ FlatPacker.pack ~cache:(Cache.fake ())
           | Mode.Test
           | Mode.Development ->
             let cache_prefix =
@@ -183,7 +183,7 @@ let prepare_and_pack cl_options =
               | Some Cache.Normal ->
                 Cache.create package_dir cache_prefix input
               | Some Cache.Ignore ->
-                Lwt.return Cache.fake
+                Lwt.return @@ Cache.fake ()
               | None ->
                 Error.ie "Cache strategy is not set"
             in

@@ -241,7 +241,9 @@ module Cache = struct
     get : string -> Module.t option;
     dump : unit -> unit Lwt.t;
     add : Module.t -> string -> bool -> unit;
+    to_trusted : unit -> t;
     loaded : bool;
+    trusted : bool;
   }
 
   type entry = {
@@ -255,11 +257,13 @@ module Cache = struct
     analyzed : bool;
   }
 
-  let fake =
+  let rec fake () =
     { get = (fun _ -> None);
       dump = (fun _ -> Lwt.return_unit);
       add = (fun _ _ _ -> ());
+      to_trusted = (fun () -> { (fake ()) with trusted = true });
       loaded = false;
+      trusted = false;
     }
 
   let create_dir package_dir =
@@ -344,7 +348,25 @@ module Cache = struct
         cache_filename
         (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] !modules)
     in
-    Lwt.return { get; dump; add; loaded }
+
+    let rec to_trusted () = {
+      get;
+      dump;
+      add;
+      to_trusted;
+      loaded;
+      trusted = true
+    }
+    in
+
+    Lwt.return {
+      get;
+      dump;
+      add;
+      to_trusted;
+      loaded;
+      trusted = false
+    }
 
   let create package_dir prefix filename =
     let%lwt cache_dir = create_dir package_dir in
@@ -492,14 +514,18 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
         preprocess_module filename st_mtime source
       end
       else begin
-        let%lwt st_mtime = st_mtime' filename in
-        if cached_module.st_mtime = st_mtime
+        if cache.trusted
         then Lwt.return cached_module
-        else
-          let%lwt source = source' filename in
-          if cached_module.digest = Digest.string source
+        else begin
+          let%lwt st_mtime = st_mtime' filename in
+          if cached_module.st_mtime = st_mtime
           then Lwt.return cached_module
-          else preprocess_module filename st_mtime source
+          else
+            let%lwt source = source' filename in
+            if cached_module.digest = Digest.string source
+            then Lwt.return cached_module
+            else preprocess_module filename st_mtime source
+        end
       end
     | None ->
       let%lwt st_mtime = st_mtime' filename in
