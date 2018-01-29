@@ -98,8 +98,8 @@ let to_string { pattern_s; processor; options; _ } =
 
 
 let all_transpilers = FastpackTranspiler.[
-  StripFlow.transpile;
   ReactJSX.transpile;
+  StripFlow.transpile;
   Class.transpile;
   ObjectSpread.transpile;
 ]
@@ -115,21 +115,33 @@ let transpile_all =
   { process = (fun _ s -> builtin s); finalize = (fun () -> ()) }
 
 module NodeServer = struct
-  let cmd =
-    "node /Users/zindel/ocaml/fastpack/node-service/index.js"
 
   let make () =
+    let module FS = FastpackUtil.FS in
+    let fpack_binary_path =
+      (* TODO: how to handle it on Windows? *)
+      (match Sys.argv.(0).[0] with
+      | '/' | '.' -> Sys.argv.(0)
+      | _ -> FileUtil.which Sys.argv.(0))
+      |> FileUtil.readlink
+      |> FS.abs_path (Unix.getcwd ())
+    in
     let rec find_fpack_root dir =
       if dir = "/"
-      then failwith "Cannot find package root directory"
+      then Error.ie "Cannot find fastpack package directory"
       else
       if%lwt Lwt_unix.file_exists @@ FilePath.concat dir "package.json"
       then Lwt.return dir
       else find_fpack_root (FilePath.dirname dir)
     in
-    let () = Printf.printf "CMD: %s\n" Sys.argv.(0) in
-    let%lwt root = find_fpack_root @@ FilePath.dirname Sys.argv.(0) in
-    let () = Printf.printf "ROOT: %s\n" root in
+    let%lwt fpack_root =
+      find_fpack_root @@ FilePath.dirname fpack_binary_path
+    in
+    let cmd =
+      Printf.sprintf "node %s"
+      @@ List.fold_left FilePath.concat fpack_root ["node-service"; "index.js"]
+    in
+    let () = Printf.printf "CMD: %s\n" cmd in
     let (fp_in, node_out) = Unix.pipe () in
     let (node_in, fp_out) = Unix.pipe () in
     let fp_in_ch  = Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in in

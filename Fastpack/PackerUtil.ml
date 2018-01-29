@@ -5,6 +5,8 @@ module S = Ast.Statement
 module E = Ast.Expression
 module L = Ast.Literal
 
+module FS = FastpackUtil.FS
+
 let debug = Logs.debug
 
 let rec makedirs dir =
@@ -367,9 +369,6 @@ end
 exception PackError of Context.t * Error.reason
 
 
-let abs_path dir filename =
-  FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute dir filename
-
 let relative_name {Context. package_dir; _} filename =
   match Str.string_match (Str.regexp "^builtin:") filename 0 with
   | true ->
@@ -411,7 +410,7 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
            (** TODO: !!! Make sure to raise exceptions using Lwt *)
            (** TODO: !!! Handle potential dependency cycles *)
            (** TODO: !!! Modify ctx.stack when processing dependency *)
-           let filename = abs_path ctx.package_dir filename in
+           let filename = FS.abs_path ctx.package_dir filename in
            let%lwt m = read_module ctx cache filename in
            Lwt.return Module.(m.filename, m.st_mtime, m.digest)
         )
@@ -449,7 +448,7 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
     make_module (Module.make_id filename) filename 0.0 FastpackTranspiler.runtime
 
   | _ ->
-    let filename = abs_path ctx.package_dir filename in
+    let filename = FS.abs_path ctx.package_dir filename in
 
     if not (FilePath.is_subdir filename ctx.package_dir)
     then raise (PackError (ctx, CannotLeavePackageDir filename));
