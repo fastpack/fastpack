@@ -13,7 +13,7 @@ let debug = Logs.debug
 
 let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
-  if (ctx.Context.target = Target.EcmaScript6)
+  if (ctx.Context.target = Target.ESM)
   then raise (PackError (ctx, NotImplemented (
       None, "EcmaScript6 target is not supported "
             ^ "for the regular packer - use flat\n"
@@ -670,8 +670,10 @@ var __DEV__ = %s;
   let%lwt entry = process ctx graph entry in
   let%lwt _ = emit graph entry in
   let%lwt () = cache.dump () in
-  Lwt.return (Hashtbl.length graph.DependencyGraph.modules,
-              cache.loaded,
-              "Mode: development.")
+  let%lwt current_dir = Lwt_unix.getcwd () in
+  let modules = graph.DependencyGraph.modules
+    |> Hashtbl.keys_list
+    |> List.map (fun path -> String.replace ~sub:current_dir ~by:"." path)
+  in
 
-
+  Lwt.return (modules, cache.loaded, "Mode: development.")

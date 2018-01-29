@@ -13,18 +13,35 @@ let () =
         debug
         preprocess
         postprocess
+        stats
       =
-      let report (m, cache, message) =
-        let report () =
+      let report (modules, cache, message) =
+        let report_user_stats () =
           Printf.sprintf
             "Packed in %.3fs. Number of modules: %d. Cache: %s. %s\n"
             (Unix.gettimeofday () -. time)
-            m
+            (List.length modules)
             (if cache then "yes" else "no")
             message
           |> Lwt_io.write Lwt_io.stdout
         in
-          Lwt_main.run (report ())
+        let report_json_stats () =
+          let open Yojson.Basic
+          in
+          let modulePaths = modules
+            |> List.map (fun d -> `String d)
+          in
+            `Assoc [
+              ("modulesPaths", `List modulePaths)
+            ]
+            |> pretty_to_string
+            |> Lwt_io.write Lwt_io.stdout
+        in
+          Lwt_main.run Fastpack.(
+            match stats with
+              | Some Stats.JSON -> report_json_stats ()
+              | _ -> report_user_stats ()
+          )
       in
       if debug then begin
         Logs.set_level (Some Logs.Debug);
@@ -40,6 +57,7 @@ let () =
             cache = Some cache;
             preprocess = Some (List.map snd preprocess);
             postprocess = Some postprocess;
+            stats;
           }
         in
         `Ok (Fastpack.pack_main options |> report)
@@ -75,11 +93,11 @@ let () =
 
     let target_t =
       let doc = "Deployment target." in
-      let docv = "[ app | es6 | cjs ]" in
+      let docv = "[ app | esm | cjs ]" in
       let target =
         Arg.enum [
           "app", Fastpack.Target.Application;
-          "es6", Fastpack.Target.EcmaScript6;
+          "esm", Fastpack.Target.ESM;
           "cjs", Fastpack.Target.CommonJS;
         ]
       in
@@ -139,6 +157,17 @@ let () =
       Arg.(value & opt_all string [] & info ["postprocess"] ~docv ~doc)
     in
 
+    let stats_t =
+      let doc = "Command output stats" in
+      let docv = "[ json ]" in
+      let target =
+        Arg.enum [
+          "json", Fastpack.Stats.JSON;
+        ]
+      in
+      Arg.(value & opt (some target) None & info ["stats"] ~docv ~doc)
+    in
+
     Term.(ret (
         const run
         $ input_t
@@ -149,6 +178,7 @@ let () =
         $ debug_t
         $ preprocess_t
         $ postprocess_t
+        $ stats_t
     ))
   in
 

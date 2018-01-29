@@ -116,7 +116,7 @@ module.exports = {
 },
 "builtin$$COLON$$module": function(module, exports, __fastpack_require__, __fastpack_import__) {
 },
-"es6": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "path" */ "builtin$$COLON$$path");
 exports.default = $lib1.delimiter;
 },
@@ -124,10 +124,16 @@ exports.default = $lib1.delimiter;
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
 const path = __fastpack_require__(/* "path" */ "builtin$$COLON$$path");
 const module = __fastpack_require__(/* "module" */ "builtin$$COLON$$module");
-const es6 = __fastpack_require__(/* "./es6" */ "es6");
+const esm = __fastpack_require__(/* "./esm" */ "esm");
 const {delimiter} = path,
   rest = $__fpack__.omitProps(path, ["delimiter"]);
-console.log(path, module, delimiter, rest, es6);
+console.log(path, module, delimiter, rest, esm);
+// The following test makes sure that builtin transpiler strips type annotations
+// from inside JSX
+const Component = props =>  React.createElement("div", null, item =>  {
+    
+  }
+  );
 },
 
 });

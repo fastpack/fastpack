@@ -24,7 +24,7 @@ type binding_type = Collision
 
 let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
 
-  let total_modules = ref 0 in
+  let total_modules = ref [] in
 
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
@@ -274,7 +274,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
                 match ctx.target with
                 | Target.Application ->
                   ""
-                | Target.EcmaScript6 ->
+                | Target.ESM ->
                   exports
                   |> List.map
                     (fun (exported_name, internal_name, binding) ->
@@ -841,8 +841,17 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             StringSet.empty
             dynamic_deps
           in
-          total_modules := !total_modules
-                           + (Hashtbl.length graph.DependencyGraph.modules);
+          let%lwt current_dir = Lwt_unix.getcwd () in
+          let new_modules = graph.DependencyGraph.modules
+              |> Hashtbl.keys_list
+              |> List.map (fun path ->
+                  String.replace
+                    ~sub:current_dir
+                    ~by:"."
+                    path
+                )
+          in
+          total_modules := List.concat [ !total_modules; new_modules; ];
           Lwt.return_unit
   in
   let%lwt () =

@@ -90,22 +90,28 @@ const $n__builtin$$COLON$$path = { exports: {} };
 
 const $n__builtin$$COLON$$module = { exports: {} };
 
-/* es6 */
+/* esm */
 
 
-const $e__es6__default = $n__builtin$$COLON$$path.exports.delimiter;
+const $e__esm__default = $n__builtin$$COLON$$path.exports.delimiter;
 
-const $n__es6 = { exports: {default: $e__es6__default} };
+const $n__esm = { exports: {default: $e__esm__default} };
 
 /* index */
 
 const $i__index__$__fpack__ = ($n__builtin$$COLON$$__fastpack_runtime__.exports);
 const $i__index__path = ($n__builtin$$COLON$$path.exports);
 const $i__index__module = ($n__builtin$$COLON$$module.exports);
-const $i__index__es6 = ($n__es6.exports);
+const $i__index__esm = ($n__esm.exports);
 const {delimiter: $i__index__delimiter} = $i__index__path,
   $i__index__rest = $i__index__$__fpack__.omitProps($i__index__path, ["delimiter"]);
-console.log($i__index__path, $i__index__module, $i__index__delimiter, $i__index__rest, $i__index__es6);
+console.log($i__index__path, $i__index__module, $i__index__delimiter, $i__index__rest, $i__index__esm);
+// The following test makes sure that builtin transpiler strips type annotations
+// from inside JSX
+const $i__index__Component = props =>  React.createElement("div", null, item =>  {
+    
+  }
+  );
 
 const $n__index = { exports: {} };
 })()

@@ -55,4 +55,5 @@ const App = ({ components }) => (
   </div>
 );
 
-<X component={true ? <Comp1 /> : <Comp2 />}/>
+<X component={true ? <Comp1 /> : <Comp2 />}/>;
+
