@@ -57,8 +57,3 @@ const App = ({ components }) => (
 
 <X component={true ? <Comp1 /> : <Comp2 />}/>;
 
-const Component = props => (
-  <div>
-    {(item: string) => {}}
-  </div>
-);

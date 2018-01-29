@@ -128,6 +128,12 @@ const esm = __fastpack_require__(/* "./esm" */ "esm");
 const {delimiter} = path,
   rest = $__fpack__.omitProps(path, ["delimiter"]);
 console.log(path, module, delimiter, rest, esm);
+// The following test makes sure that builtin transpiler strips type annotations
+// from inside JSX
+const Component = props =>  React.createElement("div", null, item =>  {
+    
+  }
+  );
 },
 
 });

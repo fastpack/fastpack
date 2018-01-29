@@ -243,9 +243,3 @@ export {x};
 export function getIteratorFn(maybeIterable: ?any): ?() => ?Iterator<*> {
   return null;
 }
-
-const Component = props => (
-  <div>
-    {(item: string) => {}}
-  </div>
-);

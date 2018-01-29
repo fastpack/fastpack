@@ -106,6 +106,12 @@ const $i__index__esm = ($n__esm.exports);
 const {delimiter: $i__index__delimiter} = $i__index__path,
   $i__index__rest = $i__index__$__fpack__.omitProps($i__index__path, ["delimiter"]);
 console.log($i__index__path, $i__index__module, $i__index__delimiter, $i__index__rest, $i__index__esm);
+// The following test makes sure that builtin transpiler strips type annotations
+// from inside JSX
+const $i__index__Component = props =>  React.createElement("div", null, item =>  {
+    
+  }
+  );
 
 const $n__index = { exports: {} };
 })()
