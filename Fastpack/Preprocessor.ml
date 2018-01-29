@@ -99,8 +99,8 @@ let empty s =
   s, []
 
 let all_transpilers = FastpackTranspiler.[
-  StripFlow.transpile;
   ReactJSX.transpile;
+  StripFlow.transpile;
   Class.transpile;
   ObjectSpread.transpile;
 ]
