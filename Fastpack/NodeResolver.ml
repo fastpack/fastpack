@@ -28,13 +28,6 @@ type t = {
   resolve : string -> string -> string option Lwt.t;
 }
 
-let stat_option path =
-  try%lwt
-    let%lwt stat = Lwt_unix.stat path in
-    Lwt.return_some stat
-  with Unix.Unix_error _ ->
-    Lwt.return_none
-
 let make () =
 
   let path_cache = ref M.empty in
@@ -84,7 +77,7 @@ let make () =
     | Some path ->
       Lwt.return path
     | None ->
-      match%lwt stat_option path with
+      match%lwt FastpackUtil.FS.stat_option path with
       | None -> Lwt.return_none
       | Some stat ->
         let%lwt resolved =
