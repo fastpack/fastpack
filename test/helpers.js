@@ -1,4 +1,6 @@
+const fs = require('fs');
 const path = require('path');
+const { promisify } = require('util');
 const { spawn } = require('child_process');
 const fpackFile = path.join(__dirname, '..', '_build/install/default/bin/fpack');
 
@@ -62,6 +64,9 @@ const fpack = async options => {
   })
 };
 
+const readFile = promisify(fs.readFile);
+
 module.exports = {
-  fpack
+  fpack,
+  readFile
 };
