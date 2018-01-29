@@ -145,7 +145,6 @@ module NodeServer = struct
       Printf.sprintf "node %s"
       @@ List.fold_left FilePath.concat fpack_root ["node-service"; "index.js"]
     in
-    let () = Printf.printf "CMD: %s\n" cmd in
     let (fp_in, node_out) = Unix.pipe () in
     let (node_in, fp_out) = Unix.pipe () in
     fp_in_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in;

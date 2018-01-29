@@ -5,7 +5,7 @@ function handleError(e) {
   var message = e.message || e + "";
   var name = e.name || "UnknownError";
   var stack = e.stack || null;
-  return { name: name, message: message + "--" + process.cwd(), stack: stack };
+  return { name: name, message: message, stack: stack };
 }
 
 function load(module, params, source) {
@@ -17,7 +17,6 @@ function load(module, params, source) {
     query: params || {},
 
     addDependency(file) {
-      // TODO: abs path
       ret.dependencies.push(file);
     },
 
