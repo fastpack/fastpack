@@ -184,12 +184,12 @@ module Mode = struct
 end
 
 module Target = struct
-  type t = Application | EcmaScript6 | CommonJS
+  type t = Application | ESM | CommonJS
 
   let to_string (t : t) =
     match t with
     | Application -> "Application"
-    | EcmaScript6 -> "EcmaScript 6 Module"
+    | ESM -> "EcmaScript Module"
     | CommonJS -> "CommonJS Module"
 end
 

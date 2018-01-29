@@ -35,7 +35,7 @@
 - [x] FlatPacker: Support 'development', 'production', 'test' modes
 - [x] Fastpack: use temporary file when writing the bundle
 - [x] `--debug` writes to stderr (1)
-- [x] FlatPacker : `--target [ app | es6 | cjs ]` for the last export statement
+- [x] FlatPacker : `--target [ app | esm | cjs ]` for the last export statement
 - [x] FlatPacker / RegularPacker: process.env.NODE_ENV is replaced with constant
 - [x] FlatPacker / RegularPacker: set boolean `__DEV__` global based on mode
 - [x] RegularPacker: add better API for cache (will enable watch mode later on)

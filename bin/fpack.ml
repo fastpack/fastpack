@@ -75,11 +75,11 @@ let () =
 
     let target_t =
       let doc = "Deployment target." in
-      let docv = "[ app | es6 | cjs ]" in
+      let docv = "[ app | esm | cjs ]" in
       let target =
         Arg.enum [
           "app", Fastpack.Target.Application;
-          "es6", Fastpack.Target.EcmaScript6;
+          "esm", Fastpack.Target.ESM;
           "cjs", Fastpack.Target.CommonJS;
         ]
       in
