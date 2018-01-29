@@ -9,6 +9,13 @@ module Preprocessor = Preprocessor
 module RegularPacker = RegularPacker
 module FlatPacker = FlatPacker
 
+module Stats = struct
+  type t = JSON
+
+  let to_string (t: t) =
+    match t with
+    | JSON -> "json"
+end
 
 open PackerUtil
 
@@ -29,6 +36,7 @@ type options = {
   cache : Cache.strategy option;
   preprocess : Preprocessor.config list option;
   postprocess : string list option;
+  stats : Stats.t option;
 }
 
 let empty_options = {
@@ -39,6 +47,7 @@ let empty_options = {
     cache = None;
     preprocess = None;
     postprocess = None;
+    stats = None;
 }
 
 let default_options =
@@ -50,6 +59,7 @@ let default_options =
     cache = Some Normal;
     preprocess = None;
     postprocess = None;
+    stats = None;
   }
 
 let merge_options o1 o2 =
@@ -67,6 +77,7 @@ let merge_options o1 o2 =
     cache = merge o1.cache o2.cache;
     preprocess = merge o1.preprocess o2.preprocess;
     postprocess = merge o1.postprocess o2.postprocess;
+    stats = merge o1.stats o2.stats;
   }
 
 let pack ~pack_f ~mode ~target ~(preprocessor : Preprocessor.t) ~entry_filename ~package_dir channel =
