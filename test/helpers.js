@@ -1,6 +1,13 @@
+const fs = require('fs');
 const path = require('path');
+const { promisify } = require('util');
 const { spawn } = require('child_process');
 const fpackFile = path.join(__dirname, '..', '_build/install/default/bin/fpack');
+
+const removeDir = promisify(fs.rmdir);
+const removeFile = promisify(fs.unlink);
+const readFile = promisify(fs.readFile);
+const makeTempDir = promisify(fs.mkdtemp);
 
 const getArgs = (options = {}) => {
   const args = [];
@@ -34,7 +41,7 @@ const getArgs = (options = {}) => {
   return args;
 };
 
-const fpack = async options => {
+const fpack = options => {
   const proc = spawn(fpackFile, getArgs(options), {
     cwd: process.cwd()
   });
@@ -50,7 +57,7 @@ const fpack = async options => {
     err.push(data.toString());
   });
 
-  return await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     proc.on('close', () => {
       if (out.length !== 0) {
         resolve(out.join('\n'));
@@ -62,6 +69,41 @@ const fpack = async options => {
   })
 };
 
+const loadFpackStdio = async options => {
+  const bundleDir = await makeTempDir(process.cwd());
+  const bundleFile = path.join(bundleDir, 'index.js');
+  try {
+    const result = await fpack({
+      ...options,
+      output: bundleDir
+    });
+    await removeFile(bundleFile);
+    await removeDir(bundleDir);
+    return result;
+  } catch (error) {
+    await removeFile(bundleFile);
+    await removeDir(bundleDir);
+    throw error;
+  }
+};
+
+const loadFpackBundle = async options => {
+  const bundleDir = await makeTempDir(process.cwd());
+  const bundleFile = path.join(bundleDir, 'index.js');
+  await fpack({
+    ...options,
+    output: bundleDir
+  });
+  const bundle = await readFile(bundleFile, 'utf8');
+  await removeFile(bundleFile);
+  await removeDir(bundleDir);
+
+  return bundle;
+};
+
 module.exports = {
-  fpack
+  fpack,
+  loadFpackStdio,
+  loadFpackBundle,
+  readFile
 };

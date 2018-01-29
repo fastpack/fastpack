@@ -1,4 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`transpile flow inside jsx 1`] = `
+"
 (function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
@@ -20,20 +23,17 @@ function __fastpack_import__(f) {
   });
 }
 
-/* dep2 */
+/* index$$_$$1 */
 
+// @flow
+// The following test makes sure that builtin transpiler strips type annotations
+// from inside JSX
+const $i__index$$_$$1__Component = props =>  React.createElement(\\"div\\", null, item =>  {
+    
+  }
+  );
 
-const $n__dep2 = { exports: {} };
-
-/* dep1 */
-
-
-
-const $n__dep1 = { exports: {} };
-
-/* index */
-
-
-
-const $n__index = { exports: {} };
+const $n__index$$_$$1 = { exports: {} };
 })()
+"
+`;
