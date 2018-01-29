@@ -116,7 +116,11 @@ let transpile_all =
 
 module NodeServer = struct
 
-  let make () =
+  let processes = ref []
+  let fp_in_ch = ref Lwt_io.zero
+  let fp_out_ch = ref Lwt_io.null
+
+  let start () =
     let module FS = FastpackUtil.FS in
     let fpack_binary_path =
       (* TODO: how to handle it on Windows? *)
@@ -144,8 +148,8 @@ module NodeServer = struct
     let () = Printf.printf "CMD: %s\n" cmd in
     let (fp_in, node_out) = Unix.pipe () in
     let (node_in, fp_out) = Unix.pipe () in
-    let fp_in_ch  = Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in in
-    let fp_out_ch  = Lwt_io.of_unix_fd ~mode:Lwt_io.Output fp_out in
+    fp_in_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in;
+    fp_out_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Output fp_out;
     let process_none =
       Lwt_process.(
         open_process_none
@@ -155,48 +159,53 @@ module NodeServer = struct
           (shell cmd)
       )
     in
+    processes := [process_none];
+    Lwt.return_unit
 
-    let process loader options source =
-      let options =
-        options
-        |> M.bindings
-        |> List.map
-          (fun (key, value) ->
-             key,
-             match value with
-             | Boolean value -> `Bool value
-             | Number value -> `Float value
-             | String value -> `String value
-          )
-      in
-      let message =
-        `Assoc [
-          ("loader", `String loader);
-          ("params", `Assoc options);
-          ("source", `String source)
-        ]
-      in
-      let%lwt () = Lwt_io.write fp_out_ch (Yojson.to_string message ^ "\n") in
-      let%lwt line = Lwt_io.read_line fp_in_ch in
-      let open Yojson.Safe.Util in
-      let data = Yojson.Safe.from_string line in
-      let source = member "source" data |> to_string_option in
-      let dependencies =
-        member "dependencies" data
-        |> to_list
-        |> List.map to_string_option
-        |> List.filter_map (fun item -> item)
-      in
-      match source with
-      | None -> failwith "node error received"
-      | Some source -> Lwt.return (source, dependencies)
+  let process loader options source =
+    let%lwt () =
+      if (List.length !processes) = 0 then start () else Lwt.return_unit;
     in
-    Lwt.return (process, process_none)
+    let options =
+      options
+      |> M.bindings
+      |> List.map
+        (fun (key, value) ->
+           key,
+           match value with
+           | Boolean value -> `Bool value
+           | Number value -> `Float value
+           | String value -> `String value
+        )
+    in
+    let message =
+      `Assoc [
+        ("loader", `String loader);
+        ("params", `Assoc options);
+        ("source", `String source)
+      ]
+    in
+    let%lwt () = Lwt_io.write !fp_out_ch (Yojson.to_string message ^ "\n") in
+    let%lwt line = Lwt_io.read_line !fp_in_ch in
+    let open Yojson.Safe.Util in
+    let data = Yojson.Safe.from_string line in
+    let source = member "source" data |> to_string_option in
+    let dependencies =
+      member "dependencies" data
+      |> to_list
+      |> List.map to_string_option
+      |> List.filter_map (fun item -> item)
+    in
+    match source with
+    | None -> failwith "node error received"
+    | Some source -> Lwt.return (source, dependencies)
+
+  let finalize () =
+    List.iter (fun p -> p#terminate) !processes
+
 end
 
 let make configs =
-
-  let%lwt (node_server, node_process) = NodeServer.make () in
 
   let processors = ref M.empty in
 
@@ -213,7 +222,7 @@ let make configs =
             | Some _ ->
               match processor with
               | Builtin -> Some builtin
-              | Node loader -> Some (node_server loader options)
+              | Node loader -> Some (NodeServer.process loader options)
           )
       in
       processors := M.add filename p !processors;
@@ -233,11 +242,7 @@ let make configs =
     Lwt.return (source, build_dependencies)
   in
 
-  let finalize () =
-    node_process#terminate
-  in
-
-  Lwt.return { process; finalize }
+  Lwt.return { process; finalize = NodeServer.finalize }
 
 
 
