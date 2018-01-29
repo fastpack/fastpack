@@ -119,6 +119,17 @@ module NodeServer = struct
     "node /Users/zindel/ocaml/fastpack/node-service/index.js"
 
   let make () =
+    let rec find_fpack_root dir =
+      if dir = "/"
+      then failwith "Cannot find package root directory"
+      else
+      if%lwt Lwt_unix.file_exists @@ FilePath.concat dir "package.json"
+      then Lwt.return dir
+      else find_fpack_root (FilePath.dirname dir)
+    in
+    let () = Printf.printf "CMD: %s\n" Sys.argv.(0) in
+    let%lwt root = find_fpack_root @@ FilePath.dirname Sys.argv.(0) in
+    let () = Printf.printf "ROOT: %s\n" root in
     let (fp_in, node_out) = Unix.pipe () in
     let (node_in, fp_out) = Unix.pipe () in
     let fp_in_ch  = Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in in
@@ -127,7 +138,6 @@ module NodeServer = struct
       Lwt_process.(
         open_process_none
           ~env:(Unix.environment ())
-          (* ~env:(Array.append (Unix.environment ()) [|"NODE_PATH=/Users/zindel/ocaml/react-example/node_modules"|]) *)
           ~stdin:(`FD_move node_in)
           ~stdout:(`FD_move node_out)
           (shell cmd)
