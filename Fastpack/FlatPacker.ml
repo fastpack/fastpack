@@ -840,10 +840,17 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
             StringSet.empty
             dynamic_deps
           in
-          total_modules := List.concat [
-            !total_modules;
-            (Hashtbl.keys_list graph.DependencyGraph.modules);
-          ];
+          let%lwt current_dir = Lwt_unix.getcwd () in
+          let new_modules = graph.DependencyGraph.modules
+              |> Hashtbl.keys_list
+              |> List.map (fun path ->
+                  String.replace
+                    ~sub:current_dir
+                    ~by:"."
+                    path
+                )
+          in
+          total_modules := List.concat [ !total_modules; new_modules; ];
           Lwt.return_unit
   in
   let%lwt () =

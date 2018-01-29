@@ -670,7 +670,10 @@ var __DEV__ = %s;
   let%lwt entry = process ctx graph entry in
   let%lwt _ = emit graph entry in
   let%lwt () = cache.dump () in
+  let%lwt current_dir = Lwt_unix.getcwd () in
+  let modules = graph.DependencyGraph.modules
+    |> Hashtbl.keys_list
+    |> List.map (fun path -> String.replace ~sub:current_dir ~by:"." path)
+  in
 
-  Lwt.return (Hashtbl.keys_list graph.DependencyGraph.modules,
-              cache.loaded,
-              "Mode: development.")
+  Lwt.return (modules, cache.loaded, "Mode: development.")

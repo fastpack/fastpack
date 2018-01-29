@@ -1,3 +1,5 @@
+// @flow
+
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -12,8 +14,8 @@ const fpackFile = path.join(process.cwd(), '_build/install/default/bin/fpack');
 
 (async () => {
   const dirs = await readdir(testRoot);
-  const passed = [];
-  const failed = [];
+  let passed = [];
+  let failed = [];
 
   for (const name of dirs) {
     const testDir = path.join(testRoot, name);
@@ -26,8 +28,18 @@ const fpackFile = path.join(process.cwd(), '_build/install/default/bin/fpack');
       cwd: testDir
     });
 
+    const result = [];
+
     const handleData = data => {
-      const testOut = data.toString();
+      result.push(data.toString());
+    };
+
+    proc.stdout.on('data', handleData);
+
+    proc.stderr.on('data', handleData);
+
+    await new Promise(resolve => proc.on('close', () => {
+      const testOut = result.join('\n\n');
       if (testExp === testOut) {
         passed.push(name);
         console.info(`Test '${name}' is passed`);
@@ -36,13 +48,8 @@ const fpackFile = path.join(process.cwd(), '_build/install/default/bin/fpack');
         failed.push(name);
         console.error(`Test '${name}' is not passed`);
       }
-    };
-
-    proc.stdout.on('data', handleData);
-
-    proc.stderr.on('data', handleData);
-
-    await new Promise(resolve => proc.on('close', resolve));
+      resolve()
+    }));
   }
 
   console.info(`Passed ${passed.length} tests. Failed ${failed.length} tests.`);
