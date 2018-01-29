@@ -1,8 +1,11 @@
+const path = require('path');
+module.paths.unshift(path.join(process.cwd(), 'node_modules'));
+
 function handleError(e) {
   var message = e.message || e + "";
   var name = e.name || "UnknownError";
   var stack = e.stack || null;
-  return { name: name, message: message, stack: stack };
+  return { name: name, message: message + "--" + process.cwd(), stack: stack };
 }
 
 function load(module, params, source) {
@@ -78,10 +81,6 @@ stdin.on("data", function(data) {
       write({ error: handleError(e), source: null, dependencies: [] });
     }
   }
-});
-
-stdin.on("end", function() {
-  console.log("end");
 });
 
 function loop() {

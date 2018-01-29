@@ -11,6 +11,7 @@ module Parser = FastpackUtil.Parser
 module Scope = FastpackUtil.Scope
 module Visit = FastpackUtil.Visit
 module UTF8 = FastpackUtil.UTF8
+module FS = FastpackUtil.FS
 
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
@@ -84,7 +85,7 @@ let pack ?(cache=Cache.fake) (ctx : Context.t) channel =
         let filename =
           if Str.string_match (Str.regexp "^builtin:") filename 0
           then filename
-          else abs_path ctx.package_dir filename
+          else FS.abs_path ctx.package_dir filename
         in
         resolved_requests := DM.add req filename !resolved_requests
       in

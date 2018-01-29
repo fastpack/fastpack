@@ -17,6 +17,7 @@ type process_f = string -> string * string list
 
 type t = {
   process : string -> string -> (string * string list) Lwt.t;
+  finalize : unit -> unit;
 }
 
 let config_re = Re_posix.compile_pat "^([^:]+)(:([a-zA-Z_][^?]+)(\\?(.*))?)?$"
@@ -95,8 +96,6 @@ let to_string { pattern_s; processor; options; _ } =
     processor
     (if options <> "" then "?" ^ options else "")
 
-let empty s =
-  s, []
 
 let all_transpilers = FastpackTranspiler.[
   ReactJSX.transpile;
@@ -109,8 +108,102 @@ let builtin source =
   (* TODO: handle TranspilerError *)
   Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
 
-let node _s =
-  failwith "Node preprocessor is not implemented"
+let empty =
+  { process = (fun _ s -> Lwt.return (s, [])); finalize = (fun () -> ())}
+
+let transpile_all =
+  { process = (fun _ s -> builtin s); finalize = (fun () -> ()) }
+
+module NodeServer = struct
+
+  let processes = ref []
+  let fp_in_ch = ref Lwt_io.zero
+  let fp_out_ch = ref Lwt_io.null
+
+  let start () =
+    let module FS = FastpackUtil.FS in
+    let fpack_binary_path =
+      (* TODO: how to handle it on Windows? *)
+      (match Sys.argv.(0).[0] with
+      | '/' | '.' -> Sys.argv.(0)
+      | _ -> FileUtil.which Sys.argv.(0))
+      |> FileUtil.readlink
+      |> FS.abs_path (Unix.getcwd ())
+    in
+    let rec find_fpack_root dir =
+      if dir = "/"
+      then Error.ie "Cannot find fastpack package directory"
+      else
+      if%lwt Lwt_unix.file_exists @@ FilePath.concat dir "package.json"
+      then Lwt.return dir
+      else find_fpack_root (FilePath.dirname dir)
+    in
+    let%lwt fpack_root =
+      find_fpack_root @@ FilePath.dirname fpack_binary_path
+    in
+    let cmd =
+      Printf.sprintf "node %s"
+      @@ List.fold_left FilePath.concat fpack_root ["node-service"; "index.js"]
+    in
+    let () = Printf.printf "CMD: %s\n" cmd in
+    let (fp_in, node_out) = Unix.pipe () in
+    let (node_in, fp_out) = Unix.pipe () in
+    fp_in_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in;
+    fp_out_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Output fp_out;
+    let process_none =
+      Lwt_process.(
+        open_process_none
+          ~env:(Unix.environment ())
+          ~stdin:(`FD_move node_in)
+          ~stdout:(`FD_move node_out)
+          (shell cmd)
+      )
+    in
+    processes := [process_none];
+    Lwt.return_unit
+
+  let process loader options source =
+    let%lwt () =
+      if (List.length !processes) = 0 then start () else Lwt.return_unit;
+    in
+    let options =
+      options
+      |> M.bindings
+      |> List.map
+        (fun (key, value) ->
+           key,
+           match value with
+           | Boolean value -> `Bool value
+           | Number value -> `Float value
+           | String value -> `String value
+        )
+    in
+    let message =
+      `Assoc [
+        ("loader", `String loader);
+        ("params", `Assoc options);
+        ("source", `String source)
+      ]
+    in
+    let%lwt () = Lwt_io.write !fp_out_ch (Yojson.to_string message ^ "\n") in
+    let%lwt line = Lwt_io.read_line !fp_in_ch in
+    let open Yojson.Safe.Util in
+    let data = Yojson.Safe.from_string line in
+    let source = member "source" data |> to_string_option in
+    let dependencies =
+      member "dependencies" data
+      |> to_list
+      |> List.map to_string_option
+      |> List.filter_map (fun item -> item)
+    in
+    match source with
+    | None -> failwith "node error received"
+    | Some source -> Lwt.return (source, dependencies)
+
+  let finalize () =
+    List.iter (fun p -> p#terminate) !processes
+
+end
 
 let make configs =
 
@@ -123,13 +216,13 @@ let make configs =
       let p =
         configs
         |> List.filter_map
-          (fun { pattern; processor; _ } ->
+          (fun { pattern; processor; options; _ } ->
             match Re.exec_opt pattern filename with
             | None -> None
             | Some _ ->
               match processor with
               | Builtin -> Some builtin
-              | Node _ -> failwith "Cannot build Node processor"
+              | Node loader -> Some (NodeServer.process loader options)
           )
       in
       processors := M.add filename p !processors;
@@ -149,7 +242,7 @@ let make configs =
     Lwt.return (source, build_dependencies)
   in
 
-  { process }
+  Lwt.return { process; finalize = NodeServer.finalize }
 
 
 

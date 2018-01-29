@@ -49,70 +49,70 @@ let pack_regular_prod =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.Application
-    ~preprocessor:(Fastpack.Preprocessor.make [])
+    ~preprocessor:Fastpack.Preprocessor.empty
     Fastpack.RegularPacker.pack
 
 let pack_regular_dev =
   pack
     ~mode:Fastpack.Mode.Development
     ~target:Fastpack.Target.Application
-    ~preprocessor:(Fastpack.Preprocessor.make [])
+    ~preprocessor:Fastpack.Preprocessor.empty
     Fastpack.RegularPacker.pack
 
 let pack_flat_prod =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.Application
-    ~preprocessor:(Fastpack.Preprocessor.make [])
+    ~preprocessor:Fastpack.Preprocessor.empty
     (Fastpack.FlatPacker.pack)
 
 let pack_flat_dev =
   pack
     ~mode:Fastpack.Mode.Development
     ~target:Fastpack.Target.Application
-    ~preprocessor:(Fastpack.Preprocessor.make [])
+    ~preprocessor:Fastpack.Preprocessor.empty
     (Fastpack.FlatPacker.pack)
 
 let pack_regular_cjs =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.CommonJS
-    ~preprocessor:(Fastpack.Preprocessor.make [])
+    ~preprocessor:Fastpack.Preprocessor.empty
     Fastpack.RegularPacker.pack
 
 let pack_regular_esm =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.ESM
-    ~preprocessor:(Fastpack.Preprocessor.make [])
+    ~preprocessor:Fastpack.Preprocessor.empty
     Fastpack.RegularPacker.pack
 
 let pack_flat_esm =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.ESM
-    ~preprocessor:(Fastpack.Preprocessor.make [])
+    ~preprocessor:Fastpack.Preprocessor.empty
     Fastpack.FlatPacker.pack
 
 let pack_flat_cjs =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.CommonJS
-    ~preprocessor:(Fastpack.Preprocessor.make [])
+    ~preprocessor:Fastpack.Preprocessor.empty
     Fastpack.FlatPacker.pack
 
 let pack_transpile_regular_dev =
   pack
     ~mode:Fastpack.Mode.Development
     ~target:Fastpack.Target.Application
-    ~preprocessor:Fastpack.Preprocessor.(make [ of_string "^." ])
+    ~preprocessor:Fastpack.Preprocessor.transpile_all
     Fastpack.RegularPacker.pack
 
 let pack_transpile_flat_prod =
   pack
     ~mode:Fastpack.Mode.Production
     ~target:Fastpack.Target.Application
-    ~preprocessor:Fastpack.Preprocessor.(make [ of_string "^." ])
+    ~preprocessor:Fastpack.Preprocessor.transpile_all
     Fastpack.FlatPacker.pack
 
 let tests = [

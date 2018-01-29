@@ -113,7 +113,7 @@ let prepare_and_pack cl_options =
   let%lwt current_dir = Lwt_unix.getcwd () in
   let start_dir =
     match cl_options.input with
-    | Some filename -> FilePath.dirname @@ abs_path current_dir filename
+    | Some filename -> FilePath.dirname @@ FS.abs_path current_dir filename
     | None -> current_dir
   in
   let%lwt package_dir =
@@ -132,7 +132,7 @@ let prepare_and_pack cl_options =
     match cl_options.output with
     | None -> cl_options
     | Some path ->
-      { cl_options with output = Some (abs_path current_dir path)}
+      { cl_options with output = Some (FS.abs_path current_dir path)}
   in
   let options =
     merge_options
@@ -150,12 +150,12 @@ let prepare_and_pack cl_options =
   (* run pack with parameters calculated *)
   match options.input, options.output with
   | Some input, Some output ->
-    let entry_filename = abs_path package_dir input in
+    let entry_filename = FS.abs_path package_dir input in
     let output_file =
-      abs_path package_dir @@ FilePath.concat output "index.js"
+      FS.abs_path package_dir @@ FilePath.concat output "index.js"
     in
     let%lwt () = makedirs @@ FilePath.dirname output_file in
-    let preprocessor =
+    let%lwt preprocessor =
       match options.preprocess with
       | None -> Preprocessor.make []
       | Some preprocess -> Preprocessor.make preprocess
@@ -245,8 +245,9 @@ let prepare_and_pack cl_options =
         Lwt.return ret
       )
       (fun () ->
+         let () = preprocessor.Preprocessor.finalize () in
          if%lwt Lwt_unix.file_exists temp_file
-         then Lwt_unix.unlink temp_file
+         then Lwt_unix.unlink temp_file;
       )
 
   | _ ->

@@ -2,8 +2,10 @@
 
 ### MVP
 
-
-- [ ] Report execution time, number of modules & cache usage
+- [ ] Preprocess: handle errors
+- [ ] Preprocess: handle all TODO items
+- [ ] Fastpack: cache file name account for absolute path to the entry point and
+      all preprocessors
 - [ ] RegularPacker: handle json require
 - [ ] Documentation / Domain (1)
 
@@ -17,6 +19,7 @@
 - [ ] FastpackTranspiler: SpreadChild (2, in case we support something
   else than React)
 
+- [x] Report execution time, number of modules & cache usage
 - [x] `--postprocess` option
 - [x] UI/UX (error reporting, config) [zindel] (1)
 - [x] FastpackTranspiler: jsx [andeypopp]
