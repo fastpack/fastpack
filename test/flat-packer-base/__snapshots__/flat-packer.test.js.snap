@@ -51,7 +51,10 @@ if ($n__dep$$_$$cjs$$_$$exports.exports.a < $n__dep$$_$$cjs$$_$$exports.exports.
   console.log($n__dep$$_$$cjs$$_$$exports.exports);
 }
 
-const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {} };
+const $e__index$$_$$cjs$$_$$in$$_$$esm__default = 'default';
+const $e__index$$_$$cjs$$_$$in$$_$$esm__named = 'named';
+
+const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$$_$$in$$_$$esm__default, named: $e__index$$_$$cjs$$_$$in$$_$$esm__named} };
 })()
 "
 `;
@@ -107,7 +110,10 @@ if ($n__dep$$_$$cjs$$_$$exports.exports.a < $n__dep$$_$$cjs$$_$$exports.exports.
   console.log($n__dep$$_$$cjs$$_$$exports.exports);
 }
 
-const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {} };
+const $e__index$$_$$cjs$$_$$in$$_$$esm__default = 'default';
+const $e__index$$_$$cjs$$_$$in$$_$$esm__named = 'named';
+
+const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$$_$$in$$_$$esm__default, named: $e__index$$_$$cjs$$_$$in$$_$$esm__named} };
 module.exports = $n__index$$_$$cjs$$_$$in$$_$$esm.exports;
 })()
 "
@@ -164,7 +170,12 @@ if ($n__dep$$_$$cjs$$_$$exports.exports.a < $n__dep$$_$$cjs$$_$$exports.exports.
   console.log($n__dep$$_$$cjs$$_$$exports.exports);
 }
 
-const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {} };
+const $e__index$$_$$cjs$$_$$in$$_$$esm__default = 'default';
+const $e__index$$_$$cjs$$_$$in$$_$$esm__named = 'named';
+
+const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$$_$$in$$_$$esm__default, named: $e__index$$_$$cjs$$_$$in$$_$$esm__named} };
+export default $e__index$$_$$cjs$$_$$in$$_$$esm__default;
+export {$e__index$$_$$cjs$$_$$in$$_$$esm__named as named};
 })()
 "
 `;
@@ -210,7 +221,7 @@ const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$def
 
 /* index$$_$$esm$$_$$in$$_$$cjs */
 
-const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
+let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
 const { a: $i__index$$_$$esm$$_$$in$$_$$cjs__a, b: $i__index$$_$$esm$$_$$in$$_$$cjs__b } = ($n__dep$$_$$esm$$_$$named.exports);
 const $i__index$$_$$esm$$_$$in$$_$$cjs__defaultPair = ($n__dep$$_$$esm$$_$$default.exports);
 
@@ -224,7 +235,7 @@ if ($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair.a < $i__index$$_$$esm$$_$$in$$_$
   console.log($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair);
 }
 
-const $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {} };
+$n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
 })()
 "
 `;
@@ -270,7 +281,7 @@ const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$def
 
 /* index$$_$$esm$$_$$in$$_$$cjs */
 
-const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
+let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
 const { a: $i__index$$_$$esm$$_$$in$$_$$cjs__a, b: $i__index$$_$$esm$$_$$in$$_$$cjs__b } = ($n__dep$$_$$esm$$_$$named.exports);
 const $i__index$$_$$esm$$_$$in$$_$$cjs__defaultPair = ($n__dep$$_$$esm$$_$$default.exports);
 
@@ -284,7 +295,7 @@ if ($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair.a < $i__index$$_$$esm$$_$$in$$_$
   console.log($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair);
 }
 
-const $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {} };
+$n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
 module.exports = $n__index$$_$$esm$$_$$in$$_$$cjs.exports;
 })()
 "
@@ -331,7 +342,7 @@ const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$def
 
 /* index$$_$$esm$$_$$in$$_$$cjs */
 
-const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
+let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
 const { a: $i__index$$_$$esm$$_$$in$$_$$cjs__a, b: $i__index$$_$$esm$$_$$in$$_$$cjs__b } = ($n__dep$$_$$esm$$_$$named.exports);
 const $i__index$$_$$esm$$_$$in$$_$$cjs__defaultPair = ($n__dep$$_$$esm$$_$$default.exports);
 
@@ -345,7 +356,7 @@ if ($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair.a < $i__index$$_$$esm$$_$$in$$_$
   console.log($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair);
 }
 
-const $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {} };
+$n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
 })()
 "
 `;
@@ -387,7 +398,7 @@ let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.expor
 
 /* index$$_$$cjs */
 
-const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
+let $n__index$$_$$cjs = { exports: {}};const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
 const { a: $i__index$$_$$cjs__a, b: $i__index$$_$$cjs__b } = ($n__dep$$_$$cjs$$_$$exports.exports);
 const $i__index$$_$$cjs__modulePair = ($n__dep$$_$$cjs$$_$$module.exports);
 
@@ -401,7 +412,7 @@ if ($i__index$$_$$cjs__exportsPair.a < $i__index$$_$$cjs__exportsPair.b) {
   console.log($i__index$$_$$cjs__exportsPair);
 }
 
-const $n__index$$_$$cjs = { exports: {} };
+$n__index$$_$$cjs.exports.named = 'named';
 })()
 "
 `;
@@ -443,7 +454,7 @@ let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.expor
 
 /* index$$_$$cjs */
 
-const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
+let $n__index$$_$$cjs = { exports: {}};const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
 const { a: $i__index$$_$$cjs__a, b: $i__index$$_$$cjs__b } = ($n__dep$$_$$cjs$$_$$exports.exports);
 const $i__index$$_$$cjs__modulePair = ($n__dep$$_$$cjs$$_$$module.exports);
 
@@ -457,7 +468,7 @@ if ($i__index$$_$$cjs__exportsPair.a < $i__index$$_$$cjs__exportsPair.b) {
   console.log($i__index$$_$$cjs__exportsPair);
 }
 
-const $n__index$$_$$cjs = { exports: {} };
+$n__index$$_$$cjs.exports.named = 'named';
 module.exports = $n__index$$_$$cjs.exports;
 })()
 "
@@ -500,7 +511,7 @@ let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.expor
 
 /* index$$_$$cjs */
 
-const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
+let $n__index$$_$$cjs = { exports: {}};const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
 const { a: $i__index$$_$$cjs__a, b: $i__index$$_$$cjs__b } = ($n__dep$$_$$cjs$$_$$exports.exports);
 const $i__index$$_$$cjs__modulePair = ($n__dep$$_$$cjs$$_$$module.exports);
 
@@ -514,7 +525,7 @@ if ($i__index$$_$$cjs__exportsPair.a < $i__index$$_$$cjs__exportsPair.b) {
   console.log($i__index$$_$$cjs__exportsPair);
 }
 
-const $n__index$$_$$cjs = { exports: {} };
+$n__index$$_$$cjs.exports.named = 'named';
 })()
 "
 `;
@@ -574,7 +585,10 @@ if ($n__dep$$_$$esm$$_$$named.exports.a < $n__dep$$_$$esm$$_$$named.exports.b) {
   console.log($n__dep$$_$$esm$$_$$named.exports);
 }
 
-const $n__index$$_$$esm = { exports: {} };
+const $e__index$$_$$esm__default = 'default';
+const $e__index$$_$$esm__named = 'named';
+
+const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named: $e__index$$_$$esm__named} };
 })()
 "
 `;
@@ -634,7 +648,10 @@ if ($n__dep$$_$$esm$$_$$named.exports.a < $n__dep$$_$$esm$$_$$named.exports.b) {
   console.log($n__dep$$_$$esm$$_$$named.exports);
 }
 
-const $n__index$$_$$esm = { exports: {} };
+const $e__index$$_$$esm__default = 'default';
+const $e__index$$_$$esm__named = 'named';
+
+const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named: $e__index$$_$$esm__named} };
 module.exports = $n__index$$_$$esm.exports;
 })()
 "
@@ -695,7 +712,12 @@ if ($n__dep$$_$$esm$$_$$named.exports.a < $n__dep$$_$$esm$$_$$named.exports.b) {
   console.log($n__dep$$_$$esm$$_$$named.exports);
 }
 
-const $n__index$$_$$esm = { exports: {} };
+const $e__index$$_$$esm__default = 'default';
+const $e__index$$_$$esm__named = 'named';
+
+const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named: $e__index$$_$$esm__named} };
+export default $e__index$$_$$esm__default;
+export {$e__index$$_$$esm__named as named};
 })()
 "
 `;
@@ -730,7 +752,10 @@ if ($i__index$$_$$single__a < 2) {
   console.log($i__index$$_$$single__a);
 }
 
-const $n__index$$_$$single = { exports: {} };
+const $e__index$$_$$single__default = 'default';
+const $e__index$$_$$single__named = 'named';
+
+const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default, named: $e__index$$_$$single__named} };
 })()
 "
 `;
@@ -765,7 +790,10 @@ if ($i__index$$_$$single__a < 2) {
   console.log($i__index$$_$$single__a);
 }
 
-const $n__index$$_$$single = { exports: {} };
+const $e__index$$_$$single__default = 'default';
+const $e__index$$_$$single__named = 'named';
+
+const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default, named: $e__index$$_$$single__named} };
 module.exports = $n__index$$_$$single.exports;
 })()
 "
@@ -801,7 +829,12 @@ if ($i__index$$_$$single__a < 2) {
   console.log($i__index$$_$$single__a);
 }
 
-const $n__index$$_$$single = { exports: {} };
+const $e__index$$_$$single__default = 'default';
+const $e__index$$_$$single__named = 'named';
+
+const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default, named: $e__index$$_$$single__named} };
+export default $e__index$$_$$single__default;
+export {$e__index$$_$$single__named as named};
 })()
 "
 `;

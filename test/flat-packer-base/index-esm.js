@@ -11,3 +11,6 @@ if (defaultPair.a < defaultPair.b) {
 if (namedPair.a < namedPair.b) {
   console.log(namedPair);
 }
+
+export default 'default';
+export const named = 'named';
