@@ -1,4 +1,4 @@
-const { loadFpackBundle, readFile } = require('../helpers.js');
+const { loadFpackBundle } = require('../helpers.js');
 
 process.chdir(__dirname);
 
