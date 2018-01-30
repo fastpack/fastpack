@@ -674,6 +674,7 @@ var __DEV__ = %s;
     graph
     |> DependencyGraph.get_modules
     |> List.map (fun path -> String.replace ~sub:ctx.package_dir ~by:"." path)
+    |> List.sort compare
   in
 
   Lwt.return (modules, cache.loaded, "Mode: development.")

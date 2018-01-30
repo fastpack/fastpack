@@ -882,4 +882,4 @@ function __fastpack_import__(f) {
   in
   let%lwt () = pack ctx MDM.empty in
   let%lwt () = Lwt_io.write channel "})()\n" in
-  Lwt.return (!total_modules, cache.loaded, "Mode: production")
+  Lwt.return (List.sort compare !total_modules, cache.loaded, "Mode: production")
