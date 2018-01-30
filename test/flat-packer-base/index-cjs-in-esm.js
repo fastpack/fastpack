@@ -11,3 +11,6 @@ if (modulePair.a < modulePair.b) {
 if (exportsPair.a < exportsPair.b) {
   console.log(exportsPair);
 }
+
+export default 'default';
+export const named = 'named';

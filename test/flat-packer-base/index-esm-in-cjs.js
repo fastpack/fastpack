@@ -11,3 +11,5 @@ if (defaultPair.a < defaultPair.b) {
 if (namedPair.a < namedPair.b) {
   console.log(namedPair);
 }
+
+exports.named = 'named';
