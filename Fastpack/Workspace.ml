@@ -59,68 +59,73 @@ let print_patches patches =
   patches
 
 let write out w ctx =
-  let fold_patches patches =
-    (* The idea behind this key function is:
-     * - patch with lower start position goes first
-     * - then (same start positions): zero-length patches
-     * - then (same start positions): ordered by length in descending order
-     * - then (same length): ordered by appearance in the patch list
-     * *)
-    let key {offset_start; offset_end; order; _} =
-      let len = offset_end - offset_start in
-      (offset_start, len <> 0, -len, order)
+  match w.patches with
+  | [] ->
+    let%lwt () = Lwt_io.write out w.value in
+    Lwt.return w.value
+  | _ ->
+    let fold_patches patches =
+      (* The idea behind this key function is:
+       * - patch with lower start position goes first
+       * - then (same start positions): zero-length patches
+       * - then (same start positions): ordered by length in descending order
+       * - then (same length): ordered by appearance in the patch list
+       * *)
+      let key {offset_start; offset_end; order; _} =
+        let len = offset_end - offset_start in
+        (offset_start, len <> 0, -len, order)
+      in
+      let _, folded =
+        List.fold_left
+          (fun (last, patches) patch ->
+            let zero_patch = (patch.offset_end - patch.offset_start) = 0 in
+            if zero_patch
+              then (last, patch::patches)
+              else begin
+                match last with
+                | None  -> (Some patch, patch :: patches)
+                | Some last ->
+                  match (patch.offset_start < last.offset_end,
+                         patch.offset_end <= last.offset_end) with
+                  | true, true -> (Some last, patches)
+                  | true, false -> Error.ie "Unexpected patch combination"
+                  | false, _ -> (Some patch, patch :: patches)
+              end
+          )
+          (None, [])
+        @@ List.sort (fun p1 p2 -> compare (key p1) (key p2)) patches
+      in
+      List.rev folded
     in
-    let _, folded =
-      List.fold_left
-        (fun (last, patches) patch ->
-          let zero_patch = (patch.offset_end - patch.offset_start) = 0 in
-          if zero_patch
-            then (last, patch::patches)
-            else begin
-              match last with
-              | None  -> (Some patch, patch :: patches)
-              | Some last ->
-                match (patch.offset_start < last.offset_end,
-                       patch.offset_end <= last.offset_end) with
-                | true, true -> (Some last, patches)
-                | true, false -> Error.ie "Unexpected patch combination"
-                | false, _ -> (Some patch, patch :: patches)
-            end
-        )
-        (None, [])
-      @@ List.sort (fun p1 p2 -> compare (key p1) (key p2)) patches
-    in
-    List.rev folded
-  in
 
-  let patches = fold_patches w.patches in
-  (* let () = print_endline w.value in *)
-  (* let () = print_endline "----" in *)
-  (* let _ = print_patches patches in *)
-  (* let () = print_endline "----" in *)
-  let rec write_patch b_offset u_offset value patches content =
-    match patches with
-    | [] ->
-      let u_length = UTF8.length value - u_offset in
-      let chunk = UTF8.sub value u_offset u_length in
-      let%lwt () = Lwt_io.write_from_string_exactly out value b_offset (String.length chunk) in
-      Lwt.return (content ^ chunk)
-    | patch :: patches ->
-      let u_length = patch.offset_start - u_offset in
-      let chunk = UTF8.sub value u_offset u_length in
-      let b_length = String.length chunk in
-      let%lwt () = Lwt_io.write_from_string_exactly out value b_offset b_length in
-      let patch_content = patch.patch ctx in
-      let%lwt () = Lwt_io.write out patch_content in
-      let patched_chunk = UTF8.sub value patch.offset_start (patch.offset_end - patch.offset_start) in
-      write_patch
-        (b_offset + b_length + String.length patched_chunk)
-        patch.offset_end
-        value
-        patches
-        (content ^ chunk ^ patch_content)
-  in
-  write_patch 0 0 w.value patches ""
+    let patches = fold_patches w.patches in
+    (* let () = print_endline w.value in *)
+    (* let () = print_endline "----" in *)
+    (* let _ = print_patches patches in *)
+    (* let () = print_endline "----" in *)
+    let rec write_patch b_offset u_offset value patches content =
+      match patches with
+      | [] ->
+        let u_length = UTF8.length value - u_offset in
+        let chunk = UTF8.sub value u_offset u_length in
+        let%lwt () = Lwt_io.write_from_string_exactly out value b_offset (String.length chunk) in
+        Lwt.return (content ^ chunk)
+      | patch :: patches ->
+        let u_length = patch.offset_start - u_offset in
+        let chunk = UTF8.sub value u_offset u_length in
+        let b_length = String.length chunk in
+        let%lwt () = Lwt_io.write_from_string_exactly out value b_offset b_length in
+        let patch_content = patch.patch ctx in
+        let%lwt () = Lwt_io.write out patch_content in
+        let patched_chunk = UTF8.sub value patch.offset_start (patch.offset_end - patch.offset_start) in
+        write_patch
+          (b_offset + b_length + String.length patched_chunk)
+          patch.offset_end
+          value
+          patches
+          (content ^ chunk ^ patch_content)
+    in
+    write_patch 0 0 w.value patches ""
 
 let to_string w ctx =
   let patches = List.rev w.patches in
