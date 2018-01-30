@@ -11,13 +11,13 @@ let iter_modules iter graph =
 let get_modules graph =
   Hashtbl.keys_list graph.modules
 
-let empty ?(size=2000) () = {
+let empty ?(size=5000) () = {
   modules = Hashtbl.create size;
   dependencies = Hashtbl.create (size * 20);
 }
 
 let lookup table key =
-  try Some (Hashtbl.find table key) with Not_found -> None
+  Hashtbl.find_opt table key
 
 let lookup_module graph filename =
   lookup graph.modules filename
@@ -26,6 +26,8 @@ let lookup_dependencies graph (m : Module.t) =
   Hashtbl.find_all graph.dependencies m.filename
 
 let add_module graph (m : Module.t) =
+  if Hashtbl.mem graph.modules m.filename
+  then Hashtbl.remove graph.modules m.filename;
   Hashtbl.add graph.modules m.filename m
 
 let add_dependency graph (m : Module.t) (dep : (Dependency.t * Module.t option)) =
