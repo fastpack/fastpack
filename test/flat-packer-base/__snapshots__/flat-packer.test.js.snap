@@ -1,8 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`flat packer with cjs in esm: target: app 1`] = `
-"
-(function() {
+"(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -60,9 +59,7 @@ const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$
 `;
 
 exports[`flat packer with cjs in esm: target: cjs 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -115,14 +112,11 @@ const $e__index$$_$$cjs$$_$$in$$_$$esm__named = 'named';
 
 const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$$_$$in$$_$$esm__default, named: $e__index$$_$$cjs$$_$$in$$_$$esm__named} };
 module.exports = $n__index$$_$$cjs$$_$$in$$_$$esm.exports;
-})()
 "
 `;
 
 exports[`flat packer with cjs in esm: target: esm 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -176,13 +170,11 @@ const $e__index$$_$$cjs$$_$$in$$_$$esm__named = 'named';
 const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$$_$$in$$_$$esm__default, named: $e__index$$_$$cjs$$_$$in$$_$$esm__named} };
 export default $e__index$$_$$cjs$$_$$in$$_$$esm__default;
 export {$e__index$$_$$cjs$$_$$in$$_$$esm__named as named};
-})()
 "
 `;
 
 exports[`flat packer with esm in cjs: target: app 1`] = `
-"
-(function() {
+"(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -241,9 +233,7 @@ $n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
 `;
 
 exports[`flat packer with esm in cjs: target: cjs 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -297,14 +287,11 @@ if ($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair.a < $i__index$$_$$esm$$_$$in$$_$
 
 $n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
 module.exports = $n__index$$_$$esm$$_$$in$$_$$cjs.exports;
-})()
 "
 `;
 
 exports[`flat packer with esm in cjs: target: esm 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -357,13 +344,11 @@ if ($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair.a < $i__index$$_$$esm$$_$$in$$_$
 }
 
 $n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
-})()
 "
 `;
 
 exports[`flat packer with only cjs: target: app 1`] = `
-"
-(function() {
+"(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -418,9 +403,7 @@ $n__index$$_$$cjs.exports.named = 'named';
 `;
 
 exports[`flat packer with only cjs: target: cjs 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -470,14 +453,11 @@ if ($i__index$$_$$cjs__exportsPair.a < $i__index$$_$$cjs__exportsPair.b) {
 
 $n__index$$_$$cjs.exports.named = 'named';
 module.exports = $n__index$$_$$cjs.exports;
-})()
 "
 `;
 
 exports[`flat packer with only cjs: target: esm 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -526,13 +506,11 @@ if ($i__index$$_$$cjs__exportsPair.a < $i__index$$_$$cjs__exportsPair.b) {
 }
 
 $n__index$$_$$cjs.exports.named = 'named';
-})()
 "
 `;
 
 exports[`flat packer with only esm: target: app 1`] = `
-"
-(function() {
+"(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -594,9 +572,7 @@ const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named
 `;
 
 exports[`flat packer with only esm: target: cjs 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -653,14 +629,11 @@ const $e__index$$_$$esm__named = 'named';
 
 const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named: $e__index$$_$$esm__named} };
 module.exports = $n__index$$_$$esm.exports;
-})()
 "
 `;
 
 exports[`flat packer with only esm: target: esm 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -718,13 +691,11 @@ const $e__index$$_$$esm__named = 'named';
 const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named: $e__index$$_$$esm__named} };
 export default $e__index$$_$$esm__default;
 export {$e__index$$_$$esm__named as named};
-})()
 "
 `;
 
 exports[`flat packer with single js: target: app 1`] = `
-"
-(function() {
+"(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -761,9 +732,7 @@ const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default,
 `;
 
 exports[`flat packer with single js: target: cjs 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -795,14 +764,11 @@ const $e__index$$_$$single__named = 'named';
 
 const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default, named: $e__index$$_$$single__named} };
 module.exports = $n__index$$_$$single.exports;
-})()
 "
 `;
 
 exports[`flat packer with single js: target: esm 1`] = `
-"
-(function() {
-var __DEV__ = false;
+"var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
@@ -835,6 +801,5 @@ const $e__index$$_$$single__named = 'named';
 const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default, named: $e__index$$_$$single__named} };
 export default $e__index$$_$$single__default;
 export {$e__index$$_$$single__named as named};
-})()
 "
 `;
