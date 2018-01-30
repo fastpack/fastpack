@@ -19,8 +19,14 @@ test: build-dev
 	@#@esy x fpack_test $(FPACK_TEST_PATH)
 	@_build/default/bin/fpack_test.exe $(FPACK_TEST_PATH)
 
+setup-jest:
+	cd test && yarn
+
+clean-jest:
+	cd test && rm -rf node_modules
+
 test-jest: build-dev
-	cd test; yarn; yarn jest
+	cd test && yarn jest
 
 fetch:
 	git submodule init
@@ -56,8 +62,8 @@ clean-examples:
 	@rm -rf examples/react-app-simple/node_modules
 
 
-bootstrap: fetch install build build-examples
+bootstrap: fetch install build build-examples setup-jest
 
-clean: clean-examples
+clean: clean-examples clean-jest
 	@rm -rf _build/ node_modules/
 
