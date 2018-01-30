@@ -1167,7 +1167,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
       ~sep:", "
       ~emit_newline_after:false
       (Scope.of_function ctx.parents f)
-    |> emit_if as_arrow (emit " => ")
+    |> emit_if as_arrow (emit " =>")
     |> emit_if_some emit_type_annotation returnType
     |> emit_space
     |> (match body with

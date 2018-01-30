@@ -28,8 +28,8 @@ function F(a, b, c)/* SCOPE: a -> Argument [7:11 - 7:12], b -> Argument [7:14 - 
   let c = 2;
   
 }
-let f = (x, y, z)/* SCOPE: x -> Argument [10:9 - 10:10], y -> Argument [10:11 - 10:12], z -> Argument [10:13 - 10:14] */ =>  x + y + z;
-let f1 = (x, y, z)/* SCOPE: x -> Argument [11:10 - 11:11], y -> Argument [11:12 - 11:13], z -> Argument [11:14 - 11:15] */ =>  {/* SCOPE:  */
+let f = (x, y, z)/* SCOPE: x -> Argument [10:9 - 10:10], y -> Argument [10:11 - 10:12], z -> Argument [10:13 - 10:14] */ => x + y + z;
+let f1 = (x, y, z)/* SCOPE: x -> Argument [11:10 - 11:11], y -> Argument [11:12 - 11:13], z -> Argument [11:14 - 11:15] */ => {/* SCOPE:  */
   
     return x;
     

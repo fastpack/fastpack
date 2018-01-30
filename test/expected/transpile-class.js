@@ -38,17 +38,17 @@ class C2 extends C1 {
   constructor() {
     debugger;
     super();
-    Object.defineProperty(this, "onClick", {"configurable": true, "enumerable": true, "writable": true, "value": e =>  {
+    Object.defineProperty(this, "onClick", {"configurable": true, "enumerable": true, "writable": true, "value": e => {
       console.log('hello');
       
     }
     });
-    Object.defineProperty(this, "onMouseMove", {"configurable": true, "enumerable": true, "writable": true, "value": e =>  {
+    Object.defineProperty(this, "onMouseMove", {"configurable": true, "enumerable": true, "writable": true, "value": e => {
       console.log(e);
       
     }
     });
-    Object.defineProperty(this, "doSomethingUseful", {"configurable": true, "enumerable": true, "writable": true, "value": () =>  42});
+    Object.defineProperty(this, "doSomethingUseful", {"configurable": true, "enumerable": true, "writable": true, "value": () => 42});
     this.onClick();
     
   }
@@ -56,7 +56,7 @@ class C2 extends C1 {
 }/* class decorators */
 let C3 = $__fpack__.defineClass(class C3 {
     
-  }, [], [c =>  c, dec], []);
+  }, [], [c => c, dec], []);
 /* method decorators */
 let C4 = $__fpack__.defineClass(class C4 {
     method1() {
@@ -67,7 +67,7 @@ let C4 = $__fpack__.defineClass(class C4 {
       
     }
     
-  }, [], [], [{"method": "method1", "decorators": [dec]}, {"method": "method2", "decorators": [m =>  m, dec2]}]);
+  }, [], [], [{"method": "method1", "decorators": [dec]}, {"method": "method2", "decorators": [m => m, dec2]}]);
 /* class expressions */
 (class  {
   constructor() {
@@ -99,7 +99,7 @@ let C6 = $__fpack__.defineClass(class C6 extends C5 {
       super();
       Object.defineProperty(this, "prop_no_value", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
       Object.defineProperty(this, "prop_int", {"configurable": true, "enumerable": true, "writable": true, "value": 1});
-      Object.defineProperty(this, "prop_func", {"configurable": true, "enumerable": true, "writable": true, "value": x =>  x + 1});
+      Object.defineProperty(this, "prop_func", {"configurable": true, "enumerable": true, "writable": true, "value": x => x + 1});
       after_super_and_props();
       
     }
@@ -108,4 +108,4 @@ let C6 = $__fpack__.defineClass(class C6 extends C5 {
       
     }
     
-  }, [{"name": "static_prop", "value": void 0}], [cls, cls =>  cls], [{"method": "methodDecorated2", "decorators": [m =>  m]}, {"method": "methodDecorated3", "decorators": [mDec1, mDec2]}]);
+  }, [{"name": "static_prop", "value": void 0}], [cls, cls => cls], [{"method": "methodDecorated2", "decorators": [m => m]}, {"method": "methodDecorated3", "decorators": [mDec1, mDec2]}]);

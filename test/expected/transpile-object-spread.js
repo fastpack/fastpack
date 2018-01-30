@@ -93,14 +93,14 @@ var __fpack__13 = {a: {b: 2, c: 3}},
  */
 /* Babel */
 ({a1} = c1);
-(() =>  {
+(() => {
   ({a2} = c2);
   b2 = $__fpack__.omitProps(c2, ["a2"]);
   return c2;
   
 }
 )();
-console.log((() =>  {
+console.log((() => {
   ({a3} = c3);
   b3 = $__fpack__.omitProps(c3, ["a3"]);
   return c3;
@@ -108,7 +108,7 @@ console.log((() =>  {
 }
 )());
 /* Own  - Babel fails on this */
-console.log((() =>  {
+console.log((() => {
   let __fpack__15 = {a: 1, b: 2, c: {x: 1}},
     __fpack__16 = "c" + "";
   ({a} = __fpack__15);
@@ -131,13 +131,13 @@ let f1 = function (__fpack__18) {
     
   }
   ;
-let f2 = __fpack__19 =>  {
+let f2 = __fpack__19 => {
     let c = $__fpack__.omitProps(__fpack__19, []);
     return c;
     
   }
   ;
-let f3 = __fpack__20 =>  {
+let f3 = __fpack__20 => {
     let c = $__fpack__.omitProps(__fpack__20, []);
     return c;
     
@@ -149,7 +149,7 @@ function f5(a, __fpack__21, __fpack__22) {
     g = $__fpack__.omitProps(__fpack__22.d.e.f, []);
   
 }
-let f6 = (__fpack__23, c, __fpack__24) =>  {
+let f6 = (__fpack__23, c, __fpack__24) => {
     let {a} = __fpack__23,
       b = $__fpack__.omitProps(__fpack__23, ["a"]),
       f = $__fpack__.omitProps(__fpack__24.d.e, []);
@@ -172,7 +172,7 @@ function f9(a, __fpack__26, ...__fpack__27) {
   
 }
 // basic for loop
-for (p = (() =>  {
+for (p = (() => {
   let __fpack__28 = {x: 1, a: 2};
   ({x} = __fpack__28);
   y = $__fpack__.omitProps(__fpack__28, ["x"]);
