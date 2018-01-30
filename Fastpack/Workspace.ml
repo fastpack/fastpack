@@ -103,13 +103,13 @@ let write out w ctx =
     | [] ->
       let u_length = UTF8.length value - u_offset in
       let chunk = UTF8.sub value u_offset u_length in
-      let%lwt () = Lwt_io.write_from_exactly out value b_offset (String.length chunk) in
+      let%lwt () = Lwt_io.write_from_string_exactly out value b_offset (String.length chunk) in
       Lwt.return (content ^ chunk)
     | patch :: patches ->
       let u_length = patch.offset_start - u_offset in
       let chunk = UTF8.sub value u_offset u_length in
       let b_length = String.length chunk in
-      let%lwt () = Lwt_io.write_from_exactly out value b_offset b_length in
+      let%lwt () = Lwt_io.write_from_string_exactly out value b_offset b_length in
       let patch_content = patch.patch ctx in
       let%lwt () = Lwt_io.write out patch_content in
       let patched_chunk = UTF8.sub value patch.offset_start (patch.offset_end - patch.offset_start) in

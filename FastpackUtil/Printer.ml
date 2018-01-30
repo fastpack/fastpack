@@ -1357,7 +1357,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     parents = [];
     scope = Scope.empty;
   } in
-  Buffer.to_bytes
+  Buffer.contents
     (ctx
      |> emit_statements statements
      |> (fun ctx -> emit_list emit_comment ctx.comments ctx)
