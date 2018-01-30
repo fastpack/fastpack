@@ -28,9 +28,6 @@ clean-jest:
 test-jest: build-dev
 	cd test && yarn jest
 
-test-flat-packer: build-dev
-	cd test && yarn jest --testPathPattern=flat-packer
-
 fetch:
 	git submodule init
 	git submodule update

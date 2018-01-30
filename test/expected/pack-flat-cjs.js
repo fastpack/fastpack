@@ -1,5 +1,3 @@
-
-(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -36,4 +34,3 @@ const $e__index__default = function() {console.log('Hello, world!')};
 
 const $n__index = { exports: {default: $e__index__default, index: $e__index__index, a: $e__a__a, changeA: $e__a__changeA} };
 module.exports = $n__index.exports;
-})()

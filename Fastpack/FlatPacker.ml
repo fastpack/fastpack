@@ -854,12 +854,29 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
           total_modules := List.concat [ !total_modules; new_modules; ];
           Lwt.return_unit
   in
+  let mode =
+    Printf.sprintf "var __DEV__ = %s;\n"
+      @@ if ctx.mode = Mode.Development then "true" else "false"
+  in
+  let header = (
+    match ctx.target with
+    | Target.Application -> "(function() {\n"
+    | Target.CommonJS -> ""
+    | Target.ESM -> ""
+  )
+  in
+  let footer = (
+    match ctx.target with
+    | Target.Application -> "})()\n"
+    | Target.CommonJS -> ""
+    | Target.ESM -> ""
+  )
+  in
+  let%lwt () = Lwt_io.write channel header in
+  let%lwt () = Lwt_io.write channel mode in
   let%lwt () =
     Lwt_io.write channel
-    @@ Printf.sprintf "
-(function() {
-var __DEV__ = %s;
-var __fastpack_cache__ = {};
+    @@ Printf.sprintf "var __fastpack_cache__ = {};
 
 function __fastpack_require__(f) {
   if (__fastpack_cache__[f.name] === undefined) {
@@ -878,8 +895,7 @@ function __fastpack_import__(f) {
   });
 }
 "
-    @@ if ctx.mode = Mode.Development then "true" else "false"
   in
   let%lwt () = pack ctx MDM.empty in
-  let%lwt () = Lwt_io.write channel "})()\n" in
+  let%lwt () = Lwt_io.write channel footer in
   Lwt.return (List.sort compare !total_modules, cache.loaded, "Mode: production")

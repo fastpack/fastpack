@@ -1,5 +1,3 @@
-
-(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
@@ -39,4 +37,3 @@ export default $e__index__default;
 export {$e__index__index as index};
 export {$e__a__a as a};
 export {$e__a__changeA as changeA};
-})()
