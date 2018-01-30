@@ -1,8 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`transpile flow inside jsx 1`] = `
-"
-(function() {
+"(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
 
