@@ -858,18 +858,11 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
     Printf.sprintf "var __DEV__ = %s;\n"
       @@ if ctx.mode = Mode.Development then "true" else "false"
   in
-  let header = (
+  let header, footer = (
     match ctx.target with
-    | Target.Application -> "(function() {\n"
-    | Target.CommonJS -> ""
-    | Target.ESM -> ""
-  )
-  in
-  let footer = (
-    match ctx.target with
-    | Target.Application -> "})()\n"
-    | Target.CommonJS -> ""
-    | Target.ESM -> ""
+    | Target.Application -> "(function() {\n", "})()\n"
+    | Target.CommonJS -> "", ""
+    | Target.ESM -> "", ""
   )
   in
   let%lwt () = Lwt_io.write channel header in
