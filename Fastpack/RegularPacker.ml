@@ -9,10 +9,9 @@ module Visit = FastpackUtil.Visit
 
 let debug = Logs.debug
 
-
-
 let pack (cache : Cache.t) (ctx : Context.t) channel =
 
+  (* TODO: handle this at a higher level, IllegalConfiguration error *)
   if (ctx.Context.target = Target.ESM)
   then raise (PackError (ctx, NotImplemented (
       None, "EcmaScript6 target is not supported "
@@ -669,7 +668,6 @@ var __DEV__ = %s;
   let%lwt entry = read_module ctx cache ctx.entry_filename in
   let%lwt entry = process ctx graph entry in
   let%lwt _ = emit graph entry in
-  let%lwt () = cache.dump () in
   let modules =
     graph
     |> DependencyGraph.get_modules

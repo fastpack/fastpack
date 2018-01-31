@@ -265,7 +265,7 @@ let prepare_and_pack cl_options start_time =
       (fun () ->
          match mode, options.watch with
          | Development, Some true ->
-           Watcher.watch pack_postprocess_report cache start_time
+           Watcher.watch package_dir pack_postprocess_report cache start_time
          | _, Some true ->
            (* TODO: convert this into proper error*)
            failwith "Can only watch in development mode"
@@ -274,8 +274,9 @@ let prepare_and_pack cl_options start_time =
            pack_postprocess_report cache start_time
       )
       (fun () ->
-         preprocessor.Preprocessor.finalize ()
-         |> Lwt.return
+         let%lwt () = cache.dump () in
+         let () = preprocessor.Preprocessor.finalize () in
+         Lwt.return_unit
       )
 
   | _ ->

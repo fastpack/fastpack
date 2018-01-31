@@ -241,6 +241,7 @@ module Cache = struct
     get : string -> Module.t option;
     dump : unit -> unit Lwt.t;
     add : Module.t -> string -> bool -> unit;
+    invalidate : string -> bool;
     to_trusted : unit -> t;
     loaded : bool;
     trusted : bool;
@@ -261,6 +262,7 @@ module Cache = struct
     { get = (fun _ -> None);
       dump = (fun _ -> Lwt.return_unit);
       add = (fun _ _ _ -> ());
+      invalidate = (fun _ -> false);
       to_trusted = (fun () -> { (fake ()) with trusted = true });
       loaded = false;
       trusted = false;
@@ -341,6 +343,7 @@ module Cache = struct
     in
 
     let dump () =
+      let%lwt () = Lwt_io.(write stdout "dumping cache\n") in
       Lwt_io.with_file
         ~mode:Lwt_io.Output
         ~perm:0o640
@@ -349,10 +352,19 @@ module Cache = struct
         (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] !modules)
     in
 
+    let invalidate filename =
+      match M.get filename !modules with
+      | None -> false
+      | Some _ ->
+        modules := M.remove filename !modules;
+        true
+    in
+
     let rec to_trusted () = {
       get;
       dump;
       add;
+      invalidate;
       to_trusted;
       loaded;
       trusted = true
@@ -363,6 +375,7 @@ module Cache = struct
       get;
       dump;
       add;
+      invalidate;
       to_trusted;
       loaded;
       trusted = false
