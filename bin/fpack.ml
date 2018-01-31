@@ -13,8 +13,8 @@ let () =
         preprocess
         postprocess
         stats
-        debug
         watch
+        debug
       =
       if debug then begin
         Logs.set_level (Some Logs.Debug);

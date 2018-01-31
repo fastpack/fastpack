@@ -145,20 +145,10 @@ module NodeServer = struct
       Printf.sprintf "node %s"
       @@ List.fold_left FilePath.concat fpack_root ["node-service"; "index.js"]
     in
-    let (fp_in, node_out) = Unix.pipe () in
-    let (node_in, fp_out) = Unix.pipe () in
-    fp_in_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in;
-    fp_out_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Output fp_out;
-    let process_none =
-      Lwt_process.(
-        open_process_none
-          ~env:(Unix.environment ())
-          ~stdin:(`FD_move node_in)
-          ~stdout:(`FD_move node_out)
-          (shell cmd)
-      )
-    in
-    processes := [process_none];
+    let%lwt (process, ch_in, ch_out) = FS.open_process cmd in
+    fp_in_ch := ch_in;
+    fp_out_ch := ch_out;
+    processes := [process];
     Lwt.return_unit
 
   let process loader options source =
