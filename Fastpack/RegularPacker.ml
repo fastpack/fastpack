@@ -11,7 +11,7 @@ let debug = Logs.debug
 
 
 
-let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
+let pack (cache : Cache.t) (ctx : Context.t) channel =
 
   if (ctx.Context.target = Target.ESM)
   then raise (PackError (ctx, NotImplemented (

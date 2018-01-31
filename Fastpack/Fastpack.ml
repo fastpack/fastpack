@@ -85,7 +85,7 @@ let merge_options o1 o2 =
     watch = merge o1.watch o2.watch;
   }
 
-let pack ~pack_f ~mode ~target ~(preprocessor : Preprocessor.t) ~entry_filename ~package_dir channel =
+let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir channel =
   let ctx = { Context.
     entry_filename;
     package_dir;
@@ -97,7 +97,7 @@ let pack ~pack_f ~mode ~target ~(preprocessor : Preprocessor.t) ~entry_filename 
     preprocessor
   }
   in
-  pack_f ctx channel
+  pack_f cache ctx channel
 
 let find_package_root start_dir =
   let rec check_dir dir =
@@ -170,13 +170,13 @@ let prepare_and_pack cl_options start_time =
       | Some target -> target
       | None -> Error.ie "target is not set"
     in
-    let%lwt mode, pack_f =
+    let%lwt mode, cache, pack_f =
       match options.mode with
       | Some mode ->
-        let%lwt pack_f =
+        let%lwt cache, pack_f =
           match mode with
           | Mode.Production ->
-            Lwt.return @@ FlatPacker.pack ~cache:(Cache.fake ())
+            Lwt.return (Cache.fake (), FlatPacker.pack)
           | Mode.Test
           | Mode.Development ->
             let cache_prefix =
@@ -192,15 +192,15 @@ let prepare_and_pack cl_options start_time =
               | None ->
                 Error.ie "Cache strategy is not set"
             in
-            Lwt.return @@ RegularPacker.pack ~cache
+            Lwt.return (cache, RegularPacker.pack)
         in
-        Lwt.return (mode, pack_f)
+        Lwt.return (mode, cache, pack_f)
       | None ->
         Error.ie "mode is not set"
     in
-    let pack_postprocess ch =
+    let pack_postprocess cache ch =
       let pack =
-        pack ~pack_f ~mode ~target ~preprocessor ~entry_filename ~package_dir
+        pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
       in
       match options.postprocess with
       | None | Some [] ->
@@ -240,7 +240,7 @@ let prepare_and_pack cl_options start_time =
       | Some JSON -> Reporter.report_json
       | None -> Reporter.report_string
     in
-    let pack_postprocess_report start_time =
+    let pack_postprocess_report cache start_time =
       let temp_file = Filename.temp_file "" ".bundle.js" in
       Lwt.finalize
         (fun () ->
@@ -250,7 +250,7 @@ let prepare_and_pack cl_options start_time =
               ~perm:0o640
               ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
               temp_file
-              pack_postprocess
+              (pack_postprocess cache)
           in
           let%lwt () = Lwt_unix.rename temp_file output_file in
           let%lwt () = report start_time stats in
@@ -263,17 +263,15 @@ let prepare_and_pack cl_options start_time =
     in
     Lwt.finalize
       (fun () ->
-         match options.mode, options.watch with
-         | Some Development, Some true ->
-           Watcher.watch pack_postprocess_report start_time
-         | Some _, Some true ->
+         match mode, options.watch with
+         | Development, Some true ->
+           Watcher.watch pack_postprocess_report cache start_time
+         | _, Some true ->
            (* TODO: convert this into proper error*)
            failwith "Can only watch in development mode"
-         | Some _, None
-         | Some _, Some false ->
-           pack_postprocess_report start_time
-         | _ ->
-           Error.ie "mode is not set"
+         | _, None
+         | _, Some false ->
+           pack_postprocess_report cache start_time
       )
       (fun () ->
          preprocessor.Preprocessor.finalize ()

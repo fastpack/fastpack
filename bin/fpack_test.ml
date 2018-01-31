@@ -24,6 +24,7 @@ let pack ~mode ~target ~preprocessor pack_f entry_filename _ =
     let%lwt _ =
       Fastpack.pack
         ~pack_f
+        ~cache:(Fastpack.Cache.fake ())
         ~mode
         ~target
         ~preprocessor

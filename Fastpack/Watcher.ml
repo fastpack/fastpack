@@ -1,3 +1,3 @@
-let watch pack start_time =
+let watch pack cache start_time =
   let%lwt () = Lwt_io.(write stdout "Watching..") in
-  pack start_time
+  pack cache start_time
