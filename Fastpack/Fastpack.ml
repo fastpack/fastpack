@@ -38,6 +38,7 @@ type options = {
   preprocess : Preprocessor.config list option;
   postprocess : string list option;
   stats : Stats.t option;
+  watch : bool option;
 }
 
 let empty_options = {
@@ -49,6 +50,7 @@ let empty_options = {
     preprocess = None;
     postprocess = None;
     stats = None;
+    watch = None;
 }
 
 let default_options =
@@ -61,6 +63,7 @@ let default_options =
     preprocess = None;
     postprocess = None;
     stats = None;
+    watch = None;
   }
 
 let merge_options o1 o2 =
@@ -79,6 +82,7 @@ let merge_options o1 o2 =
     preprocess = merge o1.preprocess o2.preprocess;
     postprocess = merge o1.postprocess o2.postprocess;
     stats = merge o1.stats o2.stats;
+    watch = merge o1.watch o2.watch;
   }
 
 let pack ~pack_f ~mode ~target ~(preprocessor : Preprocessor.t) ~entry_filename ~package_dir channel =
@@ -176,7 +180,7 @@ let prepare_and_pack cl_options start_time =
           | Mode.Test
           | Mode.Development ->
             let cache_prefix =
-              (** TODO: account for abs path on the package_dir *)
+              (** TODO: account for abs path of the package_dir *)
               Mode.to_string mode ^ "--" ^ Target.to_string target
             in
             let%lwt cache =
@@ -258,7 +262,19 @@ let prepare_and_pack cl_options start_time =
         )
     in
     Lwt.finalize
-      (fun () -> pack_postprocess_report start_time)
+      (fun () ->
+         match options.mode, options.watch with
+         | Some Development, Some true ->
+           Watcher.watch pack_postprocess_report start_time
+         | Some _, Some true ->
+           (* TODO: convert this into proper error*)
+           failwith "Can only watch in development mode"
+         | Some _, None
+         | Some _, Some false ->
+           pack_postprocess_report start_time
+         | _ ->
+           Error.ie "mode is not set"
+      )
       (fun () ->
          preprocessor.Preprocessor.finalize ()
          |> Lwt.return
