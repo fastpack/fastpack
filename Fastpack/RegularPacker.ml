@@ -677,4 +677,9 @@ var __DEV__ = %s;
     |> List.sort compare
   in
 
-  Lwt.return (modules, cache.loaded, "Mode: development.")
+  Lwt.return {
+    Reporter.
+    modules;
+    cache = cache.loaded;
+    message = "Mode: development."
+  }

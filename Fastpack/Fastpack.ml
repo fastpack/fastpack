@@ -6,6 +6,7 @@ module Target = PackerUtil.Target
 module Cache = PackerUtil.Cache
 module Context = PackerUtil.Context
 module Preprocessor = Preprocessor
+module Reporter = Reporter
 module RegularPacker = RegularPacker
 module FlatPacker = FlatPacker
 
@@ -109,7 +110,7 @@ let find_package_root start_dir =
 let read_package_json_options _ =
   Lwt.return_none
 
-let prepare_and_pack cl_options =
+let prepare_and_pack cl_options start_time =
   let%lwt current_dir = Lwt_unix.getcwd () in
   let start_dir =
     match cl_options.input with
@@ -193,7 +194,7 @@ let prepare_and_pack cl_options =
       | None ->
         Error.ie "mode is not set"
     in
-    let pack_and_postprocess ch =
+    let pack_postprocess ch =
       let pack =
         pack ~pack_f ~mode ~target ~preprocessor ~entry_filename ~package_dir
       in
@@ -202,7 +203,7 @@ let prepare_and_pack cl_options =
         pack ch
       | Some processors ->
         (* pack to memory *)
-        let bytes = Lwt_bytes.create 50000000 in
+        let bytes = Lwt_bytes.create 50_000_000 in
         let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
         let%lwt ret = pack mem_ch in
         let%lwt data =
@@ -230,29 +231,42 @@ let prepare_and_pack cl_options =
         let%lwt () = Lwt_io.write ch data in
         Lwt.return ret
     in
-    let temp_file = Filename.temp_file "" ".bundle.js" in
+    let report =
+      match options.stats with
+      | Some JSON -> Reporter.report_json
+      | None -> Reporter.report_string
+    in
+    let pack_postprocess_report start_time =
+      let temp_file = Filename.temp_file "" ".bundle.js" in
+      Lwt.finalize
+        (fun () ->
+          let%lwt stats =
+            Lwt_io.with_file
+              ~mode:Lwt_io.Output
+              ~perm:0o640
+              ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+              temp_file
+              pack_postprocess
+          in
+          let%lwt () = Lwt_unix.rename temp_file output_file in
+          let%lwt () = report start_time stats in
+          Lwt.return_unit
+        )
+        (fun () ->
+           if%lwt Lwt_unix.file_exists temp_file
+           then Lwt_unix.unlink temp_file;
+        )
+    in
     Lwt.finalize
+      (fun () -> pack_postprocess_report start_time)
       (fun () ->
-        let%lwt ret =
-          Lwt_io.with_file
-            ~mode:Lwt_io.Output
-            ~perm:0o640
-            ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
-            temp_file
-            pack_and_postprocess
-        in
-        let%lwt () = Lwt_unix.rename temp_file output_file in
-        Lwt.return ret
-      )
-      (fun () ->
-         let () = preprocessor.Preprocessor.finalize () in
-         if%lwt Lwt_unix.file_exists temp_file
-         then Lwt_unix.unlink temp_file;
+         preprocessor.Preprocessor.finalize ()
+         |> Lwt.return
       )
 
   | _ ->
     Error.ie "input / output are not provided"
 
 
-let pack_main options =
-  Lwt_main.run (prepare_and_pack options)
+let pack_main options start_time =
+  Lwt_main.run (prepare_and_pack options start_time)

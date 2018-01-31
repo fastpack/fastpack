@@ -891,4 +891,9 @@ function __fastpack_import__(f) {
   in
   let%lwt () = pack ctx MDM.empty in
   let%lwt () = Lwt_io.write channel footer in
-  Lwt.return (List.sort compare !total_modules, cache.loaded, "Mode: production")
+  Lwt.return {
+    Reporter.
+    modules = List.sort compare !total_modules;
+    cache = cache.loaded;
+    message = "Mode: production"
+  }

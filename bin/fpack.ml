@@ -15,34 +15,6 @@ let () =
         postprocess
         stats
       =
-      let report (modules, cache, message) =
-        let report_user_stats () =
-          Printf.sprintf
-            "Packed in %.3fs. Number of modules: %d. Cache: %s. %s\n"
-            (Unix.gettimeofday () -. time)
-            (List.length modules)
-            (if cache then "yes" else "no")
-            message
-          |> Lwt_io.write Lwt_io.stdout
-        in
-        let report_json_stats () =
-          let open Yojson.Basic
-          in
-          let modulePaths = modules
-            |> List.map (fun d -> `String d)
-          in
-            `Assoc [
-              ("modulesPaths", `List modulePaths)
-            ]
-            |> pretty_to_string
-            |> Lwt_io.write Lwt_io.stdout
-        in
-          Lwt_main.run Fastpack.(
-            match stats with
-              | Some Stats.JSON -> report_json_stats ()
-              | _ -> report_user_stats ()
-          )
-      in
       if debug then begin
         Logs.set_level (Some Logs.Debug);
         Logs.set_reporter (Logs_fmt.reporter ());
@@ -60,7 +32,7 @@ let () =
             stats;
           }
         in
-        `Ok (Fastpack.pack_main options |> report)
+        `Ok (Fastpack.pack_main options time)
       with
       | Fastpack.PackError (ctx, error) ->
         `Error (false, Fastpack.string_of_error ctx error)
