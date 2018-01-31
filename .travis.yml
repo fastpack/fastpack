@@ -10,3 +10,6 @@ install:
   - travis_wait make build-dev
 script:
   - make test
+cache:
+  directories:
+  - $HOME/.esy/
