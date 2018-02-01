@@ -881,17 +881,13 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) result_channel =
   let dynamic_import_runtime = (if !has_dynamic_modules then
 "var __fastpack_cache__ = {};
 
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
 function __fastpack_import__(f) {
   return new Promise((resolve, reject) => {
     try {
-      resolve(__fastpack_require__(f));
+      if (__fastpack_cache__[f.name] === undefined) {
+        __fastpack_cache__[f.name] = f();
+      }
+      resolve(__fastpack_cache__[f.name]);
     } catch (e) {
       reject(e);
     }
