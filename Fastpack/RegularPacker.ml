@@ -418,11 +418,13 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             callee = (_, E.Identifier (_, "require"));
             arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
           } ->
-          let dep = add_dependency request in
-          patch_loc_with loc (fun ctx ->
-              let {Module. id = module_id; _} = get_module dep ctx in
-              fastpack_require module_id dep.request
-            );
+          if (not @@ Scope.has_binding "require" (top_scope ())) then begin
+            let dep = add_dependency request in
+            patch_loc_with loc (fun ctx ->
+                let {Module. id = module_id; _} = get_module dep ctx in
+                fastpack_require module_id dep.request
+              );
+          end;
           Visit.Break
 
         | E.Identifier (loc, name) ->
