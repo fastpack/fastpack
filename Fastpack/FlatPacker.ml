@@ -22,9 +22,12 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
+let pack ?(cache=Cache.fake ()) (ctx : Context.t) result_channel =
 
+  let bytes = Lwt_bytes.create 50_000_000 in
+  let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
   let total_modules = ref [] in
+  let has_dynamic_modules = ref false in
 
   (* internal top-level bindings in the file *)
   let gen_int_binding module_id name =
@@ -135,6 +138,7 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
           requested_from_filename = filename;
         } in
         let () = dynamic_deps := (ctx, dep) :: !dynamic_deps in
+        let () = has_dynamic_modules := true in
         dep
       in
 
@@ -854,10 +858,15 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
           total_modules := List.concat [ !total_modules; new_modules; ];
           Lwt.return_unit
   in
-  let mode =
-    Printf.sprintf "var __DEV__ = %s;\n"
-      @@ if ctx.mode = Mode.Development then "true" else "false"
+  let%lwt () = pack ctx MDM.empty in
+
+  let bundle = channel
+    |> Lwt_io.position
+    |> Int64.to_int
+    |> Lwt_bytes.extract bytes 0
+    |> Lwt_bytes.to_string
   in
+
   let header, footer = (
     match ctx.target with
     | Target.Application -> "(function() {\n", "})()\n"
@@ -865,32 +874,34 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
     | Target.ESM -> "", ""
   )
   in
-  let%lwt () = Lwt_io.write channel header in
-  let%lwt () = Lwt_io.write channel mode in
-  let%lwt () =
-    Lwt_io.write channel
-    @@ Printf.sprintf "var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
+  let mode = Printf.sprintf
+    "var __DEV__ = %s;\n"
+    (if ctx.mode = Mode.Development then "true" else "false")
+  in
+  let dynamic_import_runtime = (if !has_dynamic_modules then
+"var __fastpack_cache__ = {};
 
 function __fastpack_import__(f) {
   return new Promise((resolve, reject) => {
     try {
-      resolve(__fastpack_require__(f));
+      if (__fastpack_cache__[f.name] === undefined) {
+        __fastpack_cache__[f.name] = f();
+      }
+      resolve(__fastpack_cache__[f.name]);
     } catch (e) {
       reject(e);
     }
   });
 }
 "
+    else "")
   in
-  let%lwt () = pack ctx MDM.empty in
-  let%lwt () = Lwt_io.write channel footer in
+
+  let%lwt () = Lwt_io.write result_channel header in
+  let%lwt () = Lwt_io.write result_channel mode in
+  let%lwt () = Lwt_io.write result_channel dynamic_import_runtime in
+  let%lwt () = Lwt_io.write result_channel bundle in
+  let%lwt () = Lwt_io.write result_channel footer in
   Lwt.return {
     Reporter.
     modules = List.sort compare !total_modules;

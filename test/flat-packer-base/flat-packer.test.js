@@ -61,3 +61,15 @@ test('flat packer with cjs in esm', async () => {
     await loadFpackBundle({ input: 'index-cjs-in-esm.js', target: 'cjs' })
   ).toMatchSnapshot('target: cjs');
 });
+
+test('flat packer with dynamic esm dep', async () => {
+  expect(
+    await loadFpackBundle({ input: 'index-dynamic.js', target: 'app' })
+  ).toMatchSnapshot('target: app');
+  expect(
+    await loadFpackBundle({ input: 'index-dynamic.js', target: 'esm' })
+  ).toMatchSnapshot('target: esm');
+  expect(
+    await loadFpackBundle({ input: 'index-dynamic.js', target: 'cjs' })
+  ).toMatchSnapshot('target: cjs');
+});
