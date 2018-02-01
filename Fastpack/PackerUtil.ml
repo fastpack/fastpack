@@ -205,6 +205,7 @@ module Context = struct
     target : Target.t;
     resolver : NodeResolver.t;
     preprocessor : Preprocessor.t;
+    graph : DependencyGraph.t;
   }
 
   let to_string { entry_filename; package_dir; stack; mode; current_filename; _ } =
@@ -403,7 +404,6 @@ end
 
 exception PackError of Context.t * Error.reason
 
-
 let relative_name {Context. package_dir; _} filename =
   match Str.string_match (Str.regexp "^builtin:") filename 0 with
   | true ->
@@ -475,7 +475,11 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
   | "builtin:fs"
   | "builtin:tty"
   | "builtin:net"
-  | "builtin:events" ->
+  | "builtin:events"
+  | "builtin:stream"
+  | "builtin:constants"
+  | "builtin:readable-stream"
+  | "builtin:assert" ->
     (* TODO: handle builtins *)
     make_module (Module.make_id filename) filename 0.0 ""
 

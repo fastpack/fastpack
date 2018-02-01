@@ -85,6 +85,7 @@ let merge_options o1 o2 =
     watch = merge o1.watch o2.watch;
   }
 
+(* TODO: this function may not be needed when tests are ported to Jest *)
 let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir channel =
   let ctx = { Context.
     entry_filename;
@@ -94,7 +95,8 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
     mode;
     target;
     resolver = NodeResolver.make ();
-    preprocessor
+    preprocessor;
+    graph = DependencyGraph.empty ();
   }
   in
   pack_f cache ctx channel
@@ -198,18 +200,28 @@ let prepare_and_pack cl_options start_time =
       | None ->
         Error.ie "mode is not set"
     in
-    let pack_postprocess cache ch =
-      let pack =
-        pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
-      in
+    let get_context () =
+      { Context.
+        entry_filename;
+        package_dir;
+        stack = [];
+        current_filename = entry_filename;
+        mode;
+        target;
+        resolver = NodeResolver.make ();
+        preprocessor;
+        graph = DependencyGraph.empty ()
+      }
+    in
+    let pack_postprocess cache ctx ch =
       match options.postprocess with
       | None | Some [] ->
-        pack ch
+        pack_f cache ctx ch
       | Some processors ->
         (* pack to memory *)
         let bytes = Lwt_bytes.create 50_000_000 in
         let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-        let%lwt ret = pack mem_ch in
+        let%lwt ret = pack_f cache ctx mem_ch in
         let%lwt data =
           Lwt_list.fold_left_s
             (fun data cmd ->
@@ -240,7 +252,7 @@ let prepare_and_pack cl_options start_time =
       | Some JSON -> Reporter.report_json
       | None -> Reporter.report_string
     in
-    let pack_postprocess_report cache start_time =
+    let pack_postprocess_report cache ctx start_time =
       let temp_file = Filename.temp_file "" ".bundle.js" in
       Lwt.finalize
         (fun () ->
@@ -250,7 +262,7 @@ let prepare_and_pack cl_options start_time =
               ~perm:0o640
               ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
               temp_file
-              (pack_postprocess cache)
+              (pack_postprocess cache ctx)
           in
           let%lwt () = Lwt_unix.rename temp_file output_file in
           let%lwt () = report start_time stats in
@@ -265,13 +277,13 @@ let prepare_and_pack cl_options start_time =
       (fun () ->
          match mode, options.watch with
          | Development, Some true ->
-           Watcher.watch package_dir pack_postprocess_report cache start_time
+           Watcher.watch pack_postprocess_report cache get_context start_time
          | _, Some true ->
            (* TODO: convert this into proper error*)
            failwith "Can only watch in development mode"
          | _, None
          | _, Some false ->
-           pack_postprocess_report cache start_time
+           pack_postprocess_report cache (get_context ()) start_time
       )
       (fun () ->
          let%lwt () = cache.dump () in

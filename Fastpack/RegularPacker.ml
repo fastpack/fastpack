@@ -494,13 +494,22 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         (*     raise (PackError (ctx, ScopeError reason)) *)
         (* in *)
         let (workspace, dependencies, scope, exports, es_module) =
-          try
-              analyze m.id m.filename source
-          with
-          | FlowParser.Parse_error.Error args ->
-            raise (PackError (ctx, CannotParseFile (m.filename, args)))
-          | Scope.ScopeError reason ->
-            raise (PackError (ctx, ScopeError reason))
+          match is_json m.filename with
+          | true ->
+            let workspace =
+              Workspace.of_string
+              @@ Printf.sprintf "module.exports = %s;"
+                source
+            in
+            (workspace, [], Scope.empty, [], false)
+          | false ->
+            try
+                analyze m.id m.filename source
+            with
+            | FlowParser.Parse_error.Error args ->
+              raise (PackError (ctx, CannotParseFile (m.filename, args)))
+            | Scope.ScopeError reason ->
+              raise (PackError (ctx, ScopeError reason))
         in
         { m with workspace; scope; exports; es_module }, dependencies
       end
@@ -544,7 +553,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             | Some m ->
               Lwt.return m
           in
-          DependencyGraph.add_dependency graph m (req, Some dep_module);
+          DependencyGraph.add_dependency graph m (req, Some dep_module.filename);
           Lwt.return_unit
         )
         m.resolved_dependencies
@@ -645,6 +654,7 @@ var __DEV__ = %s;
         in
         let%lwt content = Workspace.write channel workspace dep_map in
         let () = cache.add m content true in
+        let () = DependencyGraph.add_module graph { m with workspace = Workspace.of_string content } in
         let%lwt () = emit "},\n" in
         Lwt.return seen
     in
@@ -664,10 +674,15 @@ var __DEV__ = %s;
     Lwt.return_unit
   in
 
-  let graph = DependencyGraph.empty () in
-  let%lwt entry = read_module ctx cache ctx.entry_filename in
-  let%lwt entry = process ctx graph entry in
-  let%lwt _ = emit graph entry in
+  let graph = ctx.graph in
+  let%lwt entry = read_module ctx cache ctx.current_filename in
+  let%lwt _ = process ctx graph entry in
+  let global_entry =
+    match DependencyGraph.lookup_module graph ctx.entry_filename with
+    | Some m -> m
+    | None -> Error.ie (ctx.entry_filename ^ " not found in the graph")
+  in
+  let%lwt _ = emit graph global_entry in
   let modules =
     graph
     |> DependencyGraph.get_modules

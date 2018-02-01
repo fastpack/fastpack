@@ -709,7 +709,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                      Lwt.return m
                  in
                  let () =
-                   DependencyGraph.add_dependency graph m (req, Some dep_module)
+                   DependencyGraph.add_dependency graph m (req, Some dep_module.filename)
                  in
                  Lwt.return_none
                end
