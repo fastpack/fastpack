@@ -182,13 +182,24 @@ let prepare_and_pack cl_options start_time =
           | Mode.Test
           | Mode.Development ->
             let cache_prefix =
-              (** TODO: account for abs path of the package_dir *)
-              Mode.to_string mode ^ "--" ^ Target.to_string target
+              let digest s = s |> Digest.string |> Digest.to_hex in
+              let preprocessors =
+                preprocessor.Preprocessor.configs
+                |> List.map Preprocessor.to_string
+                |> String.concat ""
+                |> digest
+              in
+              String.concat "-" [
+                Mode.to_string mode;
+                Target.to_string target;
+                digest package_dir;
+                preprocessors;
+              ]
             in
             let%lwt cache =
               match options.cache with
               | Some Cache.Normal ->
-                Cache.create package_dir cache_prefix input
+                Cache.create package_dir cache_prefix entry_filename
               | Some Cache.Ignore ->
                 Lwt.return @@ Cache.fake ()
               | None ->

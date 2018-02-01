@@ -290,10 +290,15 @@ module Cache = struct
       let%lwt () = makedirs dir in
       Lwt.return dir
 
-  let cache_filename cache_dir prefix filename =
-    filename
-    |> String.replace ~sub:"/" ~by:"__"
-    |> String.replace ~sub:"." ~by:"___"
+  let cache_filename package_dir cache_dir prefix filename =
+    String.(
+      sub
+        filename
+        (length package_dir + 1)
+        (length filename - length package_dir - 1)
+      |> replace ~sub:"/" ~by:"__"
+      |> replace ~sub:"." ~by:"___"
+    )
     |> Printf.sprintf "%s-%s-%s.cache" prefix Version.github_commit
     |> FilePath.concat cache_dir
 
@@ -385,7 +390,7 @@ module Cache = struct
 
   let create package_dir prefix filename =
     let%lwt cache_dir = create_dir package_dir in
-    let cache_filename = cache_filename cache_dir prefix filename in
+    let cache_filename = cache_filename package_dir cache_dir prefix filename in
 
     let%lwt modules =
       match%lwt Lwt_unix.file_exists cache_filename with

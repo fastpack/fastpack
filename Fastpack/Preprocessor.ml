@@ -17,6 +17,7 @@ type process_f = string -> string * string list
 
 type t = {
   process : string -> string -> (string * string list) Lwt.t;
+  configs : config list;
   finalize : unit -> unit;
 }
 
@@ -108,11 +109,17 @@ let builtin source =
   (* TODO: handle TranspilerError *)
   Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
 
-let empty =
-  { process = (fun _ s -> Lwt.return (s, [])); finalize = (fun () -> ())}
+let empty = {
+    process = (fun _ s -> Lwt.return (s, []));
+    configs = [];
+    finalize = (fun () -> ())
+  }
 
-let transpile_all =
-  { process = (fun _ s -> builtin s); finalize = (fun () -> ()) }
+let transpile_all = {
+    process = (fun _ s -> builtin s);
+    configs = [];
+    finalize = (fun () -> ())
+  }
 
 module NodeServer = struct
 
@@ -231,7 +238,7 @@ let make configs =
     Lwt.return (source, build_dependencies)
   in
 
-  Lwt.return { process; finalize = NodeServer.finalize }
+  Lwt.return { process; configs; finalize = NodeServer.finalize }
 
 
 
