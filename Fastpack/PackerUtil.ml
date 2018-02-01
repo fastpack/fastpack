@@ -350,7 +350,6 @@ module Cache = struct
     in
 
     let dump () =
-      let%lwt () = Lwt_io.(write stdout "dumping cache\n") in
       Lwt_io.with_file
         ~mode:Lwt_io.Output
         ~perm:0o640
