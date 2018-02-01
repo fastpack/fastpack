@@ -3,24 +3,6 @@
 exports[`flat packer with cjs in esm: target: app 1`] = `
 "(function() {
 var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$cjs$$_$$exports */
 
@@ -60,24 +42,6 @@ const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$
 
 exports[`flat packer with cjs in esm: target: cjs 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$cjs$$_$$exports */
 
@@ -117,24 +81,6 @@ module.exports = $n__index$$_$$cjs$$_$$in$$_$$esm.exports;
 
 exports[`flat packer with cjs in esm: target: esm 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$cjs$$_$$exports */
 
@@ -173,7 +119,7 @@ export {$e__index$$_$$cjs$$_$$in$$_$$esm__named as named};
 "
 `;
 
-exports[`flat packer with esm in cjs: target: app 1`] = `
+exports[`flat packer with dynamic esm dep: target: app 1`] = `
 "(function() {
 var __DEV__ = false;
 var __fastpack_cache__ = {};
@@ -194,6 +140,123 @@ function __fastpack_import__(f) {
     }
   });
 }
+
+/* index$$_$$dynamic */
+
+__fastpack_import__($w__dep$$_$$esm$$_$$named).then(named => {
+  console.log(named);
+});
+
+const $n__index$$_$$dynamic = { exports: {} };
+
+function $w__dep$$_$$esm$$_$$named() {
+
+/* dep$$_$$esm$$_$$named */
+
+const $e__dep$$_$$esm$$_$$named__a = 1;
+const $e__dep$$_$$esm$$_$$named__b = 2;
+
+const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+
+return $n__dep$$_$$esm$$_$$named.exports;
+}
+})()
+"
+`;
+
+exports[`flat packer with dynamic esm dep: target: cjs 1`] = `
+"var __DEV__ = false;
+var __fastpack_cache__ = {};
+
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+  }
+  return __fastpack_cache__[f.name];
+}
+
+function __fastpack_import__(f) {
+  return new Promise((resolve, reject) => {
+    try {
+      resolve(__fastpack_require__(f));
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+/* index$$_$$dynamic */
+
+__fastpack_import__($w__dep$$_$$esm$$_$$named).then(named => {
+  console.log(named);
+});
+
+const $n__index$$_$$dynamic = { exports: {} };
+module.exports = $n__index$$_$$dynamic.exports;
+
+function $w__dep$$_$$esm$$_$$named() {
+
+/* dep$$_$$esm$$_$$named */
+
+const $e__dep$$_$$esm$$_$$named__a = 1;
+const $e__dep$$_$$esm$$_$$named__b = 2;
+
+const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+module.exports = $n__dep$$_$$esm$$_$$named.exports;
+
+return $n__dep$$_$$esm$$_$$named.exports;
+}
+"
+`;
+
+exports[`flat packer with dynamic esm dep: target: esm 1`] = `
+"var __DEV__ = false;
+var __fastpack_cache__ = {};
+
+function __fastpack_require__(f) {
+  if (__fastpack_cache__[f.name] === undefined) {
+    __fastpack_cache__[f.name] = f();
+  }
+  return __fastpack_cache__[f.name];
+}
+
+function __fastpack_import__(f) {
+  return new Promise((resolve, reject) => {
+    try {
+      resolve(__fastpack_require__(f));
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+/* index$$_$$dynamic */
+
+__fastpack_import__($w__dep$$_$$esm$$_$$named).then(named => {
+  console.log(named);
+});
+
+const $n__index$$_$$dynamic = { exports: {} };
+
+function $w__dep$$_$$esm$$_$$named() {
+
+/* dep$$_$$esm$$_$$named */
+
+const $e__dep$$_$$esm$$_$$named__a = 1;
+const $e__dep$$_$$esm$$_$$named__b = 2;
+
+const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+export {$e__dep$$_$$esm$$_$$named__a as a};
+export {$e__dep$$_$$esm$$_$$named__b as b};
+
+return $n__dep$$_$$esm$$_$$named.exports;
+}
+"
+`;
+
+exports[`flat packer with esm in cjs: target: app 1`] = `
+"(function() {
+var __DEV__ = false;
 
 /* dep$$_$$esm$$_$$named */
 
@@ -234,24 +297,6 @@ $n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
 
 exports[`flat packer with esm in cjs: target: cjs 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$esm$$_$$named */
 
@@ -292,24 +337,6 @@ module.exports = $n__index$$_$$esm$$_$$in$$_$$cjs.exports;
 
 exports[`flat packer with esm in cjs: target: esm 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$esm$$_$$named */
 
@@ -350,24 +377,6 @@ $n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
 exports[`flat packer with only cjs: target: app 1`] = `
 "(function() {
 var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$cjs$$_$$exports */
 
@@ -404,24 +413,6 @@ $n__index$$_$$cjs.exports.named = 'named';
 
 exports[`flat packer with only cjs: target: cjs 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$cjs$$_$$exports */
 
@@ -458,24 +449,6 @@ module.exports = $n__index$$_$$cjs.exports;
 
 exports[`flat packer with only cjs: target: esm 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$cjs$$_$$exports */
 
@@ -512,24 +485,6 @@ $n__index$$_$$cjs.exports.named = 'named';
 exports[`flat packer with only esm: target: app 1`] = `
 "(function() {
 var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$esm$$_$$named */
 
@@ -573,24 +528,6 @@ const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named
 
 exports[`flat packer with only esm: target: cjs 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$esm$$_$$named */
 
@@ -634,24 +571,6 @@ module.exports = $n__index$$_$$esm.exports;
 
 exports[`flat packer with only esm: target: esm 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* dep$$_$$esm$$_$$named */
 
@@ -697,24 +616,6 @@ export {$e__index$$_$$esm__named as named};
 exports[`flat packer with single js: target: app 1`] = `
 "(function() {
 var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* index$$_$$single */
 
@@ -733,24 +634,6 @@ const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default,
 
 exports[`flat packer with single js: target: cjs 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* index$$_$$single */
 
@@ -769,24 +652,6 @@ module.exports = $n__index$$_$$single.exports;
 
 exports[`flat packer with single js: target: esm 1`] = `
 "var __DEV__ = false;
-var __fastpack_cache__ = {};
-
-function __fastpack_require__(f) {
-  if (__fastpack_cache__[f.name] === undefined) {
-    __fastpack_cache__[f.name] = f();
-  }
-  return __fastpack_cache__[f.name];
-}
-
-function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(__fastpack_require__(f));
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* index$$_$$single */
 

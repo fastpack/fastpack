@@ -31,11 +31,12 @@ let pack ~mode ~target ~preprocessor pack_f entry_filename _ =
         ~package_dir:(Filename.dirname entry_filename)
         ch
     in
-    Lwt.return
-    @@ Lwt_bytes.to_string
-    @@ Lwt_bytes.extract bytes 0
-    @@ Int64.to_int
-    @@ Lwt_io.position ch
+  ch
+    |> Lwt_io.position
+    |> Int64.to_int
+    |> Lwt_bytes.extract bytes 0
+    |> Lwt_bytes.to_string
+    |> Lwt.return
   in
   try
     Lwt_main.run (pack' ())
