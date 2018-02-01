@@ -1,5 +1,4 @@
 (function() {
-var __DEV__ = false;
 
 /* builtin$$COLON$$__fastpack_runtime__ */
 

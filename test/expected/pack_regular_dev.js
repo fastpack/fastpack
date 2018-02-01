@@ -1,5 +1,3 @@
-
-var __DEV__ = true;
 (function(modules) {
   // The module cache
   var installedModules = {};

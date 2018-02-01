@@ -1,5 +1,4 @@
 (function() {
-var __DEV__ = false;
 var __fastpack_cache__ = {};
 
 function __fastpack_import__(f) {

@@ -1,5 +1,3 @@
-
-var __DEV__ = false;
 module.exports = (function(modules) {
   // The module cache
   var installedModules = {};

@@ -1,5 +1,4 @@
 (function() {
-var __DEV__ = false;
 
 /* a */
 
