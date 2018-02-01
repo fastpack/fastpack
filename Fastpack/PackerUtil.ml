@@ -3,6 +3,7 @@ module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
 module S = Ast.Statement
 module E = Ast.Expression
+module P = Ast.Pattern
 module L = Ast.Literal
 
 module FS = FastpackUtil.FS
@@ -564,6 +565,18 @@ let is_es_module stmts =
   (* TODO: what if module has only import() expression? *)
   let import_or_export ((_, stmt) : Loc.t S.t) =
     match stmt with
+    | S.Expression {
+        expression = (_, E.Assignment {
+            operator = E.Assignment.Assign;
+            left = (_, P.Expression (_, E.Member {
+                _object = (_, E.Identifier (_, "exports"));
+                property = E.Member.PropertyIdentifier (_, "__esModule");
+                computed = false
+              }));
+            right = (_, E.Literal { value = L.Boolean true; _});
+        });
+        _
+      }
     | S.ExportDefaultDeclaration _
     | S.ExportNamedDeclaration _
     | S.ImportDeclaration _ ->
