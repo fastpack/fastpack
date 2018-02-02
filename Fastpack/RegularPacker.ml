@@ -570,9 +570,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
        TODO: Give webpack team proper credits!
     *)
     Lwt_io.write out
-    @@ Printf.sprintf "
-var __DEV__ = %s;
-%s(function(modules) {
+    @@ Printf.sprintf
+"%s(function(modules) {
   // The module cache
   var installedModules = {};
 
@@ -624,7 +623,7 @@ var __DEV__ = %s;
 
   return __fastpack_require__(__fastpack_require__.s = '%s');
 })
-" (if ctx.mode = Mode.Development then "true" else "false") prefix entry_id
+" prefix entry_id
   in
 
   let emit graph entry =
