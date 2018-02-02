@@ -6,7 +6,7 @@ type t = {
 
 let report_string start_time { modules; cache; message } =
   Printf.sprintf
-    "Packed in %.3fs. Number of modules: %d. Cache: %s. %s\n"
+    "Packed in %.3fs. Modules: %d. Cache: %s. %s\n"
     (Unix.gettimeofday () -. start_time)
     (List.length modules)
     (if cache then "yes" else "no")

@@ -1,3 +1,4 @@
+module StringSet = Set.Make(String)
 
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
@@ -241,10 +242,9 @@ module Cache = struct
 
   type t = {
     get : string -> Module.t option;
+    get_potentially_invalid : string -> string list;
     dump : unit -> unit Lwt.t;
     add : Module.t -> string -> bool -> unit;
-    invalidate : string -> bool;
-    to_trusted : unit -> t;
     loaded : bool;
     trusted : bool;
   }
@@ -260,12 +260,11 @@ module Cache = struct
     analyzed : bool;
   }
 
-  let rec fake () =
+  let fake () =
     { get = (fun _ -> None);
+      get_potentially_invalid = (fun _ -> []);
       dump = (fun _ -> Lwt.return_unit);
       add = (fun _ _ _ -> ());
-      invalidate = (fun _ -> false);
-      to_trusted = (fun () -> { (fake ()) with trusted = true });
       loaded = false;
       trusted = false;
     }
@@ -306,8 +305,73 @@ module Cache = struct
 
     let loaded = modules <> M.empty in
     let modules = ref modules in
+    let build_dependencies =
+      ref (
+        !modules
+        |> M.bindings
+        |> List.map
+          (fun (filename, {build_dependencies; _}) ->
+            List.map
+              (fun (dependency, _, _) -> (dependency, filename))
+              build_dependencies
+          )
+        |> List.concat
+        |> List.fold_left
+          (fun acc (dep, filename) ->
+             M.update
+               dep
+               (function
+                | None -> Some (StringSet.add filename StringSet.empty)
+                | Some set -> Some(StringSet.add filename set)
+               )
+             acc
+          )
+          M.empty
+      )
+    in
+
+    let remove_build_dependencies filename dependencies =
+      List.iter
+        (fun (dep, _, _) ->
+           build_dependencies :=
+             M.update
+               dep
+               (function
+                | None -> None
+                | Some set -> Some (StringSet.remove filename set)
+               )
+               !build_dependencies
+        )
+        dependencies
+    in
+
+    let add_build_dependencies filename dependencies =
+      List.iter
+        (fun (dep, _, _) ->
+           build_dependencies :=
+             M.update
+               dep
+               (function
+                | None -> Some (StringSet.add filename StringSet.empty)
+                | Some set -> Some(StringSet.add filename set)
+               )
+               !build_dependencies
+        )
+        dependencies
+    in
 
     let add (m : Module.t) source analyzed =
+      let () =
+        match M.get m.filename !modules with
+        | None ->
+          add_build_dependencies m.filename m.build_dependencies
+        | Some entry ->
+          if entry.build_dependencies <> m.build_dependencies then begin
+            remove_build_dependencies m.filename m.build_dependencies;
+            add_build_dependencies m.filename m.build_dependencies
+          end
+          else ()
+      in
       modules :=
         M.add
           m.filename
@@ -345,7 +409,8 @@ module Cache = struct
           analyzed;
           workspace = Workspace.of_string source;
           scope = FastpackUtil.Scope.empty;
-          exports = []
+          exports = [];
+          cached = true;
         }
     in
 
@@ -358,31 +423,20 @@ module Cache = struct
         (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] !modules)
     in
 
-    let invalidate filename =
+    let get_potentially_invalid filename =
       match M.get filename !modules with
-      | None -> false
+      | None -> []
       | Some _ ->
-        modules := M.remove filename !modules;
-        true
-    in
-
-    let rec to_trusted () = {
-      get;
-      dump;
-      add;
-      invalidate;
-      to_trusted;
-      loaded;
-      trusted = true
-    }
+        match M.get filename !build_dependencies with
+        | None -> [filename]
+        | Some set -> set |> StringSet.add filename |> StringSet.elements
     in
 
     Lwt.return {
       get;
+      get_potentially_invalid;
       dump;
       add;
-      invalidate;
-      to_trusted;
       loaded;
       trusted = false
     }
@@ -456,7 +510,8 @@ let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) 
       digest;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
-      exports = []
+      exports = [];
+      cached = false;
     }
   in
 
