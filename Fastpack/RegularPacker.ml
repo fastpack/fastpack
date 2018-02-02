@@ -12,11 +12,14 @@ let debug = Logs.debug
 let pack (cache : Cache.t) (ctx : Context.t) channel =
 
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
-  if (ctx.Context.target = Target.ESM)
-  then raise (PackError (ctx, NotImplemented (
-      None, "EcmaScript6 target is not supported "
-            ^ "for the regular packer - use flat\n"
-    )));
+  let%lwt () =
+    if (ctx.Context.target = Target.ESM)
+    then Lwt.fail (PackError (ctx, NotImplemented (
+        None, "EcmaScript6 target is not supported "
+              ^ "for the regular packer - use flat\n"
+      )))
+    else Lwt.return_unit
+  in
 
   let analyze _id filename source =
     let ((_, stmts, _) as program), _ = Parser.parse_source source in
@@ -483,25 +486,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let m, dependencies =
       if (not m.analyzed) then begin
         let source = m.Module.workspace.Workspace.value in
-        (* TODO: reafctor this *)
-        (* let transpiled = *)
-        (*   try *)
-        (*     transpile ctx m.filename source *)
-        (*   with *)
-        (*   | FlowParser.Parse_error.Error args -> *)
-        (*     raise (PackError (ctx, CannotParseFile (m.filename, args))) *)
-        (*   | FastpackTranspiler.Error.TranspilerError error -> *)
-        (*     raise (PackError (ctx, TranspilerError error)) *)
-        (*   | Scope.ScopeError reason -> *)
-        (*     raise (PackError (ctx, ScopeError reason)) *)
-        (* in *)
         let (workspace, dependencies, scope, exports, es_module) =
           match is_json m.filename with
           | true ->
             let workspace =
-              Workspace.of_string
-              @@ Printf.sprintf "module.exports = %s;"
-                source
+              Printf.sprintf "module.exports = %s;" source
+              |> Workspace.of_string
             in
             (workspace, [], Scope.empty, [], false)
           | false ->
@@ -537,7 +527,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             )
             resolved
         in
-        if missing <> [] then raise (PackError (ctx, CannotResolveModules missing));
+        let%lwt () =
+          if missing <> []
+          then Lwt.fail (PackError (ctx, CannotResolveModules missing))
+          else Lwt.return_unit
+        in
         Lwt.return { m with resolved_dependencies }
       end
       else

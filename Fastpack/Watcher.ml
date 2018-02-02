@@ -3,10 +3,7 @@ module FS = FastpackUtil.FS
 open PackerUtil
 
 
-let watch pack (cache : Cache.t) get_context start_time =
-  let ctx = get_context () in
-  let {Context. package_dir; _ } = ctx in
-  let process = ref None in
+let watch pack (cache : Cache.t) graph get_context =
 
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
@@ -19,9 +16,9 @@ let watch pack (cache : Cache.t) get_context start_time =
     (fun _ -> Lwt.wakeup_exn u (Failure "SIGINT"))
   |> ignore;
 
-  let%lwt () = pack cache ctx start_time in
-  (* TODO: in case if pack fails graph should be empty and cache is not trusted *)
   let%lwt () = Lwt_io.(write stdout "Watching file changes ...\n") in
+  let process = ref None in
+  let { Context. package_dir; _ } = get_context () in
   let cmd = "watchman-wait -m 0 " ^ package_dir in
   let%lwt (started_process, ch_in, _) = FS.open_process cmd in
   process := Some started_process;
@@ -136,4 +133,4 @@ let watch pack (cache : Cache.t) get_context start_time =
     in
     Lwt.return_unit
   in
-  Lwt.finalize (fun () -> read_pack (Some ctx.graph) <?> w) finalize
+  Lwt.finalize (fun () -> read_pack (Some graph) <?> w) finalize

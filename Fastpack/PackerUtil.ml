@@ -569,7 +569,6 @@ let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) 
       let%lwt build_dependencies =
         Lwt_list.map_s
           (fun filename ->
-             (** TODO: !!! Make sure to raise exceptions using Lwt *)
              (** TODO: !!! Handle potential dependency cycles *)
              (** TODO: !!! Modify ctx.stack when processing dependency *)
              let filename = FS.abs_path ctx.package_dir filename in
@@ -603,7 +602,6 @@ let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) 
     let build_dependencies_changed {Module. build_dependencies; _} =
       Lwt_list.exists_s
         (fun (filename, st_mtime, digest) ->
-           (** TODO: !!! Make sure to raise exceptions using Lwt *)
            (** TODO: !!! Handle potential dependency cycles *)
            (** TODO: !!! Modify ctx.stack when processing dependency *)
            let%lwt (m : Module.t) = read_module ctx cache filename in

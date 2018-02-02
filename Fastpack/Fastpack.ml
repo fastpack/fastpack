@@ -285,27 +285,35 @@ let prepare_and_pack cl_options start_time =
            then Lwt_unix.unlink temp_file;
         )
     in
+    let ctx = get_context () in
+    let init_run () =
+      Lwt.catch
+        (fun () ->
+           pack_postprocess_report cache ctx start_time
+        )
+        (function
+         | PackError (ctx, error) ->
+           raise (ExitError (string_of_error ctx error))
+         | exn ->
+           raise exn
+        )
+    in
     Lwt.finalize
       (fun () ->
          match mode, options.watch with
          | Development, Some true ->
-           Watcher.watch pack_postprocess_report cache get_context start_time
+           let%lwt () = init_run () in
+           Watcher.watch
+             pack_postprocess_report
+             { cache with trusted = true }
+             ctx.graph
+             get_context
          | _, Some true ->
            (* TODO: convert this into proper error: IllegalConfiguration *)
            failwith "Can only watch in development mode"
          | _, None
          | _, Some false ->
-           Lwt.catch
-             (fun () ->
-                pack_postprocess_report cache (get_context ()) start_time
-             )
-             (fun exn ->
-              match exn with
-              | PackError (ctx, error) ->
-                raise (ExitError (string_of_error ctx error))
-              | _ ->
-                raise exn
-             )
+           init_run ()
       )
       (fun () ->
          let%lwt () = cache.dump () in
