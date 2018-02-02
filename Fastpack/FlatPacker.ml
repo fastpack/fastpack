@@ -22,7 +22,7 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let pack (cache : Cache.t) (ctx : Context.t) channel =
+let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
   let bytes = Lwt_bytes.create 50_000_000 in
   let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
