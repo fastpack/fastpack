@@ -550,8 +550,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         (fun (req, resolved) ->
           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
             | None ->
+              let ctx = { ctx with stack = req :: ctx.stack } in
               let%lwt m = read_module ctx cache resolved in
-              process { ctx with stack = req :: ctx.stack } graph m
+              process ctx graph m
             | Some m ->
               Lwt.return m
           in

@@ -107,7 +107,10 @@ let all_transpilers = FastpackTranspiler.[
 
 let builtin source =
   (* TODO: handle TranspilerError *)
-  Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
+    try
+      Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
+    with
+    | exn -> Lwt.fail exn
 
 let empty = {
     process = (fun _ s -> Lwt.return (s, []));

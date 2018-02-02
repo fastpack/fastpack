@@ -554,7 +554,16 @@ let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) 
       let { Preprocessor. process; _ } = ctx.preprocessor in
       let relname = relative_name ctx filename in
       let digest = Digest.string source in
-      let%lwt source, build_dependencies = process relname source in
+      let%lwt source, build_dependencies =
+        Lwt.catch
+          (fun () -> process relname source)
+          (function
+           | FlowParser.Parse_error.Error args ->
+             Lwt.fail (PackError (ctx, CannotParseFile (filename, args)))
+           | exn ->
+             Lwt.fail exn
+          )
+      in
       let%lwt build_dependencies =
         Lwt_list.map_s
           (fun filename ->
