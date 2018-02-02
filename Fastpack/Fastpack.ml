@@ -22,6 +22,7 @@ open PackerUtil
 
 
 exception PackError = PackerUtil.PackError
+exception ExitError of string 
 
 let string_of_error ctx error =
   Printf.sprintf
@@ -290,11 +291,21 @@ let prepare_and_pack cl_options start_time =
          | Development, Some true ->
            Watcher.watch pack_postprocess_report cache get_context start_time
          | _, Some true ->
-           (* TODO: convert this into proper error*)
+           (* TODO: convert this into proper error: IllegalConfiguration *)
            failwith "Can only watch in development mode"
          | _, None
          | _, Some false ->
-           pack_postprocess_report cache (get_context ()) start_time
+           Lwt.catch
+             (fun () ->
+                pack_postprocess_report cache (get_context ()) start_time
+             )
+             (fun exn ->
+              match exn with
+              | PackError (ctx, error) ->
+                raise (ExitError (string_of_error ctx error))
+              | _ ->
+                raise exn
+             )
       )
       (fun () ->
          let%lwt () = cache.dump () in

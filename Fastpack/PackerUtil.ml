@@ -421,51 +421,39 @@ let relative_name {Context. package_dir; _} filename =
         (length filename - length package_dir - 1)
     )
 
-let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
+let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) filename =
 
-    let st_mtime' filename =
-      let%lwt {st_mtime; _} =
-        try%lwt
-          Lwt_unix.stat filename
-        with Unix.Unix_error _ ->
-          raise (PackError (ctx, CannotReadModule filename))
-      in
-      Lwt.return st_mtime
+  let st_mtime' filename =
+    let%lwt {st_mtime; _} =
+      try%lwt
+        Lwt_unix.stat filename
+      with Unix.Unix_error _ ->
+        Lwt.fail (PackError (ctx, CannotReadModule filename))
     in
+    Lwt.return st_mtime
+  in
 
-    let source' filename =
-      let%lwt source =
-        try%lwt
-          Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
-        with Unix.Unix_error _ ->
-          raise (PackError (ctx, CannotReadModule filename))
-      in
-      Lwt.return source
+  let source' filename =
+    let%lwt source =
+      try%lwt
+        Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
+      with Unix.Unix_error _ ->
+        Lwt.fail (PackError (ctx, CannotReadModule filename))
     in
+    Lwt.return source
+  in
 
-  let make_module ?(build_dependencies=[]) id filename st_mtime source =
-    let%lwt build_dependencies =
-      Lwt_list.map_s
-        (fun filename ->
-           (** TODO: !!! Make sure to raise exceptions using Lwt *)
-           (** TODO: !!! Handle potential dependency cycles *)
-           (** TODO: !!! Modify ctx.stack when processing dependency *)
-           let filename = FS.abs_path ctx.package_dir filename in
-           let%lwt m = read_module ctx cache filename in
-           Lwt.return Module.(m.filename, m.st_mtime, m.digest)
-        )
-        build_dependencies
-    in
-    Lwt.return {
+  let make_module id filename st_mtime source digest =
+    {
       Module.
       id;
       filename;
       st_mtime;
       resolved_dependencies = [];
-      build_dependencies;
+      build_dependencies = [];
       es_module = false;
       analyzed = false;
-      digest = Digest.string source;
+      digest;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
       exports = []
@@ -486,32 +474,64 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
   | "builtin:readable-stream"
   | "builtin:assert" ->
     (* TODO: handle builtins *)
-    make_module (Module.make_id filename) filename 0.0 ""
+    make_module (Module.make_id filename) filename 0.0 "" ""
+    |> Lwt.return
 
   | "builtin:__fastpack_runtime__" ->
-    make_module (Module.make_id filename) filename 0.0 FastpackTranspiler.runtime
+    make_module
+      (Module.make_id filename)
+      filename
+      0.0
+      FastpackTranspiler.runtime
+      (Digest.string FastpackTranspiler.runtime)
+    |> Lwt.return
 
   | _ ->
     let filename = FS.abs_path ctx.package_dir filename in
 
-    if not (FilePath.is_subdir filename ctx.package_dir)
-    then raise (PackError (ctx, CannotLeavePackageDir filename));
+    let%lwt _ =
+      if not (FilePath.is_subdir filename ctx.package_dir)
+      then Lwt.fail (PackError (ctx, CannotLeavePackageDir filename))
+      else Lwt.return_unit
+    in
 
-
-    let preprocess_module filename st_mtime source =
+    let preprocess_module ?(cached=None) filename st_mtime source =
       let { Preprocessor. process; _ } = ctx.preprocessor in
       let relname = relative_name ctx filename in
+      let digest = Digest.string source in
       let%lwt source, build_dependencies = process relname source in
-      let%lwt m =
-        make_module
-          ~build_dependencies
-          (Module.make_id relname)
-          filename
-          st_mtime
-          source
+      let%lwt build_dependencies =
+        Lwt_list.map_s
+          (fun filename ->
+             (** TODO: !!! Make sure to raise exceptions using Lwt *)
+             (** TODO: !!! Handle potential dependency cycles *)
+             (** TODO: !!! Modify ctx.stack when processing dependency *)
+             let filename = FS.abs_path ctx.package_dir filename in
+             let%lwt m = read_module ctx cache filename in
+             Lwt.return Module.(m.filename, m.st_mtime, m.digest)
+          )
+          build_dependencies
       in
-      cache.add m source false;
-      Lwt.return m
+      match cached with
+      | Some (cached : Module.t)
+        when cached.workspace.Workspace.value = source
+          && build_dependencies = cached.build_dependencies ->
+        let m = { cached with st_mtime; digest } in
+        cache.add m source m.analyzed;
+        Lwt.return { cached with st_mtime; digest }
+      | _ ->
+        let m = {
+          (make_module
+            (Module.make_id relname)
+            filename
+            st_mtime
+            source
+            digest)
+          with build_dependencies
+        }
+        in
+        cache.add m source false;
+        Lwt.return m
     in
 
     let build_dependencies_changed {Module. build_dependencies; _} =
@@ -533,10 +553,10 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
       then begin
         let%lwt st_mtime = st_mtime' filename in
         let%lwt source = source' filename in
-        preprocess_module filename st_mtime source
+        preprocess_module ~cached:(Some cached_module) filename st_mtime source
       end
       else begin
-        if cache.trusted
+        if cache.trusted && not ignore_trusted
         then Lwt.return cached_module
         else begin
           let%lwt st_mtime = st_mtime' filename in
@@ -546,7 +566,7 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
             let%lwt source = source' filename in
             if cached_module.digest = Digest.string source
             then Lwt.return cached_module
-            else preprocess_module filename st_mtime source
+            else preprocess_module ~cached:(Some cached_module) filename st_mtime source
         end
       end
     | None ->

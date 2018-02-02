@@ -27,10 +27,22 @@ let watch pack (cache : Cache.t) get_context start_time =
   let%lwt (started_process, ch_in, _) = FS.open_process cmd in
   process := Some started_process;
 
-  (* we have cache & graph *)
-  (* when file is received we always delete it from cache *)
-  (* invalidate file in cache *)
-  (* if file is in graph - run packer *)
+  (*
+   * if file is not in cache - no rebuild
+   * get all files it invalidates (including itself)
+   * if graph is empty (last build was not successful):
+   *    re-read main file, ignoring the trusted cache
+   *    if file is still cached - no action
+   *    otherwise rebuild the entire bundle as usual
+   * if graph is not empty (last build was successful):
+   *    filter out all invalidated files against the graph (by existance in it)
+   *    if nothing remains - no action
+   *    otherwise:
+   *      re-read the main file ignoring trusted - if it is still cached - no action
+   *      if one file remains - rebuild using this file as an entry point and the graph
+   *      otherwise rebuild as usual with an empty graph
+   *
+   * *)
   let cache = cache.to_trusted () in
   let rec read_pack () =
     let%lwt line = Lwt_io.read_line_opt ch_in in

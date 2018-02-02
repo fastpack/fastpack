@@ -36,8 +36,8 @@ let () =
         in
         `Ok (Fastpack.pack_main options time)
       with
-      | Fastpack.PackError (ctx, error) ->
-        `Error (false, Fastpack.string_of_error ctx error)
+      | Fastpack.ExitError message ->
+        `Error (false, message)
     in
 
 
