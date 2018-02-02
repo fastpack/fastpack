@@ -2,7 +2,6 @@
 
 exports[`transpile flow inside jsx 1`] = `
 "(function() {
-var __DEV__ = false;
 
 /* index$$_$$1 */
 

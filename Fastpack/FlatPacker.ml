@@ -874,10 +874,6 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) result_channel =
     | Target.ESM -> "", ""
   )
   in
-  let mode = Printf.sprintf
-    "var __DEV__ = %s;\n"
-    (if ctx.mode = Mode.Development then "true" else "false")
-  in
   let dynamic_import_runtime = (if !has_dynamic_modules then
 "var __fastpack_cache__ = {};
 
@@ -898,7 +894,6 @@ function __fastpack_import__(f) {
   in
 
   let%lwt () = Lwt_io.write result_channel header in
-  let%lwt () = Lwt_io.write result_channel mode in
   let%lwt () = Lwt_io.write result_channel dynamic_import_runtime in
   let%lwt () = Lwt_io.write result_channel bundle in
   let%lwt () = Lwt_io.write result_channel footer in
