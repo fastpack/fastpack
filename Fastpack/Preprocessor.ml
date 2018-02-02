@@ -1,5 +1,7 @@
 module M = Map.Make(String)
 
+exception Error of string
+
 type option_value = Boolean of bool
                   | Number of float
                   | String of string
@@ -106,11 +108,13 @@ let all_transpilers = FastpackTranspiler.[
 ]
 
 let builtin source =
-  (* TODO: handle TranspilerError *)
     try
       Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
     with
-    | exn -> Lwt.fail exn
+    | FastpackTranspiler.Error.TranspilerError err ->
+      Lwt.fail (Error (FastpackTranspiler.Error.error_to_string err))
+    | exn ->
+      Lwt.fail exn
 
 let empty = {
     process = (fun _ s -> Lwt.return (s, []));

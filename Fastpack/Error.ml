@@ -11,7 +11,7 @@ type reason =
   | DependencyCycle of string list
   | CannotFindExportedName of string * string
   | ScopeError of Scope.reason
-  | TranspilerError of FastpackTranspiler.Error.error
+  | PreprocessorError of string
 
 let loc_to_string {Loc. start; _end; _} =
   Printf.sprintf "(%d:%d) - (%d:%d):"
@@ -80,7 +80,7 @@ the code.
   | ScopeError reason ->
     Scope.error_to_string reason
 
-  | TranspilerError error ->
-    FastpackTranspiler.Error.error_to_string error
+  | PreprocessorError error ->
+    error
 
 let ie = FastpackUtil.Error.ie

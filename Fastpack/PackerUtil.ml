@@ -560,6 +560,8 @@ let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) 
           (function
            | FlowParser.Parse_error.Error args ->
              Lwt.fail (PackError (ctx, CannotParseFile (filename, args)))
+           | Preprocessor.Error message ->
+             Lwt.fail (PackError (ctx, PreprocessorError message))
            | exn ->
              Lwt.fail exn
           )
