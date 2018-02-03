@@ -462,6 +462,14 @@ end
 
 
 exception PackError of Context.t * Error.reason
+exception ExitError of string
+exception ExitOK
+
+let string_of_error ctx error =
+  Printf.sprintf
+    "\n%s\n%s"
+    (Context.to_string ctx)
+    (Error.to_string ctx.package_dir error)
 
 let relative_name {Context. package_dir; _} filename =
   match Str.string_match (Str.regexp "^builtin:") filename 0 with

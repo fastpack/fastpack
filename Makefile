@@ -28,6 +28,9 @@ clean-jest:
 test-jest: build-dev
 	cd test && yarn jest
 
+train-jest: build-dev
+	cd test && yarn jest --updateSnapshot
+
 fetch:
 	git submodule init
 	git submodule update

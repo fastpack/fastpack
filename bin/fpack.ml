@@ -38,6 +38,8 @@ let () =
       with
       | Fastpack.ExitError message ->
         `Error (false, message)
+      | Fastpack.ExitOK ->
+        `Ok ()
     in
 
 

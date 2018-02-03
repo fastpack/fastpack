@@ -620,26 +620,29 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 " prefix entry_id
   in
 
+  let emitted_modules = ref (StringSet.empty) in
   let emit graph entry =
     let emit bytes = Lwt_io.write channel bytes in
-    let rec emit_module ?(seen=StringSet.empty) m =
-      if StringSet.mem m.Module.id seen
-      then Lwt.return seen
-      else
-        let seen = StringSet.add m.Module.id seen in
+    let rec emit_module m =
+      if StringSet.mem m.Module.filename !emitted_modules
+      then Lwt.return_unit
+      else begin
+        emitted_modules := StringSet.add m.Module.filename !emitted_modules;
         let workspace = m.Module.workspace in
         let dep_map = Module.DependencyMap.empty in
         let dependencies = DependencyGraph.lookup_dependencies graph m in
-        let%lwt (dep_map, seen) = Lwt_list.fold_left_s
-            (fun (dep_map, seen) (dep, m) ->
+        let%lwt dep_map =
+          Lwt_list.fold_left_s
+            (fun dep_map (dep, m) ->
                match m with
                | None ->
-                 Lwt.return (dep_map, seen)
+                 Lwt.return dep_map
                | Some m ->
-                 let%lwt seen = emit_module ~seen:seen m in
+                 let%lwt () = emit_module m in
                  let dep_map = Module.DependencyMap.add dep m dep_map in
-                 Lwt.return (dep_map, seen))
-            (dep_map, seen)
+                 Lwt.return dep_map
+            )
+            dep_map
             dependencies
         in
         let%lwt () =
@@ -650,9 +653,14 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         in
         let%lwt content = Workspace.write channel workspace dep_map in
         let () = cache.add m content true in
-        let () = DependencyGraph.add_module graph { m with workspace = Workspace.of_string content } in
+        let () =
+          DependencyGraph.add_module
+            graph
+            { m with workspace = Workspace.of_string content }
+        in
         let%lwt () = emit "},\n" in
-        Lwt.return seen
+        Lwt.return_unit
+      end
     in
 
     let export =
@@ -679,16 +687,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     | None -> Error.ie (ctx.entry_filename ^ " not found in the graph")
   in
   let%lwt _ = emit graph global_entry in
-  let modules =
-    graph
-    |> DependencyGraph.get_modules
-    |> List.map (fun path -> String.replace ~sub:ctx.package_dir ~by:"." path)
-    |> List.sort compare
-  in
 
   Lwt.return {
     Reporter.
-    modules;
+    modules = StringSet.elements !emitted_modules;
     cache = cache.loaded;
     message = "Mode: development."
   }

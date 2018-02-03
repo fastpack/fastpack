@@ -4,17 +4,14 @@ open PackerUtil
 
 
 let watch pack (cache : Cache.t) graph get_context =
-
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
    * *)
   (* TODO: raise WatchCompleted ? *)
   (* TODO: handle SIGTERM *)
   let w, u = Lwt.wait () in
-  Lwt_unix.on_signal
-    Sys.sigint
-    (fun _ -> Lwt.wakeup_exn u (Failure "SIGINT"))
-  |> ignore;
+  Lwt_unix.on_signal Sys.sigint (fun _ -> Lwt.wakeup_exn u ExitOK) |> ignore;
+  Lwt_unix.on_signal Sys.sigterm (fun _ -> Lwt.wakeup_exn u ExitOK) |> ignore;
 
   let%lwt () = Lwt_io.(write stdout "Watching file changes ...\n") in
   let process = ref None in
@@ -22,6 +19,23 @@ let watch pack (cache : Cache.t) graph get_context =
   let cmd = "watchman-wait -m 0 " ^ package_dir in
   let%lwt (started_process, ch_in, _) = FS.open_process cmd in
   process := Some started_process;
+
+  let pack cache ctx start_time =
+    Lwt.catch
+      (fun () ->
+         let%lwt () = pack cache ctx start_time in
+         Lwt.return_some ctx.Context.graph
+      )
+      (function
+       | PackError (ctx, error) ->
+         let%lwt () =
+           (string_of_error ctx error) ^ "\n" |> Lwt_io.(write stderr)
+         in
+         Lwt.return_none
+       | exn ->
+         raise exn
+      )
+  in
 
   (*
    * if file is not in cache - no rebuild
@@ -39,7 +53,6 @@ let watch pack (cache : Cache.t) graph get_context =
    *      otherwise rebuild as usual with an empty graph
    *
    * *)
-  let cache = { cache with trusted = true } in
   let rec read_pack graph =
     let report_file_change ctx filename =
       let message =
@@ -74,6 +87,7 @@ let watch pack (cache : Cache.t) graph get_context =
         | [], _ ->
           Lwt.return graph
         | _, None ->
+          let%lwt () = Lwt_io.(write stdout "empty graph\n") in
           let ctx = {(get_context ()) with graph = DependencyGraph.empty ()} in
           let%lwt () = report_file_change ctx filename in
           let%lwt m = read_module ~ignore_trusted:true ctx cache filename in
@@ -82,10 +96,10 @@ let watch pack (cache : Cache.t) graph get_context =
             Lwt.return graph
           end
           else begin
-            let%lwt () = pack cache ctx start_time in
-            Lwt.return_some ctx.graph
+            pack cache ctx start_time >>= Lwt.return
           end
         | files, Some graph ->
+          let%lwt () = Lwt_io.(write stdout "existing graph\n") in
           let%lwt () = report_file_change (get_context ()) filename in
           let files =
             List.filter
@@ -110,16 +124,14 @@ let watch pack (cache : Cache.t) graph get_context =
             else begin
               DependencyGraph.remove_module graph filename;
               let ctx = { ctx with graph; current_filename = filename } in
-              let%lwt () = pack cache ctx start_time in
-              Lwt.return_some ctx.graph
+              pack cache ctx start_time >>= Lwt.return
             end
           | _ ->
             let ctx = {(get_context ()) with graph = DependencyGraph.empty ()} in
             let%lwt m = read_module ~ignore_trusted:true ctx cache filename in
             if m.Module.cached then Lwt.return_some graph
             else begin
-              let%lwt () = pack cache ctx start_time in
-              Lwt.return_some ctx.graph
+              pack cache ctx start_time >>= Lwt.return
             end
       in
       (read_pack [@tailcall]) graph

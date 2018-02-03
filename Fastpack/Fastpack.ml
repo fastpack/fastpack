@@ -22,13 +22,11 @@ open PackerUtil
 
 
 exception PackError = PackerUtil.PackError
-exception ExitError of string 
+exception ExitError = PackerUtil.ExitError
+exception ExitOK = PackerUtil.ExitOK
 
-let string_of_error ctx error =
-  Printf.sprintf
-    "\n%s\n%s"
-    (Context.to_string ctx)
-    (Error.to_string ctx.package_dir error)
+(* TODO: this makes fpack_test happy, remove when fpack_test is removed *)
+let string_of_error = PackerUtil.string_of_error
 
 type options = {
   input : string option;
@@ -288,9 +286,7 @@ let prepare_and_pack cl_options start_time =
     let ctx = get_context () in
     let init_run () =
       Lwt.catch
-        (fun () ->
-           pack_postprocess_report cache ctx start_time
-        )
+        (fun () -> pack_postprocess_report cache ctx start_time)
         (function
          | PackError (ctx, error) ->
            raise (ExitError (string_of_error ctx error))

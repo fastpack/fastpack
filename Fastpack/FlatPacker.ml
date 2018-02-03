@@ -848,12 +848,6 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           let new_modules =
             graph
             |> DependencyGraph.get_modules
-            |> List.map (fun path ->
-                String.replace
-                  ~sub:ctx.package_dir
-                  ~by:"."
-                  path
-              )
           in
           total_modules := List.concat [ !total_modules; new_modules; ];
           Lwt.return_unit
