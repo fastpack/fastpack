@@ -22,12 +22,11 @@ open PackerUtil
 
 
 exception PackError = PackerUtil.PackError
+exception ExitError = PackerUtil.ExitError
+exception ExitOK = PackerUtil.ExitOK
 
-let string_of_error ctx error =
-  Printf.sprintf
-    "\n%s\n%s"
-    (Context.to_string ctx)
-    (Error.to_string ctx.package_dir error)
+(* TODO: this makes fpack_test happy, remove when fpack_test is removed *)
+let string_of_error = PackerUtil.string_of_error
 
 type options = {
   input : string option;
@@ -38,6 +37,7 @@ type options = {
   preprocess : Preprocessor.config list option;
   postprocess : string list option;
   stats : Stats.t option;
+  watch : bool option;
 }
 
 let empty_options = {
@@ -49,6 +49,7 @@ let empty_options = {
     preprocess = None;
     postprocess = None;
     stats = None;
+    watch = None;
 }
 
 let default_options =
@@ -61,6 +62,7 @@ let default_options =
     preprocess = None;
     postprocess = None;
     stats = None;
+    watch = None;
   }
 
 let merge_options o1 o2 =
@@ -79,9 +81,11 @@ let merge_options o1 o2 =
     preprocess = merge o1.preprocess o2.preprocess;
     postprocess = merge o1.postprocess o2.postprocess;
     stats = merge o1.stats o2.stats;
+    watch = merge o1.watch o2.watch;
   }
 
-let pack ~pack_f ~mode ~target ~(preprocessor : Preprocessor.t) ~entry_filename ~package_dir channel =
+(* TODO: this function may not be needed when tests are ported to Jest *)
+let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir channel =
   let ctx = { Context.
     entry_filename;
     package_dir;
@@ -90,10 +94,11 @@ let pack ~pack_f ~mode ~target ~(preprocessor : Preprocessor.t) ~entry_filename 
     mode;
     target;
     resolver = NodeResolver.make ();
-    preprocessor
+    preprocessor;
+    graph = DependencyGraph.empty ();
   }
   in
-  pack_f ctx channel
+  pack_f cache ctx channel
 
 let find_package_root start_dir =
   let rec check_dir dir =
@@ -166,46 +171,67 @@ let prepare_and_pack cl_options start_time =
       | Some target -> target
       | None -> Error.ie "target is not set"
     in
-    let%lwt mode, pack_f =
+    let%lwt mode, cache, pack_f =
       match options.mode with
       | Some mode ->
-        let%lwt pack_f =
+        let%lwt cache, pack_f =
           match mode with
           | Mode.Production ->
-            Lwt.return @@ FlatPacker.pack ~cache:(Cache.fake ())
+            Lwt.return (Cache.fake (), FlatPacker.pack)
           | Mode.Test
           | Mode.Development ->
             let cache_prefix =
-              (** TODO: account for abs path on the package_dir *)
-              Mode.to_string mode ^ "--" ^ Target.to_string target
+              let digest s = s |> Digest.string |> Digest.to_hex in
+              let preprocessors =
+                preprocessor.Preprocessor.configs
+                |> List.map Preprocessor.to_string
+                |> String.concat ""
+                |> digest
+              in
+              String.concat "-" [
+                Mode.to_string mode;
+                Target.to_string target;
+                digest package_dir;
+                preprocessors;
+              ]
             in
             let%lwt cache =
               match options.cache with
               | Some Cache.Normal ->
-                Cache.create package_dir cache_prefix input
+                Cache.create package_dir cache_prefix entry_filename
               | Some Cache.Ignore ->
                 Lwt.return @@ Cache.fake ()
               | None ->
                 Error.ie "Cache strategy is not set"
             in
-            Lwt.return @@ RegularPacker.pack ~cache
+            Lwt.return (cache, RegularPacker.pack)
         in
-        Lwt.return (mode, pack_f)
+        Lwt.return (mode, cache, pack_f)
       | None ->
         Error.ie "mode is not set"
     in
-    let pack_postprocess ch =
-      let pack =
-        pack ~pack_f ~mode ~target ~preprocessor ~entry_filename ~package_dir
-      in
+    let get_context () =
+      { Context.
+        entry_filename;
+        package_dir;
+        stack = [];
+        current_filename = entry_filename;
+        mode;
+        target;
+        resolver = NodeResolver.make ();
+        preprocessor;
+        graph = DependencyGraph.empty ()
+      }
+    in
+    let pack_postprocess cache ctx ch =
       match options.postprocess with
       | None | Some [] ->
-        pack ch
+        pack_f cache ctx ch
       | Some processors ->
         (* pack to memory *)
         let bytes = Lwt_bytes.create 50_000_000 in
         let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-        let%lwt ret = pack mem_ch in
+        let%lwt ret = pack_f cache ctx mem_ch in
         let%lwt data =
           Lwt_list.fold_left_s
             (fun data cmd ->
@@ -229,14 +255,14 @@ let prepare_and_pack cl_options start_time =
             processors
         in
         let%lwt () = Lwt_io.write ch data in
-        Lwt.return ret
+        Lwt.return { ret with size = String.length data }
     in
     let report =
       match options.stats with
       | Some JSON -> Reporter.report_json
       | None -> Reporter.report_string
     in
-    let pack_postprocess_report start_time =
+    let pack_postprocess_report cache ctx start_time =
       let temp_file = Filename.temp_file "" ".bundle.js" in
       Lwt.finalize
         (fun () ->
@@ -246,22 +272,50 @@ let prepare_and_pack cl_options start_time =
               ~perm:0o640
               ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
               temp_file
-              pack_postprocess
+              (pack_postprocess cache ctx)
           in
           let%lwt () = Lwt_unix.rename temp_file output_file in
           let%lwt () = report start_time stats in
-          Lwt.return_unit
+          Lwt.return stats
         )
         (fun () ->
            if%lwt Lwt_unix.file_exists temp_file
            then Lwt_unix.unlink temp_file;
         )
     in
+    let ctx = get_context () in
+    let init_run () =
+      Lwt.catch
+        (fun () -> pack_postprocess_report cache ctx start_time)
+        (function
+         | PackError (ctx, error) ->
+           raise (ExitError (string_of_error ctx error))
+         | exn ->
+           raise exn
+        )
+    in
     Lwt.finalize
-      (fun () -> pack_postprocess_report start_time)
       (fun () ->
-         preprocessor.Preprocessor.finalize ()
-         |> Lwt.return
+         match mode, options.watch with
+         | Development, Some true ->
+           let%lwt {Reporter. modules; _} = init_run () in
+           Watcher.watch
+             pack_postprocess_report
+             { cache with trusted = true; loaded = true }
+             ctx.graph
+             modules
+             get_context
+         | _, Some true ->
+           (* TODO: convert this into proper error: IllegalConfiguration *)
+           failwith "Can only watch in development mode"
+         | _, None
+         | _, Some false ->
+          let%lwt _ = init_run () in Lwt.return_unit
+      )
+      (fun () ->
+         let%lwt () = cache.dump () in
+         let () = preprocessor.Preprocessor.finalize () in
+         Lwt.return_unit
       )
 
   | _ ->

@@ -1,8 +1,10 @@
+module StringSet = Set.Make(String)
 
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
 module S = Ast.Statement
 module E = Ast.Expression
+module P = Ast.Pattern
 module L = Ast.Literal
 
 module FS = FastpackUtil.FS
@@ -205,6 +207,7 @@ module Context = struct
     target : Target.t;
     resolver : NodeResolver.t;
     preprocessor : Preprocessor.t;
+    graph : DependencyGraph.t;
   }
 
   let to_string { entry_filename; package_dir; stack; mode; current_filename; _ } =
@@ -239,9 +242,10 @@ module Cache = struct
 
   type t = {
     get : string -> Module.t option;
+    get_potentially_invalid : string -> string list;
     dump : unit -> unit Lwt.t;
     add : Module.t -> string -> bool -> unit;
-    to_trusted : unit -> t;
+    remove : string -> unit;
     loaded : bool;
     trusted : bool;
   }
@@ -257,11 +261,12 @@ module Cache = struct
     analyzed : bool;
   }
 
-  let rec fake () =
+  let fake () =
     { get = (fun _ -> None);
+      get_potentially_invalid = (fun _ -> []);
       dump = (fun _ -> Lwt.return_unit);
       add = (fun _ _ _ -> ());
-      to_trusted = (fun () -> { (fake ()) with trusted = true });
+      remove = (fun _ -> ());
       loaded = false;
       trusted = false;
     }
@@ -286,10 +291,15 @@ module Cache = struct
       let%lwt () = makedirs dir in
       Lwt.return dir
 
-  let cache_filename cache_dir prefix filename =
-    filename
-    |> String.replace ~sub:"/" ~by:"__"
-    |> String.replace ~sub:"." ~by:"___"
+  let cache_filename package_dir cache_dir prefix filename =
+    String.(
+      sub
+        filename
+        (length package_dir + 1)
+        (length filename - length package_dir - 1)
+      |> replace ~sub:"/" ~by:"__"
+      |> replace ~sub:"." ~by:"___"
+    )
     |> Printf.sprintf "%s-%s-%s.cache" prefix Version.github_commit
     |> FilePath.concat cache_dir
 
@@ -297,8 +307,73 @@ module Cache = struct
 
     let loaded = modules <> M.empty in
     let modules = ref modules in
+    let build_dependencies =
+      ref (
+        !modules
+        |> M.bindings
+        |> List.map
+          (fun (filename, {build_dependencies; _}) ->
+            List.map
+              (fun (dependency, _, _) -> (dependency, filename))
+              build_dependencies
+          )
+        |> List.concat
+        |> List.fold_left
+          (fun acc (dep, filename) ->
+             M.update
+               dep
+               (function
+                | None -> Some (StringSet.add filename StringSet.empty)
+                | Some set -> Some(StringSet.add filename set)
+               )
+             acc
+          )
+          M.empty
+      )
+    in
+
+    let remove_build_dependencies filename dependencies =
+      List.iter
+        (fun (dep, _, _) ->
+           build_dependencies :=
+             M.update
+               dep
+               (function
+                | None -> None
+                | Some set -> Some (StringSet.remove filename set)
+               )
+               !build_dependencies
+        )
+        dependencies
+    in
+
+    let add_build_dependencies filename dependencies =
+      List.iter
+        (fun (dep, _, _) ->
+           build_dependencies :=
+             M.update
+               dep
+               (function
+                | None -> Some (StringSet.add filename StringSet.empty)
+                | Some set -> Some(StringSet.add filename set)
+               )
+               !build_dependencies
+        )
+        dependencies
+    in
 
     let add (m : Module.t) source analyzed =
+      let () =
+        match M.get m.filename !modules with
+        | None ->
+          add_build_dependencies m.filename m.build_dependencies
+        | Some entry ->
+          if entry.build_dependencies <> m.build_dependencies then begin
+            remove_build_dependencies m.filename m.build_dependencies;
+            add_build_dependencies m.filename m.build_dependencies
+          end
+          else ()
+      in
       modules :=
         M.add
           m.filename
@@ -310,6 +385,14 @@ module Cache = struct
             source
           }
           !modules;
+    in
+
+    let remove filename =
+      match M.get filename !modules with
+      | None -> ()
+      | Some { build_dependencies; _} ->
+        remove_build_dependencies filename build_dependencies;
+        modules := M.remove filename !modules;
     in
 
     let get filename =
@@ -336,7 +419,8 @@ module Cache = struct
           analyzed;
           workspace = Workspace.of_string source;
           scope = FastpackUtil.Scope.empty;
-          exports = []
+          exports = [];
+          cached = true;
         }
     in
 
@@ -349,28 +433,28 @@ module Cache = struct
         (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] !modules)
     in
 
-    let rec to_trusted () = {
-      get;
-      dump;
-      add;
-      to_trusted;
-      loaded;
-      trusted = true
-    }
+    let get_potentially_invalid filename =
+      match M.get filename !modules with
+      | None -> []
+      | Some _ ->
+        match M.get filename !build_dependencies with
+        | None -> [filename]
+        | Some set -> set |> StringSet.add filename |> StringSet.elements
     in
 
     Lwt.return {
       get;
+      get_potentially_invalid;
       dump;
       add;
-      to_trusted;
+      remove;
       loaded;
       trusted = false
     }
 
   let create package_dir prefix filename =
     let%lwt cache_dir = create_dir package_dir in
-    let cache_filename = cache_filename cache_dir prefix filename in
+    let cache_filename = cache_filename package_dir cache_dir prefix filename in
 
     let%lwt modules =
       match%lwt Lwt_unix.file_exists cache_filename with
@@ -389,7 +473,14 @@ end
 
 
 exception PackError of Context.t * Error.reason
+exception ExitError of string
+exception ExitOK
 
+let string_of_error ctx error =
+  Printf.sprintf
+    "\n%s\n%s"
+    (Context.to_string ctx)
+    (Error.to_string ctx.package_dir error)
 
 let relative_name {Context. package_dir; _} filename =
   match Str.string_match (Str.regexp "^builtin:") filename 0 with
@@ -403,54 +494,43 @@ let relative_name {Context. package_dir; _} filename =
         (length filename - length package_dir - 1)
     )
 
-let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
+let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) filename =
 
-    let st_mtime' filename =
-      let%lwt {st_mtime; _} =
-        try%lwt
-          Lwt_unix.stat filename
-        with Unix.Unix_error _ ->
-          raise (PackError (ctx, CannotReadModule filename))
-      in
-      Lwt.return st_mtime
+  let st_mtime' filename =
+    let%lwt {st_mtime; _} =
+      try%lwt
+        Lwt_unix.stat filename
+      with Unix.Unix_error _ ->
+        Lwt.fail (PackError (ctx, CannotReadModule filename))
     in
+    Lwt.return st_mtime
+  in
 
-    let source' filename =
-      let%lwt source =
-        try%lwt
-          Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
-        with Unix.Unix_error _ ->
-          raise (PackError (ctx, CannotReadModule filename))
-      in
-      Lwt.return source
+  let source' filename =
+    let%lwt source =
+      try%lwt
+        Lwt_io.with_file ~mode:Lwt_io.Input filename Lwt_io.read
+      with Unix.Unix_error _ ->
+        Lwt.fail (PackError (ctx, CannotReadModule filename))
     in
+    Lwt.return source
+  in
 
-  let make_module ?(build_dependencies=[]) id filename st_mtime source =
-    let%lwt build_dependencies =
-      Lwt_list.map_s
-        (fun filename ->
-           (** TODO: !!! Make sure to raise exceptions using Lwt *)
-           (** TODO: !!! Handle potential dependency cycles *)
-           (** TODO: !!! Modify ctx.stack when processing dependency *)
-           let filename = FS.abs_path ctx.package_dir filename in
-           let%lwt m = read_module ctx cache filename in
-           Lwt.return Module.(m.filename, m.st_mtime, m.digest)
-        )
-        build_dependencies
-    in
-    Lwt.return {
+  let make_module id filename st_mtime source digest =
+    {
       Module.
       id;
       filename;
       st_mtime;
       resolved_dependencies = [];
-      build_dependencies;
+      build_dependencies = [];
       es_module = false;
       analyzed = false;
-      digest = Digest.string source;
+      digest;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
-      exports = []
+      exports = [];
+      cached = false;
     }
   in
 
@@ -462,40 +542,85 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
   | "builtin:fs"
   | "builtin:tty"
   | "builtin:net"
-  | "builtin:events" ->
+  | "builtin:events"
+  | "builtin:stream"
+  | "builtin:constants"
+  | "builtin:readable-stream"
+  | "builtin:assert" ->
     (* TODO: handle builtins *)
-    make_module (Module.make_id filename) filename 0.0 ""
+    make_module (Module.make_id filename) filename 0.0 "" ""
+    |> Lwt.return
 
   | "builtin:__fastpack_runtime__" ->
-    make_module (Module.make_id filename) filename 0.0 FastpackTranspiler.runtime
+    make_module
+      (Module.make_id filename)
+      filename
+      0.0
+      FastpackTranspiler.runtime
+      (Digest.string FastpackTranspiler.runtime)
+    |> Lwt.return
 
   | _ ->
     let filename = FS.abs_path ctx.package_dir filename in
 
-    if not (FilePath.is_subdir filename ctx.package_dir)
-    then raise (PackError (ctx, CannotLeavePackageDir filename));
+    let%lwt _ =
+      if not (FilePath.is_subdir filename ctx.package_dir)
+      then Lwt.fail (PackError (ctx, CannotLeavePackageDir filename))
+      else Lwt.return_unit
+    in
 
-
-    let preprocess_module filename st_mtime source =
+    let preprocess_module ?(cached=None) filename st_mtime source =
       let { Preprocessor. process; _ } = ctx.preprocessor in
       let relname = relative_name ctx filename in
-      let%lwt source, build_dependencies = process relname source in
-      let%lwt m =
-        make_module
-          ~build_dependencies
-          (Module.make_id relname)
-          filename
-          st_mtime
-          source
+      let digest = Digest.string source in
+      let%lwt source, build_dependencies =
+        Lwt.catch
+          (fun () -> process relname source)
+          (function
+           | FlowParser.Parse_error.Error args ->
+             Lwt.fail (PackError (ctx, CannotParseFile (filename, args)))
+           | Preprocessor.Error message ->
+             Lwt.fail (PackError (ctx, PreprocessorError message))
+           | exn ->
+             Lwt.fail exn
+          )
       in
-      cache.add m source false;
-      Lwt.return m
+      let%lwt build_dependencies =
+        Lwt_list.map_s
+          (fun filename ->
+             (** TODO: !!! Handle potential dependency cycles *)
+             (** TODO: !!! Modify ctx.stack when processing dependency *)
+             let filename = FS.abs_path ctx.package_dir filename in
+             let%lwt m = read_module ctx cache filename in
+             Lwt.return Module.(m.filename, m.st_mtime, m.digest)
+          )
+          build_dependencies
+      in
+      match cached with
+      | Some (cached : Module.t)
+        when cached.workspace.Workspace.value = source
+          && build_dependencies = cached.build_dependencies ->
+        let m = { cached with st_mtime; digest } in
+        cache.add m source m.analyzed;
+        Lwt.return { cached with st_mtime; digest }
+      | _ ->
+        let m = {
+          (make_module
+            (Module.make_id relname)
+            filename
+            st_mtime
+            source
+            digest)
+          with build_dependencies
+        }
+        in
+        cache.add m source false;
+        Lwt.return m
     in
 
     let build_dependencies_changed {Module. build_dependencies; _} =
       Lwt_list.exists_s
         (fun (filename, st_mtime, digest) ->
-           (** TODO: !!! Make sure to raise exceptions using Lwt *)
            (** TODO: !!! Handle potential dependency cycles *)
            (** TODO: !!! Modify ctx.stack when processing dependency *)
            let%lwt (m : Module.t) = read_module ctx cache filename in
@@ -511,10 +636,10 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
       then begin
         let%lwt st_mtime = st_mtime' filename in
         let%lwt source = source' filename in
-        preprocess_module filename st_mtime source
+        preprocess_module ~cached:(Some cached_module) filename st_mtime source
       end
       else begin
-        if cache.trusted
+        if cache.trusted && not ignore_trusted
         then Lwt.return cached_module
         else begin
           let%lwt st_mtime = st_mtime' filename in
@@ -524,7 +649,7 @@ let rec read_module (ctx : Context.t) (cache : Cache.t) filename =
             let%lwt source = source' filename in
             if cached_module.digest = Digest.string source
             then Lwt.return cached_module
-            else preprocess_module filename st_mtime source
+            else preprocess_module ~cached:(Some cached_module) filename st_mtime source
         end
       end
     | None ->
@@ -547,6 +672,18 @@ let is_es_module stmts =
   (* TODO: what if module has only import() expression? *)
   let import_or_export ((_, stmt) : Loc.t S.t) =
     match stmt with
+    | S.Expression {
+        expression = (_, E.Assignment {
+            operator = E.Assignment.Assign;
+            left = (_, P.Expression (_, E.Member {
+                _object = (_, E.Identifier (_, "exports"));
+                property = E.Member.PropertyIdentifier (_, "__esModule");
+                computed = false
+              }));
+            right = (_, E.Literal { value = L.Boolean true; _});
+        });
+        _
+      }
     | S.ExportDefaultDeclaration _
     | S.ExportNamedDeclaration _
     | S.ImportDeclaration _ ->

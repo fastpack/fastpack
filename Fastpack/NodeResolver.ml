@@ -1,11 +1,13 @@
 module M = Map.Make(String)
+let debug = Logs.debug
 
 module PackageJson = struct
+  (* TODO: account for browser *)
   type t = {
     name : string;
     main : string option;
     module_ : string option;
-    browser : string option;
+    (* browser : string option; *)
   }
 
   let of_json data =
@@ -14,8 +16,8 @@ module PackageJson = struct
       let name = member "name" data |> to_string in
       let main = member "main" data |> to_string_option in
       let module_ = member "module" data |> to_string_option in
-      let browser = member "browser" data |> to_string_option in
-      Result.Ok { name; main; module_; browser }
+      (* let browser = member "browser" data |> to_string_option in *)
+      Result.Ok { name; main; module_; (* browser *) }
     with Type_error _ ->
       Result.Error "Error parsing package.json"
 

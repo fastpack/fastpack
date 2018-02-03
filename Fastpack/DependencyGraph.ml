@@ -1,8 +1,10 @@
 module StringSet = Set.Make(String)
+exception Cycle of string list
+let debug = Logs.debug
 
 type t = {
   modules : (string, Module.t) Hashtbl.t;
-  dependencies : (string, (Dependency.t * Module.t option)) Hashtbl.t;
+  dependencies : (string, (Dependency.t * string option)) Hashtbl.t;
 }
 
 let iter_modules iter graph =
@@ -23,18 +25,27 @@ let lookup_module graph filename =
   lookup graph.modules filename
 
 let lookup_dependencies graph (m : Module.t) =
-  Hashtbl.find_all graph.dependencies m.filename
+  List.map
+    (fun (dep, some_filename) ->
+      match some_filename with
+      | None -> (dep, None)
+      | Some filename -> (dep, lookup_module graph filename)
+    )
+    (Hashtbl.find_all graph.dependencies m.filename)
 
 let add_module graph (m : Module.t) =
-  if Hashtbl.mem graph.modules m.filename
-  then Hashtbl.remove graph.modules m.filename;
+  Hashtbl.remove graph.modules m.filename;
   Hashtbl.add graph.modules m.filename m
 
-let add_dependency graph (m : Module.t) (dep : (Dependency.t * Module.t option)) =
-  Hashtbl.add graph.dependencies m.filename dep;
+let add_dependency graph (m : Module.t) (dep : (Dependency.t * string option)) =
+  Hashtbl.add graph.dependencies m.filename dep
 
+let remove_module graph filename =
+  Hashtbl.remove graph.modules filename;
+  List.iter
+    (fun _ -> Hashtbl.remove graph.dependencies filename)
+    (Hashtbl.find_all graph.dependencies filename)
 
-exception Cycle of string list
 
 let sort graph entry =
   let modules = ref [] in

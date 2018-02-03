@@ -18,6 +18,10 @@ let builtins =
   |> StringSet.add "tty"
   |> StringSet.add "net"
   |> StringSet.add "events"
+  |> StringSet.add "assert"
+  |> StringSet.add "stream"
+  |> StringSet.add "constants"
+  |> StringSet.add "readable-stream"
 
 let is_builtin module_request =
   StringSet.mem module_request builtins

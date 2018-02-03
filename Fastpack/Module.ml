@@ -22,8 +22,11 @@ type t = {
   (** List of build dependencies *)
   build_dependencies : (string * float * string) list;
 
-  (** If module is cached *)
+  (** If module is analyzed when packing *)
   analyzed : bool;
+
+  (** If module is analyzed when packing *)
+  cached : bool;
 
   (** EcmaScript 6 Module *)
   es_module : bool;

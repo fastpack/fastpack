@@ -3,9 +3,9 @@
 exports[`--stats=json add modulesPaths in dev 1`] = `
 Object {
   "modulesPaths": Array [
-    "./dep1.js",
-    "./dep2.js",
-    "./index.js",
+    "/.../dep1.js",
+    "/.../dep2.js",
+    "/.../index.js",
   ],
 }
 `;
@@ -13,9 +13,9 @@ Object {
 exports[`--stats=json add modulesPaths in prod 1`] = `
 Object {
   "modulesPaths": Array [
-    "./dep1.js",
-    "./dep2.js",
-    "./index.js",
+    "/.../dep1.js",
+    "/.../dep2.js",
+    "/.../index.js",
   ],
 }
 `;

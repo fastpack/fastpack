@@ -1,5 +1,7 @@
 module M = Map.Make(String)
 
+exception Error of string
+
 type option_value = Boolean of bool
                   | Number of float
                   | String of string
@@ -17,6 +19,7 @@ type process_f = string -> string * string list
 
 type t = {
   process : string -> string -> (string * string list) Lwt.t;
+  configs : config list;
   finalize : unit -> unit;
 }
 
@@ -105,14 +108,25 @@ let all_transpilers = FastpackTranspiler.[
 ]
 
 let builtin source =
-  (* TODO: handle TranspilerError *)
-  Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
+    try
+      Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
+    with
+    | FastpackTranspiler.Error.TranspilerError err ->
+      Lwt.fail (Error (FastpackTranspiler.Error.error_to_string err))
+    | exn ->
+      Lwt.fail exn
 
-let empty =
-  { process = (fun _ s -> Lwt.return (s, [])); finalize = (fun () -> ())}
+let empty = {
+    process = (fun _ s -> Lwt.return (s, []));
+    configs = [];
+    finalize = (fun () -> ())
+  }
 
-let transpile_all =
-  { process = (fun _ s -> builtin s); finalize = (fun () -> ()) }
+let transpile_all = {
+    process = (fun _ s -> builtin s);
+    configs = [];
+    finalize = (fun () -> ())
+  }
 
 module NodeServer = struct
 
@@ -145,20 +159,10 @@ module NodeServer = struct
       Printf.sprintf "node %s"
       @@ List.fold_left FilePath.concat fpack_root ["node-service"; "index.js"]
     in
-    let (fp_in, node_out) = Unix.pipe () in
-    let (node_in, fp_out) = Unix.pipe () in
-    fp_in_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Input fp_in;
-    fp_out_ch := Lwt_io.of_unix_fd ~mode:Lwt_io.Output fp_out;
-    let process_none =
-      Lwt_process.(
-        open_process_none
-          ~env:(Unix.environment ())
-          ~stdin:(`FD_move node_in)
-          ~stdout:(`FD_move node_out)
-          (shell cmd)
-      )
-    in
-    processes := [process_none];
+    let%lwt (process, ch_in, ch_out) = FS.open_process cmd in
+    fp_in_ch := ch_in;
+    fp_out_ch := ch_out;
+    processes := [process];
     Lwt.return_unit
 
   let process loader options source =
@@ -241,7 +245,7 @@ let make configs =
     Lwt.return (source, build_dependencies)
   in
 
-  Lwt.return { process; finalize = NodeServer.finalize }
+  Lwt.return { process; configs; finalize = NodeServer.finalize }
 
 
 

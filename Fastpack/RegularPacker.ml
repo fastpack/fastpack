@@ -9,15 +9,17 @@ module Visit = FastpackUtil.Visit
 
 let debug = Logs.debug
 
+let pack (cache : Cache.t) (ctx : Context.t) channel =
 
-
-let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
-
-  if (ctx.Context.target = Target.ESM)
-  then raise (PackError (ctx, NotImplemented (
-      None, "EcmaScript6 target is not supported "
-            ^ "for the regular packer - use flat\n"
-    )));
+  (* TODO: handle this at a higher level, IllegalConfiguration error *)
+  let%lwt () =
+    if (ctx.Context.target = Target.ESM)
+    then Lwt.fail (PackError (ctx, NotImplemented (
+        None, "EcmaScript6 target is not supported "
+              ^ "for the regular packer - use flat\n"
+      )))
+    else Lwt.return_unit
+  in
 
   let analyze _id filename source =
     let ((_, stmts, _) as program), _ = Parser.parse_source source in
@@ -419,11 +421,13 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
             callee = (_, E.Identifier (_, "require"));
             arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
           } ->
-          let dep = add_dependency request in
-          patch_loc_with loc (fun ctx ->
-              let {Module. id = module_id; _} = get_module dep ctx in
-              fastpack_require module_id dep.request
-            );
+          if (not @@ Scope.has_binding "require" (top_scope ())) then begin
+            let dep = add_dependency request in
+            patch_loc_with loc (fun ctx ->
+                let {Module. id = module_id; _} = get_module dep ctx in
+                fastpack_require module_id dep.request
+              );
+          end;
           Visit.Break
 
         | E.Identifier (loc, name) ->
@@ -482,26 +486,22 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
     let m, dependencies =
       if (not m.analyzed) then begin
         let source = m.Module.workspace.Workspace.value in
-        (* TODO: reafctor this *)
-        (* let transpiled = *)
-        (*   try *)
-        (*     transpile ctx m.filename source *)
-        (*   with *)
-        (*   | FlowParser.Parse_error.Error args -> *)
-        (*     raise (PackError (ctx, CannotParseFile (m.filename, args))) *)
-        (*   | FastpackTranspiler.Error.TranspilerError error -> *)
-        (*     raise (PackError (ctx, TranspilerError error)) *)
-        (*   | Scope.ScopeError reason -> *)
-        (*     raise (PackError (ctx, ScopeError reason)) *)
-        (* in *)
         let (workspace, dependencies, scope, exports, es_module) =
-          try
-              analyze m.id m.filename source
-          with
-          | FlowParser.Parse_error.Error args ->
-            raise (PackError (ctx, CannotParseFile (m.filename, args)))
-          | Scope.ScopeError reason ->
-            raise (PackError (ctx, ScopeError reason))
+          match is_json m.filename with
+          | true ->
+            let workspace =
+              Printf.sprintf "module.exports = %s;" source
+              |> Workspace.of_string
+            in
+            (workspace, [], Scope.empty, [], false)
+          | false ->
+            try
+                analyze m.id m.filename source
+            with
+            | FlowParser.Parse_error.Error args ->
+              raise (PackError (ctx, CannotParseFile (m.filename, args)))
+            | Scope.ScopeError reason ->
+              raise (PackError (ctx, ScopeError reason))
         in
         { m with workspace; scope; exports; es_module }, dependencies
       end
@@ -527,7 +527,11 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
             )
             resolved
         in
-        if missing <> [] then raise (PackError (ctx, CannotResolveModules missing));
+        let%lwt () =
+          if missing <> []
+          then Lwt.fail (PackError (ctx, CannotResolveModules missing))
+          else Lwt.return_unit
+        in
         Lwt.return { m with resolved_dependencies }
       end
       else
@@ -540,12 +544,13 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
         (fun (req, resolved) ->
           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
             | None ->
+              let ctx = { ctx with stack = req :: ctx.stack } in
               let%lwt m = read_module ctx cache resolved in
-              process { ctx with stack = req :: ctx.stack } graph m
+              process ctx graph m
             | Some m ->
               Lwt.return m
           in
-          DependencyGraph.add_dependency graph m (req, Some dep_module);
+          DependencyGraph.add_dependency graph m (req, Some dep_module.filename);
           Lwt.return_unit
         )
         m.resolved_dependencies
@@ -615,26 +620,29 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
 " prefix entry_id
   in
 
+  let emitted_modules = ref (StringSet.empty) in
   let emit graph entry =
     let emit bytes = Lwt_io.write channel bytes in
-    let rec emit_module ?(seen=StringSet.empty) m =
-      if StringSet.mem m.Module.id seen
-      then Lwt.return seen
-      else
-        let seen = StringSet.add m.Module.id seen in
+    let rec emit_module m =
+      if StringSet.mem m.Module.filename !emitted_modules
+      then Lwt.return_unit
+      else begin
+        emitted_modules := StringSet.add m.Module.filename !emitted_modules;
         let workspace = m.Module.workspace in
         let dep_map = Module.DependencyMap.empty in
         let dependencies = DependencyGraph.lookup_dependencies graph m in
-        let%lwt (dep_map, seen) = Lwt_list.fold_left_s
-            (fun (dep_map, seen) (dep, m) ->
+        let%lwt dep_map =
+          Lwt_list.fold_left_s
+            (fun dep_map (dep, m) ->
                match m with
                | None ->
-                 Lwt.return (dep_map, seen)
+                 Lwt.return dep_map
                | Some m ->
-                 let%lwt seen = emit_module ~seen:seen m in
+                 let%lwt () = emit_module m in
                  let dep_map = Module.DependencyMap.add dep m dep_map in
-                 Lwt.return (dep_map, seen))
-            (dep_map, seen)
+                 Lwt.return dep_map
+            )
+            dep_map
             dependencies
         in
         let%lwt () =
@@ -645,8 +653,14 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
         in
         let%lwt content = Workspace.write channel workspace dep_map in
         let () = cache.add m content true in
+        let () =
+          DependencyGraph.add_module
+            graph
+            { m with workspace = Workspace.of_string content }
+        in
         let%lwt () = emit "},\n" in
-        Lwt.return seen
+        Lwt.return_unit
+      end
     in
 
     let export =
@@ -664,21 +678,20 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) channel =
     Lwt.return_unit
   in
 
-  let graph = DependencyGraph.empty () in
-  let%lwt entry = read_module ctx cache ctx.entry_filename in
-  let%lwt entry = process ctx graph entry in
-  let%lwt _ = emit graph entry in
-  let%lwt () = cache.dump () in
-  let modules =
-    graph
-    |> DependencyGraph.get_modules
-    |> List.map (fun path -> String.replace ~sub:ctx.package_dir ~by:"." path)
-    |> List.sort compare
+  let graph = ctx.graph in
+  let%lwt entry = read_module ctx cache ctx.current_filename in
+  let%lwt _ = process ctx graph entry in
+  let global_entry =
+    match DependencyGraph.lookup_module graph ctx.entry_filename with
+    | Some m -> m
+    | None -> Error.ie (ctx.entry_filename ^ " not found in the graph")
   in
+  let%lwt _ = emit graph global_entry in
 
   Lwt.return {
     Reporter.
-    modules;
+    modules = !emitted_modules;
     cache = cache.loaded;
-    message = "Mode: development."
+    message = "Mode: development.";
+    size = Lwt_io.position channel |> Int64.to_int
   }

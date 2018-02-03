@@ -79,7 +79,7 @@ const loadFpackStdio = async options => {
     });
     await removeFile(bundleFile);
     await removeDir(bundleDir);
-    return result;
+    return result.replace(new RegExp(process.cwd(), "g"), "/...");
   } catch (error) {
     await removeFile(bundleFile);
     await removeDir(bundleDir);

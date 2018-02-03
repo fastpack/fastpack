@@ -10,10 +10,11 @@ let () =
         mode
         target
         cache
-        debug
         preprocess
         postprocess
         stats
+        watch
+        debug
       =
       if debug then begin
         Logs.set_level (Some Logs.Debug);
@@ -30,12 +31,15 @@ let () =
             preprocess = Some (List.map snd preprocess);
             postprocess = Some postprocess;
             stats;
+            watch = Some watch;
           }
         in
         `Ok (Fastpack.pack_main options time)
       with
-      | Fastpack.PackError (ctx, error) ->
-        `Error (false, Fastpack.string_of_error ctx error)
+      | Fastpack.ExitError message ->
+        `Error (false, message)
+      | Fastpack.ExitOK ->
+        `Ok ()
     in
 
 
@@ -81,11 +85,6 @@ let () =
         let doc = "Do not use cache at all" in
         let ignore = Ignore, Arg.info ["no-cache"] ~doc in
         Arg.(value & vflag Normal [ignore])
-    in
-
-    let debug_t =
-      let doc = "Print debug output" in
-      Arg.(value & flag & info ["d"; "debug"] ~doc)
     in
 
     let preprocess_t =
@@ -140,6 +139,16 @@ let () =
       Arg.(value & opt (some target) None & info ["stats"] ~docv ~doc)
     in
 
+    let watch_t =
+      let doc = "Watch file changes and rebuild bundle" in
+      Arg.(value & flag & info ["w"; "watch"] ~doc)
+    in
+
+    let debug_t =
+      let doc = "Print debug output" in
+      Arg.(value & flag & info ["d"; "debug"] ~doc)
+    in
+
     Term.(ret (
         const run
         $ input_t
@@ -147,10 +156,11 @@ let () =
         $ mode_t
         $ target_t
         $ cache_t
-        $ debug_t
         $ preprocess_t
         $ postprocess_t
         $ stats_t
+        $ watch_t
+        $ debug_t
     ))
   in
 

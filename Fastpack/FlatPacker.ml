@@ -22,7 +22,7 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let pack ?(cache=Cache.fake ()) (ctx : Context.t) result_channel =
+let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
   let bytes = Lwt_bytes.create 50_000_000 in
   let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
@@ -713,7 +713,7 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) result_channel =
                      Lwt.return m
                  in
                  let () =
-                   DependencyGraph.add_dependency graph m (req, Some dep_module)
+                   DependencyGraph.add_dependency graph m (req, Some dep_module.filename)
                  in
                  Lwt.return_none
                end
@@ -848,12 +848,6 @@ let pack ?(cache=Cache.fake ()) (ctx : Context.t) result_channel =
           let new_modules =
             graph
             |> DependencyGraph.get_modules
-            |> List.map (fun path ->
-                String.replace
-                  ~sub:ctx.package_dir
-                  ~by:"."
-                  path
-              )
           in
           total_modules := List.concat [ !total_modules; new_modules; ];
           Lwt.return_unit
@@ -899,7 +893,9 @@ function __fastpack_import__(f) {
   let%lwt () = Lwt_io.write result_channel footer in
   Lwt.return {
     Reporter.
-    modules = List.sort compare !total_modules;
+    (* TODO: use StringSet to accumulate modules, this is temporary hack *)
+    modules = StringSet.of_list !total_modules;
     cache = cache.loaded;
-    message = "Mode: production"
+    message = "Mode: production";
+    size = Lwt_io.position result_channel |> Int64.to_int
   }
