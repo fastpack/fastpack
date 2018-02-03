@@ -276,7 +276,7 @@ let prepare_and_pack cl_options start_time =
           in
           let%lwt () = Lwt_unix.rename temp_file output_file in
           let%lwt () = report start_time stats in
-          Lwt.return_unit
+          Lwt.return stats
         )
         (fun () ->
            if%lwt Lwt_unix.file_exists temp_file
@@ -298,18 +298,19 @@ let prepare_and_pack cl_options start_time =
       (fun () ->
          match mode, options.watch with
          | Development, Some true ->
-           let%lwt () = init_run () in
+           let%lwt {Reporter. modules; _} = init_run () in
            Watcher.watch
              pack_postprocess_report
-             { cache with trusted = true }
+             { cache with trusted = true; loaded = true }
              ctx.graph
+             modules
              get_context
          | _, Some true ->
            (* TODO: convert this into proper error: IllegalConfiguration *)
            failwith "Can only watch in development mode"
          | _, None
          | _, Some false ->
-           init_run ()
+          let%lwt _ = init_run () in Lwt.return_unit
       )
       (fun () ->
          let%lwt () = cache.dump () in
