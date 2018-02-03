@@ -1,5 +1,6 @@
+module StringSet = Set.Make(String)
 type t = {
-  modules : string list;
+  modules : StringSet.t;
   cache : bool;
   message : string;
   size : int;
@@ -22,7 +23,7 @@ let report_string start_time { modules; cache; message; size } =
     "Packed in %.3fs. Bundle: %s. Modules: %d. Cache: %s. %s\n"
     (Unix.gettimeofday () -. start_time)
     pretty_size
-    (List.length modules)
+    (modules |> StringSet.elements |> List.length)
     (if cache then "yes" else "no")
     message
   |> Lwt_io.write Lwt_io.stdout
@@ -31,6 +32,7 @@ let report_json _start_time { modules; _ } =
   let open Yojson.Basic
   in
   let modulePaths = modules
+    |> StringSet.elements
     |> List.map (fun d -> `String d)
   in
     `Assoc [

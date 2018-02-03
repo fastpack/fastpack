@@ -690,7 +690,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
   Lwt.return {
     Reporter.
-    modules = StringSet.elements !emitted_modules;
+    modules = !emitted_modules;
     cache = cache.loaded;
     message = "Mode: development.";
     size = Lwt_io.position channel |> Int64.to_int

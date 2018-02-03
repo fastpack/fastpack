@@ -893,7 +893,8 @@ function __fastpack_import__(f) {
   let%lwt () = Lwt_io.write result_channel footer in
   Lwt.return {
     Reporter.
-    modules = List.sort compare !total_modules;
+    (* TODO: use StringSet to accumulate modules, this is temporary hack *)
+    modules = StringSet.of_list !total_modules;
     cache = cache.loaded;
     message = "Mode: production";
     size = Lwt_io.position result_channel |> Int64.to_int

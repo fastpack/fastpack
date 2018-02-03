@@ -78,11 +78,6 @@ let watch pack (cache : Cache.t) graph get_context =
       let start_time = Unix.gettimeofday () in
       let filename = FS.abs_path package_dir filename in
       let%lwt graph =
-        (* TODO: cache.invalidate should return:
-         * None - if file not in cache
-         * Some [] - if this is a module
-         * Some [modules] - if this is a build dependency
-         * *)
         match cache.get_potentially_invalid filename, graph with
         | [], _ ->
           Lwt.return graph
