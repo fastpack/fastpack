@@ -895,5 +895,6 @@ function __fastpack_import__(f) {
     Reporter.
     modules = List.sort compare !total_modules;
     cache = cache.loaded;
-    message = "Mode: production"
+    message = "Mode: production";
+    size = Lwt_io.position result_channel |> Int64.to_int
   }

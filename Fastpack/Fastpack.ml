@@ -255,7 +255,7 @@ let prepare_and_pack cl_options start_time =
             processors
         in
         let%lwt () = Lwt_io.write ch data in
-        Lwt.return ret
+        Lwt.return { ret with size = String.length data }
     in
     let report =
       match options.stats with
