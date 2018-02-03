@@ -21,21 +21,32 @@ let watch pack (cache : Cache.t) graph modules get_context =
   let%lwt (started_process, ch_in, _) = FS.open_process cmd in
   process := Some started_process;
 
+  let handle_error = function
+    | PackError (ctx, error) ->
+      let%lwt () =
+        (string_of_error ctx error) ^ "\n" |> Lwt_io.(write stderr)
+      in
+      Lwt.return_none
+    | exn ->
+      raise exn
+  in
+
+  let read_module ctx cache filename =
+    Lwt.catch
+      (fun () ->
+        read_module ~ignore_trusted:true ctx cache filename
+        >>= Lwt.return_some
+      )
+      handle_error
+  in
+
   let pack cache ctx start_time =
     Lwt.catch
       (fun () ->
          let%lwt {Reporter. modules; _} = pack cache ctx start_time in
          Lwt.return_some modules
       )
-      (function
-       | PackError (ctx, error) ->
-         let%lwt () =
-           (string_of_error ctx error) ^ "\n" |> Lwt_io.(write stderr)
-         in
-         Lwt.return_none
-       | exn ->
-         raise exn
-      )
+      handle_error
   in
 
   let rec read_pack graph modules =
@@ -70,7 +81,8 @@ let watch pack (cache : Cache.t) graph modules get_context =
         (* Something is changed in the dir, but we don't care *)
         | [], false ->
           Lwt.return (graph, modules)
-        (* Weird bug, should never happen, emitted last time, but unknown in cache*)
+        (* Weird bug, should never happen, emitted last time,
+         * but unknown in cache*)
         | [], true ->
           Error.ie ("File is in bundle, but unknown in cache: " ^ filename)
         (* Maybe a build dependency like .babelrc, need to check further *)
@@ -83,7 +95,8 @@ let watch pack (cache : Cache.t) graph modules get_context =
             cache.remove filename;
             let%lwt () =
               report_same_bundle
-                ~message:("Previously cached file not in bundle. Maybe forgotten import?")
+                ~message:("Previously cached file not in bundle. "
+                          ^ "Maybe forgotten import?")
                 start_time
             in
             Lwt.return (graph, modules)
@@ -96,20 +109,25 @@ let watch pack (cache : Cache.t) graph modules get_context =
            * *)
           | [filename] ->
             let ctx = get_context () in
-            let%lwt m = read_module ~ignore_trusted:true ctx cache filename in
-            if m.cached
-            then
-              let%lwt () = report_same_bundle start_time in
-              Lwt.return (graph, modules)
-            else begin
-              DependencyGraph.remove_module graph filename;
-              let ctx = { ctx with graph; current_filename = filename } in
-              let%lwt modules =
-                match%lwt pack cache ctx start_time with
-                | Some modules -> Lwt.return modules
-                | None -> Lwt.return modules
-              in
-              Lwt.return (ctx.graph, modules)
+            begin
+              match%lwt read_module ctx cache filename with
+              | None ->
+                Lwt.return (graph, modules)
+              | Some m ->
+                if m.cached
+                then
+                  let%lwt () = report_same_bundle start_time in
+                  Lwt.return (graph, modules)
+                else begin
+                  DependencyGraph.remove_module graph filename;
+                  let ctx = { ctx with graph; current_filename = filename } in
+                  let%lwt modules =
+                    match%lwt pack cache ctx start_time with
+                    | Some modules -> Lwt.return modules
+                    | None -> Lwt.return modules
+                  in
+                  Lwt.return (ctx.graph, modules)
+                end
             end
           (*
            * Several files may be influenced by the build dependency
@@ -118,19 +136,22 @@ let watch pack (cache : Cache.t) graph modules get_context =
            * *)
           | _ ->
             let ctx =
-              {(get_context ()) with graph = DependencyGraph.empty ()} 
+              {(get_context ()) with graph = DependencyGraph.empty ()}
             in
-            let%lwt m = read_module ~ignore_trusted:true ctx cache filename in
-            if m.Module.cached
-            then
+            match%lwt read_module ctx cache filename with
+            | None ->
               Lwt.return (graph, modules)
-            else
-              let%lwt modules =
-                match%lwt pack cache ctx start_time with
-                | Some modules -> Lwt.return modules
-                | None -> Lwt.return modules
-              in
-              Lwt.return (ctx.graph, modules)
+            | Some m ->
+              if m.Module.cached
+              then
+                Lwt.return (graph, modules)
+              else
+                let%lwt modules =
+                  match%lwt pack cache ctx start_time with
+                  | Some modules -> Lwt.return modules
+                  | None -> Lwt.return modules
+                in
+                Lwt.return (ctx.graph, modules)
       in
       (read_pack [@tailcall]) graph modules
   in
