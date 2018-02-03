@@ -245,6 +245,7 @@ module Cache = struct
     get_potentially_invalid : string -> string list;
     dump : unit -> unit Lwt.t;
     add : Module.t -> string -> bool -> unit;
+    remove : string -> unit;
     loaded : bool;
     trusted : bool;
   }
@@ -265,6 +266,7 @@ module Cache = struct
       get_potentially_invalid = (fun _ -> []);
       dump = (fun _ -> Lwt.return_unit);
       add = (fun _ _ _ -> ());
+      remove = (fun _ -> ());
       loaded = false;
       trusted = false;
     }
@@ -385,6 +387,14 @@ module Cache = struct
           !modules;
     in
 
+    let remove filename =
+      match M.get filename !modules with
+      | None -> ()
+      | Some { build_dependencies; _} ->
+        remove_build_dependencies filename build_dependencies;
+        modules := M.remove filename !modules;
+    in
+
     let get filename =
       match M.get filename !modules with
       | None ->
@@ -437,6 +447,7 @@ module Cache = struct
       get_potentially_invalid;
       dump;
       add;
+      remove;
       loaded;
       trusted = false
     }

@@ -38,22 +38,6 @@ let watch pack (cache : Cache.t) graph modules get_context =
       )
   in
 
-  (*
-   * if file is not in cache - no rebuild
-   * get all files it invalidates (including itself)
-   * if graph is empty (last build was not successful):
-   *    re-read main file, ignoring the trusted cache
-   *    if file is still cached - no action
-   *    otherwise rebuild the entire bundle as usual
-   * if graph is not empty (last build was successful):
-   *    filter out all invalidated files against the graph (by existance in it)
-   *    if nothing remains - no action
-   *    otherwise:
-   *      re-read the main file ignoring trusted - if it is still cached - no action
-   *      if one file remains - rebuild using this file as an entry point and the graph
-   *      otherwise rebuild as usual with an empty graph
-   *
-   * *)
   let rec read_pack graph modules =
     let report_file_change ctx filename =
       let message =
@@ -89,7 +73,6 @@ let watch pack (cache : Cache.t) graph modules get_context =
         (* Weird bug, should never happen, emitted last time, but unknown in cache*)
         | [], true ->
           Error.ie ("File is in bundle, but unknown in cache: " ^ filename)
-        (* *)
         (* Maybe a build dependency like .babelrc, need to check further *)
         | files, _ ->
           let%lwt () = report_file_change (get_context ()) filename in
@@ -97,6 +80,7 @@ let watch pack (cache : Cache.t) graph modules get_context =
           (* all files which are invalidated by the change
            * aren't in the current bundle *)
           | [] ->
+            cache.remove filename;
             let%lwt () =
               report_same_bundle
                 ~message:("Previously cached file not in bundle. Maybe forgotten import?")
