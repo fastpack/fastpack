@@ -417,6 +417,7 @@ module Cache = struct
           build_dependencies;
           es_module;
           analyzed;
+          package = None; (* TODO: fix this *)
           workspace = Workspace.of_string source;
           scope = FastpackUtil.Scope.empty;
           exports = [];
@@ -527,6 +528,7 @@ let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) 
       es_module = false;
       analyzed = false;
       digest;
+      package = None; (* TODO: fix this *)
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
       exports = [];
@@ -656,6 +658,17 @@ let rec read_module ?(ignore_trusted=false) (ctx : Context.t) (cache : Cache.t) 
       let%lwt st_mtime = st_mtime' filename in
       let%lwt source = source' filename in
       preprocess_module filename st_mtime source
+
+let read_module_opt ctx cache filename =
+  Lwt.catch
+    (fun () ->
+       let%lwt m = read_module ctx cache filename in
+       Lwt.return_some m
+    )
+    (function
+      | PackError (_, CannotReadModule _) -> Lwt.return_none
+      | exn -> Lwt.fail exn
+    )
 
 
 let is_ignored_request request =

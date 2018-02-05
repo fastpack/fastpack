@@ -3,7 +3,7 @@ module FS = FastpackUtil.FS
 open PackerUtil
 
 
-let watch pack (cache : Cache.t) graph modules get_context =
+let watch pack (cache : Cache.t) graph modules get_context read_entry_package entry_filename =
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
    * *)
@@ -40,10 +40,10 @@ let watch pack (cache : Cache.t) graph modules get_context =
       handle_error
   in
 
-  let pack cache ctx start_time =
+  let pack cache ctx entry_package entry_filename start_time =
     Lwt.catch
       (fun () ->
-         let%lwt {Reporter. modules; _} = pack cache ctx start_time in
+         let%lwt {Reporter. modules; _} = pack cache ctx entry_package entry_filename start_time in
          Lwt.return_some modules
       )
       handle_error
@@ -120,9 +120,19 @@ let watch pack (cache : Cache.t) graph modules get_context =
                   Lwt.return (graph, modules)
                 else begin
                   DependencyGraph.remove_module graph filename;
-                  let ctx = { ctx with graph; current_filename = filename } in
+                  let ctx = { ctx with graph } in
+                  let package =
+                    match cache.get filename with
+                    | Some m ->
+                      begin
+                        match m.Module.package with
+                        | Some package -> package
+                        | None -> Error.ie ("Module does not have package: " ^ filename)
+                      end
+                    | None -> Error.ie ("Module is not cached: " ^ filename)
+                  in
                   let%lwt modules =
-                    match%lwt pack cache ctx start_time with
+                    match%lwt pack cache ctx package filename start_time with
                     | Some modules -> Lwt.return modules
                     | None -> Lwt.return modules
                   in
@@ -146,8 +156,9 @@ let watch pack (cache : Cache.t) graph modules get_context =
               then
                 Lwt.return (graph, modules)
               else
+                let%lwt package = read_entry_package ctx cache in
                 let%lwt modules =
-                  match%lwt pack cache ctx start_time with
+                  match%lwt pack cache ctx package entry_filename start_time with
                   | Some modules -> Lwt.return modules
                   | None -> Lwt.return modules
                 in

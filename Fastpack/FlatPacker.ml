@@ -22,7 +22,7 @@ let debug = Logs.debug
 
 type binding_type = Collision
 
-let pack (cache : Cache.t) (ctx : Context.t) result_channel =
+let pack (cache : Cache.t) (ctx : Context.t) entry_package entry_filename result_channel =
 
   let bytes = Lwt_bytes.create 50_000_000 in
   let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
@@ -59,7 +59,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
     Str.string_match (Str.regexp "^\\$[iewcn]__") name 0
   in
 
-  let rec pack ?(with_wrapper=false) (ctx : Context.t) modules =
+  let rec pack ?(with_wrapper=false) (ctx : Context.t) modules entry_package entry_filename =
 
     let () = debug (fun m -> m "Packing: %s" ctx.entry_filename) in
 
@@ -68,7 +68,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       |> MDM.bindings
       |> List.filter_map
           (fun (_, m) ->
-            if m.Module.filename = ctx.entry_filename then Some m else None
+            if m.Module.filename = entry_filename then Some m else None
           )
     in
 
@@ -77,7 +77,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       let wrapper =
         Printf.sprintf
           "function %s() {return %s.exports;}\n"
-          (gen_wrapper_binding ctx.entry_filename)
+          (gen_wrapper_binding entry_filename)
           (gen_ext_namespace_binding m.Module.id)
       in
       Lwt_io.write channel wrapper
@@ -644,7 +644,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           begin
             Visit.visit handler program;
             if (not !has_namespace_binding) then add_namespace_binding ();
-            if (filename = ctx.entry_filename) then add_target_export ();
+            if (filename = entry_filename) then add_target_export ();
           end;
 
           (!workspace,
@@ -798,7 +798,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       in
 
       let graph = DependencyGraph.empty () in
-      let%lwt entry = read_module ctx cache ctx.entry_filename in
+      let%lwt entry = read_module ctx cache entry_filename in
+      let entry = { entry with package = Some entry_package } in
       let%lwt entry = process ctx graph entry in
       let%lwt dynamic_deps =
         Lwt_list.map_s
@@ -832,8 +833,10 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                    let%lwt () =
                      pack
                       ~with_wrapper:true
-                      { ctx with entry_filename }
+                      ctx
                       modules
+                      (Package.empty) (* TODO: fix this *)
+                      entry_filename
                    in
                    Lwt.return (StringSet.add entry_filename seen)
                | None ->
@@ -852,7 +855,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           total_modules := List.concat [ !total_modules; new_modules; ];
           Lwt.return_unit
   in
-  let%lwt () = pack ctx MDM.empty in
+  let%lwt () = pack ctx MDM.empty entry_package entry_filename in
 
   let bundle = channel
     |> Lwt_io.position

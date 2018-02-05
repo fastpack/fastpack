@@ -98,7 +98,7 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
     graph = DependencyGraph.empty ();
   }
   in
-  pack_f cache ctx channel
+  pack_f cache ctx Package.empty entry_filename channel
 
 let find_package_root start_dir =
   let rec check_dir dir =
@@ -127,25 +127,11 @@ let prepare_and_pack cl_options start_time =
     | Some dir -> Lwt.return dir
     | None -> Lwt.return start_dir
   in
-  let package_json = FilePath.concat package_dir "package.json" in
-  let%lwt package_json_options =
-    if%lwt Lwt_unix.file_exists package_json then
-      read_package_json_options package_json
-    else
-      Lwt.return_none
-  in
   let options =
     match cl_options.output with
     | None -> cl_options
     | Some path ->
       { cl_options with output = Some (FS.abs_path current_dir path)}
-  in
-  let options =
-    merge_options
-      default_options
-      (match package_json_options with
-       | None -> options
-       | Some package_json_options -> merge_options package_json_options options)
   in
   (* find root directory *)
   (* if package.json exists parse it and merge options: *)
@@ -223,15 +209,15 @@ let prepare_and_pack cl_options start_time =
         graph = DependencyGraph.empty ()
       }
     in
-    let pack_postprocess cache ctx ch =
+    let pack_postprocess cache ctx entry_package entry_filename ch =
       match options.postprocess with
       | None | Some [] ->
-        pack_f cache ctx ch
+        pack_f cache ctx entry_package entry_filename ch
       | Some processors ->
         (* pack to memory *)
         let bytes = Lwt_bytes.create 50_000_000 in
         let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-        let%lwt ret = pack_f cache ctx mem_ch in
+        let%lwt ret = pack_f cache ctx entry_package entry_filename mem_ch in
         let%lwt data =
           Lwt_list.fold_left_s
             (fun data cmd ->
@@ -262,7 +248,7 @@ let prepare_and_pack cl_options start_time =
       | Some JSON -> Reporter.report_json
       | None -> Reporter.report_string
     in
-    let pack_postprocess_report cache ctx start_time =
+    let pack_postprocess_report cache ctx entry_package entry_filename start_time =
       let temp_file = Filename.temp_file "" ".bundle.js" in
       Lwt.finalize
         (fun () ->
@@ -272,7 +258,7 @@ let prepare_and_pack cl_options start_time =
               ~perm:0o640
               ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
               temp_file
-              (pack_postprocess cache ctx)
+              (pack_postprocess cache ctx entry_package entry_filename)
           in
           let%lwt () = Lwt_unix.rename temp_file output_file in
           let%lwt () = report start_time stats in
@@ -284,9 +270,24 @@ let prepare_and_pack cl_options start_time =
         )
     in
     let ctx = get_context () in
+    let read_entry_package ctx cache =
+      let package_json_path = FilePath.concat package_dir "package.json" in
+      match%lwt read_module_opt ctx cache package_json_path with
+      | Some m ->
+        Lwt.return (Package.create m.Module.filename m.Module.workspace.Workspace.value)
+      | None -> Lwt.return Package.empty
+    in
     let init_run () =
       Lwt.catch
-        (fun () -> pack_postprocess_report cache ctx start_time)
+        (fun () ->
+           let%lwt entry_package = read_entry_package ctx cache in
+           pack_postprocess_report
+             cache
+             ctx
+             entry_package
+             entry_filename
+             start_time
+        )
         (function
          | PackError (ctx, error) ->
            raise (ExitError (string_of_error ctx error))
@@ -305,6 +306,8 @@ let prepare_and_pack cl_options start_time =
              ctx.graph
              modules
              get_context
+             read_entry_package
+             entry_filename
          | _, Some true ->
            (* TODO: convert this into proper error: IllegalConfiguration *)
            failwith "Can only watch in development mode"

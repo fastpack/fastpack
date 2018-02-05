@@ -9,7 +9,7 @@ module Visit = FastpackUtil.Visit
 
 let debug = Logs.debug
 
-let pack (cache : Cache.t) (ctx : Context.t) channel =
+let pack (cache : Cache.t) (ctx : Context.t) entry_package entry_filename channel  =
 
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
   let%lwt () =
@@ -679,7 +679,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
   in
 
   let graph = ctx.graph in
-  let%lwt entry = read_module ctx cache ctx.current_filename in
+  let%lwt entry = read_module ctx cache entry_filename in
+  let entry = { entry with package = Some entry_package } in
   let%lwt _ = process ctx graph entry in
   let global_entry =
     match DependencyGraph.lookup_module graph ctx.entry_filename with

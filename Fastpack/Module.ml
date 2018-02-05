@@ -31,6 +31,9 @@ type t = {
   (** EcmaScript 6 Module *)
   es_module : bool;
 
+  (** Package of the module *)
+  package: Package.t option;
+
   (** Module source along with transformations applied *)
   workspace : t DependencyMap.t Workspace.t;
 
