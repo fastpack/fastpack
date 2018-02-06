@@ -10,16 +10,10 @@ module M = Map.Make(String)
 module FS = FastpackUtil.FS
 
 module ModuleEntry = struct
-  module Preprocessed = struct
-    type t = {
-      content : string option;
-      dependencies : (string * float * string) list;
-    }
-  end
-
-  module Analyzed = struct
+  module Modified = struct
     type t = {
       es_module : bool;
+      analyzed : bool;
       content : string;
       dependencies : (string * float * string) list;
       resolved_dependencies : (Dependency.t * string) list;
@@ -28,8 +22,7 @@ module ModuleEntry = struct
 
   type t = {
     id : string;
-    preprocessed : Preprocessed.t option;
-    analyzed : Analyzed.t option;
+    modified : Modified.t option;
   }
 end
 
@@ -51,6 +44,8 @@ type t = {
   file_stat_opt : string -> (entry * bool) option Lwt.t;
   get_file : string -> (entry * bool) Lwt.t;
   get_package : string -> (Package.t * bool) Lwt.t;
+  get_module : string -> (Module.t * bool) Lwt.t;
+  modify_content : Module.t -> string -> unit Lwt.t;
 }
 
 exception FileDoesNotExist of string
@@ -71,13 +66,95 @@ let create () =
   let files = ref M.empty in
   (* TODO: try loading the cache *)
 
-  let update filename entry =
-    files := M.add filename entry !files;
+  let add_trusted filename =
     trusted := StringSet.add filename !trusted
   in
 
-  let validate _filename _entry =
-    failwith "Not imppl"
+  let update filename entry =
+    files := M.add filename entry !files;
+    add_trusted filename;
+  in
+
+  let validate filename entry =
+    let validate_file () =
+      match%lwt FS.stat_option filename with
+      | None ->
+        update filename no_file;
+        Lwt.return (no_file, false)
+      | Some { st_mtime; st_kind; _} ->
+        if st_mtime = entry.st_mtime
+        then begin
+          add_trusted filename;
+          Lwt.return (entry, true)
+        end
+        else begin
+          let%lwt content = Lwt_io.(with_file ~mode:Input filename read) in
+          let digest = Digest.string content in
+          if digest = entry.digest
+          then begin
+            let entry = { entry with st_mtime; st_kind } in
+            update filename entry;
+            Lwt.return (entry, true);
+          end
+          else begin
+            let entry = { entry with st_mtime; st_kind; digest; content } in
+            update filename entry;
+            Lwt.return (entry, false);
+          end
+        end
+    in
+    match entry with
+    | { module_ = Some m; package; _ } ->
+      let%lwt entry, cached = validate_file () in
+      if cached
+      then Lwt.return (entry, true)
+      else begin
+        let package =
+          match package with
+          | None -> None
+          | Some _ ->
+            Some (Package.of_json filename entry.content)
+        in
+        let module_ = { m with modified = None } in
+        let entry = { entry with module_ = Some module_; package } in
+        Lwt.return (entry, false)
+      end
+    | { package = Some _; _ } ->
+      let%lwt entry, cached = validate_file () in
+      if cached
+      then Lwt.return (entry, true)
+      else begin
+        let package = Package.of_json filename entry.content in
+        let entry = { entry with package = Some package } in
+        Lwt.return (entry, false)
+      end
+    | { digest; st_mtime; _ } ->
+      if digest <> ""
+      then validate_file ()
+      else if st_mtime <> 0.0
+      then begin
+        match%lwt FS.stat_option filename with
+        | None ->
+          update filename no_file;
+          Lwt.return (no_file, false)
+        | Some { st_mtime; st_kind; _} ->
+          if st_mtime = entry.st_mtime
+          then begin
+            add_trusted filename;
+            Lwt.return (entry, true)
+          end
+          else begin
+            let entry = { entry with st_mtime; st_kind } in
+            update filename entry;
+            Lwt.return (entry, false)
+          end
+      end
+      else begin
+        let%lwt exists = Lwt_unix.file_exists filename in
+        let entry = { no_file with exists } in
+        update filename entry;
+        Lwt.return (entry, false)
+      end
   in
 
   let file_exists filename =
@@ -180,24 +257,86 @@ let create () =
     match StringSet.mem filename !trusted, M.get filename !files with
     | true, Some { package = Some package; _ } ->
       Lwt.return (package, true)
-    | _, None
-    | true, Some _ ->
+    | _ ->
       let%lwt entry, cached = get_file filename in
       let package = Package.of_json filename entry.content in
       update filename { entry with package = Some package };
       Lwt.return (package, cached)
-    | false, Some entry ->
-      let%lwt { exists; package; _ }, cached = validate filename entry in
-      match exists, package with
-      | false, _ ->
-        Lwt.fail (FileDoesNotExist filename)
-      | true, Some package ->
-        Lwt.return (package, cached)
-      | true, None ->
-        (* TODO: not a package.json error *)
-        Lwt.fail (FileDoesNotExist filename)
   in
 
+  let get_module filename =
+    let module_of_entry entry =
+      let (
+        id,
+        resolved_dependencies,
+        build_dependencies,
+        analyzed,
+        es_module,
+        content
+      ) =
+        match entry with
+        | { module_ = None; _ } ->
+          let id = Module.make_id filename in
+          update filename { entry with module_ = Some { id; modified = None }};
+          (id, [], [], false, false, entry.content)
+
+        | { module_ = Some {id; modified = None }; _ } ->
+          (id, [], [], false, false, entry.content)
+
+        | { module_ = Some {id; modified = Some {
+            content;
+            analyzed;
+            es_module;
+            dependencies;
+            resolved_dependencies;
+          }}; _ } ->
+          (id, resolved_dependencies, dependencies, analyzed, es_module, content)
+      in
+      { Module.
+        id;
+        filename;
+        (* TODO: remove next 2 lines *)
+        st_mtime = entry.st_mtime;
+        digest = entry.digest;
+        resolved_dependencies;
+        build_dependencies;
+        analyzed;
+        es_module;
+        cached = false; (* remove this line *)
+        workspace = Workspace.of_string content;
+        scope = FastpackUtil.Scope.empty;
+        exports = []
+      }
+    in
+    let%lwt entry, cached = get_file filename in
+    Lwt.return (module_of_entry entry, cached)
+  in
+
+  let modify_content (m : Module.t) content =
+    let%lwt entry, _ = get_file m.filename in
+    let modified =
+      match entry.module_ with
+      | Some { modified = Some modified; _ } ->
+        { modified with
+          es_module = m.es_module;
+          analyzed = m.analyzed;
+          content;
+          resolved_dependencies = m.resolved_dependencies
+        }
+      | Some { modified = None; _ } ->
+        { dependencies = [];
+          es_module = m.es_module;
+          analyzed = m.analyzed;
+          content;
+          resolved_dependencies = m.resolved_dependencies
+        }
+      | None ->
+        Error.ie "Cannot modify module before creation"
+    in
+    update m.filename { entry with
+                        module_ = Some { id = m.id; modified = Some modified }};
+    Lwt.return_unit
+  in
 
   {
     file_exists;
@@ -205,6 +344,8 @@ let create () =
     file_stat_opt;
     get_file;
     get_package;
+    get_module;
+    modify_content;
   }
 
 
