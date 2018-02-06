@@ -177,34 +177,63 @@ let prepare_and_pack cl_options start_time =
         let%lwt cache, pack_f =
           match mode with
           | Mode.Production ->
-            Lwt.return (Cache.create (), FlatPacker.pack)
+            let%lwt cache = Cache.create None in
+            Lwt.return (cache, FlatPacker.pack)
           | Mode.Test
           | Mode.Development ->
-            (* let cache_prefix = *)
-            (*   let digest s = s |> Digest.string |> Digest.to_hex in *)
-            (*   let preprocessors = *)
-            (*     preprocessor.Preprocessor.configs *)
-            (*     |> List.map Preprocessor.to_string *)
-            (*     |> String.concat "" *)
-            (*     |> digest *)
-            (*   in *)
-            (*   String.concat "-" [ *)
-            (*     Mode.to_string mode; *)
-            (*     Target.to_string target; *)
-            (*     digest package_dir; *)
-            (*     preprocessors; *)
-            (*   ] *)
-            (* in *)
-            (* let%lwt cache = *)
-            (*   match options.cache with *)
-            (*   | Some Cache.Normal -> *)
-            (*     Cache.create package_dir cache_prefix entry_filename *)
-            (*   | Some Cache.Ignore -> *)
-            (*     Lwt.return @@ Cache.fake () *)
-            (*   | None -> *)
-            (*     Error.ie "Cache strategy is not set" *)
-            (* in *)
-            Lwt.return (Cache.create (), RegularPacker.pack)
+            let%lwt cache_filename =
+              match options.cache with
+              | Some Cache.Normal ->
+                let digest s = s |> Digest.string |> Digest.to_hex in
+                let preprocessors =
+                  preprocessor.Preprocessor.configs
+                  |> List.map Preprocessor.to_string
+                  |> String.concat ""
+                  |> digest
+                in
+                let short_filename =
+                  String.(
+                    sub
+                      entry_filename
+                      (length package_dir + 1)
+                      (length entry_filename - length package_dir - 1)
+                    |> replace ~sub:"/" ~by:"__"
+                    |> replace ~sub:"." ~by:"___"
+                  )
+                in
+                let filename =
+                  String.concat "-" [
+                    short_filename;
+                    Mode.to_string mode;
+                    Target.to_string target;
+                    digest package_dir;
+                    preprocessors;
+                    Version.github_commit
+                  ]
+                in
+                let node_modules = FilePath.concat package_dir "node_modules" in
+                let%lwt dir =
+                  match%lwt FS.try_dir node_modules with
+                  | Some dir ->
+                    FilePath.concat
+                      (FilePath.concat dir ".cache")
+                      "fpack"
+                    |> Lwt.return
+                  | None ->
+                    FilePath.concat
+                      (FilePath.concat package_dir ".cache")
+                      "fpack"
+                    |> Lwt.return
+                in
+                let%lwt () = FS.makedirs dir in
+                FilePath.concat dir filename |> Lwt.return_some
+              | Some Cache.Ignore ->
+                Lwt.return_none
+              | None ->
+                Error.ie "Cache strategy is not set"
+            in
+            let%lwt cache = Cache.create cache_filename in
+            Lwt.return (cache, RegularPacker.pack)
         in
         Lwt.return (mode, cache, pack_f)
       | None ->
@@ -313,7 +342,7 @@ let prepare_and_pack cl_options start_time =
           let%lwt _ = init_run () in Lwt.return_unit
       )
       (fun () ->
-         (* let%lwt () = cache.dump () in *)
+         let%lwt () = cache.dump () in
          let () = preprocessor.Preprocessor.finalize () in
          Lwt.return_unit
       )

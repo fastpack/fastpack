@@ -48,12 +48,13 @@ type t = {
   modify_content : Module.t -> string -> unit Lwt.t;
   get_potentially_invalid : string -> string list;
   remove : string -> unit;
+  dump : unit -> unit Lwt.t;
 }
 
 exception FileDoesNotExist of string
 type strategy = Normal | Ignore
 
-let create () =
+let create cache_filename =
   let no_file = {
     exists = false;
     st_mtime = 0.0;
@@ -66,7 +67,22 @@ let create () =
   in
 
   let trusted = ref StringSet.empty in
-  let files = ref M.empty in
+  let%lwt loaded =
+    match cache_filename with
+    | None ->
+      Lwt.return M.empty
+    | Some filename ->
+      match%lwt Lwt_unix.file_exists filename with
+      | true ->
+        Lwt_io.with_file
+          ~mode:Lwt_io.Input
+          ~flags:Unix.[O_RDONLY]
+          filename
+          (fun ch -> (Lwt_io.read_value ch : entry M.t Lwt.t))
+      | false ->
+        Lwt.return M.empty
+  in
+  let files = ref loaded in
   (* TODO: try loading the cache *)
 
   let add_trusted filename =
@@ -348,7 +364,20 @@ let create () =
   let get_potentially_invalid _filename = [] in
   let remove _filename = () in
 
-  {
+  let dump () =
+    match cache_filename with
+    | None ->
+      Lwt.return_unit
+    | Some filename ->
+      Lwt_io.with_file
+        ~mode:Lwt_io.Output
+        ~perm:0o640
+        ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+        filename
+        (fun ch -> Lwt_io.write_value ch ~flags:[] !files)
+  in
+
+  Lwt.return {
     file_exists;
     file_stat;
     file_stat_opt;
@@ -358,6 +387,7 @@ let create () =
     modify_content;
     get_potentially_invalid;
     remove;
+    dump;
   }
 
 
