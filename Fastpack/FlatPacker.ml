@@ -813,12 +813,16 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           ctx.package_dir
           ctx.entry_filename
       in
-      let%lwt entry = process { ctx with package } graph entry in
+      let ctx = { ctx with package } in
+      let%lwt entry = process ctx graph entry in
       let%lwt dynamic_deps =
         Lwt_list.map_s
           (fun (ctx, req) ->
              let%lwt resolved = Dependency.(
-               ctx.Context.resolver.resolve ctx.package req.request req.requested_from_filename
+               ctx.Context.resolver.resolve
+                 ctx.package
+                 req.request
+                 req.requested_from_filename
              ) in
              let resolved =
                match resolved with

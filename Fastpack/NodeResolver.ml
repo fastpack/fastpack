@@ -81,6 +81,11 @@ let make (cache : Cache.t) =
       | None -> resolve_path (path ^ ".json")
   in
 
+  let get_package_dependency {Package. filename; _} =
+    match filename with
+    | Some filename -> [filename]
+    | None -> []
+  in
 
   let rec resolve_package package path basedir =
     (* let () = Printf.printf "Package: %s\n" package in *)
@@ -90,9 +95,37 @@ let make (cache : Cache.t) =
     let package_path = FilePath.concat node_modules_path package in
     if%lwt cache.file_exists node_modules_path then
       if%lwt cache.file_exists package_path then
+        let package_json_path = FilePath.concat package_path "package.json" in
+        let%lwt package =
+          match%lwt cache.file_exists package_json_path with
+          | false -> Lwt.return Package.empty
+          | true ->
+            let%lwt package, _ = cache.get_package package_json_path in
+            Lwt.return package
+        in
+        let dep = get_package_dependency package in
         match path with
-        | None -> resolve_extensionless_path package_path
-        | Some path -> resolve_extensionless_path (FilePath.concat package_path path)
+        | None ->
+          let%lwt resolved = resolve_extensionless_path package_path in
+          begin
+            match resolved with
+            | None ->
+              Lwt.return_none
+            | Some resolved ->
+              Lwt.return_some (resolved, dep)
+          end
+        | Some path ->
+          let path = FS.abs_path package_path path in
+          match Package.resolve_browser package path with
+          | Some resolved ->
+            Lwt.return_some (resolved, dep)
+          | None ->
+            let%lwt resolved = resolve_extensionless_path path in
+            match resolved with
+            | None ->
+              Lwt.return_none
+            | Some resolved ->
+              Lwt.return_some (resolved, dep)
       else
         let next_basedir = FilePath.dirname basedir in
         if next_basedir == basedir
@@ -103,12 +136,6 @@ let make (cache : Cache.t) =
       if next_basedir == basedir
       then Lwt.return_none
       else resolve_package package path next_basedir
-  in
-
-  let get_package_dependency {Package. filename; _} =
-    match filename with
-    | Some filename -> [filename]
-    | None -> []
   in
 
   let resolve (package : Package.t) path from_filename =
@@ -165,11 +192,7 @@ let make (cache : Cache.t) =
               | None ->
                 Lwt.return_none
               | Some package_name ->
-                match%lwt resolve_package package_name path basedir with
-                | None ->
-                  Lwt.return_none
-                | Some resolved ->
-                  Lwt.return_some (resolved, [])
+                resolve_package package_name path basedir
             end
 
           (* package *)
@@ -181,13 +204,10 @@ let make (cache : Cache.t) =
               | package::rest -> (Some package, Some (String.concat "/" rest))
             in
             match package_name with
-            | None -> Lwt.return_none
+            | None ->
+              Lwt.return_none
             | Some package ->
-              match%lwt resolve_package package path basedir with
-              | None ->
-                Lwt.return_none
-              | Some resolved ->
-                Lwt.return_some (resolved, [])
+              resolve_package package path basedir
 
   in
 
