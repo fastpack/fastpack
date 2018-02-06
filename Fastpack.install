@@ -1,6 +1,10 @@
 lib: [
   "_build/install/default/lib/Fastpack/META" {"META"}
   "_build/install/default/lib/Fastpack/opam" {"opam"}
+  "_build/install/default/lib/Fastpack/Fastpack__Cache.cmi"
+  "_build/install/default/lib/Fastpack/Fastpack__Cache.cmx"
+  "_build/install/default/lib/Fastpack/Fastpack__Cache.cmt"
+  "_build/install/default/lib/Fastpack/Cache.ml"
   "_build/install/default/lib/Fastpack/Fastpack__Dependency.cmi"
   "_build/install/default/lib/Fastpack/Fastpack__Dependency.cmx"
   "_build/install/default/lib/Fastpack/Fastpack__Dependency.cmt"
@@ -33,6 +37,10 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__NodeResolver.cmx"
   "_build/install/default/lib/Fastpack/Fastpack__NodeResolver.cmt"
   "_build/install/default/lib/Fastpack/NodeResolver.ml"
+  "_build/install/default/lib/Fastpack/Fastpack__Package.cmi"
+  "_build/install/default/lib/Fastpack/Fastpack__Package.cmx"
+  "_build/install/default/lib/Fastpack/Fastpack__Package.cmt"
+  "_build/install/default/lib/Fastpack/Package.ml"
   "_build/install/default/lib/Fastpack/Fastpack__PackerUtil.cmi"
   "_build/install/default/lib/Fastpack/Fastpack__PackerUtil.cmx"
   "_build/install/default/lib/Fastpack/Fastpack__PackerUtil.cmt"

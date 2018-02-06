@@ -4,7 +4,7 @@
  ((names (fpack fpack_test fpack_print))
   (public_names (fpack fpack_test fpack_print))
   (package Fastpack)
-  (libraries (FastpackUtil Fastpack FastpackTranspiler cmdliner lwt.unix sedlex fileutils yojson containers logs logs.cli logs.lwt logs.top fmt))
+  (libraries (FastpackUtil Fastpack FastpackTranspiler cmdliner lwt.unix sedlex fileutils yojson containers logs logs.cli logs.lwt logs.top fmt ppx_expect.evaluator ppx_inline_test.runner.lib))
   (flags (:standard "-open" "Containers"))
   (preprocess (pps (lwt.ppx)))))
 
