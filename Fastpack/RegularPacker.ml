@@ -550,7 +550,6 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               let%lwt m = read_module ctx cache resolved in
               let%lwt package =
                 ctx.resolver.NodeResolver.find_package
-                  cache
                   ctx.package_dir
                   resolved
               in

@@ -94,7 +94,7 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
     current_filename = entry_filename;
     mode;
     target;
-    resolver = NodeResolver.make ();
+    resolver = NodeResolver.make cache;
     preprocessor;
     graph = DependencyGraph.empty ();
   }
@@ -241,8 +241,8 @@ let prepare_and_pack cl_options start_time =
         Error.ie "mode is not set"
     in
     let get_context current_filename =
-      let resolver = NodeResolver.make () in
-      let%lwt package = resolver.find_package cache package_dir current_filename in
+      let resolver = NodeResolver.make cache in
+      let%lwt package = resolver.find_package package_dir current_filename in
       Lwt.return { Context.
         entry_filename;
         package_dir;

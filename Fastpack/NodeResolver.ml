@@ -29,7 +29,7 @@ end
 
 type t = {
   resolve : string -> string -> string option Lwt.t;
-  find_package : Cache.t -> string -> string -> Package.t Lwt.t;
+  find_package : string -> string -> Package.t Lwt.t;
 }
 
 let builtins =
@@ -51,18 +51,7 @@ let builtins =
 let is_builtin module_request =
   StringSet.mem module_request builtins
 
-let make () =
-
-  let path_cache = ref M.empty in
-  let file_exists path =
-    match M.get path !path_cache with
-    | Some value -> Lwt.return value
-    | None ->
-      let%lwt exists = Lwt_unix.file_exists path in
-      path_cache := M.add path exists !path_cache;
-      Lwt.return exists
-  in
-
+let make (cache : Cache.t) =
 
   let package_entry_point package_json_path =
     let package_path = FilePath.dirname package_json_path in
@@ -100,9 +89,9 @@ let make () =
     | Some path ->
       Lwt.return path
     | None ->
-      match%lwt FastpackUtil.FS.stat_option path with
+      match%lwt cache.file_stat_opt path with
       | None -> Lwt.return_none
-      | Some stat ->
+      | Some (stat, _) ->
         let%lwt resolved =
           match stat.st_kind with
 
@@ -110,13 +99,13 @@ let make () =
             (* Check if directory contains package.json and read entry point from
                there if any *)
             let package_json_path = FilePath.concat path "package.json" in
-            if%lwt file_exists package_json_path then
+            if%lwt cache.file_exists package_json_path then
               let%lwt entry_point = package_entry_point package_json_path in
               Lwt.return_some entry_point
             else
               (** Check if directory contains index.js and return it if found *)
               let index_js_path = FilePath.concat path "index.js" in
-              if%lwt file_exists index_js_path then
+              if%lwt cache.file_exists index_js_path then
                 Lwt.return_some index_js_path
               else
                 Lwt.return_none
@@ -146,8 +135,8 @@ let make () =
   let rec resolve_package package path basedir =
     let node_modules_path = FilePath.concat basedir "node_modules" in
     let package_path = FilePath.concat node_modules_path package in
-    if%lwt file_exists node_modules_path then
-      if%lwt file_exists package_path then
+    if%lwt cache.file_exists node_modules_path then
+      if%lwt cache.file_exists package_path then
         match path with
         | None -> resolve_extensionless_path package_path
         | Some path -> resolve_extensionless_path (FilePath.concat package_path path)
@@ -211,7 +200,7 @@ let make () =
            | Some package -> resolve_package package path basedir)
   in
 
-  let find_package (cache : Cache.t) root_dir filename =
+  let find_package root_dir filename =
     let rec find_package_json dir =
       let filename = FilePath.concat dir "package.json" in
       match%lwt cache.file_exists filename with
