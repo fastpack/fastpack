@@ -202,6 +202,7 @@ module Context = struct
     entry_filename : string;
     package_dir : string;
     current_filename : string;
+    package : Package.t;
     stack : Dependency.t list;
     mode : Mode.t;
     target : Target.t;

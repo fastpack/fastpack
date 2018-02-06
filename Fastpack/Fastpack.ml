@@ -88,6 +88,7 @@ let merge_options o1 o2 =
 let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir channel =
   let ctx = { Context.
     entry_filename;
+    package = Package.empty;
     package_dir;
     stack = [];
     current_filename = entry_filename;
@@ -239,15 +240,18 @@ let prepare_and_pack cl_options start_time =
       | None ->
         Error.ie "mode is not set"
     in
-    let get_context () =
-      { Context.
+    let get_context current_filename =
+      let resolver = NodeResolver.make () in
+      let%lwt package = resolver.find_package cache package_dir current_filename in
+      Lwt.return { Context.
         entry_filename;
         package_dir;
+        package;
         stack = [];
-        current_filename = entry_filename;
+        current_filename;
         mode;
         target;
-        resolver = NodeResolver.make ();
+        resolver;
         preprocessor;
         graph = DependencyGraph.empty ()
       }
@@ -312,7 +316,7 @@ let prepare_and_pack cl_options start_time =
            then Lwt_unix.unlink temp_file;
         )
     in
-    let ctx = get_context () in
+    let%lwt ctx = get_context entry_filename in
     let init_run () =
       Lwt.catch
         (fun () -> pack_postprocess_report cache ctx start_time)
@@ -333,6 +337,8 @@ let prepare_and_pack cl_options start_time =
              cache
              ctx.graph
              modules
+             package_dir
+             entry_filename
              get_context
          | _, Some true ->
            (* TODO: convert this into proper error: IllegalConfiguration *)

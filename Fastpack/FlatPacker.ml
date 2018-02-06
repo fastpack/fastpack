@@ -686,7 +686,11 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         (* check all static dependecies *)
         let%lwt missing = Lwt_list.filter_map_s
           (fun req ->
-            (match%lwt Dependency.resolve ctx.Context.resolver req with
+            let%lwt resolved = Dependency.(
+              ctx.Context.resolver.resolve req.request req.requested_from_filename
+            )
+            in
+            (match resolved with
              | None ->
                Lwt.return_some req
              | Some resolved ->
@@ -803,7 +807,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       let%lwt dynamic_deps =
         Lwt_list.map_s
           (fun (ctx, req) ->
-             let%lwt resolved = Dependency.resolve ctx.Context.resolver req in
+             let%lwt resolved = Dependency.(
+               ctx.Context.resolver.resolve req.request req.requested_from_filename
+             ) in
              begin
                match resolved with
                | Some filename -> add_resolved_request req filename

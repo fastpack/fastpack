@@ -513,7 +513,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         let%lwt resolved =
           Lwt_list.map_p
             (fun req ->
-               let%lwt resolved = Dependency.resolve ctx.Context.resolver req in
+               let%lwt resolved = Dependency.(
+                 ctx.Context.resolver.resolve req.request req.requested_from_filename
+               ) in
                Lwt.return (req, resolved)
             )
             dependencies
@@ -546,7 +548,13 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             | None ->
               let ctx = { ctx with stack = req :: ctx.stack } in
               let%lwt m = read_module ctx cache resolved in
-              process ctx graph m
+              let%lwt package =
+                ctx.resolver.NodeResolver.find_package
+                  cache
+                  ctx.package_dir
+                  resolved
+              in
+              process { ctx with package } graph m
             | Some m ->
               Lwt.return m
           in

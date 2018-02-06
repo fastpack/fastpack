@@ -3,7 +3,7 @@ module FS = FastpackUtil.FS
 open PackerUtil
 
 
-let watch pack (cache : Cache.t) graph modules get_context =
+let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_context =
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
    * *)
@@ -16,7 +16,6 @@ let watch pack (cache : Cache.t) graph modules get_context =
     )
   in
   let process = ref None in
-  let { Context. package_dir; _ } = get_context () in
   let cmd = "watchman-wait -m 0 " ^ package_dir in
   let%lwt (started_process, ch_in, _) = FS.open_process cmd in
   process := Some started_process;
@@ -87,7 +86,8 @@ let watch pack (cache : Cache.t) graph modules get_context =
           Error.ie ("File is in bundle, but unknown in cache: " ^ filename)
         (* Maybe a build dependency like .babelrc, need to check further *)
         | files, _ ->
-          let%lwt () = report_file_change (get_context ()) filename in
+          let%lwt ctx = get_context entry_filename in
+          let%lwt () = report_file_change ctx filename in
           match List.filter in_bundle files with
           (* all files which are invalidated by the change
            * aren't in the current bundle *)
@@ -108,7 +108,7 @@ let watch pack (cache : Cache.t) graph modules get_context =
            * dependencies as well
            * *)
           | [filename] ->
-            let ctx = get_context () in
+            let%lwt ctx = get_context entry_filename in
             begin
               match%lwt read_module ctx cache filename with
               | None ->
@@ -135,9 +135,8 @@ let watch pack (cache : Cache.t) graph modules get_context =
            * and the main entry point
            * *)
           | _ ->
-            let ctx =
-              {(get_context ()) with graph = DependencyGraph.empty ()}
-            in
+            let%lwt ctx = get_context entry_filename in
+            let ctx = { ctx with graph = DependencyGraph.empty ()} in
             match%lwt read_module ctx cache filename with
             | None ->
               Lwt.return (graph, modules)

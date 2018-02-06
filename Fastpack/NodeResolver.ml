@@ -1,3 +1,4 @@
+module StringSet = Set.Make(String)
 module M = Map.Make(String)
 let debug = Logs.debug
 
@@ -28,7 +29,27 @@ end
 
 type t = {
   resolve : string -> string -> string option Lwt.t;
+  find_package : Cache.t -> string -> string -> Package.t Lwt.t;
 }
+
+let builtins =
+  StringSet.empty
+  |> StringSet.add "__fastpack_runtime__"
+  |> StringSet.add "os"
+  |> StringSet.add "module"
+  |> StringSet.add "path"
+  |> StringSet.add "util"
+  |> StringSet.add "fs"
+  |> StringSet.add "tty"
+  |> StringSet.add "net"
+  |> StringSet.add "events"
+  |> StringSet.add "assert"
+  |> StringSet.add "stream"
+  |> StringSet.add "constants"
+  |> StringSet.add "readable-stream"
+
+let is_builtin module_request =
+  StringSet.mem module_request builtins
 
 let make () =
 
@@ -142,48 +163,69 @@ let make () =
       else resolve_package package path next_basedir
   in
 
-  let resolve path basedir =
+  let resolve path from_filename =
+    if is_builtin path
+    then Lwt.return_some ("builtin:" ^ path)
+    else
+      let basedir = FilePath.dirname from_filename in
+      match path with
 
-    match path with
+      | "" ->
+        Lwt.return_none
 
-    | "" ->
-      Lwt.return_none
+      | path ->
+        match String.get path 0 with
 
-    | path ->
-      match String.get path 0 with
+        (* relative module path *)
+        | '.' ->
+          let path =
+            FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute basedir path
+          in
+          resolve_extensionless_path path
 
-      (* relative module path *)
-      | '.' ->
-        let path =
-          FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute basedir path
-        in
-        resolve_extensionless_path path
+        (* absolute module path *)
+        | '/' ->
+          resolve_extensionless_path path
 
-      (* absolute module path *)
-      | '/' ->
-        resolve_extensionless_path path
+        (* scoped package *)
+        | '@' ->
+          let (package, path) = match String.split_on_char '/' path with
+            | [] -> (None, None)
+            | _scope::[] -> (None, None)
+            | scope::package::[] -> (Some (scope ^ "/" ^ package), None)
+            | scope::package::rest -> (Some (scope ^ "/" ^ package), Some (String.concat "/" rest))
+          in
+          (match package with
+           | None -> Lwt.return_none
+           | Some package -> resolve_package package path basedir)
 
-      (* scoped package *)
-      | '@' ->
-        let (package, path) = match String.split_on_char '/' path with
-          | [] -> (None, None)
-          | _scope::[] -> (None, None)
-          | scope::package::[] -> (Some (scope ^ "/" ^ package), None)
-          | scope::package::rest -> (Some (scope ^ "/" ^ package), Some (String.concat "/" rest))
-        in
-        (match package with
-         | None -> Lwt.return_none
-         | Some package -> resolve_package package path basedir)
-
-      (* package *)
-      | _ ->
-        let (package, path) = match String.split_on_char '/' path with
-          | [] -> (None, None)
-          | package::[] -> (Some package, None)
-          | package::rest -> (Some package, Some (String.concat "/" rest))
-        in
-        (match package with
-         | None -> Lwt.return_none
-         | Some package -> resolve_package package path basedir)
+        (* package *)
+        | _ ->
+          let (package, path) = match String.split_on_char '/' path with
+            | [] -> (None, None)
+            | package::[] -> (Some package, None)
+            | package::rest -> (Some package, Some (String.concat "/" rest))
+          in
+          (match package with
+           | None -> Lwt.return_none
+           | Some package -> resolve_package package path basedir)
   in
-  { resolve }
+
+  let find_package (cache : Cache.t) root_dir filename =
+    let rec find_package_json dir =
+      let filename = FilePath.concat dir "package.json" in
+      match%lwt cache.file_exists filename with
+      | true ->
+        let%lwt package, _ = cache.get_package filename in
+        Lwt.return package
+      | false ->
+        if dir = root_dir
+        then Lwt.return (Package.empty)
+        else find_package_json (FilePath.dirname dir)
+    in
+    let%lwt package = find_package_json (FilePath.dirname filename) in
+    (* let%lwt () = Lwt_io.(write stdout (Package.to_string package ^ "\n")) in *)
+    Lwt.return package
+  in
+
+  { resolve; find_package }

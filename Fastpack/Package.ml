@@ -26,3 +26,8 @@ let of_json filename data =
   with Type_error _ ->
     (* TODO: provide better report here *)
     failwith ("Package.json cannot be parsed: " ^ filename)
+
+let to_string { filename; _} =
+  match filename with
+  | None -> "(empty)"
+  | Some filename -> filename
