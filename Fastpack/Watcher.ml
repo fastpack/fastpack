@@ -34,7 +34,7 @@ let watch pack (cache : Cache.t) graph modules get_context =
   let read_module ctx cache filename =
     Lwt.catch
       (fun () ->
-        read_module ~ignore_trusted:true ctx cache filename
+        read_module ctx cache filename
         >>= Lwt.return_some
       )
       handle_error

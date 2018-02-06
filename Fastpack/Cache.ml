@@ -44,11 +44,14 @@ type t = {
   file_stat_opt : string -> (entry * bool) option Lwt.t;
   get_file : string -> (entry * bool) Lwt.t;
   get_package : string -> (Package.t * bool) Lwt.t;
-  get_module : string -> (Module.t * bool) Lwt.t;
+  get_module : string -> string -> (Module.t * bool) Lwt.t;
   modify_content : Module.t -> string -> unit Lwt.t;
+  get_potentially_invalid : string -> string list;
+  remove : string -> unit;
 }
 
 exception FileDoesNotExist of string
+type strategy = Normal | Ignore
 
 let create () =
   let no_file = {
@@ -264,7 +267,7 @@ let create () =
       Lwt.return (package, cached)
   in
 
-  let get_module filename =
+  let get_module filename relname =
     let module_of_entry entry =
       let (
         id,
@@ -276,7 +279,7 @@ let create () =
       ) =
         match entry with
         | { module_ = None; _ } ->
-          let id = Module.make_id filename in
+          let id = Module.make_id relname in
           update filename { entry with module_ = Some { id; modified = None }};
           (id, [], [], false, false, entry.content)
 
@@ -313,30 +316,37 @@ let create () =
   in
 
   let modify_content (m : Module.t) content =
-    let%lwt entry, _ = get_file m.filename in
-    let modified =
-      match entry.module_ with
-      | Some { modified = Some modified; _ } ->
-        { modified with
-          es_module = m.es_module;
-          analyzed = m.analyzed;
-          content;
-          resolved_dependencies = m.resolved_dependencies
-        }
-      | Some { modified = None; _ } ->
-        { dependencies = [];
-          es_module = m.es_module;
-          analyzed = m.analyzed;
-          content;
-          resolved_dependencies = m.resolved_dependencies
-        }
-      | None ->
-        Error.ie "Cannot modify module before creation"
-    in
-    update m.filename { entry with
-                        module_ = Some { id = m.id; modified = Some modified }};
-    Lwt.return_unit
+    match String.sub m.filename 0 8 with
+    | "builtin:" ->
+      Lwt.return_unit
+    | _ ->
+      let%lwt entry, _ = get_file m.filename in
+      let modified =
+        match entry.module_ with
+        | Some { modified = Some modified; _ } ->
+          { modified with
+            es_module = m.es_module;
+            analyzed = m.analyzed;
+            content;
+            resolved_dependencies = m.resolved_dependencies
+          }
+        | Some { modified = None; _ } ->
+          { dependencies = [];
+            es_module = m.es_module;
+            analyzed = m.analyzed;
+            content;
+            resolved_dependencies = m.resolved_dependencies
+          }
+        | None ->
+          Error.ie "Cannot modify module before creation"
+      in
+      update m.filename { entry with
+                          module_ = Some { id = m.id; modified = Some modified }};
+      Lwt.return_unit
   in
+
+  let get_potentially_invalid _filename = [] in
+  let remove _filename = () in
 
   {
     file_exists;
@@ -346,6 +356,8 @@ let create () =
     get_package;
     get_module;
     modify_content;
+    get_potentially_invalid;
+    remove;
   }
 
 

@@ -652,7 +652,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             m.id
         in
         let%lwt content = Workspace.write channel workspace dep_map in
-        let () = cache.add m content true in
+        let m = { m with analyzed = true } in
+        let%lwt () = cache.modify_content m content in
         let () =
           DependencyGraph.add_module
             graph
@@ -691,7 +692,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
   Lwt.return {
     Reporter.
     modules = !emitted_modules;
-    cache = cache.loaded;
+    cache = false;
     message = "Mode: development.";
     size = Lwt_io.position channel |> Int64.to_int
   }

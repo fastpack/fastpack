@@ -1,9 +1,9 @@
 
 module Version = Version
 module Error = Error
+module Cache = Cache
 module Mode = PackerUtil.Mode
 module Target = PackerUtil.Target
-module Cache = PackerUtil.Cache
 module Context = PackerUtil.Context
 module Preprocessor = Preprocessor
 module Reporter = Reporter
@@ -177,34 +177,34 @@ let prepare_and_pack cl_options start_time =
         let%lwt cache, pack_f =
           match mode with
           | Mode.Production ->
-            Lwt.return (Cache.fake (), FlatPacker.pack)
+            Lwt.return (Cache.create (), FlatPacker.pack)
           | Mode.Test
           | Mode.Development ->
-            let cache_prefix =
-              let digest s = s |> Digest.string |> Digest.to_hex in
-              let preprocessors =
-                preprocessor.Preprocessor.configs
-                |> List.map Preprocessor.to_string
-                |> String.concat ""
-                |> digest
-              in
-              String.concat "-" [
-                Mode.to_string mode;
-                Target.to_string target;
-                digest package_dir;
-                preprocessors;
-              ]
-            in
-            let%lwt cache =
-              match options.cache with
-              | Some Cache.Normal ->
-                Cache.create package_dir cache_prefix entry_filename
-              | Some Cache.Ignore ->
-                Lwt.return @@ Cache.fake ()
-              | None ->
-                Error.ie "Cache strategy is not set"
-            in
-            Lwt.return (cache, RegularPacker.pack)
+            (* let cache_prefix = *)
+            (*   let digest s = s |> Digest.string |> Digest.to_hex in *)
+            (*   let preprocessors = *)
+            (*     preprocessor.Preprocessor.configs *)
+            (*     |> List.map Preprocessor.to_string *)
+            (*     |> String.concat "" *)
+            (*     |> digest *)
+            (*   in *)
+            (*   String.concat "-" [ *)
+            (*     Mode.to_string mode; *)
+            (*     Target.to_string target; *)
+            (*     digest package_dir; *)
+            (*     preprocessors; *)
+            (*   ] *)
+            (* in *)
+            (* let%lwt cache = *)
+            (*   match options.cache with *)
+            (*   | Some Cache.Normal -> *)
+            (*     Cache.create package_dir cache_prefix entry_filename *)
+            (*   | Some Cache.Ignore -> *)
+            (*     Lwt.return @@ Cache.fake () *)
+            (*   | None -> *)
+            (*     Error.ie "Cache strategy is not set" *)
+            (* in *)
+            Lwt.return (Cache.create (), RegularPacker.pack)
         in
         Lwt.return (mode, cache, pack_f)
       | None ->
@@ -301,7 +301,7 @@ let prepare_and_pack cl_options start_time =
            let%lwt {Reporter. modules; _} = init_run () in
            Watcher.watch
              pack_postprocess_report
-             { cache with trusted = true; loaded = true }
+             cache
              ctx.graph
              modules
              get_context
@@ -313,7 +313,7 @@ let prepare_and_pack cl_options start_time =
           let%lwt _ = init_run () in Lwt.return_unit
       )
       (fun () ->
-         let%lwt () = cache.dump () in
+         (* let%lwt () = cache.dump () in *)
          let () = preprocessor.Preprocessor.finalize () in
          Lwt.return_unit
       )

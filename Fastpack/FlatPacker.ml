@@ -895,7 +895,7 @@ function __fastpack_import__(f) {
     Reporter.
     (* TODO: use StringSet to accumulate modules, this is temporary hack *)
     modules = StringSet.of_list !total_modules;
-    cache = cache.loaded;
+    cache = false;
     message = "Mode: production";
     size = Lwt_io.position result_channel |> Int64.to_int
   }
