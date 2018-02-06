@@ -687,13 +687,13 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         let%lwt missing = Lwt_list.filter_map_s
           (fun req ->
             let%lwt resolved = Dependency.(
-              ctx.Context.resolver.resolve req.request req.requested_from_filename
+              ctx.Context.resolver.resolve ctx.package req.request req.requested_from_filename
             )
             in
             (match resolved with
              | None ->
                Lwt.return_some req
-             | Some resolved ->
+             | Some (resolved, _) ->
                (* check if this modules is seen earlier in the stack *)
                if has_module resolved
                then begin
@@ -705,8 +705,13 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                    match DependencyGraph.lookup_module graph resolved with
                    | None ->
                      let%lwt m = read_module ctx cache resolved in
+                     let%lwt package =
+                       ctx.resolver.NodeResolver.find_package
+                         ctx.package_dir
+                         resolved
+                     in
                      let%lwt m =
-                       process { ctx with stack = req :: ctx.stack } graph m
+                       process { ctx with package; stack = req :: ctx.stack } graph m
                      in
                      begin
                        let () = add_resolved_request req resolved in
@@ -803,18 +808,26 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
       let graph = DependencyGraph.empty () in
       let%lwt entry = read_module ctx cache ctx.entry_filename in
-      let%lwt entry = process ctx graph entry in
+      let%lwt package =
+        ctx.resolver.NodeResolver.find_package
+          ctx.package_dir
+          ctx.entry_filename
+      in
+      let%lwt entry = process { ctx with package } graph entry in
       let%lwt dynamic_deps =
         Lwt_list.map_s
           (fun (ctx, req) ->
              let%lwt resolved = Dependency.(
-               ctx.Context.resolver.resolve req.request req.requested_from_filename
+               ctx.Context.resolver.resolve ctx.package req.request req.requested_from_filename
              ) in
-             begin
+             let resolved =
                match resolved with
-               | Some filename -> add_resolved_request req filename
-               | None -> ()
-             end;
+               | Some (filename, _) ->
+                 add_resolved_request req filename;
+                 Some filename
+               | None ->
+                 None
+             in
              Lwt.return (ctx, req, resolved)
           )
           !dynamic_deps

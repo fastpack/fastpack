@@ -34,3 +34,6 @@ let to_string { filename; _} =
   match filename with
   | None -> "(empty)"
   | Some filename -> filename
+
+let resolve_browser _package _path =
+  None
