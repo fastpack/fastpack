@@ -10,6 +10,9 @@ let empty = {
 }
 
 let of_json filename data =
+  let add_suffix m =
+      m ^ if Filename.check_suffix m ".js" then "" else ".js"
+  in
   let data = Yojson.Safe.from_string data in
   let open Yojson.Safe.Util in
   try
@@ -22,7 +25,7 @@ let of_json filename data =
       | None, Some main -> main
       | None, None -> "index.js"
     in
-    {filename = Some filename; entry_point}
+    {filename = Some filename; entry_point = add_suffix entry_point}
   with Type_error _ ->
     (* TODO: provide better report here *)
     failwith ("Package.json cannot be parsed: " ^ filename)
