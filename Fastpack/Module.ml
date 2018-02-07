@@ -13,9 +13,6 @@ type t = {
   (** List of resolved dependencies, populated for cached modules *)
   resolved_dependencies : (Dependency.t * string) list;
 
-  (** List of build dependencies *)
-  build_dependencies : (string * float * string) list;
-
   (** If module is analyzed when packing *)
   analyzed : bool;
 

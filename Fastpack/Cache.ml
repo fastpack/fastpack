@@ -15,7 +15,7 @@ module ModuleEntry = struct
       es_module : bool;
       analyzed : bool;
       content : string;
-      dependencies : (string * float * string) list;
+      build_dependencies : string M.t;
       resolved_dependencies : (Dependency.t * string) list;
     }
   end
@@ -46,6 +46,7 @@ type t = {
   get_package : string -> (Package.t * bool) Lwt.t;
   get_module : string -> string -> (Module.t * bool) Lwt.t;
   modify_content : Module.t -> string -> unit Lwt.t;
+  add_build_dependencies: Module.t -> string list -> unit Lwt.t;
   get_potentially_invalid : string -> string list;
   remove : string -> unit;
   dump : unit -> unit Lwt.t;
@@ -66,7 +67,6 @@ let create cache_filename =
   }
   in
 
-  let trusted = ref StringSet.empty in
   let%lwt loaded =
     match cache_filename with
     | None ->
@@ -82,16 +82,35 @@ let create cache_filename =
       | false ->
         Lwt.return M.empty
   in
-  let files = ref loaded in
-  (* TODO: try loading the cache *)
 
+  let trusted = ref StringSet.empty in
   let add_trusted filename =
     trusted := StringSet.add filename !trusted
   in
 
+  let files = ref loaded in
   let update filename entry =
     files := M.add filename entry !files;
     add_trusted filename;
+  in
+
+  (* filename => set of files it changes *)
+  let build_dependency_map = ref M.empty in
+  let add_build_dependency filename changes =
+    let set =
+      match M.get filename !build_dependency_map with
+      | None -> StringSet.empty
+      | Some set -> StringSet.add changes set
+    in
+    build_dependency_map := M.add filename set !build_dependency_map;
+  in
+  let remove_dependency filename changes =
+    let set =
+      match M.get filename !build_dependency_map with
+      | None -> StringSet.empty
+      | Some set -> StringSet.remove changes set
+    in
+    build_dependency_map := M.add filename set !build_dependency_map;
   in
 
   let validate filename entry =
@@ -133,6 +152,14 @@ let create cache_filename =
           | None -> None
           | Some _ ->
             Some (Package.of_json filename entry.content)
+        in
+        let () =
+          match m with
+          | { modified = Some { build_dependencies; _ }; _ } ->
+            build_dependencies
+            |> M.bindings
+            |> List.iter (fun (dep, _) -> remove_dependency dep filename)
+          | _ -> ()
         in
         let module_ = { m with modified = None } in
         let entry = { entry with module_ = Some module_; package } in
@@ -284,11 +311,35 @@ let create cache_filename =
   in
 
   let get_module filename relname =
+    let check_build_dependencies entry =
+      match entry with
+      | { module_ = Some { id; modified = Some { build_dependencies; _}}; _ } ->
+        let%lwt build_dependencies_changed =
+          build_dependencies
+          |> M.bindings
+          |> Lwt_list.exists_s
+            (fun (filename, known_digest) ->
+               let%lwt { digest; _ }, _ = get_file filename in
+               Lwt.return (digest <> known_digest)
+            )
+        in
+        if build_dependencies_changed
+        then begin
+          build_dependencies
+          |> M.bindings
+          |> List.iter (fun (dep, _) -> remove_dependency dep filename);
+          Lwt.return ({ entry with module_ = Some {id; modified = None}}, false)
+        end
+        else
+          Lwt.return (entry, true)
+      | _ ->
+        Lwt.return (entry, true)
+    in
+
     let module_of_entry entry =
       let (
         id,
         resolved_dependencies,
-        build_dependencies,
         analyzed,
         es_module,
         content
@@ -297,25 +348,24 @@ let create cache_filename =
         | { module_ = None; _ } ->
           let id = Module.make_id relname in
           update filename { entry with module_ = Some { id; modified = None }};
-          (id, [], [], false, false, entry.content)
+          (id, [], false, false, entry.content)
 
         | { module_ = Some {id; modified = None }; _ } ->
-          (id, [], [], false, false, entry.content)
+          (id, [], false, false, entry.content)
 
         | { module_ = Some {id; modified = Some {
             content;
             analyzed;
             es_module;
-            dependencies;
             resolved_dependencies;
+            _
           }}; _ } ->
-          (id, resolved_dependencies, dependencies, analyzed, es_module, content)
+          (id, resolved_dependencies, analyzed, es_module, content)
       in
       { Module.
         id;
         filename;
         resolved_dependencies;
-        build_dependencies;
         analyzed;
         es_module;
         workspace = Workspace.of_string content;
@@ -324,7 +374,8 @@ let create cache_filename =
       }
     in
     let%lwt entry, cached = get_file filename in
-    Lwt.return (module_of_entry entry, cached)
+    let%lwt entry, build_dependencies_cached = check_build_dependencies entry in
+    Lwt.return (module_of_entry entry, build_dependencies_cached && cached)
   in
 
   let modify_content (m : Module.t) content =
@@ -343,7 +394,7 @@ let create cache_filename =
             resolved_dependencies = m.resolved_dependencies
           }
         | Some { modified = None; _ } ->
-          { dependencies = [];
+          { build_dependencies = M.empty;
             es_module = m.es_module;
             analyzed = m.analyzed;
             content;
@@ -352,9 +403,60 @@ let create cache_filename =
         | None ->
           Error.ie "Cannot modify module before creation"
       in
-      update m.filename { entry with
-                          module_ = Some { id = m.id; modified = Some modified }};
+      update m.filename {
+        entry with
+        module_ = Some { id = m.id; modified = Some modified }
+      };
       Lwt.return_unit
+  in
+
+  let add_build_dependencies m dependencies =
+    let update_build_dependency_map () =
+      dependencies
+      |> List.iter (fun dep -> add_build_dependency m.Module.filename dep)
+    in
+    let add_build_dependencies existing_dependencies =
+      Lwt_list.fold_left_s
+        (fun acc filename ->
+           let%lwt {digest; _ }, _ = get_file filename in
+           add_build_dependency filename m.Module.filename;
+           Lwt.return (M.add filename digest acc)
+        )
+        existing_dependencies
+        dependencies
+    in
+    let%lwt entry, _ = get_file m.Module.filename in
+    match entry with
+    | { module_ = Some { id; modified = Some modified }; _ } ->
+      let%lwt build_dependencies =
+        add_build_dependencies modified.build_dependencies
+      in
+      update m.Module.filename {
+        entry with module_ = Some {
+          id;
+          modified = Some {modified with build_dependencies}
+        }};
+      update_build_dependency_map ();
+      Lwt.return_unit
+    | { module_ = Some { id; modified = None }; _ } ->
+      let%lwt build_dependencies =
+        add_build_dependencies M.empty
+      in
+      update m.Module.filename {
+        entry with module_ = Some {
+          id;
+          modified = Some {
+              es_module = false;
+              analyzed = false;
+              content = entry.content;
+              build_dependencies;
+              resolved_dependencies = [];
+            }
+        }};
+      update_build_dependency_map ();
+      Lwt.return_unit
+    | _ ->
+      Error.ie ("Adding build_dependencies to a non-module: " ^ m.filename)
   in
 
   let get_potentially_invalid _filename = [] in
@@ -381,6 +483,7 @@ let create cache_filename =
     get_package;
     get_module;
     modify_content;
+    add_build_dependencies;
     get_potentially_invalid;
     remove;
     dump;

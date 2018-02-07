@@ -235,237 +235,237 @@ module Context = struct
 end
 
 
-module CacheOld = struct
+(* module CacheOld = struct *)
 
-  module M = Map.Make(String)
+(*   module M = Map.Make(String) *)
 
-  type strategy = Normal | Ignore
+(*   type strategy = Normal | Ignore *)
 
-  type t = {
-    get : string -> Module.t option;
-    get_potentially_invalid : string -> string list;
-    dump : unit -> unit Lwt.t;
-    add : Module.t -> string -> bool -> unit;
-    remove : string -> unit;
-    loaded : bool;
-    trusted : bool;
-  }
+(*   type t = { *)
+(*     get : string -> Module.t option; *)
+(*     get_potentially_invalid : string -> string list; *)
+(*     dump : unit -> unit Lwt.t; *)
+(*     add : Module.t -> string -> bool -> unit; *)
+(*     remove : string -> unit; *)
+(*     loaded : bool; *)
+(*     trusted : bool; *)
+(*   } *)
 
-  type entry = {
-    id : string;
-    digest : string;
-    st_mtime : float;
-    es_module : bool;
-    resolved_dependencies : (Dependency.t * string) list;
-    build_dependencies : (string * float * string) list;
-    source : string;
-    analyzed : bool;
-  }
+(*   type entry = { *)
+(*     id : string; *)
+(*     digest : string; *)
+(*     st_mtime : float; *)
+(*     es_module : bool; *)
+(*     resolved_dependencies : (Dependency.t * string) list; *)
+(*     build_dependencies : (string * float * string) list; *)
+(*     source : string; *)
+(*     analyzed : bool; *)
+(*   } *)
 
-  let fake () =
-    { get = (fun _ -> None);
-      get_potentially_invalid = (fun _ -> []);
-      dump = (fun _ -> Lwt.return_unit);
-      add = (fun _ _ _ -> ());
-      remove = (fun _ -> ());
-      loaded = false;
-      trusted = false;
-    }
+(*   let fake () = *)
+(*     { get = (fun _ -> None); *)
+(*       get_potentially_invalid = (fun _ -> []); *)
+(*       dump = (fun _ -> Lwt.return_unit); *)
+(*       add = (fun _ _ _ -> ()); *)
+(*       remove = (fun _ -> ()); *)
+(*       loaded = false; *)
+(*       trusted = false; *)
+(*     } *)
 
-  let create_dir package_dir =
-    let try_dir dir =
-      try%lwt
-        let%lwt stat = Lwt_unix.stat dir in
-        match stat.st_kind with
-        | Lwt_unix.S_DIR -> Lwt.return_some dir
-        | _ -> Lwt.return_none
-      with Unix.Unix_error _ ->
-        Lwt.return_none
-    in
-    match%lwt try_dir (FilePath.concat package_dir "node_modules") with
-    | Some dir ->
-      let dir = FilePath.concat dir ".cache/fpack" in
-      let%lwt () = makedirs dir in
-      Lwt.return dir
-    | None ->
-      let dir = FilePath.concat package_dir ".cache/fpack" in
-      let%lwt () = makedirs dir in
-      Lwt.return dir
+(*   let create_dir package_dir = *)
+(*     let try_dir dir = *)
+(*       try%lwt *)
+(*         let%lwt stat = Lwt_unix.stat dir in *)
+(*         match stat.st_kind with *)
+(*         | Lwt_unix.S_DIR -> Lwt.return_some dir *)
+(*         | _ -> Lwt.return_none *)
+(*       with Unix.Unix_error _ -> *)
+(*         Lwt.return_none *)
+(*     in *)
+(*     match%lwt try_dir (FilePath.concat package_dir "node_modules") with *)
+(*     | Some dir -> *)
+(*       let dir = FilePath.concat dir ".cache/fpack" in *)
+(*       let%lwt () = makedirs dir in *)
+(*       Lwt.return dir *)
+(*     | None -> *)
+(*       let dir = FilePath.concat package_dir ".cache/fpack" in *)
+(*       let%lwt () = makedirs dir in *)
+(*       Lwt.return dir *)
 
-  let cache_filename package_dir cache_dir prefix filename =
-    String.(
-      sub
-        filename
-        (length package_dir + 1)
-        (length filename - length package_dir - 1)
-      |> replace ~sub:"/" ~by:"__"
-      |> replace ~sub:"." ~by:"___"
-    )
-    |> Printf.sprintf "%s-%s-%s.cache" prefix Version.github_commit
-    |> FilePath.concat cache_dir
+(*   let cache_filename package_dir cache_dir prefix filename = *)
+(*     String.( *)
+(*       sub *)
+(*         filename *)
+(*         (length package_dir + 1) *)
+(*         (length filename - length package_dir - 1) *)
+(*       |> replace ~sub:"/" ~by:"__" *)
+(*       |> replace ~sub:"." ~by:"___" *)
+(*     ) *)
+(*     |> Printf.sprintf "%s-%s-%s.cache" prefix Version.github_commit *)
+(*     |> FilePath.concat cache_dir *)
 
-  let cache cache_filename modules =
+(*   let cache cache_filename modules = *)
 
-    let loaded = modules <> M.empty in
-    let modules = ref modules in
-    let build_dependencies =
-      ref (
-        !modules
-        |> M.bindings
-        |> List.map
-          (fun (filename, {build_dependencies; _}) ->
-            List.map
-              (fun (dependency, _, _) -> (dependency, filename))
-              build_dependencies
-          )
-        |> List.concat
-        |> List.fold_left
-          (fun acc (dep, filename) ->
-             M.update
-               dep
-               (function
-                | None -> Some (StringSet.add filename StringSet.empty)
-                | Some set -> Some(StringSet.add filename set)
-               )
-             acc
-          )
-          M.empty
-      )
-    in
+(*     let loaded = modules <> M.empty in *)
+(*     let modules = ref modules in *)
+(*     let build_dependencies = *)
+(*       ref ( *)
+(*         !modules *)
+(*         |> M.bindings *)
+(*         |> List.map *)
+(*           (fun (filename, {build_dependencies; _}) -> *)
+(*             List.map *)
+(*               (fun (dependency, _, _) -> (dependency, filename)) *)
+(*               build_dependencies *)
+(*           ) *)
+(*         |> List.concat *)
+(*         |> List.fold_left *)
+(*           (fun acc (dep, filename) -> *)
+(*              M.update *)
+(*                dep *)
+(*                (function *)
+(*                 | None -> Some (StringSet.add filename StringSet.empty) *)
+(*                 | Some set -> Some(StringSet.add filename set) *)
+(*                ) *)
+(*              acc *)
+(*           ) *)
+(*           M.empty *)
+(*       ) *)
+(*     in *)
 
-    let remove_build_dependencies filename dependencies =
-      List.iter
-        (fun (dep, _, _) ->
-           build_dependencies :=
-             M.update
-               dep
-               (function
-                | None -> None
-                | Some set -> Some (StringSet.remove filename set)
-               )
-               !build_dependencies
-        )
-        dependencies
-    in
+(*     let remove_build_dependencies filename dependencies = *)
+(*       List.iter *)
+(*         (fun (dep, _, _) -> *)
+(*            build_dependencies := *)
+(*              M.update *)
+(*                dep *)
+(*                (function *)
+(*                 | None -> None *)
+(*                 | Some set -> Some (StringSet.remove filename set) *)
+(*                ) *)
+(*                !build_dependencies *)
+(*         ) *)
+(*         dependencies *)
+(*     in *)
 
-    let add_build_dependencies filename dependencies =
-      List.iter
-        (fun (dep, _, _) ->
-           build_dependencies :=
-             M.update
-               dep
-               (function
-                | None -> Some (StringSet.add filename StringSet.empty)
-                | Some set -> Some(StringSet.add filename set)
-               )
-               !build_dependencies
-        )
-        dependencies
-    in
+(*     let add_build_dependencies filename dependencies = *)
+(*       List.iter *)
+(*         (fun (dep, _, _) -> *)
+(*            build_dependencies := *)
+(*              M.update *)
+(*                dep *)
+(*                (function *)
+(*                 | None -> Some (StringSet.add filename StringSet.empty) *)
+(*                 | Some set -> Some(StringSet.add filename set) *)
+(*                ) *)
+(*                !build_dependencies *)
+(*         ) *)
+(*         dependencies *)
+(*     in *)
 
-    let add (m : Module.t) source analyzed =
-      let () =
-        match M.get m.filename !modules with
-        | None ->
-          add_build_dependencies m.filename m.build_dependencies
-        | Some entry ->
-          if entry.build_dependencies <> m.build_dependencies then begin
-            remove_build_dependencies m.filename m.build_dependencies;
-            add_build_dependencies m.filename m.build_dependencies
-          end
-          else ()
-      in
-      modules :=
-        M.add
-          m.filename
-          { id = m.id; digest = ""; st_mtime = 0.0;
-            resolved_dependencies = m.resolved_dependencies;
-            build_dependencies = m.build_dependencies;
-            es_module = m.es_module;
-            analyzed;
-            source
-          }
-          !modules;
-    in
+(*     let add (m : Module.t) source analyzed = *)
+(*       let () = *)
+(*         match M.get m.filename !modules with *)
+(*         | None -> *)
+(*           add_build_dependencies m.filename m.build_dependencies *)
+(*         | Some entry -> *)
+(*           if entry.build_dependencies <> m.build_dependencies then begin *)
+(*             remove_build_dependencies m.filename m.build_dependencies; *)
+(*             add_build_dependencies m.filename m.build_dependencies *)
+(*           end *)
+(*           else () *)
+(*       in *)
+(*       modules := *)
+(*         M.add *)
+(*           m.filename *)
+(*           { id = m.id; digest = ""; st_mtime = 0.0; *)
+(*             resolved_dependencies = m.resolved_dependencies; *)
+(*             build_dependencies = m.build_dependencies; *)
+(*             es_module = m.es_module; *)
+(*             analyzed; *)
+(*             source *)
+(*           } *)
+(*           !modules; *)
+(*     in *)
 
-    let remove filename =
-      match M.get filename !modules with
-      | None -> ()
-      | Some { build_dependencies; _} ->
-        remove_build_dependencies filename build_dependencies;
-        modules := M.remove filename !modules;
-    in
+(*     let remove filename = *)
+(*       match M.get filename !modules with *)
+(*       | None -> () *)
+(*       | Some { build_dependencies; _} -> *)
+(*         remove_build_dependencies filename build_dependencies; *)
+(*         modules := M.remove filename !modules; *)
+(*     in *)
 
-    let get filename =
-      match M.get filename !modules with
-      | None ->
-        None
-      | Some {
-          id;
-          resolved_dependencies;
-          build_dependencies;
-          source;
-          analyzed;
-          es_module; _ } ->
-        Some { Module.
-          id;
-          filename;
-          resolved_dependencies;
-          build_dependencies;
-          es_module;
-          analyzed;
-          workspace = Workspace.of_string source;
-          scope = FastpackUtil.Scope.empty;
-          exports = [];
-        }
-    in
+(*     let get filename = *)
+(*       match M.get filename !modules with *)
+(*       | None -> *)
+(*         None *)
+(*       | Some { *)
+(*           id; *)
+(*           resolved_dependencies; *)
+(*           build_dependencies; *)
+(*           source; *)
+(*           analyzed; *)
+(*           es_module; _ } -> *)
+(*         Some { Module. *)
+(*           id; *)
+(*           filename; *)
+(*           resolved_dependencies; *)
+(*           build_dependencies; *)
+(*           es_module; *)
+(*           analyzed; *)
+(*           workspace = Workspace.of_string source; *)
+(*           scope = FastpackUtil.Scope.empty; *)
+(*           exports = []; *)
+(*         } *)
+(*     in *)
 
-    let dump () =
-      Lwt_io.with_file
-        ~mode:Lwt_io.Output
-        ~perm:0o640
-        ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
-        cache_filename
-        (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] !modules)
-    in
+(*     let dump () = *)
+(*       Lwt_io.with_file *)
+(*         ~mode:Lwt_io.Output *)
+(*         ~perm:0o640 *)
+(*         ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR] *)
+(*         cache_filename *)
+(*         (fun ch -> Lwt_io.write_value ch ~flags:[Marshal.Compat_32] !modules) *)
+(*     in *)
 
-    let get_potentially_invalid filename =
-      match M.get filename !modules with
-      | None -> []
-      | Some _ ->
-        match M.get filename !build_dependencies with
-        | None -> [filename]
-        | Some set -> set |> StringSet.add filename |> StringSet.elements
-    in
+(*     let get_potentially_invalid filename = *)
+(*       match M.get filename !modules with *)
+(*       | None -> [] *)
+(*       | Some _ -> *)
+(*         match M.get filename !build_dependencies with *)
+(*         | None -> [filename] *)
+(*         | Some set -> set |> StringSet.add filename |> StringSet.elements *)
+(*     in *)
 
-    Lwt.return {
-      get;
-      get_potentially_invalid;
-      dump;
-      add;
-      remove;
-      loaded;
-      trusted = false
-    }
+(*     Lwt.return { *)
+(*       get; *)
+(*       get_potentially_invalid; *)
+(*       dump; *)
+(*       add; *)
+(*       remove; *)
+(*       loaded; *)
+(*       trusted = false *)
+(*     } *)
 
-  let create package_dir prefix filename =
-    let%lwt cache_dir = create_dir package_dir in
-    let cache_filename = cache_filename package_dir cache_dir prefix filename in
+(*   let create package_dir prefix filename = *)
+(*     let%lwt cache_dir = create_dir package_dir in *)
+(*     let cache_filename = cache_filename package_dir cache_dir prefix filename in *)
 
-    let%lwt modules =
-      match%lwt Lwt_unix.file_exists cache_filename with
-      | true ->
-        Lwt_io.with_file
-          ~mode:Lwt_io.Input
-          ~flags:Unix.[O_RDONLY]
-          cache_filename
-          (fun ch -> (Lwt_io.read_value ch : entry M.t Lwt.t))
-      | false ->
-        Lwt.return @@ (M.empty : entry M.t)
-    in
-    cache cache_filename modules
+(*     let%lwt modules = *)
+(*       match%lwt Lwt_unix.file_exists cache_filename with *)
+(*       | true -> *)
+(*         Lwt_io.with_file *)
+(*           ~mode:Lwt_io.Input *)
+(*           ~flags:Unix.[O_RDONLY] *)
+(*           cache_filename *)
+(*           (fun ch -> (Lwt_io.read_value ch : entry M.t Lwt.t)) *)
+(*       | false -> *)
+(*         Lwt.return @@ (M.empty : entry M.t) *)
+(*     in *)
+(*     cache cache_filename modules *)
 
-end
+(* end *)
 
 
 exception PackError of Context.t * Error.reason
@@ -497,7 +497,6 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
       id;
       filename;
       resolved_dependencies = [];
-      build_dependencies = [];
       es_module = false;
       analyzed = false;
       workspace = Workspace.of_string source;
