@@ -161,7 +161,7 @@ let create cache_filename =
             |> List.iter (fun (dep, _) -> remove_dependency dep filename)
           | _ -> ()
         in
-        let module_ = { m with modified = None } in
+        let module_ = { m with state = Module.Initial; modified = None } in
         let entry = { entry with module_ = Some module_; package } in
         Lwt.return (entry, false)
       end
@@ -331,7 +331,8 @@ let create cache_filename =
           |> M.bindings
           |> List.iter (fun (dep, _) -> remove_dependency dep filename);
           Lwt.return (
-            { entry with module_ = Some {module_ with modified = None}},
+            { entry with
+              module_ = Some { module_ with state = Module.Initial; modified = None}},
             false
           )
         end

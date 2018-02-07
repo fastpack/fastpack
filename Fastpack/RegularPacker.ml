@@ -516,8 +516,21 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
           Lwt_list.map_p
             (fun req ->
                let%lwt resolved = Dependency.(
-                 ctx.Context.resolver.resolve ctx.package req.request req.requested_from_filename
+                 ctx.resolver.resolve
+                   ctx.package
+                   req.request
+                   req.requested_from_filename
                ) in
+               let%lwt resolved =
+                 match resolved with
+                 | None ->
+                   Lwt.return_none
+                 | Some (resolved, build_dependencies) ->
+                   let%lwt () =
+                     cache.add_build_dependencies m build_dependencies
+                   in
+                   Lwt.return_some resolved
+               in
                Lwt.return (req, resolved)
             )
             dependencies
@@ -527,7 +540,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             (fun (req, resolved) ->
                match resolved with
                | None -> `Left req
-               | Some (resolved, _) -> `Right (req, resolved)
+               | Some resolved -> `Right (req, resolved)
             )
             resolved
         in

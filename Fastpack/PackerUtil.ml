@@ -543,7 +543,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
      then begin
        let { Preprocessor. process; _ } = ctx.preprocessor in
        let relname = relative_name ctx filename in
-       let%lwt content, _build_dependencies =
+       let%lwt content, build_dependencies =
          Lwt.catch
            (fun () -> process relname m.workspace.Workspace.value)
            (function
@@ -561,6 +561,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
          workspace = Workspace.of_string content
        } in
        let%lwt () = cache.modify_content m content in
+       let%lwt () = cache.add_build_dependencies m build_dependencies in
        Lwt.return m
      end
      else
