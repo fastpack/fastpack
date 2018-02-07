@@ -45,6 +45,7 @@ type t = {
   file_stat : string -> (entry * bool) Lwt.t;
   file_stat_opt : string -> (entry * bool) option Lwt.t;
   get_file : string -> (entry * bool) Lwt.t;
+  get_file_no_raise : string -> (entry * bool) Lwt.t;
   get_package : string -> (Package.t * bool) Lwt.t;
   get_module : string -> string -> (Module.t * bool) Lwt.t;
   modify_content : Module.t -> string -> unit Lwt.t;
@@ -324,6 +325,30 @@ let create cache_filename =
       else Lwt.fail (FileDoesNotExist filename)
   in
 
+  let get_file_no_raise filename =
+    let%lwt entry, cached =
+      Lwt.catch
+        (fun () -> get_file filename)
+        (function
+          | FileDoesNotExist _ ->
+            let entry = {
+              exists = false;
+              st_mtime = 0.0;
+              st_kind = Unix.S_REG;
+              content = "";
+              digest = "";
+              package = None;
+              module_ = None;
+            } in
+            update filename entry;
+            Lwt.return (entry, false)
+          | exn ->
+            raise exn
+        )
+    in
+    Lwt.return (entry, cached)
+  in
+
   let get_package filename =
     match StringSet.mem filename !trusted, M.get filename !files with
     | true, Some { package = Some package; _ } ->
@@ -520,6 +545,7 @@ let create cache_filename =
     file_stat;
     file_stat_opt;
     get_file;
+    get_file_no_raise;
     get_package;
     get_module;
     modify_content;

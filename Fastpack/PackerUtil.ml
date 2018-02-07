@@ -305,7 +305,16 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
      then Lwt.fail (PackError (ctx, CannotLeavePackageDir filename))
      else Lwt.return_unit
    in
-   let%lwt m, _ = cache.get_module filename (relative_name ctx filename) in
+   let%lwt m, _ =
+     Lwt.catch
+       (fun () -> cache.get_module filename (relative_name ctx filename))
+       (function
+         | Cache.FileDoesNotExist filename ->
+           Lwt.fail (PackError (ctx, CannotReadModule filename))
+         | exn ->
+           raise exn
+       )
+   in
    let%lwt m =
      if m.state = Module.Initial
      then begin

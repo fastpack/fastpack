@@ -81,9 +81,10 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
           Error.ie ("File is in bundle, but unknown in cache: " ^ filename)
         (* Maybe a build dependency like .babelrc, need to check further *)
         | files, _ ->
+          let%lwt prev_entry, _ = cache.get_file_no_raise filename in
           cache.remove filename;
-          let%lwt entry, cached = cache.get_file filename in
-          if entry.digest = "" (* the directory is changed *)
+          let%lwt _, cached = cache.get_file_no_raise filename in
+          if prev_entry.digest = "" (* the directory is changed *)
           then Lwt.return (graph, modules)
           else
             let%lwt () = report_file_change filename in
