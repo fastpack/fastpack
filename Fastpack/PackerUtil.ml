@@ -498,7 +498,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
       filename;
       resolved_dependencies = [];
       es_module = false;
-      analyzed = false;
+      state = Initial;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
       exports = [];
@@ -539,7 +539,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
    in
    let%lwt m, _ = cache.get_module filename (relative_name ctx filename) in
    let%lwt m =
-     if (not m.analyzed)
+     if m.state = Module.Initial
      then begin
        let { Preprocessor. process; _ } = ctx.preprocessor in
        let relname = relative_name ctx filename in
@@ -555,7 +555,11 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
               Lwt.fail exn
            )
        in
-       let m = { m with workspace = Workspace.of_string content } in
+       let m = {
+         m with
+         state = Module.Preprocessed;
+         workspace = Workspace.of_string content
+       } in
        let%lwt () = cache.modify_content m content in
        Lwt.return m
      end

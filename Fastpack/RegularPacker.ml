@@ -484,7 +484,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
   let rec process (ctx : Context.t) graph (m : Module.t) =
     let ctx = { ctx with current_filename = m.filename } in
     let m, dependencies =
-      if (not m.analyzed) then begin
+      if m.state <> Module.Analyzed
+      then begin
         let source = m.Module.workspace.Workspace.value in
         let (workspace, dependencies, scope, exports, es_module) =
           match is_json m.filename with
@@ -509,7 +510,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         m, []
     in
     let%lwt m =
-      if (not m.analyzed) then begin
+      if m.state <> Module.Analyzed
+      then begin
         let%lwt resolved =
           Lwt_list.map_p
             (fun req ->
@@ -659,7 +661,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             m.id
         in
         let%lwt content = Workspace.write channel workspace dep_map in
-        let m = { m with analyzed = true } in
+        let m = { m with state = Module.Analyzed } in
         let%lwt () = cache.modify_content m content in
         let () =
           DependencyGraph.add_module

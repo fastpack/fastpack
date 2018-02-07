@@ -3,6 +3,10 @@ module DependencyMap = Map.Make(struct
     let compare = Dependency.compare
   end)
 
+type state = Initial
+           | Preprocessed
+           | Analyzed
+
 type t = {
   (** Opaque module id *)
   id : string;
@@ -14,7 +18,7 @@ type t = {
   resolved_dependencies : (Dependency.t * string) list;
 
   (** If module is analyzed when packing *)
-  analyzed : bool;
+  state : state;
 
   (** EcmaScript Module *)
   es_module : bool;

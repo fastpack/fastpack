@@ -13,7 +13,6 @@ module ModuleEntry = struct
   module Modified = struct
     type t = {
       es_module : bool;
-      analyzed : bool;
       content : string;
       build_dependencies : string M.t;
       resolved_dependencies : (Dependency.t * string) list;
@@ -22,6 +21,7 @@ module ModuleEntry = struct
 
   type t = {
     id : string;
+    state : Module.state;
     modified : Modified.t option;
   }
 end
@@ -313,7 +313,9 @@ let create cache_filename =
   let get_module filename relname =
     let check_build_dependencies entry =
       match entry with
-      | { module_ = Some { id; modified = Some { build_dependencies; _}}; _ } ->
+      | { module_ = Some ({
+          modified = Some { build_dependencies; _};
+          _ } as module_); _} ->
         let%lwt build_dependencies_changed =
           build_dependencies
           |> M.bindings
@@ -328,7 +330,10 @@ let create cache_filename =
           build_dependencies
           |> M.bindings
           |> List.iter (fun (dep, _) -> remove_dependency dep filename);
-          Lwt.return ({ entry with module_ = Some {id; modified = None}}, false)
+          Lwt.return (
+            { entry with module_ = Some {module_ with modified = None}},
+            false
+          )
         end
         else
           Lwt.return (entry, true)
@@ -340,33 +345,33 @@ let create cache_filename =
       let (
         id,
         resolved_dependencies,
-        analyzed,
+        state,
         es_module,
         content
       ) =
         match entry with
         | { module_ = None; _ } ->
           let id = Module.make_id relname in
-          update filename { entry with module_ = Some { id; modified = None }};
-          (id, [], false, false, entry.content)
+          let state = Module.Initial in
+          update filename { entry with module_ = Some { id; state; modified = None }};
+          (id, [], state, false, entry.content)
 
-        | { module_ = Some {id; modified = None }; _ } ->
-          (id, [], false, false, entry.content)
+        | { module_ = Some {id; state; modified = None }; _ } ->
+          (id, [], state, false, entry.content)
 
-        | { module_ = Some {id; modified = Some {
+        | { module_ = Some {id; state; modified = Some {
             content;
-            analyzed;
             es_module;
             resolved_dependencies;
             _
           }}; _ } ->
-          (id, resolved_dependencies, analyzed, es_module, content)
+          (id, resolved_dependencies, state, es_module, content)
       in
       { Module.
         id;
         filename;
+        state;
         resolved_dependencies;
-        analyzed;
         es_module;
         workspace = Workspace.of_string content;
         scope = FastpackUtil.Scope.empty;
@@ -389,14 +394,12 @@ let create cache_filename =
         | Some { modified = Some modified; _ } ->
           { modified with
             es_module = m.es_module;
-            analyzed = m.analyzed;
             content;
             resolved_dependencies = m.resolved_dependencies
           }
         | Some { modified = None; _ } ->
           { build_dependencies = M.empty;
             es_module = m.es_module;
-            analyzed = m.analyzed;
             content;
             resolved_dependencies = m.resolved_dependencies
           }
@@ -405,7 +408,7 @@ let create cache_filename =
       in
       update m.filename {
         entry with
-        module_ = Some { id = m.id; modified = Some modified }
+        module_ = Some { id = m.id; state = m.state; modified = Some modified }
       };
       Lwt.return_unit
   in
@@ -427,27 +430,28 @@ let create cache_filename =
     in
     let%lwt entry, _ = get_file m.Module.filename in
     match entry with
-    | { module_ = Some { id; modified = Some modified }; _ } ->
+    | { module_ = Some { id; state; modified = Some modified; }; _ } ->
       let%lwt build_dependencies =
         add_build_dependencies modified.build_dependencies
       in
       update m.Module.filename {
         entry with module_ = Some {
           id;
+          state;
           modified = Some {modified with build_dependencies}
         }};
       update_build_dependency_map ();
       Lwt.return_unit
-    | { module_ = Some { id; modified = None }; _ } ->
+    | { module_ = Some { id; state; modified = None }; _ } ->
       let%lwt build_dependencies =
         add_build_dependencies M.empty
       in
       update m.Module.filename {
         entry with module_ = Some {
           id;
+          state;
           modified = Some {
               es_module = false;
-              analyzed = false;
               content = entry.content;
               build_dependencies;
               resolved_dependencies = [];
