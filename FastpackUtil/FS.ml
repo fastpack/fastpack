@@ -9,6 +9,14 @@ let stat_option path =
 let abs_path dir filename =
   FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute dir filename
 
+let relative_path dir filename =
+    String.(
+      sub
+        filename
+        (length dir + 1)
+        (length filename - length dir - 1)
+    )
+
 let open_process cmd =
   (* TODO: handle Unix_error *)
   let (fp_in, process_out) = Unix.pipe () in

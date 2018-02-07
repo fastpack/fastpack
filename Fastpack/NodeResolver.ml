@@ -140,42 +140,46 @@ let make (cache : Cache.t) =
 
   let resolve (package : Package.t) path from_filename =
     let basedir = FilePath.dirname from_filename in
-    match Package.resolve_browser package (FS.abs_path basedir path) with
-    | Some resolved ->
-      Lwt.return_some (resolved, get_package_dependency package)
-    | None ->
-      if is_builtin path
-      then Lwt.return_some ("builtin:" ^ path, [])
-      else
-        match path with
+    match path with
 
-        | "" ->
-          Lwt.return_none
+    | "" ->
+      Lwt.return_none
 
-        | path ->
-          match String.get path 0 with
+    | path ->
+      match String.get path 0 with
 
-          (* relative module path *)
-          | '.' ->
-            let path = FS.abs_path basedir path in
+      (* relative module path *)
+      | '.' ->
+        let path = FS.abs_path basedir path in
+        begin
+          match Package.resolve_browser package path with
+          | Some resolved ->
+            Lwt.return_some (resolved, get_package_dependency package)
+          | None ->
             begin
               match%lwt resolve_extensionless_path path with
               | None -> Lwt.return_none
               | Some resolved ->
                 Lwt.return_some (resolved, get_package_dependency package)
             end
+        end
 
-          (* absolute module path *)
-          | '/' ->
-            begin
-              match%lwt resolve_extensionless_path path with
-              | None -> Lwt.return_none
-              | Some resolved ->
-                Lwt.return_some (resolved, [])
-            end
+      (* absolute module path *)
+      | '/' ->
+        begin
+          match%lwt resolve_extensionless_path path with
+          | None -> Lwt.return_none
+          | Some resolved ->
+            Lwt.return_some (resolved, [])
+        end
 
-          (* scoped package *)
-          | '@' ->
+      (* scoped package *)
+      | '@' ->
+        begin
+          match Package.resolve_browser package path with
+          | Some resolved ->
+            Lwt.return_some (resolved, get_package_dependency package)
+          | None ->
             let package_name, path =
               match String.split_on_char '/' path with
               | [] ->
@@ -194,9 +198,18 @@ let make (cache : Cache.t) =
               | Some package_name ->
                 resolve_package package_name path basedir
             end
+        end
 
-          (* package *)
-          | _ ->
+      (* package *)
+      | _ ->
+        if is_builtin path
+        then
+          Lwt.return_some ("builtin:" ^ path, [])
+        else
+          match Package.resolve_browser package path with
+          | Some resolved ->
+            Lwt.return_some (resolved, get_package_dependency package)
+          | None ->
             let package_name, path =
               match String.split_on_char '/' path with
               | [] -> (None, None)
@@ -211,17 +224,28 @@ let make (cache : Cache.t) =
 
   in
 
+  let package_json_cache = ref M.empty in
   let find_package root_dir filename =
     let rec find_package_json dir =
-      let filename = FilePath.concat dir "package.json" in
-      match%lwt cache.file_exists filename with
-      | true ->
-        let%lwt package, _ = cache.get_package filename in
+      match M.get dir !package_json_cache with
+      | Some package ->
         Lwt.return package
-      | false ->
-        if dir = root_dir
-        then Lwt.return (Package.empty)
-        else find_package_json (FilePath.dirname dir)
+      | None ->
+        let filename = FilePath.concat dir "package.json" in
+        match%lwt cache.file_exists filename with
+        | true ->
+          let%lwt package, _ = cache.get_package filename in
+          package_json_cache := M.add dir package !package_json_cache;
+          Lwt.return package
+        | false ->
+          if dir = root_dir
+          then
+            Lwt.return (Package.empty)
+          else begin
+            let%lwt package = find_package_json (FilePath.dirname dir) in
+            package_json_cache := M.add dir package !package_json_cache;
+            Lwt.return package
+          end
     in
     let%lwt package = find_package_json (FilePath.dirname filename) in
     (* let%lwt () = Lwt_io.(write stdout (Package.to_string package ^ "\n")) in *)

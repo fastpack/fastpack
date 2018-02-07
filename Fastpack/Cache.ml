@@ -9,6 +9,8 @@ module StringSet = Set.Make(String)
 module M = Map.Make(String)
 module FS = FastpackUtil.FS
 
+let debug = Logs.debug
+
 module ModuleEntry = struct
   module Modified = struct
     type t = {
@@ -48,8 +50,10 @@ type t = {
   modify_content : Module.t -> string -> unit Lwt.t;
   add_build_dependencies: Module.t -> string list -> unit Lwt.t;
   get_potentially_invalid : string -> string list;
+  setup_build_dependencies : StringSet.t -> unit;
   remove : string -> unit;
   dump : unit -> unit Lwt.t;
+  loaded : bool;
 }
 
 exception FileDoesNotExist of string
@@ -113,6 +117,25 @@ let create cache_filename =
     build_dependency_map := M.add filename set !build_dependency_map;
   in
 
+  (* this is a special function required by Watcher
+   * in order to setup minimum required dependency map only for modules
+   * present in the last bundle. To be called once *)
+  let setup_build_dependencies filenames =
+    build_dependency_map := M.empty;
+    StringSet.iter
+      (fun filename ->
+         match M.get filename !files with
+         | Some { module_ = Some { modified = Some { build_dependencies; _ }; _ }; _ } ->
+           build_dependencies
+           |> M.bindings
+           |> List.iter
+             (fun (dep, _) -> add_build_dependency dep filename)
+         | _ ->
+           ()
+      )
+      filenames
+  in
+
   let validate filename entry =
     let validate_file () =
       match%lwt FS.stat_option filename with
@@ -163,6 +186,7 @@ let create cache_filename =
         in
         let module_ = { m with state = Module.Initial; modified = None } in
         let entry = { entry with module_ = Some module_; package } in
+        update filename entry;
         Lwt.return (entry, false)
       end
     | { package = Some _; _ } ->
@@ -172,6 +196,7 @@ let create cache_filename =
       else begin
         let package = Package.of_json filename entry.content in
         let entry = { entry with package = Some package } in
+        update filename entry;
         Lwt.return (entry, false)
       end
     | { digest; st_mtime; _ } ->
@@ -417,7 +442,7 @@ let create cache_filename =
   let add_build_dependencies m dependencies =
     let update_build_dependency_map () =
       dependencies
-      |> List.iter (fun dep -> add_build_dependency m.Module.filename dep)
+      |> List.iter (fun dep -> add_build_dependency dep m.Module.filename)
     in
     let add_build_dependencies existing_dependencies =
       Lwt_list.fold_left_s
@@ -464,8 +489,18 @@ let create cache_filename =
       Error.ie ("Adding build_dependencies to a non-module: " ^ m.filename)
   in
 
-  let get_potentially_invalid _filename = [] in
-  let remove _filename = () in
+  let get_potentially_invalid filename =
+    match M.get filename !files with
+    | None -> []
+    | Some _ ->
+      match M.get filename !build_dependency_map with
+      | None -> [filename]
+      | Some set -> set |> StringSet.add filename |> StringSet.elements
+  in
+
+  let remove filename =
+    trusted := StringSet.remove filename !trusted;
+  in
 
   let dump () =
     match cache_filename with
@@ -489,9 +524,11 @@ let create cache_filename =
     get_module;
     modify_content;
     add_build_dependencies;
+    setup_build_dependencies;
     get_potentially_invalid;
     remove;
     dump;
+    loaded = !files <> M.empty
   }
 
 
