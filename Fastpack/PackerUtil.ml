@@ -378,7 +378,7 @@ module CacheOld = struct
       modules :=
         M.add
           m.filename
-          { id = m.id; digest = m.digest; st_mtime = m.st_mtime;
+          { id = m.id; digest = ""; st_mtime = 0.0;
             resolved_dependencies = m.resolved_dependencies;
             build_dependencies = m.build_dependencies;
             es_module = m.es_module;
@@ -402,18 +402,14 @@ module CacheOld = struct
         None
       | Some {
           id;
-          digest;
-          st_mtime;
           resolved_dependencies;
           build_dependencies;
           source;
           analyzed;
-          es_module; } ->
+          es_module; _ } ->
         Some { Module.
           id;
           filename;
-          digest;
-          st_mtime;
           resolved_dependencies;
           build_dependencies;
           es_module;
@@ -421,7 +417,6 @@ module CacheOld = struct
           workspace = Workspace.of_string source;
           scope = FastpackUtil.Scope.empty;
           exports = [];
-          cached = true;
         }
     in
 
@@ -496,21 +491,18 @@ let relative_name {Context. package_dir; _} filename =
     )
 
 let read_module (ctx : Context.t) (cache : Cache.t) filename =
-  let make_module id filename st_mtime source digest =
+  let make_module id filename source =
     {
       Module.
       id;
       filename;
-      st_mtime;
       resolved_dependencies = [];
       build_dependencies = [];
       es_module = false;
       analyzed = false;
-      digest;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
       exports = [];
-      cached = false;
     }
   in
 
@@ -528,16 +520,14 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
   | "builtin:readable-stream"
   | "builtin:assert" ->
     (* TODO: handle builtins *)
-    make_module (Module.make_id filename) filename 0.0 "" ""
+    make_module (Module.make_id filename) filename ""
     |> Lwt.return
 
   | "builtin:__fastpack_runtime__" ->
     make_module
       (Module.make_id filename)
       filename
-      0.0
       FastpackTranspiler.runtime
-      (Digest.string FastpackTranspiler.runtime)
     |> Lwt.return
 
   | _ ->

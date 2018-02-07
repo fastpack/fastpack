@@ -10,12 +10,6 @@ type t = {
   (** Absolute module filename *)
   filename : string;
 
-  (** Module source digest *)
-  digest : string;
-
-  (** ST_MTIME  of the filename *)
-  st_mtime : float;
-
   (** List of resolved dependencies, populated for cached modules *)
   resolved_dependencies : (Dependency.t * string) list;
 
@@ -25,10 +19,7 @@ type t = {
   (** If module is analyzed when packing *)
   analyzed : bool;
 
-  (** If module is analyzed when packing *)
-  cached : bool;
-
-  (** EcmaScript 6 Module *)
+  (** EcmaScript Module *)
   es_module : bool;
 
   (** Module source along with transformations applied *)

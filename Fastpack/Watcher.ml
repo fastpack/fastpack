@@ -114,7 +114,7 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
               | None ->
                 Lwt.return (graph, modules)
               | Some m ->
-                if m.cached
+                if m.analyzed (* TODO: placeholder, fix it !!! *)
                 then
                   let%lwt () = report_same_bundle start_time in
                   Lwt.return (graph, modules)
@@ -141,7 +141,7 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
             | None ->
               Lwt.return (graph, modules)
             | Some m ->
-              if m.Module.cached
+              if m.Module.analyzed (* TODO: placeholder, fix !!! *)
               then
                 Lwt.return (graph, modules)
               else

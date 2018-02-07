@@ -314,14 +314,10 @@ let create cache_filename =
       { Module.
         id;
         filename;
-        (* TODO: remove next 2 lines *)
-        st_mtime = entry.st_mtime;
-        digest = entry.digest;
         resolved_dependencies;
         build_dependencies;
         analyzed;
         es_module;
-        cached = false; (* remove this line *)
         workspace = Workspace.of_string content;
         scope = FastpackUtil.Scope.empty;
         exports = []
