@@ -1,0 +1,9 @@
+(executable
+ ((name test_runner)
+  (modules (test_runner))
+  (libraries (Fastpack FastpackUtil ppx_expect.evaluator ppx_inline_test.runner.lib))))
+
+(alias
+ ((name    runtest)
+  (deps    (test_runner.exe))
+  (action  (chdir ${ROOT} (run ${<} inline-test-runner Fastpack -diff-cmd  "git --no-pager diff --no-index --color")))))

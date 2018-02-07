@@ -1,9 +1,9 @@
 
 module Version = Version
 module Error = Error
+module Cache = Cache
 module Mode = PackerUtil.Mode
 module Target = PackerUtil.Target
-module Cache = PackerUtil.Cache
 module Context = PackerUtil.Context
 module Preprocessor = Preprocessor
 module Reporter = Reporter
@@ -88,12 +88,13 @@ let merge_options o1 o2 =
 let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir channel =
   let ctx = { Context.
     entry_filename;
+    package = Package.empty;
     package_dir;
     stack = [];
     current_filename = entry_filename;
     mode;
     target;
-    resolver = NodeResolver.make ();
+    resolver = NodeResolver.make cache;
     preprocessor;
     graph = DependencyGraph.empty ();
   }
@@ -177,48 +178,80 @@ let prepare_and_pack cl_options start_time =
         let%lwt cache, pack_f =
           match mode with
           | Mode.Production ->
-            Lwt.return (Cache.fake (), FlatPacker.pack)
+            let%lwt cache = Cache.create None in
+            Lwt.return (cache, FlatPacker.pack)
           | Mode.Test
           | Mode.Development ->
-            let cache_prefix =
-              let digest s = s |> Digest.string |> Digest.to_hex in
-              let preprocessors =
-                preprocessor.Preprocessor.configs
-                |> List.map Preprocessor.to_string
-                |> String.concat ""
-                |> digest
-              in
-              String.concat "-" [
-                Mode.to_string mode;
-                Target.to_string target;
-                digest package_dir;
-                preprocessors;
-              ]
-            in
-            let%lwt cache =
+            let%lwt cache_filename =
               match options.cache with
               | Some Cache.Normal ->
-                Cache.create package_dir cache_prefix entry_filename
+                let digest s = s |> Digest.string |> Digest.to_hex in
+                let preprocessors =
+                  preprocessor.Preprocessor.configs
+                  |> List.map Preprocessor.to_string
+                  |> String.concat ""
+                  |> digest
+                in
+                let short_filename =
+                  String.(
+                    sub
+                      entry_filename
+                      (length package_dir + 1)
+                      (length entry_filename - length package_dir - 1)
+                    |> replace ~sub:"/" ~by:"__"
+                    |> replace ~sub:"." ~by:"___"
+                  )
+                in
+                let filename =
+                  String.concat "-" [
+                    short_filename;
+                    Mode.to_string mode;
+                    Target.to_string target;
+                    digest package_dir;
+                    preprocessors;
+                    Version.github_commit
+                  ]
+                in
+                let node_modules = FilePath.concat package_dir "node_modules" in
+                let%lwt dir =
+                  match%lwt FS.try_dir node_modules with
+                  | Some dir ->
+                    FilePath.concat
+                      (FilePath.concat dir ".cache")
+                      "fpack"
+                    |> Lwt.return
+                  | None ->
+                    FilePath.concat
+                      (FilePath.concat package_dir ".cache")
+                      "fpack"
+                    |> Lwt.return
+                in
+                let%lwt () = FS.makedirs dir in
+                FilePath.concat dir filename |> Lwt.return_some
               | Some Cache.Ignore ->
-                Lwt.return @@ Cache.fake ()
+                Lwt.return_none
               | None ->
                 Error.ie "Cache strategy is not set"
             in
+            let%lwt cache = Cache.create cache_filename in
             Lwt.return (cache, RegularPacker.pack)
         in
         Lwt.return (mode, cache, pack_f)
       | None ->
         Error.ie "mode is not set"
     in
-    let get_context () =
-      { Context.
+    let get_context current_filename =
+      let resolver = NodeResolver.make cache in
+      let%lwt package = resolver.find_package package_dir current_filename in
+      Lwt.return { Context.
         entry_filename;
         package_dir;
+        package;
         stack = [];
-        current_filename = entry_filename;
+        current_filename;
         mode;
         target;
-        resolver = NodeResolver.make ();
+        resolver;
         preprocessor;
         graph = DependencyGraph.empty ()
       }
@@ -283,7 +316,7 @@ let prepare_and_pack cl_options start_time =
            then Lwt_unix.unlink temp_file;
         )
     in
-    let ctx = get_context () in
+    let%lwt ctx = get_context entry_filename in
     let init_run () =
       Lwt.catch
         (fun () -> pack_postprocess_report cache ctx start_time)
@@ -301,9 +334,11 @@ let prepare_and_pack cl_options start_time =
            let%lwt {Reporter. modules; _} = init_run () in
            Watcher.watch
              pack_postprocess_report
-             { cache with trusted = true; loaded = true }
+             cache
              ctx.graph
              modules
+             package_dir
+             entry_filename
              get_context
          | _, Some true ->
            (* TODO: convert this into proper error: IllegalConfiguration *)

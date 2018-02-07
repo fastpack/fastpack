@@ -484,7 +484,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
   let rec process (ctx : Context.t) graph (m : Module.t) =
     let ctx = { ctx with current_filename = m.filename } in
     let m, dependencies =
-      if (not m.analyzed) then begin
+      if m.state <> Module.Analyzed
+      then begin
         let source = m.Module.workspace.Workspace.value in
         let (workspace, dependencies, scope, exports, es_module) =
           match is_json m.filename with
@@ -509,11 +510,27 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         m, []
     in
     let%lwt m =
-      if (not m.analyzed) then begin
+      if m.state <> Module.Analyzed
+      then begin
         let%lwt resolved =
           Lwt_list.map_p
             (fun req ->
-               let%lwt resolved = Dependency.resolve ctx.Context.resolver req in
+               let%lwt resolved = Dependency.(
+                 ctx.resolver.resolve
+                   ctx.package
+                   req.request
+                   req.requested_from_filename
+               ) in
+               let%lwt resolved =
+                 match resolved with
+                 | None ->
+                   Lwt.return_none
+                 | Some (resolved, build_dependencies) ->
+                   let%lwt () =
+                     cache.add_build_dependencies m build_dependencies
+                   in
+                   Lwt.return_some resolved
+               in
                Lwt.return (req, resolved)
             )
             dependencies
@@ -546,7 +563,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             | None ->
               let ctx = { ctx with stack = req :: ctx.stack } in
               let%lwt m = read_module ctx cache resolved in
-              process ctx graph m
+              let%lwt package =
+                ctx.resolver.NodeResolver.find_package
+                  ctx.package_dir
+                  resolved
+              in
+              process { ctx with package } graph m
             | Some m ->
               Lwt.return m
           in
@@ -652,7 +674,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             m.id
         in
         let%lwt content = Workspace.write channel workspace dep_map in
-        let () = cache.add m content true in
+        let m = { m with state = Module.Analyzed } in
+        let%lwt () = cache.modify_content m content in
         let () =
           DependencyGraph.add_module
             graph

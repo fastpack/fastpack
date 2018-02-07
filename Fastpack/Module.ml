@@ -3,6 +3,10 @@ module DependencyMap = Map.Make(struct
     let compare = Dependency.compare
   end)
 
+type state = Initial
+           | Preprocessed
+           | Analyzed
+
 type t = {
   (** Opaque module id *)
   id : string;
@@ -10,25 +14,13 @@ type t = {
   (** Absolute module filename *)
   filename : string;
 
-  (** Module source digest *)
-  digest : string;
-
-  (** ST_MTIME  of the filename *)
-  st_mtime : float;
-
   (** List of resolved dependencies, populated for cached modules *)
   resolved_dependencies : (Dependency.t * string) list;
 
-  (** List of build dependencies *)
-  build_dependencies : (string * float * string) list;
-
   (** If module is analyzed when packing *)
-  analyzed : bool;
+  state : state;
 
-  (** If module is analyzed when packing *)
-  cached : bool;
-
-  (** EcmaScript 6 Module *)
+  (** EcmaScript Module *)
   es_module : bool;
 
   (** Module source along with transformations applied *)
