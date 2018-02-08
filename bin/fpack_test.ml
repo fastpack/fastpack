@@ -125,41 +125,6 @@ let tests = [
   Test ("transpile-strip-flow.js", "", transpile);
   Test ("print.js", "", print ~with_scope:false);
   Test ("print-with-scope.js", "", print ~with_scope:true);
-  Test ("pack/index.js", "pack.js", pack_regular_prod);
-  Test ("pack_flat/index.js", "pack_flat.js", pack_flat_prod);
-  Test ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat_prod);
-  Test ("pack_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
-  Test ("pack_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
-  Test ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat_prod);
-  Test ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
-  Test ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
-  Test ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
-  Test ("pack-target/index.js", "pack-regular-cjs.js", pack_regular_cjs);
-  Test ("pack-target/index.js", "error-pack-regular-esm.txt", pack_regular_esm);
-  Test ("pack-target/index.js", "pack-flat-esm.js", pack_flat_esm);
-  Test ("pack-target/index.js", "pack-flat-cjs.js", pack_flat_cjs);
-  Test ("pack-utf8/index.js", "pack-flat-utf8.js", pack_flat_dev);
-  Test ("pack-utf8/index.js", "pack-regular-utf8.js", pack_regular_prod);
-  Test (
-    "error-cannot-rename-module-binding/index.js",
-    "error-cannot-rename-module-binding.txt",
-    pack_regular_prod
-  );
-  Test (
-    "error-parse/index.js",
-    "error-parse.txt",
-    pack_regular_prod
-  );
-  Test (
-    "error-cannot-resolve-modules/index.js",
-    "error-cannot-resolve-modules.txt",
-    pack_regular_prod
-  );
-  Test (
-    "error-cannot-leave-package-dir/index.js",
-    "error-cannot-leave-package-dir.txt",
-    pack_regular_prod
-  );
   Test (
     "error-dependency-cycle/index.js",
     "error-dependency-cycle.txt",

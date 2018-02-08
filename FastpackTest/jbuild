@@ -1,0 +1,10 @@
+(jbuild_version 1)
+
+(library
+ ((name        FastpackTest)
+  (public_name FastpackTest)
+  (library_flags (-linkall))
+  (libraries (re re.posix Fastpack FastpackUtil FastpackTranspiler lwt lwt.unix ppx_inline_test.runtime-lib))
+  (flags (:standard "-open" "Containers"))
+  (preprocess (pps (lwt.ppx ppx_expect ppx_driver.runner (-inline-test-lib FastpackTest) )))
+  ))
