@@ -2,21 +2,21 @@
 A -> Import A from 'namedTest' [3:8 - 3:9]
 C -> Import B from 'namedTest' [3:16 - 3:17]
 F -> Function [7:9 - 7:10]
-S -> Function [60:9 - 60:10]
+S -> Function [62:9 - 62:10]
 X -> Import default from 'defaultTest' [1:7 - 1:8]
 Y -> Import * from 'namespaceTest' [2:12 - 2:13]
 a -> Var [exported as a] [5:4 - 5:5]
 a1 -> Var [exported as A1] [16:6 - 16:8]
 b -> Let [6:4 - 6:5]
-doSomethingUseful -> Function [exported as default] [38:24 - 38:41]
+doSomethingUseful -> Function [exported as default] [40:24 - 40:41]
 exportC -> Class [exported as exportC] [34:13 - 34:20]
 exportF -> Function [exported as exportF] [33:16 - 33:23]
 exportVar -> Let [exported as exportVar] [35:11 - 35:20]
 f -> Let [10:4 - 10:5]
 f1 -> Let [11:4 - 11:6]
-z11 -> Let [40:9 - 40:12]
-z2 -> Let [40:14 - 40:16]
-z3 -> Let [40:18 - 40:20]
+z11 -> Let [42:9 - 42:12]
+z2 -> Let [42:14 - 42:16]
+z3 -> Let [42:18 - 42:20]
  */
 import X from "defaultTest";
 import * as Y from "namespaceTest";
@@ -71,48 +71,50 @@ export class exportC {
 export let exportVar = 25;
 ;
 export { a, a1 as A1 };
+// re-exports are not getting into scope
+export { reexp1, reexp2 as Reexp2 } from "./other";
 export default function doSomethingUseful()/* SCOPE:  */ {/* SCOPE:  */
 
   
 }
 ;
 let {z1: z11, z2, z3} = {};
-for (let p in {a: 1})/* SCOPE: p -> Let [43:9 - 43:10] */
+for (let p in {a: 1})/* SCOPE: p -> Let [45:9 - 45:10] */
   {/* SCOPE:  */
   
     console.log(p);
     
   }
-for (let p of {a: 1})/* SCOPE: p -> Let [47:9 - 47:10] */
+for (let p of {a: 1})/* SCOPE: p -> Let [49:9 - 49:10] */
   {/* SCOPE:  */
   
     console.log(p);
     
   }
-try {/* SCOPE: a -> Let [52:6 - 52:7] */
+try {/* SCOPE: a -> Let [54:6 - 54:7] */
 
   let a = 1;
   throw "test";
   
 } catch ({e1, e2, ...e3}) {/* SCOPE: 
-e1 -> Let [54:9 - 54:11]
-e2 -> Let [54:13 - 54:15]
-e3 -> Let [54:20 - 54:22]
+e1 -> Let [56:9 - 56:11]
+e2 -> Let [56:13 - 56:15]
+e3 -> Let [56:20 - 56:22]
  */
 
   console.log(e1, e2, e3);
   
-} finally {/* SCOPE: f -> Let [57:6 - 57:7] */
+} finally {/* SCOPE: f -> Let [59:6 - 59:7] */
 
   let f = 1;
   
 }
-function S()/* SCOPE:  */ {/* SCOPE: S1 -> Var [61:6 - 61:8] */
+function S()/* SCOPE:  */ {/* SCOPE: S1 -> Var [63:6 - 63:8] */
 
   var S1 = 1;
   
 }
-(function ()/* SCOPE:  */ {/* SCOPE: SS1 -> Var [65:6 - 65:9] */
+(function ()/* SCOPE:  */ {/* SCOPE: SS1 -> Var [67:6 - 67:9] */
 
   var SS1 = 1;
   

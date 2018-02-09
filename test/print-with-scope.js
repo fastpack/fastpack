@@ -34,6 +34,8 @@ export function exportF() {};
 export class exportC {};
 export let exportVar = 25;
 export {a, a1 as A1};
+// re-exports are not getting into scope
+export {reexp1, reexp2 as Reexp2} from "./other";
 
 export default function doSomethingUseful() {};
 

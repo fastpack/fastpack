@@ -14,6 +14,7 @@ $n__a.exports.default = $e__a__default;$n__a.exports.a1 = $e__a__a1;$n__a.export
 
 let $n__index = { exports: {}};
 
+console.log($e__a__a1, $e__a__a2, $e__a__a3);
 const $e__index__default = function() {
   console.log("Русский", "development",
               "разработка");

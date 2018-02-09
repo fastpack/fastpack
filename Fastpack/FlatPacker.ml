@@ -328,6 +328,27 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             end
           in
 
+          let used_imports = ref (
+            Scope.fold_left
+              (fun used_imports (name, binding) ->
+                 match binding.typ with
+                 | Scope.Import { source; _ } ->
+                   M.add name (source, false) used_imports
+                 | _
+                   ->
+                   used_imports
+              )
+              M.empty
+              program_scope
+          ) in
+          let use_name name =
+            match M.get name !used_imports with
+            | Some (source, _) ->
+              used_imports := M.add name (source, true) !used_imports;
+            | None ->
+              ()
+          in
+
           let scopes = ref [program_scope] in
           let collisions = ref [M.empty] in
           let top_scope () = List.hd !scopes in
@@ -383,6 +404,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           let patch_identifier (loc, name) =
             match get_top_level_binding name with
             | Some binding ->
+              use_name name;
               patch_loc_with
                 loc
                 (fun dep_map ->
@@ -487,18 +509,51 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
               Visit.Break
             | Visit.Continue visit_ctx ->
               match stmt with
-              | S.ExportNamedDeclaration { source = Some (_, { value = request; _}); _ }
+              | S.ImportDeclaration {
+                  source = (_, { value = request; _ });
+                  specifiers = None;
+                  default = None;
+                _ } ->
+                if (not @@ is_ignored_request request)
+                then begin
+                  (* let _ = add_static_dep request in *)
+                  remove_loc loc;
+                end;
+                Visit.Continue visit_ctx;
+
               | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
                 if (not @@ is_ignored_request request)
                 then begin
-                  let _ = add_static_dep request in
+                  (* let _ = add_static_dep request in *)
                   remove_loc loc;
                 end
                 else
                   remove_loc loc;
                 Visit.Continue visit_ctx;
 
-              | S.ExportNamedDeclaration { specifiers = Some _; _ }->
+              | S.ExportNamedDeclaration { source = Some (_, { value; _ }); _} ->
+                let _ = add_static_dep value in
+                remove_loc loc;
+                Visit.Break;
+
+              | S.ExportNamedDeclaration {
+                  specifiers = Some S.ExportNamedDeclaration.ExportSpecifiers specifiers;
+                  _ } ->
+                List.iter
+                  (fun (_, {
+                       S.ExportNamedDeclaration.ExportSpecifier.
+                       local = (_, local); _
+                     }) ->
+                     use_name local;
+                  )
+                  specifiers;
+                remove_loc loc;
+                Visit.Break;
+
+              | S.ExportNamedDeclaration {
+                  specifiers =
+                    Some S.ExportNamedDeclaration.ExportBatchSpecifier _;
+                  _ } ->
                 remove_loc loc;
                 Visit.Break;
 
@@ -647,11 +702,16 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             leave_block;
           } in
           let es_module = is_es_module stmts in
-          begin
-            Visit.visit handler program;
-            add_exports es_module;
-            if (filename = ctx.entry_filename) then add_target_export ();
-          end;
+          Visit.visit handler program;
+          add_exports es_module;
+          if (filename = ctx.entry_filename) then add_target_export ();
+
+          !used_imports
+          |> M.bindings
+          |> List.filter_map
+            (fun (_, (source, used)) -> if used then Some source else None)
+          |> List.iter (fun source -> let _ = add_static_dep source in ());
+
 
           (!workspace,
            !static_deps,

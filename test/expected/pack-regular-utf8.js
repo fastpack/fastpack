@@ -70,6 +70,7 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./a" */ "a");
+console.log($lib1.a1, $lib1.a2, $lib1.a3);
 exports.default = function() {
   console.log("Русский", "production",
               "релиз!");
