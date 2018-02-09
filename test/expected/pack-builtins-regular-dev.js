@@ -117,6 +117,8 @@ module.exports = {
 "esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "path" */ "builtin$$COLON$$path");
 exports.default = $lib1.delimiter;
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");

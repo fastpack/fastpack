@@ -16,14 +16,15 @@ function __fastpack_import__(f) {
 
 /* a */
 
+let $n__a = { exports: {}};
 
 let $e__a__a1 = 1;
 let $e__a__a2 = 2;
-
-const $n__a = { exports: {a1: $e__a__a1, a2: $e__a__a2} };
+$n__a.exports.a1 = $e__a__a1;$n__a.exports.a2 = $e__a__a2;$n__a.exports.__esModule = $n__a.exports.__esModule || true; 
 
 /* d */
 
+let $n__d = { exports: {}};
 function $e__d__d1() {
   let c;
   if(true) {
@@ -36,18 +37,18 @@ function $e__d__d1() {
 }
 
 let $e__d__d2 = $e__d__d1;
-
-const $n__d = { exports: {d1: $e__d__d1, d2: $e__d__d2} };
+$n__d.exports.d1 = $e__d__d1;$n__d.exports.d2 = $e__d__d2;$n__d.exports.__esModule = $n__d.exports.__esModule || true; 
 
 /* default_declaration */
 
+let $n__default_declaration = { exports: {}};
 function $i__default_declaration__f(x) {};const $e__default_declaration__default = $i__default_declaration__f;;
 function $e__default_declaration__g() {return $i__default_declaration__f(1)}
-
-const $n__default_declaration = { exports: {default: $i__default_declaration__f, g: $e__default_declaration__g} };
+$n__default_declaration.exports.default = $i__default_declaration__f;$n__default_declaration.exports.g = $e__default_declaration__g;$n__default_declaration.exports.__esModule = $n__default_declaration.exports.__esModule || true; 
 
 /* index */
 
+let $n__index = { exports: {}};
 
 
 
@@ -73,13 +74,13 @@ console.log($e__a__a2, $n__d.exports, $e__default_declaration__default, Expressi
  *   c -> b
  *   b => a
  */
-
-const $n__index = { exports: {} };
+$n__index.exports.__esModule = $n__index.exports.__esModule || true; 
 
 function $w__c() {
 
 /* b */
 
+let $n__b = { exports: {}};
 
 
 function $e__b__b1() {
@@ -91,12 +92,12 @@ function $e__b__b2() {
 }
 
 const $e__b__default = {b1: $e__b__b1, b2: $e__b__b2, b3: $e__a__a1};
-
-const $n__b = { exports: {default: $e__b__default, b1: $e__b__b1, b2: $e__b__b2} };
+$n__b.exports.default = $e__b__default;$n__b.exports.b1 = $e__b__b1;$n__b.exports.b2 = $e__b__b2;$n__b.exports.__esModule = $n__b.exports.__esModule || true; 
 
 /* c */
 
 let $n__c = { exports: {}};
+
 let $i__c__cInternal1 = 100;
 let $i__c__cInternal2 = 200;
 
@@ -118,6 +119,7 @@ function $i__c__c3() {
 }
 
 Object.assign($n__c.exports, {c1: $i__c__c1, c2: $i__c__c2, c3: $i__c__c3});
+$n__c.exports.__esModule = $n__c.exports.__esModule || false; 
 
 return $n__c.exports;
 }
@@ -126,9 +128,9 @@ function $w__e() {
 
 /* e */
 
+let $n__e = { exports: {}};
 console.log('"e" is imported');
-
-const $n__e = { exports: {} };
+$n__e.exports.__esModule = $n__e.exports.__esModule || false; 
 
 return $n__e.exports;
 }

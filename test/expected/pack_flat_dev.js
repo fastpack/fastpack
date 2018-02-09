@@ -2,14 +2,19 @@
 
 /* dev */
 
-let $n__dev = { exports: {}};$n__dev.exports = {dev: true};
+let $n__dev = { exports: {}};
+$n__dev.exports = {dev: true};
+$n__dev.exports.__esModule = $n__dev.exports.__esModule || false; 
 
 /* prod */
 
-let $n__prod = { exports: {}};$n__prod.exports = {prod: true};
+let $n__prod = { exports: {}};
+$n__prod.exports = {prod: true};
+$n__prod.exports.__esModule = $n__prod.exports.__esModule || false; 
 
 /* index */
 
+let $n__index = { exports: {}};
 
 let $i__index__p;
 
@@ -64,6 +69,5 @@ console.log("development");
 // bug
 if (true) {} else {}
 if (false) {} else {console.log("dev!")}
-
-const $n__index = { exports: {} };
+$n__index.exports.__esModule = $n__index.exports.__esModule || false; 
 })()

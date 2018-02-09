@@ -65,6 +65,8 @@ let a4 = "💩";
 Object.defineProperty(exports, "a4", {get: () => a4});
 
 exports.default = {a1: a1, a2: a2, a3: a3, a4: a4};
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./a" */ "a");
@@ -72,6 +74,8 @@ exports.default = function() {
   console.log("Русский", "production",
               "релиз!");
 }
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 
 });

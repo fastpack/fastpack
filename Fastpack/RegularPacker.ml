@@ -1,5 +1,6 @@
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
+module UTF8 = FastpackUtil.UTF8
 
 open PackerUtil
 
@@ -476,8 +477,19 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       }
     in
     Visit.visit handler program;
+    let es_module = is_es_module stmts in
+    let () =
+      if es_module
+      then
+        patch (UTF8.length source) 0
+          @@ Printf.sprintf
+            "\ntry {module.exports.__esModule = module.exports.__esModule || %s}catch(_){}\n"
+            (if es_module then "true" else "false")
+      else
+        ()
+    in
 
-    (!workspace, !dependencies, program_scope, exports, is_es_module stmts)
+    (!workspace, !dependencies, program_scope, exports, es_module)
   in
 
   (* Gather dependencies *)

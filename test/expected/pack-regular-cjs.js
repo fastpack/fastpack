@@ -57,6 +57,8 @@ Object.defineProperty(exports, "a", {get: () => a});
 
 function f() { a = a + 1};
 Object.defineProperty(exports, "changeA", {get: () => f});
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./a" */ "a");
@@ -65,6 +67,8 @@ let index = 1;
 Object.defineProperty(exports, "index", {get: () => index});
 
 exports.default = function() {console.log('Hello, world!')};
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 
 });

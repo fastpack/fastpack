@@ -53,6 +53,8 @@
 ({
 "z": function(module, exports, __fastpack_require__, __fastpack_import__) {
 exports.default = 1;
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "y": function(module, exports, __fastpack_require__, __fastpack_import__) {
 exports.default = 1;
@@ -66,6 +68,8 @@ function updateA (newA) {
 }
 Object.defineProperty(exports, "updateA", {get: () => updateA});
 
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "yz": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
@@ -73,12 +77,16 @@ const $lib1 = __fastpack_require__(/* "./z" */ "z");
 Object.defineProperty(exports, "Z", {get: () => $lib1});
 const $lib2 = __fastpack_require__(/* "./y" */ "y");
 Object.defineProperty(exports, "default", {get: () => $lib2.default}); Object.defineProperty(exports, "a", {get: () => $lib2.a}); Object.defineProperty(exports, "updateA", {get: () => $lib2.updateA});
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "yz_reimport": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./y" */ "y");
 const $lib2 = __fastpack_require__(/* "./z" */ "z");
 
 exports.default = {a: $lib1.a, updateA: $lib1.updateA, Z: $lib2.default};
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "cjs": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
@@ -115,6 +123,8 @@ Object.defineProperty(exports, "updateX", {get: () => updateX});
 const $lib1 = __fastpack_require__(/* "./y" */ "y");
 Object.defineProperty(exports, "X", {get: () => $lib1.default}); Object.defineProperty(exports, "xA", {get: () => $lib1.a}); Object.defineProperty(exports, "updateA", {get: () => $lib1.updateA});
 Object.defineProperty(exports, "ZM", {get: () => ZModule.default});
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "util": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib2 = __fastpack_require__(/* "./x" */ "x");
@@ -143,6 +153,8 @@ module.exports.sayHello = function() {
   $lib2.updateX();
   console.log("x after update:", $lib2.x);
 };
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./yz" */ "yz");
@@ -161,6 +173,8 @@ else {
   $lib1();
 }
 
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 
 });

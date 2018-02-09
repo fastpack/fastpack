@@ -171,6 +171,12 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           in
 
           let program_scope, exports = Scope.of_program stmts in
+
+          (* always add the namespace binding *)
+          patch 0 0
+          @@ Printf.sprintf "let %s = { exports: {}};\n"
+          @@ gen_ext_namespace_binding module_id;
+
           let () =
             Scope.iter
               (fun (name, binding) ->
@@ -182,19 +188,12 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
               program_scope
           in
 
-          let has_namespace_binding = ref false in
           let patch_namespace ?(add_exports=false) loc =
             let patch_content =
               gen_ext_namespace_binding module_id
               ^ (if add_exports then ".exports" else "")
             in
             patch_loc loc patch_content;
-            if (not !has_namespace_binding) then begin
-              patch 0 0
-              @@ Printf.sprintf "let %s = { exports: {}};"
-              @@ gen_ext_namespace_binding module_id;
-              has_namespace_binding := true;
-            end
           in
 
           let rec resolve_import dep_map filename {Scope. source; remote } =
@@ -231,14 +230,18 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   in
                   match names with
                   | [] ->
-                    raise (PackError (ctx, CannotFindExportedName (remote, m.filename)))
+                    Printf.sprintf "%s.exports.%s"
+                      (gen_ext_namespace_binding m.id)
+                      remote
+                    (* raise (PackError (ctx, CannotFindExportedName (remote, m.filename))) *)
                   | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
                     match typ with
                     | Scope.Import import -> resolve_import dep_map m.filename import
                     | _ -> name_of_binding m.id name binding
           in
 
-          let add_namespace_binding () =
+          let add_exports es_module =
+            let namespace = gen_ext_namespace_binding module_id in
             patch_with (UTF8.length source) 0
               (fun dep_map ->
                 let expr =
@@ -261,14 +264,16 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                          | Some _ -> exported_name
                          | None -> "default"
                        in
-                       Printf.sprintf "%s: %s" key value
+                       Printf.sprintf "%s.exports.%s = %s;" namespace key value
                     )
-                  |> String.concat ", "
-                  |> Printf.sprintf "{%s}"
+                  |> String.concat ""
                 in
-                Printf.sprintf "\nconst %s = { exports: %s };\n"
-                  (gen_ext_namespace_binding module_id)
+                Printf.sprintf
+                  "%s%s.exports.__esModule = %s.exports.__esModule || %s; \n"
                   expr
+                  namespace
+                  namespace
+                  (if es_module then "true" else "false")
               )
           in
 
@@ -641,9 +646,10 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             enter_block;
             leave_block;
           } in
+          let es_module = is_es_module stmts in
           begin
             Visit.visit handler program;
-            if (not !has_namespace_binding) then add_namespace_binding ();
+            add_exports es_module;
             if (filename = ctx.entry_filename) then add_target_export ();
           end;
 
@@ -651,7 +657,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
            !static_deps,
            program_scope,
            exports,
-           is_es_module stmts)
+           es_module)
         in
 
         let source = m.Module.workspace.Workspace.value in

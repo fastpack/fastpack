@@ -3,6 +3,7 @@
 /* builtin$$COLON$$__fastpack_runtime__ */
 
 let $n__builtin$$COLON$$__fastpack_runtime__ = { exports: {}};
+
 function $i__builtin$$COLON$$__fastpack_runtime____applyDecorator(decorator, proto, property, descriptor) {
   let ret = decorator(proto, property, descriptor);
   // TODO: assert all descriptor properties;
@@ -59,26 +60,28 @@ $n__builtin$$COLON$$__fastpack_runtime__.exports = {
     //return classDecorators.reverse().reduce(decorator => decorator(cls), cls);
   }
 };
+$n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule = $n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule || false; 
 
 /* builtin$$COLON$$path */
 
-
-const $n__builtin$$COLON$$path = { exports: {} };
+let $n__builtin$$COLON$$path = { exports: {}};
+$n__builtin$$COLON$$path.exports.__esModule = $n__builtin$$COLON$$path.exports.__esModule || false; 
 
 /* builtin$$COLON$$module */
 
-
-const $n__builtin$$COLON$$module = { exports: {} };
+let $n__builtin$$COLON$$module = { exports: {}};
+$n__builtin$$COLON$$module.exports.__esModule = $n__builtin$$COLON$$module.exports.__esModule || false; 
 
 /* esm */
 
+let $n__esm = { exports: {}};
 
 const $e__esm__default = $n__builtin$$COLON$$path.exports.delimiter;
-
-const $n__esm = { exports: {default: $e__esm__default} };
+$n__esm.exports.default = $e__esm__default;$n__esm.exports.__esModule = $n__esm.exports.__esModule || true; 
 
 /* index */
 
+let $n__index = { exports: {}};
 const $i__index__$__fpack__ = ($n__builtin$$COLON$$__fastpack_runtime__.exports);
 const $i__index__path = ($n__builtin$$COLON$$path.exports);
 const $i__index__module = ($n__builtin$$COLON$$module.exports);
@@ -92,6 +95,5 @@ const $i__index__Component = props => React.createElement("div", null, item => {
     
   }
   );
-
-const $n__index = { exports: {} };
+$n__index.exports.__esModule = $n__index.exports.__esModule || false; 
 })()
