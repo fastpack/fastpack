@@ -34,7 +34,7 @@ let empty =
 let is_empty module_request =
   StringSet.mem module_request empty
 
-let make (cache : Cache.t) =
+let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
 
   (** Try to resolve an absolute path *)
   let resolved_path = ref M.empty in
@@ -118,7 +118,7 @@ let make (cache : Cache.t) =
             | None ->
               Lwt.return_none
             | Some resolved ->
-              Lwt.return_some (Module.File resolved, dep)
+              Lwt.return_some (Module.resolved_file resolved, dep)
           end
         | Some path ->
           let path = FS.abs_path package_path path in
@@ -131,7 +131,7 @@ let make (cache : Cache.t) =
             | None ->
               Lwt.return_none
             | Some resolved ->
-              Lwt.return_some (Module.File resolved, dep)
+              Lwt.return_some (Module.resolved_file resolved, dep)
       else
         let next_basedir = FilePath.dirname basedir in
         if next_basedir == basedir
@@ -144,8 +144,7 @@ let make (cache : Cache.t) =
       else resolve_package package path next_basedir
   in
 
-  let resolve (package : Package.t) path from_filename =
-    let basedir = FilePath.dirname from_filename in
+  let resolve_file (package : Package.t) path basedir =
     match path with
 
     | "" ->
@@ -166,7 +165,7 @@ let make (cache : Cache.t) =
               match%lwt resolve_extensionless_path path with
               | None -> Lwt.return_none
               | Some resolved ->
-                Lwt.return_some (Module.File resolved,
+                Lwt.return_some (Module.resolved_file resolved,
                                  get_package_dependency package)
             end
         end
@@ -177,7 +176,7 @@ let make (cache : Cache.t) =
           match%lwt resolve_extensionless_path path with
           | None -> Lwt.return_none
           | Some resolved ->
-            Lwt.return_some (Module.File resolved, [])
+            Lwt.return_some (Module.resolved_file resolved, [])
         end
 
       (* scoped package *)
@@ -234,6 +233,128 @@ let make (cache : Cache.t) =
                 resolve_package package path basedir
   in
 
+  let resolve (package : Package.t) request basedir =
+    let resolve_preprocessors preprocessors =
+      Lwt_list.fold_left_s
+        (fun acc p ->
+           match acc with
+           | None ->
+             Lwt.return_none
+           | Some (preprocessors, all_deps) ->
+             let p, opts =
+               match String.split_on_char '?' p with
+               | [p] -> p, ""
+               | [p; opts] -> p, opts
+               | _ ->
+                 (* TODO: better error reporting *)
+                 Error.ie "bad preprrocessor format"
+             in
+             match p with
+             | "builtin" ->
+               Lwt.return_some (("builtin", "") :: preprocessors, all_deps)
+             | _ ->
+               let%lwt resolved = resolve_file package p basedir in
+               match resolved with
+               | None ->
+                 Lwt.return_none
+               | Some (Module.Unknown, _)
+               | Some (Module.EmptyModule, _)
+               | Some (Module.Runtime, _)
+               | Some (Module.File { filename = None; _ }, _) ->
+                 (* TODO: better error handling *)
+                 Error.ie "Something weird when resolving preprocessors"
+               | Some (Module.File { filename = Some filename; _}, deps) ->
+                 Lwt.return_some ((filename, opts) :: preprocessors,
+                                  deps @ all_deps)
+        )
+        (Some ([], []))
+        preprocessors
+    in
+    let rec resolve_parts ?(preprocess=true) parts =
+      match parts with
+      | [] ->
+        Lwt.return_none
+
+      | [ filename ] ->
+        let%lwt resolved = resolve_file package filename basedir in
+        let%lwt resolved =
+          match preprocess, resolved with
+          | true, Some (Module.File {
+              filename = Some filename;
+              preprocessors;
+            }, deps) ->
+            let more_preprocessors = preprocessor.get_processors filename in
+            let%lwt more_preprocessors =
+              resolve_preprocessors more_preprocessors
+            in
+            begin
+            match more_preprocessors with
+            | Some (more_preprocessors, more_deps) ->
+              Lwt.return_some (Module.File {
+                  filename = Some filename;
+                  preprocessors = more_preprocessors @ preprocessors
+                }, more_deps @ deps)
+            | None ->
+              Lwt.return_none
+            end
+          | _ ->
+            Lwt.return resolved
+        in
+        Lwt.return resolved
+
+      | "" :: "" :: rest
+      | "" :: rest ->
+        resolve_parts ~preprocess:false rest
+
+      | _ ->
+        let%lwt resolved_file, deps, rest =
+          match List.rev parts with
+          | [] ->
+            Error.ie "Verified earlier, empty list cannot get here"
+          | "" :: rest ->
+            Lwt.return (
+              Some (Module.File { filename = None; preprocessors = []}),
+              [],
+              rest
+            )
+          | filename :: rest ->
+            let%lwt resolved_file = resolve_parts ~preprocess [filename] in
+            begin
+              match resolved_file with
+              | Some (resolved_file, deps) ->
+                Lwt.return (Some resolved_file, deps, rest)
+              | None ->
+                Lwt.return (None, [], rest)
+            end
+        in
+        match resolved_file with
+        | None ->
+          Lwt.return_none
+        | Some Module.Unknown ->
+          Error.ie "Should not happend here"
+        | Some Module.EmptyModule ->
+          Lwt.return_some (Module.EmptyModule, [])
+        | Some Module.Runtime ->
+          Lwt.return_some (Module.Runtime, [])
+        | Some (Module.File { preprocessors; filename }) ->
+          let%lwt more_preprocessors = resolve_preprocessors rest in
+          match more_preprocessors with
+          | None ->
+            Lwt.return_none
+          | Some (more_preprocessors, more_deps) ->
+            Lwt.return_some (
+              Module.File {
+                filename;
+                preprocessors = more_preprocessors @ preprocessors;
+              },
+              deps @ more_deps
+            )
+
+    in
+    let parts = String.split_on_char '!' request in
+    resolve_parts parts
+  in
+
   let package_json_cache = ref M.empty in
   let find_package root_dir module_location =
     let rec find_package_json dir =
@@ -258,11 +379,14 @@ let make (cache : Cache.t) =
           end
     in
     match module_location with
-    | Module.File filename ->
+    | Module.File { filename = Some filename; _} ->
       find_package_json (FilePath.dirname filename)
+    | Module.File _
     | Module.EmptyModule
     | Module.Runtime ->
       Lwt.return Package.empty
+    | Module.Unknown ->
+      Error.ie "Unknown module location in find_package"
   in
 
   { resolve; find_package }

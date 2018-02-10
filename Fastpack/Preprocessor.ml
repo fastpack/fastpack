@@ -18,6 +18,7 @@ type config = {
 type process_f = string -> string * string list
 
 type t = {
+  get_processors : string -> (string * string) list;
   process : string -> string -> (string * string list) Lwt.t;
   configs : config list;
   finalize : unit -> unit;
@@ -117,12 +118,14 @@ let builtin source =
       Lwt.fail exn
 
 let empty = {
+    get_processors = (fun _ -> []);
     process = (fun _ s -> Lwt.return (s, []));
     configs = [];
     finalize = (fun () -> ())
   }
 
 let transpile_all = {
+    get_processors = (fun _ -> []);
     process = (fun _ s -> builtin s);
     configs = [];
     finalize = (fun () -> ())
@@ -210,26 +213,27 @@ end
 
 let make configs =
 
-  let processors = ref M.empty in
+  let _processors = ref M.empty in
 
-  let get_processors filename =
-    match M.get filename !processors with
-    | Some processors -> processors
-    | None ->
-      let p =
-        configs
-        |> List.filter_map
-          (fun { pattern; processor; options; _ } ->
-            match Re.exec_opt pattern filename with
-            | None -> None
-            | Some _ ->
-              match processor with
-              | Builtin -> Some builtin
-              | Node loader -> Some (NodeServer.process loader options)
-          )
-      in
-      processors := M.add filename p !processors;
-      p
+  let get_processors _filename =
+    failwith "reimplement"
+    (* match M.get filename !processors with *)
+    (* | Some processors -> processors *)
+    (* | None -> *)
+    (*   let p = *)
+    (*     configs *)
+    (*     |> List.filter_map *)
+    (*       (fun { pattern; processor; options; _ } -> *)
+    (*         match Re.exec_opt pattern filename with *)
+    (*         | None -> None *)
+    (*         | Some _ -> *)
+    (*           match processor with *)
+    (*           | Builtin -> Some builtin *)
+    (*           | Node loader -> Some (NodeServer.process loader options) *)
+    (*       ) *)
+    (*   in *)
+    (*   processors := M.add filename p !processors; *)
+    (*   p *)
   in
 
   let process filename source =
@@ -245,7 +249,7 @@ let make configs =
     Lwt.return (source, build_dependencies)
   in
 
-  Lwt.return { process; configs; finalize = NodeServer.finalize }
+  Lwt.return { get_processors; process; configs; finalize = NodeServer.finalize }
 
 
 
