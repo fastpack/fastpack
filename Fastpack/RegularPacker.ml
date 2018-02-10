@@ -539,7 +539,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                    Lwt.return_none
                  | Some (resolved, build_dependencies) ->
                    let%lwt () =
-                     cache.add_build_dependencies m build_dependencies
+                     match resolved with
+                     | Module.File _ ->
+                       cache.add_build_dependencies m build_dependencies
+                     | Module.EmptyModule | Module.Runtime ->
+                       Lwt.return_unit
                    in
                    Lwt.return_some resolved
                in
@@ -571,7 +575,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let%lwt () =
       Lwt_list.iter_s
         (fun (req, resolved) ->
-          let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
+          let resolved_str = Module.location_to_string resolved in
+          let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
             | None ->
               let ctx = { ctx with stack = req :: ctx.stack } in
               let%lwt m = read_module ctx cache resolved in
@@ -687,7 +692,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         in
         let%lwt content = Workspace.write channel workspace dep_map in
         let m = { m with state = Module.Analyzed } in
-        let%lwt () = cache.modify_content m content in
+        (* TODO: nasty temp hack - remove *)
+        let%lwt () =
+          if String.get m.filename 0 = '/'
+          then cache.modify_content m content
+          else Lwt.return_unit
+        in
         let () =
           DependencyGraph.add_module
             graph
@@ -714,7 +724,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
   in
 
   let graph = ctx.graph in
-  let%lwt entry = read_module ctx cache ctx.current_filename in
+  (* TODO: fix next line *)
+  let%lwt entry = read_module ctx cache (Module.File ctx.current_filename) in
   let%lwt _ = process ctx graph entry in
   let global_entry =
     match DependencyGraph.lookup_module graph ctx.entry_filename with

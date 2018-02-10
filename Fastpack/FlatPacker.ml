@@ -84,13 +84,17 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
     | _ ->
       let resolved_requests = ref DM.empty in
-      let add_resolved_request req filename =
-        let filename =
-          if Str.string_match (Str.regexp "^builtin:") filename 0
-          then filename
-          else FS.abs_path ctx.package_dir filename
+      let add_resolved_request req resolved =
+        let resolved =
+          match resolved with
+          | Module.EmptyModule
+          | Module.Runtime ->
+            resolved
+          | Module.File filename ->
+            let filename = FS.abs_path ctx.package_dir filename in
+            Module.File filename
         in
-        resolved_requests := DM.add req filename !resolved_requests
+        resolved_requests := DM.add req resolved !resolved_requests
       in
       let get_resolved_request req =
         DM.get req !resolved_requests
@@ -459,7 +463,10 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                  match get_resolved_request dep with
                  | None ->
                    Error.ie "At this point dependency should be resolved"
-                 | Some filename ->
+                 | Some Module.EmptyModule
+                 | Some Module.Runtime ->
+                   Error.ie "Unexpected module for dynamic dependency"
+                 | Some (Module.File filename) ->
                    let wrapper = gen_wrapper_binding filename in
                    Printf.sprintf "%s(%s)" require wrapper
               )
@@ -761,14 +768,15 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                Lwt.return_some req
              | Some (resolved, _) ->
                (* check if this modules is seen earlier in the stack *)
-               if has_module resolved
+               let resolved_str = Module.location_to_string resolved in
+               if has_module resolved_str
                then begin
                  let () = add_resolved_request req resolved in
                  Lwt.return_none
                end
                else begin
                  let%lwt dep_module =
-                   match DependencyGraph.lookup_module graph resolved with
+                   match DependencyGraph.lookup_module graph resolved_str with
                    | None ->
                      let%lwt m = read_module ctx cache resolved in
                      let%lwt package =
@@ -839,31 +847,33 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
               let%lwt () = emit_module dependency_map m in
               !resolved_requests
               |> DM.bindings
-              |> List.filter (fun (_, value) -> value = m.filename)
+              |> List.filter (fun (_, value) -> Module.location_to_string value = m.filename)
               |> List.fold_left (fun acc (k, _) -> MDM.add k m acc) dependency_map
               |> Lwt.return
             )
             (!resolved_requests
              |> DM.bindings
              |> List.filter
-               (fun (_, filename) ->
-                  if has_module filename
+               (fun (_, resolved) ->
+                  let resolved_str = Module.location_to_string resolved in
+                  if has_module resolved_str
                   then true
                   else
-                    match DependencyGraph.lookup_module graph filename with
+                    match DependencyGraph.lookup_module graph resolved_str with
                     | Some m -> m.es_module
                     | None -> false
                )
              |> List.fold_left
-               (fun modules (dep, filename) ->
-                  match get_module filename with
+               (fun modules (dep, resolved) ->
+                  let resolved_str = Module.location_to_string resolved in
+                  match get_module resolved_str with
                   | Some m -> MDM.add dep m modules
                   | None ->
-                    match DependencyGraph.lookup_module graph filename with
+                    match DependencyGraph.lookup_module graph resolved_str with
                     | Some m -> MDM.add dep m modules
                     | None ->
                       Error.ie ("Module should be found. See previous step: "
-                                ^ filename)
+                                ^ resolved_str)
                )
               modules
             )
@@ -873,11 +883,12 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       in
 
       let graph = DependencyGraph.empty () in
-      let%lwt entry = read_module ctx cache ctx.entry_filename in
+      (* TODO: fix next line *)
+      let%lwt entry = read_module ctx cache (Module.File ctx.entry_filename) in
       let%lwt package =
         ctx.resolver.NodeResolver.find_package
           ctx.package_dir
-          ctx.entry_filename
+          (Module.File ctx.entry_filename)
       in
       let ctx = { ctx with package } in
       let%lwt entry = process ctx graph entry in
@@ -914,7 +925,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           Lwt_list.fold_left_s
             (fun seen (ctx, _, resolved) ->
                match resolved with
-               | Some entry_filename ->
+               (* TODO: we should pass in resolved dependencies, not filenames *)
+               | Some (Module.File entry_filename) ->
                  if StringSet.mem entry_filename seen
                  then Lwt.return seen
                  else
@@ -925,6 +937,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                       modules
                    in
                    Lwt.return (StringSet.add entry_filename seen)
+               | Some Module.Runtime
+               | Some Module.EmptyModule ->
+                 Error.ie ("Unexpected dynamic dependency")
                | None ->
                  Error.ie (
                    "At this point all dependency requests should be resolved: "

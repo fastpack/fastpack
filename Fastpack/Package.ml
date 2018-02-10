@@ -27,8 +27,9 @@ let of_json filename data =
     in
     {filename = Some filename; entry_point = add_suffix entry_point}
   with Type_error _ ->
+    {filename = None; entry_point = "index.js"}
     (* TODO: provide better report here *)
-    failwith ("Package.json cannot be parsed: " ^ filename)
+    (* failwith ("Package.json cannot be parsed: " ^ filename) *)
 
 let to_string { filename; _} =
   match filename with

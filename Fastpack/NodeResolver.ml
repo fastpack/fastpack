@@ -5,13 +5,19 @@ module FS = FastpackUtil.FS
 let debug = Logs.debug
 
 type t = {
-  resolve : Package.t -> string -> string -> (string * string list) option Lwt.t;
-  find_package : string -> string -> Package.t Lwt.t;
+  resolve : Package.t -> string -> string -> (Module.location * string list) option Lwt.t;
+  find_package : string -> Module.location -> Package.t Lwt.t;
 }
 
-let builtins =
+
+(* let builtins = *)
+(*   StringSet.empty *)
+(*   |> StringSet.add "__fastpack_runtime__" *)
+(*   |> StringSet.add "__empty_module__" *)
+
+let empty =
   StringSet.empty
-  |> StringSet.add "__fastpack_runtime__"
+  |> StringSet.add "__empty_module__"
   |> StringSet.add "os"
   |> StringSet.add "module"
   |> StringSet.add "path"
@@ -25,8 +31,8 @@ let builtins =
   |> StringSet.add "constants"
   |> StringSet.add "readable-stream"
 
-let is_builtin module_request =
-  StringSet.mem module_request builtins
+let is_empty module_request =
+  StringSet.mem module_request empty
 
 let make (cache : Cache.t) =
 
@@ -112,7 +118,7 @@ let make (cache : Cache.t) =
             | None ->
               Lwt.return_none
             | Some resolved ->
-              Lwt.return_some (resolved, dep)
+              Lwt.return_some (Module.File resolved, dep)
           end
         | Some path ->
           let path = FS.abs_path package_path path in
@@ -125,7 +131,7 @@ let make (cache : Cache.t) =
             | None ->
               Lwt.return_none
             | Some resolved ->
-              Lwt.return_some (resolved, dep)
+              Lwt.return_some (Module.File resolved, dep)
       else
         let next_basedir = FilePath.dirname basedir in
         if next_basedir == basedir
@@ -160,7 +166,8 @@ let make (cache : Cache.t) =
               match%lwt resolve_extensionless_path path with
               | None -> Lwt.return_none
               | Some resolved ->
-                Lwt.return_some (resolved, get_package_dependency package)
+                Lwt.return_some (Module.File resolved,
+                                 get_package_dependency package)
             end
         end
 
@@ -170,7 +177,7 @@ let make (cache : Cache.t) =
           match%lwt resolve_extensionless_path path with
           | None -> Lwt.return_none
           | Some resolved ->
-            Lwt.return_some (resolved, [])
+            Lwt.return_some (Module.File resolved, [])
         end
 
       (* scoped package *)
@@ -202,30 +209,33 @@ let make (cache : Cache.t) =
 
       (* package *)
       | _ ->
-        if is_builtin path
+        if is_empty path
         then
-          Lwt.return_some ("builtin:" ^ path, [])
+          Lwt.return_some (Module.EmptyModule, [])
         else
-          match Package.resolve_browser package path with
-          | Some resolved ->
-            Lwt.return_some (resolved, get_package_dependency package)
-          | None ->
-            let package_name, path =
-              match String.split_on_char '/' path with
-              | [] -> (None, None)
-              | package::[] -> (Some package, None)
-              | package::rest -> (Some package, Some (String.concat "/" rest))
-            in
-            match package_name with
+          if path = "__fastpack_runtime__"
+          then
+            Lwt.return_some (Module.Runtime, [])
+          else
+            match Package.resolve_browser package path with
+            | Some resolved ->
+              Lwt.return_some (resolved, get_package_dependency package)
             | None ->
-              Lwt.return_none
-            | Some package ->
-              resolve_package package path basedir
-
+              let package_name, path =
+                match String.split_on_char '/' path with
+                | [] -> (None, None)
+                | package::[] -> (Some package, None)
+                | package::rest -> (Some package, Some (String.concat "/" rest))
+              in
+              match package_name with
+              | None ->
+                Lwt.return_none
+              | Some package ->
+                resolve_package package path basedir
   in
 
   let package_json_cache = ref M.empty in
-  let find_package root_dir filename =
+  let find_package root_dir module_location =
     let rec find_package_json dir =
       match M.get dir !package_json_cache with
       | Some package ->
@@ -247,9 +257,12 @@ let make (cache : Cache.t) =
             Lwt.return package
           end
     in
-    let%lwt package = find_package_json (FilePath.dirname filename) in
-    (* let%lwt () = Lwt_io.(write stdout (Package.to_string package ^ "\n")) in *)
-    Lwt.return package
+    match module_location with
+    | Module.File filename ->
+      find_package_json (FilePath.dirname filename)
+    | Module.EmptyModule
+    | Module.Runtime ->
+      Lwt.return Package.empty
   in
 
   { resolve; find_package }

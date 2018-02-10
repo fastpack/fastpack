@@ -17,7 +17,7 @@ module ModuleEntry = struct
       es_module : bool;
       content : string;
       build_dependencies : string M.t;
-      resolved_dependencies : (Dependency.t * string) list;
+      resolved_dependencies : (Dependency.t * Module.location) list;
     }
   end
 

@@ -258,7 +258,7 @@ let relative_name {Context. package_dir; _} filename =
     )
 
 
-let read_module (ctx : Context.t) (cache : Cache.t) filename =
+let read_module (ctx : Context.t) (cache : Cache.t) location =
   let make_module id filename source =
     {
       Module.
@@ -273,78 +273,75 @@ let read_module (ctx : Context.t) (cache : Cache.t) filename =
     }
   in
 
-  match filename with
-  | "builtin:os"
-  | "builtin:module"
-  | "builtin:path"
-  | "builtin:util"
-  | "builtin:fs"
-  | "builtin:tty"
-  | "builtin:net"
-  | "builtin:events"
-  | "builtin:stream"
-  | "builtin:constants"
-  | "builtin:readable-stream"
-  | "builtin:assert" ->
-    (* TODO: handle builtins *)
-    make_module (Module.make_id filename) filename ""
-    |> Lwt.return
+  let empty_module = make_module
+      (Module.make_id "builtin:__empty_module__")
+      "__empty_module__"
+      "module.exports = {};"
+  in
 
-  | "builtin:__fastpack_runtime__" ->
-    make_module
-      (Module.make_id filename)
-      filename
+  let runtime_module = make_module
+      (Module.make_id "builtin:__fastpack_runtime__")
+      "__fastpack_runtime__"
       FastpackTranspiler.runtime
-    |> Lwt.return
+  in
 
-  | _ ->
+  match location with
+  | Module.EmptyModule ->
+    Lwt.return empty_module
+
+  | Module.Runtime ->
+    (* Printf.printf ("RUNTIME\n"); *)
+    Lwt.return runtime_module
+
+  | Module.File filename ->
+    (* Printf.printf "FILENAMEME: %s\n" filename; *)
     let filename = FS.abs_path ctx.package_dir filename in
 
-   let%lwt _ =
-     if not (FilePath.is_subdir filename ctx.package_dir)
-     then Lwt.fail (PackError (ctx, CannotLeavePackageDir filename))
-     else Lwt.return_unit
-   in
-   let%lwt m, _ =
-     Lwt.catch
-       (fun () -> cache.get_module filename (relative_name ctx filename))
-       (function
-         | Cache.FileDoesNotExist filename ->
-           Lwt.fail (PackError (ctx, CannotReadModule filename))
-         | exn ->
-           raise exn
-       )
-   in
-   let%lwt m =
-     if m.state = Module.Initial
-     then begin
-       let { Preprocessor. process; _ } = ctx.preprocessor in
-       let relname = relative_name ctx filename in
-       let%lwt content, build_dependencies =
-         Lwt.catch
-           (fun () -> process relname m.workspace.Workspace.value)
-           (function
-            | FlowParser.Parse_error.Error args ->
-              Lwt.fail (PackError (ctx, CannotParseFile (filename, args)))
-            | Preprocessor.Error message ->
-              Lwt.fail (PackError (ctx, PreprocessorError message))
-            | exn ->
-              Lwt.fail exn
-           )
-       in
-       let m = {
-         m with
-         state = Module.Preprocessed;
-         workspace = Workspace.of_string content
-       } in
-       let%lwt () = cache.modify_content m content in
-       let%lwt () = cache.add_build_dependencies m build_dependencies in
-       Lwt.return m
-     end
-     else
-       Lwt.return m
-   in
-   Lwt.return m
+    let%lwt _ =
+      if not (FilePath.is_subdir filename ctx.package_dir)
+      then Lwt.fail (PackError (ctx, CannotLeavePackageDir filename))
+      else Lwt.return_unit
+    in
+    let%lwt m, _ =
+      Lwt.catch
+        (fun () -> cache.get_module filename (relative_name ctx filename))
+        (function
+          | Cache.FileDoesNotExist filename ->
+            Lwt.fail (PackError (ctx, CannotReadModule filename))
+          | exn ->
+            raise exn
+        )
+    in
+    let%lwt m =
+      if m.state = Module.Initial
+      then begin
+        let { Preprocessor. process; _ } = ctx.preprocessor in
+        let relname = relative_name ctx filename in
+        let%lwt content, build_dependencies =
+          Lwt.catch
+            (fun () -> process relname m.workspace.Workspace.value)
+            (function
+             | FlowParser.Parse_error.Error args ->
+               Lwt.fail (PackError (ctx, CannotParseFile (filename, args)))
+             | Preprocessor.Error message ->
+               Lwt.fail (PackError (ctx, PreprocessorError message))
+             | exn ->
+               Lwt.fail exn
+            )
+        in
+        let m = {
+          m with
+          state = Module.Preprocessed;
+          workspace = Workspace.of_string content
+        } in
+        let%lwt () = cache.modify_content m content in
+        let%lwt () = cache.add_build_dependencies m build_dependencies in
+        Lwt.return m
+      end
+      else
+        Lwt.return m
+    in
+    Lwt.return m
 
 let is_ignored_request request =
   List.exists

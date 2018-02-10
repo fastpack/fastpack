@@ -242,7 +242,10 @@ let prepare_and_pack cl_options start_time =
     in
     let get_context current_filename =
       let resolver = NodeResolver.make cache in
-      let%lwt package = resolver.find_package package_dir current_filename in
+      (* TODO: fix next line *)
+      let%lwt package =
+        resolver.find_package package_dir (Module.File current_filename)
+      in
       Lwt.return { Context.
         entry_filename;
         package_dir;

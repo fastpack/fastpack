@@ -7,6 +7,11 @@ type state = Initial
            | Preprocessed
            | Analyzed
 
+type location = Runtime
+              | EmptyModule
+              | File of string
+
+
 type t = {
   (** Opaque module id *)
   id : string;
@@ -15,7 +20,7 @@ type t = {
   filename : string;
 
   (** List of resolved dependencies, populated for cached modules *)
-  resolved_dependencies : (Dependency.t * string) list;
+  resolved_dependencies : (Dependency.t * location) list;
 
   (** If module is analyzed when packing *)
   state : state;
@@ -57,3 +62,8 @@ let make_id filename =
     |> replace ~sub:"/" ~by:"$"
   )
 
+let location_to_string location =
+  match location with
+  | File filename -> filename
+  | EmptyModule -> "__empty_module__"
+  | Runtime -> "__fastpack_runtime__"
