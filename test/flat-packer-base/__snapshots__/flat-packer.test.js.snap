@@ -5,18 +5,23 @@ exports[`flat packer with cjs in esm: target: app 1`] = `
 
 /* dep$$_$$cjs$$_$$exports */
 
-let $n__dep$$_$$cjs$$_$$exports = { exports: {}};$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
+let $n__dep$$_$$cjs$$_$$exports = { exports: {}};
+$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
 $n__dep$$_$$cjs$$_$$exports.exports.b = 2;
+$n__dep$$_$$cjs$$_$$exports.exports.__esModule = $n__dep$$_$$cjs$$_$$exports.exports.__esModule || false; 
 
 /* dep$$_$$cjs$$_$$module */
 
-let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.exports = {
+let $n__dep$$_$$cjs$$_$$module = { exports: {}};
+$n__dep$$_$$cjs$$_$$module.exports = {
   a: 1,
   b: 2
 };
+$n__dep$$_$$cjs$$_$$module.exports.__esModule = $n__dep$$_$$cjs$$_$$module.exports.__esModule || false; 
 
 /* index$$_$$cjs$$_$$in$$_$$esm */
 
+let $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {}};
 
 
 
@@ -33,8 +38,7 @@ if ($n__dep$$_$$cjs$$_$$exports.exports.a < $n__dep$$_$$cjs$$_$$exports.exports.
 
 const $e__index$$_$$cjs$$_$$in$$_$$esm__default = 'default';
 const $e__index$$_$$cjs$$_$$in$$_$$esm__named = 'named';
-
-const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$$_$$in$$_$$esm__default, named: $e__index$$_$$cjs$$_$$in$$_$$esm__named} };
+$n__index$$_$$cjs$$_$$in$$_$$esm.exports.default = $e__index$$_$$cjs$$_$$in$$_$$esm__default;$n__index$$_$$cjs$$_$$in$$_$$esm.exports.named = $e__index$$_$$cjs$$_$$in$$_$$esm__named;$n__index$$_$$cjs$$_$$in$$_$$esm.exports.__esModule = $n__index$$_$$cjs$$_$$in$$_$$esm.exports.__esModule || true; 
 })()
 "
 `;
@@ -43,18 +47,23 @@ exports[`flat packer with cjs in esm: target: cjs 1`] = `
 "
 /* dep$$_$$cjs$$_$$exports */
 
-let $n__dep$$_$$cjs$$_$$exports = { exports: {}};$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
+let $n__dep$$_$$cjs$$_$$exports = { exports: {}};
+$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
 $n__dep$$_$$cjs$$_$$exports.exports.b = 2;
+$n__dep$$_$$cjs$$_$$exports.exports.__esModule = $n__dep$$_$$cjs$$_$$exports.exports.__esModule || false; 
 
 /* dep$$_$$cjs$$_$$module */
 
-let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.exports = {
+let $n__dep$$_$$cjs$$_$$module = { exports: {}};
+$n__dep$$_$$cjs$$_$$module.exports = {
   a: 1,
   b: 2
 };
+$n__dep$$_$$cjs$$_$$module.exports.__esModule = $n__dep$$_$$cjs$$_$$module.exports.__esModule || false; 
 
 /* index$$_$$cjs$$_$$in$$_$$esm */
 
+let $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {}};
 
 
 
@@ -71,8 +80,7 @@ if ($n__dep$$_$$cjs$$_$$exports.exports.a < $n__dep$$_$$cjs$$_$$exports.exports.
 
 const $e__index$$_$$cjs$$_$$in$$_$$esm__default = 'default';
 const $e__index$$_$$cjs$$_$$in$$_$$esm__named = 'named';
-
-const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$$_$$in$$_$$esm__default, named: $e__index$$_$$cjs$$_$$in$$_$$esm__named} };
+$n__index$$_$$cjs$$_$$in$$_$$esm.exports.default = $e__index$$_$$cjs$$_$$in$$_$$esm__default;$n__index$$_$$cjs$$_$$in$$_$$esm.exports.named = $e__index$$_$$cjs$$_$$in$$_$$esm__named;$n__index$$_$$cjs$$_$$in$$_$$esm.exports.__esModule = $n__index$$_$$cjs$$_$$in$$_$$esm.exports.__esModule || true; 
 module.exports = $n__index$$_$$cjs$$_$$in$$_$$esm.exports;
 "
 `;
@@ -81,18 +89,23 @@ exports[`flat packer with cjs in esm: target: esm 1`] = `
 "
 /* dep$$_$$cjs$$_$$exports */
 
-let $n__dep$$_$$cjs$$_$$exports = { exports: {}};$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
+let $n__dep$$_$$cjs$$_$$exports = { exports: {}};
+$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
 $n__dep$$_$$cjs$$_$$exports.exports.b = 2;
+$n__dep$$_$$cjs$$_$$exports.exports.__esModule = $n__dep$$_$$cjs$$_$$exports.exports.__esModule || false; 
 
 /* dep$$_$$cjs$$_$$module */
 
-let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.exports = {
+let $n__dep$$_$$cjs$$_$$module = { exports: {}};
+$n__dep$$_$$cjs$$_$$module.exports = {
   a: 1,
   b: 2
 };
+$n__dep$$_$$cjs$$_$$module.exports.__esModule = $n__dep$$_$$cjs$$_$$module.exports.__esModule || false; 
 
 /* index$$_$$cjs$$_$$in$$_$$esm */
 
+let $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {}};
 
 
 
@@ -109,8 +122,7 @@ if ($n__dep$$_$$cjs$$_$$exports.exports.a < $n__dep$$_$$cjs$$_$$exports.exports.
 
 const $e__index$$_$$cjs$$_$$in$$_$$esm__default = 'default';
 const $e__index$$_$$cjs$$_$$in$$_$$esm__named = 'named';
-
-const $n__index$$_$$cjs$$_$$in$$_$$esm = { exports: {default: $e__index$$_$$cjs$$_$$in$$_$$esm__default, named: $e__index$$_$$cjs$$_$$in$$_$$esm__named} };
+$n__index$$_$$cjs$$_$$in$$_$$esm.exports.default = $e__index$$_$$cjs$$_$$in$$_$$esm__default;$n__index$$_$$cjs$$_$$in$$_$$esm.exports.named = $e__index$$_$$cjs$$_$$in$$_$$esm__named;$n__index$$_$$cjs$$_$$in$$_$$esm.exports.__esModule = $n__index$$_$$cjs$$_$$in$$_$$esm.exports.__esModule || true; 
 export default $e__index$$_$$cjs$$_$$in$$_$$esm__default;
 export {$e__index$$_$$cjs$$_$$in$$_$$esm__named as named};
 "
@@ -135,20 +147,20 @@ function __fastpack_import__(f) {
 
 /* index$$_$$dynamic */
 
+let $n__index$$_$$dynamic = { exports: {}};
 __fastpack_import__($w__dep$$_$$esm$$_$$named).then(named => {
   console.log(named);
 });
-
-const $n__index$$_$$dynamic = { exports: {} };
+$n__index$$_$$dynamic.exports.__esModule = $n__index$$_$$dynamic.exports.__esModule || false; 
 
 function $w__dep$$_$$esm$$_$$named() {
 
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 
 return $n__dep$$_$$esm$$_$$named.exports;
 }
@@ -174,21 +186,21 @@ function __fastpack_import__(f) {
 
 /* index$$_$$dynamic */
 
+let $n__index$$_$$dynamic = { exports: {}};
 __fastpack_import__($w__dep$$_$$esm$$_$$named).then(named => {
   console.log(named);
 });
-
-const $n__index$$_$$dynamic = { exports: {} };
+$n__index$$_$$dynamic.exports.__esModule = $n__index$$_$$dynamic.exports.__esModule || false; 
 module.exports = $n__index$$_$$dynamic.exports;
 
 function $w__dep$$_$$esm$$_$$named() {
 
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 module.exports = $n__dep$$_$$esm$$_$$named.exports;
 
 return $n__dep$$_$$esm$$_$$named.exports;
@@ -214,20 +226,20 @@ function __fastpack_import__(f) {
 
 /* index$$_$$dynamic */
 
+let $n__index$$_$$dynamic = { exports: {}};
 __fastpack_import__($w__dep$$_$$esm$$_$$named).then(named => {
   console.log(named);
 });
-
-const $n__index$$_$$dynamic = { exports: {} };
+$n__index$$_$$dynamic.exports.__esModule = $n__index$$_$$dynamic.exports.__esModule || false; 
 
 function $w__dep$$_$$esm$$_$$named() {
 
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 export {$e__dep$$_$$esm$$_$$named__a as a};
 export {$e__dep$$_$$esm$$_$$named__b as b};
 
@@ -241,23 +253,24 @@ exports[`flat packer with esm in cjs: target: app 1`] = `
 
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 
 /* dep$$_$$esm$$_$$default */
 
+let $n__dep$$_$$esm$$_$$default = { exports: {}};
 const $e__dep$$_$$esm$$_$$default__default = {
   a: 1,
   b: 2
 };
-
-const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$default__default} };
+$n__dep$$_$$esm$$_$$default.exports.default = $e__dep$$_$$esm$$_$$default__default;$n__dep$$_$$esm$$_$$default.exports.__esModule = $n__dep$$_$$esm$$_$$default.exports.__esModule || true; 
 
 /* index$$_$$esm$$_$$in$$_$$cjs */
 
-let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
+let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};
+const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
 const { a: $i__index$$_$$esm$$_$$in$$_$$cjs__a, b: $i__index$$_$$esm$$_$$in$$_$$cjs__b } = ($n__dep$$_$$esm$$_$$named.exports);
 const $i__index$$_$$esm$$_$$in$$_$$cjs__defaultPair = ($n__dep$$_$$esm$$_$$default.exports);
 
@@ -272,6 +285,7 @@ if ($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair.a < $i__index$$_$$esm$$_$$in$$_$
 }
 
 $n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
+$n__index$$_$$esm$$_$$in$$_$$cjs.exports.__esModule = $n__index$$_$$esm$$_$$in$$_$$cjs.exports.__esModule || false; 
 })()
 "
 `;
@@ -280,23 +294,24 @@ exports[`flat packer with esm in cjs: target: cjs 1`] = `
 "
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 
 /* dep$$_$$esm$$_$$default */
 
+let $n__dep$$_$$esm$$_$$default = { exports: {}};
 const $e__dep$$_$$esm$$_$$default__default = {
   a: 1,
   b: 2
 };
-
-const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$default__default} };
+$n__dep$$_$$esm$$_$$default.exports.default = $e__dep$$_$$esm$$_$$default__default;$n__dep$$_$$esm$$_$$default.exports.__esModule = $n__dep$$_$$esm$$_$$default.exports.__esModule || true; 
 
 /* index$$_$$esm$$_$$in$$_$$cjs */
 
-let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
+let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};
+const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
 const { a: $i__index$$_$$esm$$_$$in$$_$$cjs__a, b: $i__index$$_$$esm$$_$$in$$_$$cjs__b } = ($n__dep$$_$$esm$$_$$named.exports);
 const $i__index$$_$$esm$$_$$in$$_$$cjs__defaultPair = ($n__dep$$_$$esm$$_$$default.exports);
 
@@ -311,6 +326,7 @@ if ($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair.a < $i__index$$_$$esm$$_$$in$$_$
 }
 
 $n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
+$n__index$$_$$esm$$_$$in$$_$$cjs.exports.__esModule = $n__index$$_$$esm$$_$$in$$_$$cjs.exports.__esModule || false; 
 module.exports = $n__index$$_$$esm$$_$$in$$_$$cjs.exports;
 "
 `;
@@ -319,23 +335,24 @@ exports[`flat packer with esm in cjs: target: esm 1`] = `
 "
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 
 /* dep$$_$$esm$$_$$default */
 
+let $n__dep$$_$$esm$$_$$default = { exports: {}};
 const $e__dep$$_$$esm$$_$$default__default = {
   a: 1,
   b: 2
 };
-
-const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$default__default} };
+$n__dep$$_$$esm$$_$$default.exports.default = $e__dep$$_$$esm$$_$$default__default;$n__dep$$_$$esm$$_$$default.exports.__esModule = $n__dep$$_$$esm$$_$$default.exports.__esModule || true; 
 
 /* index$$_$$esm$$_$$in$$_$$cjs */
 
-let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
+let $n__index$$_$$esm$$_$$in$$_$$cjs = { exports: {}};
+const $i__index$$_$$esm$$_$$in$$_$$cjs__namedPair = ($n__dep$$_$$esm$$_$$named.exports);
 const { a: $i__index$$_$$esm$$_$$in$$_$$cjs__a, b: $i__index$$_$$esm$$_$$in$$_$$cjs__b } = ($n__dep$$_$$esm$$_$$named.exports);
 const $i__index$$_$$esm$$_$$in$$_$$cjs__defaultPair = ($n__dep$$_$$esm$$_$$default.exports);
 
@@ -350,6 +367,7 @@ if ($i__index$$_$$esm$$_$$in$$_$$cjs__namedPair.a < $i__index$$_$$esm$$_$$in$$_$
 }
 
 $n__index$$_$$esm$$_$$in$$_$$cjs.exports.named = 'named';
+$n__index$$_$$esm$$_$$in$$_$$cjs.exports.__esModule = $n__index$$_$$esm$$_$$in$$_$$cjs.exports.__esModule || false; 
 "
 `;
 
@@ -358,19 +376,24 @@ exports[`flat packer with only cjs: target: app 1`] = `
 
 /* dep$$_$$cjs$$_$$exports */
 
-let $n__dep$$_$$cjs$$_$$exports = { exports: {}};$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
+let $n__dep$$_$$cjs$$_$$exports = { exports: {}};
+$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
 $n__dep$$_$$cjs$$_$$exports.exports.b = 2;
+$n__dep$$_$$cjs$$_$$exports.exports.__esModule = $n__dep$$_$$cjs$$_$$exports.exports.__esModule || false; 
 
 /* dep$$_$$cjs$$_$$module */
 
-let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.exports = {
+let $n__dep$$_$$cjs$$_$$module = { exports: {}};
+$n__dep$$_$$cjs$$_$$module.exports = {
   a: 1,
   b: 2
 };
+$n__dep$$_$$cjs$$_$$module.exports.__esModule = $n__dep$$_$$cjs$$_$$module.exports.__esModule || false; 
 
 /* index$$_$$cjs */
 
-let $n__index$$_$$cjs = { exports: {}};const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
+let $n__index$$_$$cjs = { exports: {}};
+const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
 const { a: $i__index$$_$$cjs__a, b: $i__index$$_$$cjs__b } = ($n__dep$$_$$cjs$$_$$exports.exports);
 const $i__index$$_$$cjs__modulePair = ($n__dep$$_$$cjs$$_$$module.exports);
 
@@ -385,6 +408,7 @@ if ($i__index$$_$$cjs__exportsPair.a < $i__index$$_$$cjs__exportsPair.b) {
 }
 
 $n__index$$_$$cjs.exports.named = 'named';
+$n__index$$_$$cjs.exports.__esModule = $n__index$$_$$cjs.exports.__esModule || false; 
 })()
 "
 `;
@@ -393,19 +417,24 @@ exports[`flat packer with only cjs: target: cjs 1`] = `
 "
 /* dep$$_$$cjs$$_$$exports */
 
-let $n__dep$$_$$cjs$$_$$exports = { exports: {}};$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
+let $n__dep$$_$$cjs$$_$$exports = { exports: {}};
+$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
 $n__dep$$_$$cjs$$_$$exports.exports.b = 2;
+$n__dep$$_$$cjs$$_$$exports.exports.__esModule = $n__dep$$_$$cjs$$_$$exports.exports.__esModule || false; 
 
 /* dep$$_$$cjs$$_$$module */
 
-let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.exports = {
+let $n__dep$$_$$cjs$$_$$module = { exports: {}};
+$n__dep$$_$$cjs$$_$$module.exports = {
   a: 1,
   b: 2
 };
+$n__dep$$_$$cjs$$_$$module.exports.__esModule = $n__dep$$_$$cjs$$_$$module.exports.__esModule || false; 
 
 /* index$$_$$cjs */
 
-let $n__index$$_$$cjs = { exports: {}};const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
+let $n__index$$_$$cjs = { exports: {}};
+const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
 const { a: $i__index$$_$$cjs__a, b: $i__index$$_$$cjs__b } = ($n__dep$$_$$cjs$$_$$exports.exports);
 const $i__index$$_$$cjs__modulePair = ($n__dep$$_$$cjs$$_$$module.exports);
 
@@ -420,6 +449,7 @@ if ($i__index$$_$$cjs__exportsPair.a < $i__index$$_$$cjs__exportsPair.b) {
 }
 
 $n__index$$_$$cjs.exports.named = 'named';
+$n__index$$_$$cjs.exports.__esModule = $n__index$$_$$cjs.exports.__esModule || false; 
 module.exports = $n__index$$_$$cjs.exports;
 "
 `;
@@ -428,19 +458,24 @@ exports[`flat packer with only cjs: target: esm 1`] = `
 "
 /* dep$$_$$cjs$$_$$exports */
 
-let $n__dep$$_$$cjs$$_$$exports = { exports: {}};$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
+let $n__dep$$_$$cjs$$_$$exports = { exports: {}};
+$n__dep$$_$$cjs$$_$$exports.exports.a = 1;
 $n__dep$$_$$cjs$$_$$exports.exports.b = 2;
+$n__dep$$_$$cjs$$_$$exports.exports.__esModule = $n__dep$$_$$cjs$$_$$exports.exports.__esModule || false; 
 
 /* dep$$_$$cjs$$_$$module */
 
-let $n__dep$$_$$cjs$$_$$module = { exports: {}};$n__dep$$_$$cjs$$_$$module.exports = {
+let $n__dep$$_$$cjs$$_$$module = { exports: {}};
+$n__dep$$_$$cjs$$_$$module.exports = {
   a: 1,
   b: 2
 };
+$n__dep$$_$$cjs$$_$$module.exports.__esModule = $n__dep$$_$$cjs$$_$$module.exports.__esModule || false; 
 
 /* index$$_$$cjs */
 
-let $n__index$$_$$cjs = { exports: {}};const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
+let $n__index$$_$$cjs = { exports: {}};
+const $i__index$$_$$cjs__exportsPair = ($n__dep$$_$$cjs$$_$$exports.exports);
 const { a: $i__index$$_$$cjs__a, b: $i__index$$_$$cjs__b } = ($n__dep$$_$$cjs$$_$$exports.exports);
 const $i__index$$_$$cjs__modulePair = ($n__dep$$_$$cjs$$_$$module.exports);
 
@@ -455,6 +490,7 @@ if ($i__index$$_$$cjs__exportsPair.a < $i__index$$_$$cjs__exportsPair.b) {
 }
 
 $n__index$$_$$cjs.exports.named = 'named';
+$n__index$$_$$cjs.exports.__esModule = $n__index$$_$$cjs.exports.__esModule || false; 
 "
 `;
 
@@ -463,22 +499,23 @@ exports[`flat packer with only esm: target: app 1`] = `
 
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 
 /* dep$$_$$esm$$_$$default */
 
+let $n__dep$$_$$esm$$_$$default = { exports: {}};
 const $e__dep$$_$$esm$$_$$default__default = {
   a: 1,
   b: 2
 };
-
-const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$default__default} };
+$n__dep$$_$$esm$$_$$default.exports.default = $e__dep$$_$$esm$$_$$default__default;$n__dep$$_$$esm$$_$$default.exports.__esModule = $n__dep$$_$$esm$$_$$default.exports.__esModule || true; 
 
 /* index$$_$$esm */
 
+let $n__index$$_$$esm = { exports: {}};
 
 
 
@@ -495,8 +532,7 @@ if ($n__dep$$_$$esm$$_$$named.exports.a < $n__dep$$_$$esm$$_$$named.exports.b) {
 
 const $e__index$$_$$esm__default = 'default';
 const $e__index$$_$$esm__named = 'named';
-
-const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named: $e__index$$_$$esm__named} };
+$n__index$$_$$esm.exports.default = $e__index$$_$$esm__default;$n__index$$_$$esm.exports.named = $e__index$$_$$esm__named;$n__index$$_$$esm.exports.__esModule = $n__index$$_$$esm.exports.__esModule || true; 
 })()
 "
 `;
@@ -505,22 +541,23 @@ exports[`flat packer with only esm: target: cjs 1`] = `
 "
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 
 /* dep$$_$$esm$$_$$default */
 
+let $n__dep$$_$$esm$$_$$default = { exports: {}};
 const $e__dep$$_$$esm$$_$$default__default = {
   a: 1,
   b: 2
 };
-
-const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$default__default} };
+$n__dep$$_$$esm$$_$$default.exports.default = $e__dep$$_$$esm$$_$$default__default;$n__dep$$_$$esm$$_$$default.exports.__esModule = $n__dep$$_$$esm$$_$$default.exports.__esModule || true; 
 
 /* index$$_$$esm */
 
+let $n__index$$_$$esm = { exports: {}};
 
 
 
@@ -537,8 +574,7 @@ if ($n__dep$$_$$esm$$_$$named.exports.a < $n__dep$$_$$esm$$_$$named.exports.b) {
 
 const $e__index$$_$$esm__default = 'default';
 const $e__index$$_$$esm__named = 'named';
-
-const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named: $e__index$$_$$esm__named} };
+$n__index$$_$$esm.exports.default = $e__index$$_$$esm__default;$n__index$$_$$esm.exports.named = $e__index$$_$$esm__named;$n__index$$_$$esm.exports.__esModule = $n__index$$_$$esm.exports.__esModule || true; 
 module.exports = $n__index$$_$$esm.exports;
 "
 `;
@@ -547,22 +583,23 @@ exports[`flat packer with only esm: target: esm 1`] = `
 "
 /* dep$$_$$esm$$_$$named */
 
+let $n__dep$$_$$esm$$_$$named = { exports: {}};
 const $e__dep$$_$$esm$$_$$named__a = 1;
 const $e__dep$$_$$esm$$_$$named__b = 2;
-
-const $n__dep$$_$$esm$$_$$named = { exports: {a: $e__dep$$_$$esm$$_$$named__a, b: $e__dep$$_$$esm$$_$$named__b} };
+$n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;$n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;$n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true; 
 
 /* dep$$_$$esm$$_$$default */
 
+let $n__dep$$_$$esm$$_$$default = { exports: {}};
 const $e__dep$$_$$esm$$_$$default__default = {
   a: 1,
   b: 2
 };
-
-const $n__dep$$_$$esm$$_$$default = { exports: {default: $e__dep$$_$$esm$$_$$default__default} };
+$n__dep$$_$$esm$$_$$default.exports.default = $e__dep$$_$$esm$$_$$default__default;$n__dep$$_$$esm$$_$$default.exports.__esModule = $n__dep$$_$$esm$$_$$default.exports.__esModule || true; 
 
 /* index$$_$$esm */
 
+let $n__index$$_$$esm = { exports: {}};
 
 
 
@@ -579,8 +616,7 @@ if ($n__dep$$_$$esm$$_$$named.exports.a < $n__dep$$_$$esm$$_$$named.exports.b) {
 
 const $e__index$$_$$esm__default = 'default';
 const $e__index$$_$$esm__named = 'named';
-
-const $n__index$$_$$esm = { exports: {default: $e__index$$_$$esm__default, named: $e__index$$_$$esm__named} };
+$n__index$$_$$esm.exports.default = $e__index$$_$$esm__default;$n__index$$_$$esm.exports.named = $e__index$$_$$esm__named;$n__index$$_$$esm.exports.__esModule = $n__index$$_$$esm.exports.__esModule || true; 
 export default $e__index$$_$$esm__default;
 export {$e__index$$_$$esm__named as named};
 "
@@ -591,6 +627,7 @@ exports[`flat packer with single js: target: app 1`] = `
 
 /* index$$_$$single */
 
+let $n__index$$_$$single = { exports: {}};
 const $i__index$$_$$single__a = 1;
 if ($i__index$$_$$single__a < 2) {
   console.log($i__index$$_$$single__a);
@@ -598,8 +635,7 @@ if ($i__index$$_$$single__a < 2) {
 
 const $e__index$$_$$single__default = 'default';
 const $e__index$$_$$single__named = 'named';
-
-const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default, named: $e__index$$_$$single__named} };
+$n__index$$_$$single.exports.default = $e__index$$_$$single__default;$n__index$$_$$single.exports.named = $e__index$$_$$single__named;$n__index$$_$$single.exports.__esModule = $n__index$$_$$single.exports.__esModule || true; 
 })()
 "
 `;
@@ -608,6 +644,7 @@ exports[`flat packer with single js: target: cjs 1`] = `
 "
 /* index$$_$$single */
 
+let $n__index$$_$$single = { exports: {}};
 const $i__index$$_$$single__a = 1;
 if ($i__index$$_$$single__a < 2) {
   console.log($i__index$$_$$single__a);
@@ -615,8 +652,7 @@ if ($i__index$$_$$single__a < 2) {
 
 const $e__index$$_$$single__default = 'default';
 const $e__index$$_$$single__named = 'named';
-
-const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default, named: $e__index$$_$$single__named} };
+$n__index$$_$$single.exports.default = $e__index$$_$$single__default;$n__index$$_$$single.exports.named = $e__index$$_$$single__named;$n__index$$_$$single.exports.__esModule = $n__index$$_$$single.exports.__esModule || true; 
 module.exports = $n__index$$_$$single.exports;
 "
 `;
@@ -625,6 +661,7 @@ exports[`flat packer with single js: target: esm 1`] = `
 "
 /* index$$_$$single */
 
+let $n__index$$_$$single = { exports: {}};
 const $i__index$$_$$single__a = 1;
 if ($i__index$$_$$single__a < 2) {
   console.log($i__index$$_$$single__a);
@@ -632,8 +669,7 @@ if ($i__index$$_$$single__a < 2) {
 
 const $e__index$$_$$single__default = 'default';
 const $e__index$$_$$single__named = 'named';
-
-const $n__index$$_$$single = { exports: {default: $e__index$$_$$single__default, named: $e__index$$_$$single__named} };
+$n__index$$_$$single.exports.default = $e__index$$_$$single__default;$n__index$$_$$single.exports.named = $e__index$$_$$single__named;$n__index$$_$$single.exports.__esModule = $n__index$$_$$single.exports.__esModule || true; 
 export default $e__index$$_$$single__default;
 export {$e__index$$_$$single__named as named};
 "
