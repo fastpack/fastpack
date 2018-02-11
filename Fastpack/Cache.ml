@@ -476,7 +476,8 @@ let create cache_filename =
         ~perm:0o640
         ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
         filename
-        (fun ch -> Lwt_io.write_value ch ~flags:[] !files)
+        (fun ch ->
+           Lwt_io.write_value ch ~flags:[] { files = !files; modules = !modules })
   in
 
   Lwt.return {

@@ -18,7 +18,7 @@ type config = {
 type process_f = string -> string * string list
 
 type t = {
-  get_processors : string -> (string * string) list;
+  get_processors : string -> string list;
   process : string -> string -> (string * string list) Lwt.t;
   configs : config list;
   finalize : unit -> unit;
