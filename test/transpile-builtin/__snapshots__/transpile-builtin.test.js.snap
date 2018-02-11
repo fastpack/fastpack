@@ -13,7 +13,7 @@ const $i__index$$_$$1__Component = props => React.createElement(\\"div\\", null,
     
   }
   );
-$n__index$$_$$1.exports.__esModule = $n__index$$_$$1.exports.__esModule || false; 
+$n__index$$_$$1.exports.__esModule = $n__index$$_$$1.exports.__esModule || false;
 })()
 "
 `;
