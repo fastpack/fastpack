@@ -3,17 +3,17 @@
 exports[`transpile flow inside jsx 1`] = `
 "(function() {
 
-/* index$$_$$1 */
+/* builtin$$B$$index$$_$$1 */
 
-let $n__index$$_$$1 = { exports: {}};
+let $n__builtin$$B$$index$$_$$1 = { exports: {}};
 // @flow
 // The following test makes sure that builtin transpiler strips type annotations
 // from inside JSX
-const $i__index$$_$$1__Component = props => React.createElement(\\"div\\", null, item => {
+const $i__builtin$$B$$index$$_$$1__Component = props => React.createElement(\\"div\\", null, item => {
     
   }
   );
-$n__index$$_$$1.exports.__esModule = $n__index$$_$$1.exports.__esModule || false;
+$n__builtin$$B$$index$$_$$1.exports.__esModule = $n__builtin$$B$$index$$_$$1.exports.__esModule || false;
 })()
 "
 `;

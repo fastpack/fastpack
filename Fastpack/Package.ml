@@ -13,7 +13,7 @@ let of_json filename data =
   let add_suffix m =
       m ^ if Filename.check_suffix m ".js" then "" else ".js"
   in
-  let data = Yojson.Safe.from_string data in
+  let data = Yojson.Safe.from_string (String.trim data) in
   let open Yojson.Safe.Util in
   try
     (* let name = member "name" data |> to_string in *)
