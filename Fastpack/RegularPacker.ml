@@ -1,3 +1,9 @@
+
+module MLSet = Set.Make(struct
+    let compare = Pervasives.compare
+    type t = Module.location
+  end)
+
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
 module UTF8 = FastpackUtil.UTF8
@@ -653,15 +659,14 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 " prefix entry_id
   in
 
-  let emitted_modules = ref (StringSet.empty) in
+  let emitted_modules = ref (MLSet.empty) in
   let emit graph entry =
     let emit bytes = Lwt_io.write channel bytes in
     let rec emit_module (m : Module.t) =
-      let location_str = Module.location_to_string m.location in
-      if StringSet.mem location_str !emitted_modules
+      if MLSet.mem m.location !emitted_modules
       then Lwt.return_unit
       else begin
-        emitted_modules := StringSet.add location_str !emitted_modules;
+        emitted_modules := MLSet.add m.location !emitted_modules;
         let workspace = m.Module.workspace in
         let dep_map = Module.DependencyMap.empty in
         let dependencies = DependencyGraph.lookup_dependencies graph m in
@@ -734,7 +739,18 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
     Lwt.return {
       Reporter.
-      modules = !emitted_modules;
+      modules =
+        MLSet.fold
+          (fun location acc ->
+            match location with
+            | Module.File { filename = Some filename; _ } ->
+              StringSet.add filename acc
+            | _ ->
+              acc
+          )
+          !emitted_modules
+          StringSet.empty
+      ;
       cache = cache.loaded;
       message = "Mode: development.";
       size = Lwt_io.position channel |> Int64.to_int

@@ -312,7 +312,6 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
     Lwt.return empty_module
 
   | Module.Runtime ->
-    (* Printf.printf ("RUNTIME\n"); *)
     Lwt.return runtime_module
 
   | Module.File { filename; _ } ->
@@ -321,7 +320,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       Lwt.return m
     | None ->
       (* filename is Some (abs path) or None at this point *)
-      let%lwt source =
+      let%lwt source, self_dependency =
         match filename with
         | Some filename ->
           let%lwt _ =
@@ -339,9 +338,9 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
                   raise exn
               )
           in
-          Lwt.return_some content
+          Lwt.return (Some content, [filename])
         | None ->
-          Lwt.return_none
+          Lwt.return (None, [])
       in
       let { Preprocessor. process; _ } = ctx.preprocessor in
       let%lwt source, build_dependencies =
@@ -363,7 +362,8 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       in
       let m = { m with state = Module.Preprocessed } in
       let%lwt () = cache.modify_content m source in
-      let%lwt () = cache.add_build_dependencies m build_dependencies in
+      let%lwt () =
+        cache.add_build_dependencies m (self_dependency @ build_dependencies) in
       Lwt.return m
 
 let is_ignored_request request =
