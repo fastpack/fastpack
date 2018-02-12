@@ -176,8 +176,8 @@ let prepare_and_pack cl_options start_time =
     let%lwt () = makedirs @@ FilePath.dirname output_file in
     let%lwt preprocessor =
       match options.preprocess with
-      | None -> Preprocessor.make []
-      | Some preprocess -> Preprocessor.make preprocess
+      | None -> Preprocessor.make [] package_dir
+      | Some preprocess -> Preprocessor.make preprocess package_dir
     in
     let target =
       match options.target with

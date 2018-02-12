@@ -1,4 +1,5 @@
 module M = Map.Make(String)
+module FS = FastpackUtil.FS
 
 exception Error of string
 
@@ -30,7 +31,7 @@ let of_string s =
     match String.(s |> trim |> split_on_char ':') with
     | [] | [""] ->
       raise (Failure "Empty config")
-    | pattern_s :: "" :: [] ->
+    | pattern_s :: [] | pattern_s :: "" :: [] ->
       pattern_s, ["builtin"]
     | pattern_s :: rest ->
       let processors =
@@ -177,7 +178,7 @@ module NodeServer = struct
 
 end
 
-let make configs =
+let make configs base_dir =
 
   let processors = ref M.empty in
 
@@ -185,11 +186,12 @@ let make configs =
     match M.get filename !processors with
     | Some processors -> processors
     | None ->
+      let relname = FS.relative_path base_dir filename in
       let p =
         configs
         |> List.fold_left
           (fun acc { pattern; processors; _ } ->
-            match Re.exec_opt pattern filename with
+            match Re.exec_opt pattern relname with
             | None -> acc
             | Some _ -> acc @ processors
           )
