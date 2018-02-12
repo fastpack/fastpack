@@ -79,16 +79,13 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
       let start_time = Unix.gettimeofday () in
       let filename = FS.abs_path package_dir filename in
       let%lwt graph, modules =
-        match cache.get_potentially_invalid filename, in_bundle filename with
+        match cache.get_potentially_invalid filename with
         (* Something is changed in the dir, but we don't care *)
-        | [], false ->
+        | [] ->
           Lwt.return (graph, modules)
-        (* Weird bug, should never happen, emitted last time,
-         * but unknown in cache*)
-        | [], true ->
-          Error.ie ("File is in bundle, but unknown in cache: " ^ filename)
         (* Maybe a build dependency like .babelrc, need to check further *)
-        | files, _ ->
+        | files ->
+          (* debug (fun x -> x "INVALID:\n%s" @@ String.concat "\n" files); *)
           let%lwt prev_entry, _ = cache.get_file_no_raise filename in
           cache.remove filename;
           let%lwt _, cached = cache.get_file_no_raise filename in
@@ -121,7 +118,7 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
                * *)
               | [module_] ->
                 begin
-                  match%lwt get_context module_ with
+                  match%lwt get_context ("!" ^ module_) with
                   | None ->
                     Lwt.return (graph, modules)
                   | Some (ctx : Context.t) ->

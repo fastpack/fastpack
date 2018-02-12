@@ -106,7 +106,7 @@ let create cache_filename =
   let add_build_dependency filename changes =
     let set =
       match M.get filename !build_dependency_map with
-      | None -> StringSet.empty
+      | None -> StringSet.add changes StringSet.empty
       | Some set -> StringSet.add changes set
     in
     build_dependency_map := M.add filename set !build_dependency_map;

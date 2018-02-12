@@ -742,11 +742,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       modules =
         MLSet.fold
           (fun location acc ->
-            match location with
-            | Module.File { filename = Some filename; _ } ->
-              StringSet.add filename acc
-            | _ ->
-              acc
+            StringSet.add (Module.location_to_string location) acc
           )
           !emitted_modules
           StringSet.empty
