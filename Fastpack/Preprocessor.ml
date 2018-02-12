@@ -18,7 +18,7 @@ type process_f = string -> string * string list
 
 type t = {
   get_processors : string -> string list;
-  process : string -> string -> (string * string list) Lwt.t;
+  process : Module.location -> string option -> (string * string list) Lwt.t;
   configs : config list;
   finalize : unit -> unit;
 }
@@ -82,6 +82,10 @@ let all_transpilers = FastpackTranspiler.[
 ]
 
 let builtin source =
+  match source with
+  | None ->
+    Lwt.fail (Error "Builtin transpiler always expects source")
+  | Some source ->
     try
       Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
     with
@@ -92,13 +96,13 @@ let builtin source =
 
 let empty = {
     get_processors = (fun _ -> []);
-    process = (fun _ s -> Lwt.return (s, []));
+    process = (fun _ s -> Lwt.return (CCOpt.get_or ~default:"" s, []));
     configs = [];
     finalize = (fun () -> ())
   }
 
 let transpile_all = {
-    get_processors = (fun _ -> []);
+    get_processors = (fun _ -> ["builtin"]);
     process = (fun _ s -> builtin s);
     configs = [];
     finalize = (fun () -> ())
@@ -141,27 +145,16 @@ module NodeServer = struct
     processes := [process];
     Lwt.return_unit
 
-  let process loader options source =
+  let process loaders filename source =
     let%lwt () =
       if (List.length !processes) = 0 then start () else Lwt.return_unit;
     in
-    let options =
-      options
-      |> M.bindings
-      |> List.map
-        (fun (key, value) ->
-           key,
-           match value with
-           | Boolean value -> `Bool value
-           | Number value -> `Float value
-           | String value -> `String value
-        )
-    in
+    let to_json_string s = `String s in
     let message =
       `Assoc [
-        ("loader", `String loader);
-        ("params", `Assoc options);
-        ("source", `String source)
+        ("loaders", `List (List.map to_json_string loaders));
+        ("filename", CCOpt.map_or ~default:(`Null) to_json_string filename);
+        ("source", CCOpt.map_or ~default:(`Null) to_json_string source)
       ]
     in
     let%lwt () = Lwt_io.write !fp_out_ch (Yojson.to_string message ^ "\n") in
@@ -206,18 +199,54 @@ let make configs =
       p
   in
 
-  let process _filename _source =
-    failwith "not implemented"
-    (* let%lwt source, build_dependencies = *)
-    (*   Lwt_list.fold_left_s *)
-    (*     (fun (source, dependencies) processor -> *)
-    (*        let%lwt (source, new_dependencies) = processor source in *)
-    (*        Lwt.return (source, dependencies @ new_dependencies) *)
-    (*     ) *)
-    (*     (source, []) *)
-    (*     (get_processors filename) *)
-    (* in *)
-    (* Lwt.return (source, build_dependencies) *)
+  let process location source =
+    match location with
+    | Module.Unknown ->
+      Error.ie "Cannot process unknown module"
+    | Module.EmptyModule | Module.Runtime ->
+      begin
+        match source with
+        | None ->
+          Error.ie "Unexpeceted absence of source for builtin / empty module"
+        | Some source ->
+          Lwt.return (source, [])
+      end
+    | Module.File { filename; preprocessors } ->
+      let rec make_chain preprocessors chain =
+        match preprocessors with
+        | [] -> chain
+        | _ ->
+          let loaders, rest =
+            preprocessors
+            |> List.take_drop_while (fun p -> p <> "builtin")
+          in
+          match loaders with
+          | [] ->
+            make_chain (List.tl rest) (builtin :: chain)
+          | _ ->
+            make_chain
+              rest
+              ((NodeServer.process loaders filename) :: chain)
+      in
+      let preprocessors =
+        List.map
+          (fun (p, opt) -> p ^ (if opt <> "" then "?" ^ opt else ""))
+          preprocessors
+      in
+      let%lwt source, deps =
+        Lwt_list.fold_left_s
+          (fun (source, deps) process ->
+            let%lwt source, more_deps = process source in
+            Lwt.return (Some source, deps @ more_deps)
+          )
+          (source, [])
+          (make_chain preprocessors [])
+      in
+      match source with
+      | None ->
+        Error.ie "Unexpected absence of source after processing"
+      | Some source ->
+        Lwt.return (source, deps)
   in
 
   Lwt.return { get_processors; process; configs; finalize = NodeServer.finalize }
