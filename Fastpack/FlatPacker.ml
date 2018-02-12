@@ -42,8 +42,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
     Printf.sprintf "$n__%s" module_id
   in
 
-  let gen_wrapper_binding filename =
-    let module_id = relative_name ctx filename |> Module.make_id in
+  let gen_wrapper_binding location =
+    let module_id = Module.make_id ctx.package_dir location in
     Printf.sprintf "$w__%s" module_id
   in
 
@@ -59,16 +59,16 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
     Str.string_match (Str.regexp "^\\$[iewcn]__") name 0
   in
 
-  let rec pack ?(with_wrapper=false) (ctx : Context.t) modules =
+  let rec pack ?(with_wrapper=false) (ctx : Context.t) entry_location modules =
 
-    let () = debug (fun m -> m "Packing: %s" ctx.entry_filename) in
+    debug (fun m -> m "Packing: %s" (Module.location_to_string entry_location));
 
     let module_processed =
       modules
       |> MDM.bindings
       |> List.filter_map
           (fun (_, m) ->
-            if m.Module.filename = ctx.entry_filename then Some m else None
+            if m.Module.location = entry_location then Some m else None
           )
     in
 
@@ -77,7 +77,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       let wrapper =
         Printf.sprintf
           "function %s() {return %s.exports;}\n"
-          (gen_wrapper_binding ctx.entry_filename)
+          (gen_wrapper_binding entry_location)
           (gen_ext_namespace_binding m.Module.id)
       in
       Lwt_io.write channel wrapper
@@ -85,32 +85,23 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
     | _ ->
       let resolved_requests = ref DM.empty in
       let add_resolved_request req resolved =
-        let resolved =
-          match resolved with
-          | Module.EmptyModule
-          | Module.Runtime ->
-            resolved
-          | Module.File filename ->
-            let filename = FS.abs_path ctx.package_dir filename in
-            Module.File filename
-        in
         resolved_requests := DM.add req resolved !resolved_requests
       in
       let get_resolved_request req =
         DM.get req !resolved_requests
       in
 
-      let has_module filename =
+      let has_module location =
         modules
         |> MDM.bindings
-        |> List.exists (fun (_, m) -> m.Module.filename = filename)
+        |> List.exists (fun (_, m) -> m.Module.location = location)
       in
 
-      let get_module filename =
+      let get_module location =
         let matching =
           modules
           |> MDM.bindings
-          |> List.filter (fun (_, m) -> m.Module.filename = filename)
+          |> List.filter (fun (_, m) -> m.Module.location = location)
         in
         match matching with
         | [] -> None
@@ -135,11 +126,14 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
       (* Keep track of all dynamic dependencies while packing *)
       let dynamic_deps = ref [] in
-      let add_dynamic_dep ctx request filename =
+      let add_dynamic_dep ctx request location =
         let dep = {
           Dependency.
           request;
-          requested_from_filename = filename;
+          requested_from_filename =
+            match location with
+            | Module.File { filename = Some filename; _ } -> filename
+            | _ -> "(empty filename)"
         } in
         let () = dynamic_deps := (ctx, dep) :: !dynamic_deps in
         let () = has_dynamic_modules := true in
@@ -148,10 +142,10 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
       let rec process (ctx : Context.t) graph (m : Module.t) =
 
-        let ctx = { ctx with current_filename = m.filename } in
+        let ctx = { ctx with current_location = Some m.location } in
 
-        let analyze module_id filename source =
-          debug (fun m -> m "Analyzing: %s" filename);
+        let analyze module_id location source =
+          debug (fun m -> m "Analyzing: %s" (Module.location_to_string location));
 
           let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
@@ -200,17 +194,21 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             patch_loc loc patch_content;
           in
 
-          let rec resolve_import dep_map filename {Scope. source; remote } =
+          let rec resolve_import dep_map location {Scope. source; remote } =
             let dep = {
               Dependency.
               request = source;
-              requested_from_filename = filename
+              requested_from_filename = match location with
+                | Module.File { filename = Some filename; _ } ->
+                  filename
+                | _ ->
+                  "(empty file)"
             }
             in
             let m = MDM.get dep dep_map in
             match m with
             | None ->
-              raise (PackError (ctx, CannotResolveModules [dep]))
+              raise (PackError (ctx, CannotResolveModule dep.request))
             | Some m ->
               match remote with
               | None ->
@@ -240,7 +238,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                     (* raise (PackError (ctx, CannotFindExportedName (remote, m.filename))) *)
                   | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
                     match typ with
-                    | Scope.Import import -> resolve_import dep_map m.filename import
+                    | Scope.Import import -> resolve_import dep_map m.location import
                     | _ -> name_of_binding m.id name binding
           in
 
@@ -255,7 +253,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                        let value =
                          match binding.Scope.typ with
                          | Scope.Import import ->
-                           resolve_import dep_map filename import
+                           resolve_import dep_map location import
                          | _ ->
                            match internal_name with
                            | Some internal_name ->
@@ -294,7 +292,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                        let value =
                          match binding.Scope.typ with
                          | Scope.Import import ->
-                           resolve_import dep_map filename import
+                           resolve_import dep_map location import
                          | _ ->
                            match internal_name with
                            | Some internal_name ->
@@ -324,7 +322,10 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             let dep = {
               Dependency.
               request;
-              requested_from_filename = filename;
+              requested_from_filename =
+                match location with
+                | Module.File { filename = Some filename; _ } -> filename
+                | _ -> "(empty filename)"
             } in
             begin
               static_deps := dep :: !static_deps;
@@ -414,7 +415,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                 (fun dep_map ->
                    match binding.typ with
                    | Scope.Import import ->
-                     resolve_import dep_map filename import
+                     resolve_import dep_map location import
                    | _ ->
                      name_of_binding module_id name binding
                 )
@@ -463,11 +464,12 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                  match get_resolved_request dep with
                  | None ->
                    Error.ie "At this point dependency should be resolved"
+                 | Some Module.Unknown
                  | Some Module.EmptyModule
                  | Some Module.Runtime ->
                    Error.ie "Unexpected module for dynamic dependency"
-                 | Some (Module.File filename) ->
-                   let wrapper = gen_wrapper_binding filename in
+                 | Some location ->
+                   let wrapper = gen_wrapper_binding location in
                    Printf.sprintf "%s(%s)" require wrapper
               )
           in
@@ -657,14 +659,14 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                     (fun dep_map ->
                        match MDM.get dep dep_map with
                        | None ->
-                         raise (PackError (ctx, CannotResolveModules [dep]))
+                         raise (PackError (ctx, CannotResolveModule dep.request))
                        | Some m ->
                          Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
                     );
                   Visit.Break;
 
               | E.Import (_, E.Literal { value = L.String request; _ }) ->
-                let dep = add_dynamic_dep ctx request filename in
+                let dep = add_dynamic_dep ctx request location in
                 patch_dynamic_dep loc dep "__fastpack_import__";
                 Visit.Break;
 
@@ -711,7 +713,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           let es_module = is_es_module stmts in
           Visit.visit handler program;
           add_exports es_module;
-          if (filename = ctx.entry_filename) then add_target_export ();
+          if (Some location = ctx.entry_location) then add_target_export ();
 
           !used_imports
           |> M.bindings
@@ -729,7 +731,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
         let source = m.Module.workspace.Workspace.value in
         let (workspace, static_deps, scope, exports, es_module) =
-          match is_json m.filename with
+          match is_json m.location with
           | true ->
             let workspace =
               Workspace.of_string
@@ -740,10 +742,11 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             (workspace, [], Scope.empty, [], false)
           | false ->
             try
-                analyze m.id m.filename source
+                analyze m.id m.location source
             with
             | FlowParser.Parse_error.Error args ->
-              raise (PackError (ctx, CannotParseFile (m.filename, args)))
+              let location_str = Module.location_to_string m.location in
+              raise (PackError (ctx, CannotParseFile (location_str, args)))
             | Scope.ScopeError reason ->
               raise (PackError (ctx, ScopeError reason))
         in
@@ -757,62 +760,64 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         DependencyGraph.add_module graph m;
 
         (* check all static dependecies *)
-        let%lwt missing = Lwt_list.filter_map_s
+        let%lwt () = Lwt_list.iter_s
           (fun req ->
-            let%lwt resolved = Dependency.(
-              ctx.Context.resolver.resolve ctx.package req.request req.requested_from_filename
-            )
+            let base_dir =
+              FilePath.dirname req.Dependency.requested_from_filename
             in
-            (match resolved with
-             | None ->
-               Lwt.return_some req
-             | Some (resolved, _) ->
-               (* check if this modules is seen earlier in the stack *)
-               let resolved_str = Module.location_to_string resolved in
-               if has_module resolved_str
-               then begin
-                 let () = add_resolved_request req resolved in
-                 Lwt.return_none
-               end
-               else begin
-                 let%lwt dep_module =
-                   match DependencyGraph.lookup_module graph resolved_str with
-                   | None ->
-                     let%lwt m = read_module ctx cache resolved in
-                     let%lwt package =
-                       ctx.resolver.NodeResolver.find_package
-                         ctx.package_dir
-                         resolved
-                     in
-                     let%lwt m =
-                       process { ctx with package; stack = req :: ctx.stack } graph m
-                     in
-                     begin
-                       let () = add_resolved_request req resolved in
-                       Lwt.return m
-                     end
-                   | Some m ->
-                     let () = add_resolved_request req resolved in
-                     Lwt.return m
-                 in
-                 let () =
-                   DependencyGraph.add_dependency graph m (req, Some dep_module.filename)
-                 in
-                 Lwt.return_none
-               end
-            )
+            let%lwt resolved, _ =
+              resolve
+                ctx
+                ctx.package
+                req.Dependency.request
+                base_dir
+            in
+            if has_module resolved
+            then begin
+              let () = add_resolved_request req resolved in
+              Lwt.return_unit
+            end
+            else begin
+              let resolved_str = Module.location_to_string resolved in
+              let%lwt dep_module =
+                match DependencyGraph.lookup_module graph resolved_str with
+                | None ->
+                  let%lwt m = read_module ctx cache resolved in
+                  let%lwt package =
+                    match resolved with
+                    | Module.File { filename = Some filename; _ } ->
+                      ctx.resolver.NodeResolver.find_package
+                        ctx.package_dir
+                        filename
+                    | _ ->
+                      Lwt.return Package.empty
+                  in
+                  let%lwt m =
+                    process { ctx with package; stack = req :: ctx.stack } graph m
+                  in
+                  begin
+                    let () = add_resolved_request req resolved in
+                    Lwt.return m
+                  end
+                | Some m ->
+                  let () = add_resolved_request req resolved in
+                  Lwt.return m
+              in
+              let () =
+                DependencyGraph.add_dependency graph m (req, Some dep_module.location)
+              in
+              Lwt.return_unit
+            end
           )
           static_deps
         in
-        match missing with
-        | [] -> Lwt.return m
-        | _ -> raise (PackError (ctx, CannotResolveModules missing))
+        Lwt.return m
       in
 
       let emit graph entry =
         let emit bytes = Lwt_io.write channel bytes in
-        let emit_module dep_map m =
-          debug (fun m_ -> m_ "Emitting: %s" m.Module.filename);
+        let emit_module dep_map (m : Module.t) =
+          debug (fun m_ -> m_ "Emitting: %s" (Module.location_to_string m.location));
           let%lwt () = emit (Printf.sprintf "\n/* %s */\n\n" m.id) in
           let%lwt _ = Workspace.write channel m.Module.workspace dep_map in
           Lwt.return_unit
@@ -821,7 +826,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         let emit_wrapper_start, emit_wrapper_end =
           if with_wrapper then
             (fun () ->
-               emit @@ "\nfunction " ^ gen_wrapper_binding entry.Module.filename ^ "() {\n"
+               emit @@ "\nfunction " ^ gen_wrapper_binding entry.Module.location ^ "() {\n"
             ),
             (fun () ->
                emit
@@ -847,7 +852,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
               let%lwt () = emit_module dependency_map m in
               !resolved_requests
               |> DM.bindings
-              |> List.filter (fun (_, value) -> Module.location_to_string value = m.filename)
+              |> List.filter (fun (_, value) -> value = m.location)
               |> List.fold_left (fun acc (k, _) -> MDM.add k m acc) dependency_map
               |> Lwt.return
             )
@@ -856,7 +861,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
              |> List.filter
                (fun (_, resolved) ->
                   let resolved_str = Module.location_to_string resolved in
-                  if has_module resolved_str
+                  if has_module resolved
                   then true
                   else
                     match DependencyGraph.lookup_module graph resolved_str with
@@ -866,7 +871,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
              |> List.fold_left
                (fun modules (dep, resolved) ->
                   let resolved_str = Module.location_to_string resolved in
-                  match get_module resolved_str with
+                  match get_module resolved with
                   | Some m -> MDM.add dep m modules
                   | None ->
                     match DependencyGraph.lookup_module graph resolved_str with
@@ -883,96 +888,90 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       in
 
       let graph = DependencyGraph.empty () in
-      (* TODO: fix next line *)
-      let%lwt entry = read_module ctx cache (Module.File ctx.entry_filename) in
+      let%lwt entry = read_module ctx cache entry_location in
       let%lwt package =
-        ctx.resolver.NodeResolver.find_package
-          ctx.package_dir
-          (Module.File ctx.entry_filename)
+        match entry_location with
+        | Module.File { filename = Some filename; _ } ->
+          ctx.resolver.NodeResolver.find_package
+            ctx.package_dir
+            filename
+        | _ ->
+          Lwt.return Package.empty
       in
       let ctx = { ctx with package } in
       let%lwt entry = process ctx graph entry in
       let%lwt dynamic_deps =
         Lwt_list.map_s
           (fun (ctx, req) ->
-             let%lwt resolved = Dependency.(
-               ctx.Context.resolver.resolve
-                 ctx.package
-                 req.request
-                 req.requested_from_filename
-             ) in
-             let resolved =
-               match resolved with
-               | Some (filename, _) ->
-                 add_resolved_request req filename;
-                 Some filename
-               | None ->
-                 None
+             let base_dir =
+               FilePath.dirname req.Dependency.requested_from_filename
              in
-             Lwt.return (ctx, req, resolved)
+             let%lwt resolved, _ =
+               resolve
+                 ctx
+                 ctx.package
+                 req.Dependency.request
+                 base_dir
+             in
+             add_resolved_request req resolved;
+             Lwt.return (ctx, resolved)
           )
           !dynamic_deps
       in
-      let missing_dynamic_deps =
-        List.filter (fun (_, _, resolved) -> resolved = None) dynamic_deps
-      in
-      match missing_dynamic_deps with
-      | (ctx, req, None) :: _ ->
-        raise (PackError (ctx, CannotResolveModules [req]))
-      | _ ->
-        let%lwt modules = emit graph entry in
-        let%lwt _ =
-          Lwt_list.fold_left_s
-            (fun seen (ctx, _, resolved) ->
-               match resolved with
-               (* TODO: we should pass in resolved dependencies, not filenames *)
-               | Some (Module.File entry_filename) ->
-                 if StringSet.mem entry_filename seen
-                 then Lwt.return seen
-                 else
-                   let%lwt () =
-                     pack
-                      ~with_wrapper:true
-                      { ctx with entry_filename }
-                      modules
-                   in
-                   Lwt.return (StringSet.add entry_filename seen)
-               | Some Module.Runtime
-               | Some Module.EmptyModule ->
-                 Error.ie ("Unexpected dynamic dependency")
-               | None ->
-                 Error.ie (
-                   "At this point all dependency requests should be resolved: "
-                )
+      let%lwt modules = emit graph entry in
+      let%lwt _ =
+        Lwt_list.fold_left_s
+          (fun seen (ctx, resolved) ->
+             match resolved with
+             (* TODO: we should pass in resolved dependencies, not filenames *)
+             | Module.Unknown
+             | Module.Runtime
+             | Module.EmptyModule ->
+               Error.ie ("Unexpected dynamic dependency")
+             | location ->
+               let location_str = Module.location_to_string location in
+               if StringSet.mem location_str seen
+               then Lwt.return seen
+               else
+                 let%lwt () =
+                   pack
+                    ~with_wrapper:true
+                    ctx
+                    location
+                    modules
+                 in
+                 Lwt.return (StringSet.add location_str seen)
 
-            )
-            StringSet.empty
-            dynamic_deps
-          in
-          let new_modules =
-            graph
-            |> DependencyGraph.get_modules
-          in
-          total_modules := List.concat [ !total_modules; new_modules; ];
-          Lwt.return_unit
+          )
+          StringSet.empty
+          dynamic_deps
+        in
+        let new_modules =
+          graph
+          |> DependencyGraph.get_modules
+        in
+        total_modules := List.concat [ !total_modules; new_modules; ];
+        Lwt.return_unit
   in
-  let%lwt () = pack ctx MDM.empty in
+  match ctx.entry_location with
+  | Some entry_location ->
+    let%lwt () = pack ctx entry_location MDM.empty in
 
-  let bundle = channel
-    |> Lwt_io.position
-    |> Int64.to_int
-    |> Lwt_bytes.extract bytes 0
-    |> Lwt_bytes.to_string
-  in
+    let bundle = channel
+      |> Lwt_io.position
+      |> Int64.to_int
+      |> Lwt_bytes.extract bytes 0
+      |> Lwt_bytes.to_string
+    in
 
-  let header, footer = (
-    match ctx.target with
-    | Target.Application -> "(function() {\n", "})()\n"
-    | Target.CommonJS -> "", ""
-    | Target.ESM -> "", ""
-  )
-  in
-  let dynamic_import_runtime = (if !has_dynamic_modules then
+    let header, footer = (
+      match ctx.target with
+      | Target.Application -> "(function() {\n", "})()\n"
+      | Target.CommonJS -> "", ""
+      | Target.ESM -> "", ""
+    )
+    in
+    let dynamic_import_runtime = (if !has_dynamic_modules then
 "var __fastpack_cache__ = {};
 
 function __fastpack_import__(f) {
@@ -988,18 +987,20 @@ function __fastpack_import__(f) {
   });
 }
 "
-    else "")
-  in
+      else "")
+    in
 
-  let%lwt () = Lwt_io.write result_channel header in
-  let%lwt () = Lwt_io.write result_channel dynamic_import_runtime in
-  let%lwt () = Lwt_io.write result_channel bundle in
-  let%lwt () = Lwt_io.write result_channel footer in
-  Lwt.return {
-    Reporter.
-    (* TODO: use StringSet to accumulate modules, this is temporary hack *)
-    modules = StringSet.of_list !total_modules;
-    cache = cache.loaded;
-    message = "Mode: production";
-    size = Lwt_io.position result_channel |> Int64.to_int
-  }
+    let%lwt () = Lwt_io.write result_channel header in
+    let%lwt () = Lwt_io.write result_channel dynamic_import_runtime in
+    let%lwt () = Lwt_io.write result_channel bundle in
+    let%lwt () = Lwt_io.write result_channel footer in
+    Lwt.return {
+      Reporter.
+      (* TODO: use StringSet to accumulate modules, this is temporary hack *)
+      modules = StringSet.of_list !total_modules;
+      cache = cache.loaded;
+      message = "Mode: production";
+      size = Lwt_io.position result_channel |> Int64.to_int
+    }
+  | _ ->
+    Error.ie "Entry location should be resolved at this point"

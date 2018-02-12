@@ -86,19 +86,31 @@ let merge_options o1 o2 =
 
 (* TODO: this function may not be needed when tests are ported to Jest *)
 let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir channel =
+  let resolver = NodeResolver.make cache preprocessor in
+  let%lwt entry_package =
+    resolver.find_package package_dir entry_filename
+  in
   let ctx = { Context.
-    entry_filename;
+    entry_location = None;
     package = Package.empty;
     package_dir;
     stack = [];
-    current_filename = entry_filename;
+    current_location = None;
     mode;
     target;
-    resolver = NodeResolver.make cache;
+    resolver;
     preprocessor;
     graph = DependencyGraph.empty ();
   }
   in
+  let%lwt entry_location, _ =
+    resolve ctx entry_package entry_filename package_dir
+  in
+  let ctx = {
+    ctx with
+    entry_location = Some entry_location;
+    current_location = Some entry_location
+  } in
   pack_f cache ctx channel
 
 let find_package_root start_dir =
