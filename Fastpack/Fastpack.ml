@@ -241,22 +241,37 @@ let prepare_and_pack cl_options start_time =
         Error.ie "mode is not set"
     in
     let get_context current_filename =
-      let resolver = NodeResolver.make cache in
-      (* TODO: fix next line *)
-      let%lwt package =
-        resolver.find_package package_dir (Module.File current_filename)
+      (* current filename should be absolute path at this point
+       * TODO: assert *)
+      let resolver = NodeResolver.make cache preprocessor in
+      let%lwt entry_package =
+        resolver.find_package package_dir entry_filename
       in
-      Lwt.return { Context.
-        entry_filename;
+      let%lwt package = resolver.find_package package_dir current_filename in
+      let ctx = {
+        Context.
+        entry_location = None;
+        current_location = None;
         package_dir;
         package;
         stack = [];
-        current_filename;
         mode;
         target;
         resolver;
         preprocessor;
         graph = DependencyGraph.empty ()
+      }
+      in
+      let%lwt entry_location, _ =
+        resolve ctx entry_package entry_filename package_dir
+      in
+      let%lwt current_location, _ =
+        resolve ctx package current_filename package_dir
+      in
+      Lwt.return {
+        ctx with
+        entry_location = Some entry_location;
+        current_location = Some current_location;
       }
     in
     let pack_postprocess cache ctx ch =

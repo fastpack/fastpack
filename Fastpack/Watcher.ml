@@ -43,6 +43,14 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
       handle_error
   in
 
+  let get_context module_ =
+    Lwt.catch
+      (fun () ->
+         get_context module_ >>= Lwt.return_some
+      )
+      handle_error
+  in
+
   let rec read_pack graph modules =
     let report_file_change filename =
       let message =
@@ -111,30 +119,41 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
                * disabling the "trusted" cache. This will check all build
                * dependencies as well
                * *)
-              | [filename] ->
-                let%lwt (ctx : Context.t) = get_context filename in
-                DependencyGraph.remove_module graph filename;
-                let ctx = { ctx with graph; current_filename = filename } in
-                let%lwt modules =
-                  match%lwt pack cache ctx start_time with
-                  | Some modules -> Lwt.return modules
-                  | None -> Lwt.return modules
-                in
-                Lwt.return (ctx.graph, modules)
+              | [module_] ->
+                begin
+                  match%lwt get_context module_ with
+                  | None ->
+                    Lwt.return (graph, modules)
+                  | Some (ctx : Context.t) ->
+                    match ctx.current_location with
+                    | None ->
+                      Error.ie "Impossible state: location is not reolved"
+                    | Some location ->
+                      DependencyGraph.remove_module graph location;
+                      let ctx = { ctx with graph } in
+                      let%lwt modules =
+                        match%lwt pack cache ctx start_time with
+                        | Some modules -> Lwt.return modules
+                        | None -> Lwt.return modules
+                      in
+                      Lwt.return (ctx.graph, modules)
+                end
               (*
                * Several files may be influenced by the build dependency
                * We'll rebuild the entire bundle using empty graph
                * and the main entry point
                * *)
               | _ ->
-                let%lwt ctx = get_context entry_filename in
-                let ctx = { ctx with graph = DependencyGraph.empty () } in
-                let%lwt modules =
-                  match%lwt pack cache ctx start_time with
-                  | Some modules -> Lwt.return modules
-                  | None -> Lwt.return modules
-                in
-                Lwt.return (ctx.graph, modules)
+                match%lwt get_context entry_filename with
+                | None ->
+                  Lwt.return (graph, modules)
+                | Some (ctx : Context.t) ->
+                  let%lwt modules =
+                    match%lwt pack cache ctx start_time with
+                    | Some modules -> Lwt.return modules
+                    | None -> Lwt.return modules
+                  in
+                  Lwt.return (ctx.graph, modules)
       in
       (read_pack [@tailcall]) graph modules
   in

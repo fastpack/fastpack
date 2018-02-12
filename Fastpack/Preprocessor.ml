@@ -249,7 +249,12 @@ let make configs =
         Lwt.return (source, deps)
   in
 
-  Lwt.return { get_processors; process; configs; finalize = NodeServer.finalize }
+  Lwt.return {
+    get_processors;
+    process;
+    configs;
+    finalize = NodeServer.finalize
+  }
 
 
 

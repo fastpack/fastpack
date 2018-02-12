@@ -22,7 +22,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     else Lwt.return_unit
   in
 
-  let analyze _id filename source =
+  let analyze _id location source =
     let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
 
@@ -85,7 +85,13 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       match Module.DependencyMap.get dep dep_map with
       | Some m -> m
       | None ->
-        raise (PackError (ctx, CannotResolveModules [dep]))
+        raise (PackError (ctx, CannotResolveModule dep.Dependency.request))
+    in
+
+    let filename =
+      match location with
+      | Module.File { filename = Some filename; _ } -> filename
+      | _ -> "(empty filename)"
     in
 
     let add_dependency request =
@@ -494,13 +500,13 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
   (* Gather dependencies *)
   let rec process (ctx : Context.t) graph (m : Module.t) =
-    let ctx = { ctx with current_filename = m.filename } in
+    let ctx = { ctx with current_location = Some m.location } in
     let m, dependencies =
       if m.state <> Module.Analyzed
       then begin
         let source = m.Module.workspace.Workspace.value in
         let (workspace, dependencies, scope, exports, es_module) =
-          match is_json m.filename with
+          match is_json m.location with
           | true ->
             let workspace =
               Printf.sprintf "module.exports = %s;" source
@@ -509,10 +515,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             (workspace, [], Scope.empty, [], false)
           | false ->
             try
-                analyze m.id m.filename source
+                analyze m.id m.location source
             with
             | FlowParser.Parse_error.Error args ->
-              raise (PackError (ctx, CannotParseFile (m.filename, args)))
+              let location_str = Module.location_to_string m.location in
+              raise (PackError (ctx, CannotParseFile (location_str, args)))
             | Scope.ScopeError reason ->
               raise (PackError (ctx, ScopeError reason))
         in
@@ -524,46 +531,29 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let%lwt m =
       if m.state <> Module.Analyzed
       then begin
-        let%lwt resolved =
+        let%lwt resolved_dependencies =
           Lwt_list.map_p
             (fun req ->
-               let%lwt resolved = Dependency.(
-                 ctx.resolver.resolve
+               let base_dir =
+                 FilePath.dirname req.Dependency.requested_from_filename
+               in
+               let%lwt resolved, build_dependencies =
+                 resolve
+                   ctx
                    ctx.package
-                   req.request
-                   req.requested_from_filename
-               ) in
-               let%lwt resolved =
+                   req.Dependency.request
+                   base_dir
+               in
+               let%lwt () =
                  match resolved with
-                 | None ->
-                   Lwt.return_none
-                 | Some (resolved, build_dependencies) ->
-                   let%lwt () =
-                     match resolved with
-                     | Module.File _ ->
-                       cache.add_build_dependencies m build_dependencies
-                     | Module.EmptyModule | Module.Runtime ->
-                       Lwt.return_unit
-                   in
-                   Lwt.return_some resolved
+                 | Module.File _ ->
+                   cache.add_build_dependencies m build_dependencies
+                 | Module.EmptyModule | Module.Runtime | Module.Unknown ->
+                   Lwt.return_unit
                in
                Lwt.return (req, resolved)
             )
             dependencies
-        in
-        let missing, resolved_dependencies =
-          List.partition_map
-            (fun (req, resolved) ->
-               match resolved with
-               | None -> `Left req
-               | Some resolved -> `Right (req, resolved)
-            )
-            resolved
-        in
-        let%lwt () =
-          if missing <> []
-          then Lwt.fail (PackError (ctx, CannotResolveModules missing))
-          else Lwt.return_unit
         in
         Lwt.return { m with resolved_dependencies }
       end
@@ -581,15 +571,19 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               let ctx = { ctx with stack = req :: ctx.stack } in
               let%lwt m = read_module ctx cache resolved in
               let%lwt package =
-                ctx.resolver.NodeResolver.find_package
-                  ctx.package_dir
-                  resolved
+                match resolved with
+                | Module.File { filename = Some filename; _ } ->
+                  ctx.resolver.NodeResolver.find_package
+                    ctx.package_dir
+                    filename
+                | _ ->
+                  Lwt.return Package.empty
               in
               process { ctx with package } graph m
             | Some m ->
               Lwt.return m
           in
-          DependencyGraph.add_dependency graph m (req, Some dep_module.filename);
+          DependencyGraph.add_dependency graph m (req, Some dep_module.location);
           Lwt.return_unit
         )
         m.resolved_dependencies
@@ -662,11 +656,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
   let emitted_modules = ref (StringSet.empty) in
   let emit graph entry =
     let emit bytes = Lwt_io.write channel bytes in
-    let rec emit_module m =
-      if StringSet.mem m.Module.filename !emitted_modules
+    let rec emit_module (m : Module.t) =
+      let location_str = Module.location_to_string m.location in
+      if StringSet.mem location_str !emitted_modules
       then Lwt.return_unit
       else begin
-        emitted_modules := StringSet.add m.Module.filename !emitted_modules;
+        emitted_modules := StringSet.add location_str !emitted_modules;
         let workspace = m.Module.workspace in
         let dep_map = Module.DependencyMap.empty in
         let dependencies = DependencyGraph.lookup_dependencies graph m in
@@ -692,11 +687,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         in
         let%lwt content = Workspace.write channel workspace dep_map in
         let m = { m with state = Module.Analyzed } in
-        (* TODO: nasty temp hack - remove *)
         let%lwt () =
-          if String.get m.filename 0 = '/'
-          then cache.modify_content m content
-          else Lwt.return_unit
+          match m.location with
+          | Module.File _ ->
+            cache.modify_content m content
+          | _ ->
+            Lwt.return_unit
         in
         let () =
           DependencyGraph.add_module
@@ -723,21 +719,25 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     Lwt.return_unit
   in
 
-  let graph = ctx.graph in
   (* TODO: fix next line *)
-  let%lwt entry = read_module ctx cache (Module.File ctx.current_filename) in
-  let%lwt _ = process ctx graph entry in
-  let global_entry =
-    match DependencyGraph.lookup_module graph ctx.entry_filename with
-    | Some m -> m
-    | None -> Error.ie (ctx.entry_filename ^ " not found in the graph")
-  in
-  let%lwt _ = emit graph global_entry in
+  match ctx.entry_location, ctx.current_location with
+  | Some entry_location, Some current_location ->
+    let%lwt entry = read_module ctx cache current_location in
+    let%lwt _ = process ctx ctx.graph entry in
+    let entry_location_str = Module.location_to_string entry_location in
+    let global_entry =
+      match DependencyGraph.lookup_module ctx.graph entry_location_str with
+      | Some m -> m
+      | None -> Error.ie (entry_location_str ^ " not found in the graph")
+    in
+    let%lwt _ = emit ctx.graph global_entry in
 
-  Lwt.return {
-    Reporter.
-    modules = !emitted_modules;
-    cache = cache.loaded;
-    message = "Mode: development.";
-    size = Lwt_io.position channel |> Int64.to_int
-  }
+    Lwt.return {
+      Reporter.
+      modules = !emitted_modules;
+      cache = cache.loaded;
+      message = "Mode: development.";
+      size = Lwt_io.position channel |> Int64.to_int
+    }
+  | _ ->
+    Error.ie "Entry and current location are not resolved at this point"
