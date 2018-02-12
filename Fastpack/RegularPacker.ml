@@ -91,7 +91,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       match Module.DependencyMap.get dep dep_map with
       | Some m -> m
       | None ->
-        raise (PackError (ctx, CannotResolveModule dep.Dependency.request))
+        raise (PackError (ctx, CannotResolveModule (dep.Dependency.request, dep)))
     in
 
     let filename =
@@ -540,15 +540,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         let%lwt resolved_dependencies =
           Lwt_list.map_p
             (fun req ->
-               let base_dir =
-                 FilePath.dirname req.Dependency.requested_from_filename
-               in
                let%lwt resolved, build_dependencies =
-                 resolve
-                   ctx
-                   ctx.package
-                   req.Dependency.request
-                   base_dir
+                 resolve ctx ctx.package req
                in
                let%lwt () =
                  match resolved with

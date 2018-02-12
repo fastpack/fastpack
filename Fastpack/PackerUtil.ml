@@ -264,14 +264,19 @@ let relative_name {Context. package_dir; _} filename =
         (length filename - length package_dir - 1)
     )
 
-let resolve (ctx : Context.t) package request base_dir =
+let resolve (ctx : Context.t) package (request : Dependency.t) =
+  let base_dir =
+    if ctx.package_dir = request.requested_from_filename
+    then ctx.package_dir
+    else FilePath.dirname request.requested_from_filename
+  in
   Lwt.catch
     (fun () ->
-       ctx.resolver.resolve package request base_dir
+       ctx.resolver.resolve package request.request base_dir
     )
     (function
       | NodeResolver.Error path ->
-        Lwt.fail (PackError (ctx, CannotResolveModule path))
+        Lwt.fail (PackError (ctx, CannotResolveModule (path, request)))
       | exn ->
         raise exn
     )

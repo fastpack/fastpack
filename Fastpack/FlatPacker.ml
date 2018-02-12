@@ -208,7 +208,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             let m = MDM.get dep dep_map in
             match m with
             | None ->
-              raise (PackError (ctx, CannotResolveModule dep.request))
+              raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
             | Some m ->
               match remote with
               | None ->
@@ -659,7 +659,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                     (fun dep_map ->
                        match MDM.get dep dep_map with
                        | None ->
-                         raise (PackError (ctx, CannotResolveModule dep.request))
+                         raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
                        | Some m ->
                          Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
                     );
@@ -762,16 +762,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         (* check all static dependecies *)
         let%lwt () = Lwt_list.iter_s
           (fun req ->
-            let base_dir =
-              FilePath.dirname req.Dependency.requested_from_filename
-            in
-            let%lwt resolved, _ =
-              resolve
-                ctx
-                ctx.package
-                req.Dependency.request
-                base_dir
-            in
+            let%lwt resolved, _ = resolve ctx ctx.package req in
             if has_module resolved
             then begin
               let () = add_resolved_request req resolved in
@@ -903,16 +894,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       let%lwt dynamic_deps =
         Lwt_list.map_s
           (fun (ctx, req) ->
-             let base_dir =
-               FilePath.dirname req.Dependency.requested_from_filename
-             in
-             let%lwt resolved, _ =
-               resolve
-                 ctx
-                 ctx.package
-                 req.Dependency.request
-                 base_dir
-             in
+             let%lwt resolved, _ = resolve ctx ctx.package req in
              add_resolved_request req resolved;
              Lwt.return (ctx, resolved)
           )

@@ -104,7 +104,11 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
   }
   in
   let%lwt entry_location, _ =
-    resolve ctx entry_package entry_filename package_dir
+    resolve ctx entry_package {
+      Dependency.
+      request = entry_filename;
+      requested_from_filename = package_dir;
+    }
   in
   let ctx = {
     ctx with
@@ -275,10 +279,18 @@ let prepare_and_pack cl_options start_time =
       }
       in
       let%lwt entry_location, _ =
-        resolve ctx entry_package entry_filename package_dir
+        resolve ctx entry_package {
+          Dependency.
+          request = entry_filename;
+          requested_from_filename = package_dir;
+        }
       in
       let%lwt current_location, _ =
-        resolve ctx package current_filename package_dir
+        resolve ctx package {
+          Dependency.
+          request = current_filename;
+          requested_from_filename = package_dir;
+        }
       in
       Lwt.return {
         ctx with

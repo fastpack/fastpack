@@ -7,3 +7,5 @@ Processing File: index.js
 
 Cannot resolve module:
 	/.../test/error-cannot-resolve-modules/c
+While processing dependency request:
+	'./c' from file: index.js
