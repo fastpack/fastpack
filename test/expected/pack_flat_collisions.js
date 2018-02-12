@@ -46,7 +46,9 @@ try {
 catch({$w__x: $c__a__$w__x, ...$c__a__$c__y}) {
   console.log($c__a__$w__x, $c__a__$c__y);
 }
-$n__a.exports.a1 = $e__a__a1;$n__a.exports.a2 = $e__a__a2;$n__a.exports.__esModule = $n__a.exports.__esModule || true; 
+$n__a.exports.a1 = $e__a__a1;
+$n__a.exports.a2 = $e__a__a2;
+$n__a.exports.__esModule = $n__a.exports.__esModule || true;
 
 /* index */
 
@@ -55,5 +57,5 @@ let $n__index = { exports: {}};
 
 console.log($n__a.exports);
 
-$n__index.exports.__esModule = $n__index.exports.__esModule || true; 
+$n__index.exports.__esModule = $n__index.exports.__esModule || true;
 })()
