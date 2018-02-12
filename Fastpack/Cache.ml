@@ -304,10 +304,17 @@ let create cache_filename =
       let%lwt stats = file_stat_opt filename in
       match stats with
       | Some (entry, _) ->
-        let%lwt content = Lwt_io.(with_file ~mode:Input filename read) in
-        let digest = Digest.string content in
-        let entry = { entry with content; digest } in
-        update filename entry;
+        let%lwt entry =
+          match entry.st_kind with
+          | Unix.S_REG ->
+            let%lwt content = Lwt_io.(with_file ~mode:Input filename read) in
+            let digest = Digest.string content in
+            let entry = { entry with content; digest } in
+            update filename entry;
+            Lwt.return entry
+          | _ ->
+            Lwt.return entry
+        in
         Lwt.return (entry, false)
       | None ->
         Lwt.fail (FileDoesNotExist filename)
