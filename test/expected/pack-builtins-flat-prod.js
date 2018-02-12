@@ -67,28 +67,28 @@ $n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule = $n__builtin$$COLON
 let $n__builtin$$COLON$$__empty_module__ = { exports: {}};
 $n__builtin$$COLON$$__empty_module__.exports = {};$n__builtin$$COLON$$__empty_module__.exports.__esModule = $n__builtin$$COLON$$__empty_module__.exports.__esModule || false; 
 
-/* esm */
+/* builtin$$B$$esm */
 
-let $n__esm = { exports: {}};
+let $n__builtin$$B$$esm = { exports: {}};
 
-const $e__esm__default = $n__builtin$$COLON$$__empty_module__.exports.delimiter;
-$n__esm.exports.default = $e__esm__default;$n__esm.exports.__esModule = $n__esm.exports.__esModule || true; 
+const $e__builtin$$B$$esm__default = $n__builtin$$COLON$$__empty_module__.exports.delimiter;
+$n__builtin$$B$$esm.exports.default = $e__builtin$$B$$esm__default;$n__builtin$$B$$esm.exports.__esModule = $n__builtin$$B$$esm.exports.__esModule || true; 
 
-/* index */
+/* builtin$$B$$index */
 
-let $n__index = { exports: {}};
-const $i__index__$__fpack__ = ($n__builtin$$COLON$$__fastpack_runtime__.exports);
-const $i__index__path = ($n__builtin$$COLON$$__empty_module__.exports);
-const $i__index__module = ($n__builtin$$COLON$$__empty_module__.exports);
-const $i__index__esm = ($n__esm.exports);
-const {delimiter: $i__index__delimiter} = $i__index__path,
-  $i__index__rest = $i__index__$__fpack__.omitProps($i__index__path, ["delimiter"]);
-console.log($i__index__path, $i__index__module, $i__index__delimiter, $i__index__rest, $i__index__esm);
+let $n__builtin$$B$$index = { exports: {}};
+const $i__builtin$$B$$index__$__fpack__ = ($n__builtin$$COLON$$__fastpack_runtime__.exports);
+const $i__builtin$$B$$index__path = ($n__builtin$$COLON$$__empty_module__.exports);
+const $i__builtin$$B$$index__module = ($n__builtin$$COLON$$__empty_module__.exports);
+const $i__builtin$$B$$index__esm = ($n__builtin$$B$$esm.exports);
+const {delimiter: $i__builtin$$B$$index__delimiter} = $i__builtin$$B$$index__path,
+  $i__builtin$$B$$index__rest = $i__builtin$$B$$index__$__fpack__.omitProps($i__builtin$$B$$index__path, ["delimiter"]);
+console.log($i__builtin$$B$$index__path, $i__builtin$$B$$index__module, $i__builtin$$B$$index__delimiter, $i__builtin$$B$$index__rest, $i__builtin$$B$$index__esm);
 // The following test makes sure that builtin transpiler strips type annotations
 // from inside JSX
-const $i__index__Component = props => React.createElement("div", null, item => {
+const $i__builtin$$B$$index__Component = props => React.createElement("div", null, item => {
     
   }
   );
-$n__index.exports.__esModule = $n__index.exports.__esModule || false; 
+$n__builtin$$B$$index.exports.__esModule = $n__builtin$$B$$index.exports.__esModule || false; 
 })()

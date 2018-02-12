@@ -23,7 +23,7 @@ type t = {
   finalize : unit -> unit;
 }
 
-let config_re = Re_posix.compile_pat "^([^:]+)(:([a-zA-Z_][^?]+)(\\?(.*))?)?$"
+let debug = Logs.debug
 
 let of_string s =
   let pattern_s, processors =

@@ -48,7 +48,7 @@
   // expose the module cache
   __fastpack_require__.c = installedModules;
 
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = 'builtin$$B$$index');
 })
 ({
 "builtin$$COLON$$__fastpack_runtime__": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -112,17 +112,17 @@ module.exports = {
 },
 "builtin$$COLON$$__empty_module__": function(module, exports, __fastpack_require__, __fastpack_import__) {
 module.exports = {};},
-"esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"builtin$$B$$esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
 exports.default = $lib1.delimiter;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
-"index": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
 const path = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
 const module = __fastpack_require__(/* "module" */ "builtin$$COLON$$__empty_module__");
-const esm = __fastpack_require__(/* "./esm" */ "esm");
+const esm = __fastpack_require__(/* "./esm" */ "builtin$$B$$esm");
 const {delimiter} = path,
   rest = $__fpack__.omitProps(path, ["delimiter"]);
 console.log(path, module, delimiter, rest, esm);

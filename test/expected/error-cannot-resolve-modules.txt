@@ -5,7 +5,5 @@ Mode: production
 Call Stack: (empty)
 Processing File: index.js
 
-Cannot resolve modules:
-	'./c' from file: index.js
-	'./b' from file: index.js
-	'./a' from file: index.js
+Cannot resolve module:
+	/.../test/error-cannot-resolve-modules/c

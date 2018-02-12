@@ -46,6 +46,7 @@ type t = {
   exports: (string * string option * FastpackUtil.Scope.binding) list;
 }
 
+let debug = Logs.debug
 (*
  * .js$ => <del>
  * / => $
@@ -68,19 +69,23 @@ let make_id base_dir location =
     "builtin$$COLON$$__fastpack_runtime__"
   | File { filename; preprocessors } ->
     let fix_filename filename =
-      let filename = FS.relative_path base_dir filename in
-      let suf = ".js" in
-      String.(
-        (if suffix ~suf filename
-         then sub filename 0 (length filename - length suf)
-         else filename)
-        |> replace ~sub:"node_modules" ~by:"NM$"
-        |> replace ~sub:"@" ~by:"AT$$"
-        |> replace ~sub:":" ~by:"$$COLON$$"
-        |> replace ~sub:"." ~by:"DOT$$"
-        |> replace ~sub:"-" ~by:"$$_$$"
-        |> replace ~sub:"/" ~by:"$"
-      )
+      match filename with
+      | "builtin" ->
+        "builtin"
+      | _ ->
+        let filename = FS.relative_path base_dir filename in
+        let suf = ".js" in
+        String.(
+          (if suffix ~suf filename
+           then sub filename 0 (length filename - length suf)
+           else filename)
+          |> replace ~sub:"node_modules" ~by:"NM$"
+          |> replace ~sub:"@" ~by:"AT$$"
+          |> replace ~sub:":" ~by:"$$COLON$$"
+          |> replace ~sub:"." ~by:"DOT$$"
+          |> replace ~sub:"-" ~by:"$$_$$"
+          |> replace ~sub:"/" ~by:"$"
+        )
     in
     let filename =
       match filename with
