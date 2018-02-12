@@ -266,12 +266,12 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                          | Some _ -> exported_name
                          | None -> "default"
                        in
-                       Printf.sprintf "%s.exports.%s = %s;" namespace key value
+                       Printf.sprintf "%s.exports.%s = %s;\n" namespace key value
                     )
                   |> String.concat ""
                 in
                 Printf.sprintf
-                  "%s%s.exports.__esModule = %s.exports.__esModule || %s; \n"
+                  "%s%s.exports.__esModule = %s.exports.__esModule || %s;\n"
                   expr
                   namespace
                   namespace

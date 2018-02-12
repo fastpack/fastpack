@@ -4,13 +4,13 @@
 
 let $n__dev = { exports: {}};
 $n__dev.exports = {dev: true};
-$n__dev.exports.__esModule = $n__dev.exports.__esModule || false; 
+$n__dev.exports.__esModule = $n__dev.exports.__esModule || false;
 
 /* prod */
 
 let $n__prod = { exports: {}};
 $n__prod.exports = {prod: true};
-$n__prod.exports.__esModule = $n__prod.exports.__esModule || false; 
+$n__prod.exports.__esModule = $n__prod.exports.__esModule || false;
 
 /* index */
 
@@ -69,5 +69,5 @@ console.log("development");
 // bug
 if (true) {} else {}
 if (false) {} else {console.log("dev!")}
-$n__index.exports.__esModule = $n__index.exports.__esModule || false; 
+$n__index.exports.__esModule = $n__index.exports.__esModule || false;
 })()

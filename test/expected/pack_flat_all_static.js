@@ -19,7 +19,7 @@ function __fastpack_import__(f) {
 let $n__b = { exports: {}};
 console.log('side effect of b');
 $n__b.exports = function() {console.log('b')};
-$n__b.exports.__esModule = $n__b.exports.__esModule || false; 
+$n__b.exports.__esModule = $n__b.exports.__esModule || false;
 
 /* a */
 
@@ -30,7 +30,7 @@ $n__a.exports = function() {
   console.log('b in a');
   $i__a__b();
 };
-$n__a.exports.__esModule = $n__a.exports.__esModule || false; 
+$n__a.exports.__esModule = $n__a.exports.__esModule || false;
 
 /* index */
 
@@ -59,6 +59,6 @@ b
 b in promise
 b
 */
-$n__index.exports.__esModule = $n__index.exports.__esModule || false; 
+$n__index.exports.__esModule = $n__index.exports.__esModule || false;
 function $w__b() {return $n__b.exports;}
 })()
