@@ -12,19 +12,13 @@ module FS = FastpackUtil.FS
 let debug = Logs.debug
 
 module ModuleEntry = struct
-  module Modified = struct
-    type t = {
-      es_module : bool;
-      content : string;
-      build_dependencies : string M.t;
-      resolved_dependencies : (Dependency.t * string) list;
-    }
-  end
-
   type t = {
     id : string;
     state : Module.state;
-    modified : Modified.t option;
+    es_module : bool;
+    content : string;
+    build_dependencies : string M.t;
+    resolved_dependencies : (Dependency.t * Module.location) list;
   }
 end
 
@@ -35,10 +29,12 @@ type entry = {
   digest : string;
   content : string;
   package: Package.t option;
-  module_: ModuleEntry.t option;
 }
 
-type validate = Exists | Stats | File | Package | Module
+type cache = {
+  files : entry M.t;
+  modules : ModuleEntry.t M.t;
+}
 
 type t = {
   file_exists : string -> bool Lwt.t;
@@ -47,7 +43,7 @@ type t = {
   get_file : string -> (entry * bool) Lwt.t;
   get_file_no_raise : string -> (entry * bool) Lwt.t;
   get_package : string -> (Package.t * bool) Lwt.t;
-  get_module : string -> string -> (Module.t * bool) Lwt.t;
+  get_module : Module.location -> Module.t option Lwt.t;
   modify_content : Module.t -> string -> unit Lwt.t;
   add_build_dependencies: Module.t -> string list -> unit Lwt.t;
   get_potentially_invalid : string -> string list;
@@ -60,6 +56,11 @@ type t = {
 exception FileDoesNotExist of string
 type strategy = Normal | Ignore
 
+let empty = {
+  files = M.empty;
+  modules = M.empty;
+}
+
 let create cache_filename =
   let no_file = {
     exists = false;
@@ -68,14 +69,13 @@ let create cache_filename =
     digest = "";
     content = "";
     package = None;
-    module_ = None;
   }
   in
 
   let%lwt loaded =
     match cache_filename with
     | None ->
-      Lwt.return M.empty
+      Lwt.return empty
     | Some filename ->
       match%lwt Lwt_unix.file_exists filename with
       | true ->
@@ -83,9 +83,9 @@ let create cache_filename =
           ~mode:Lwt_io.Input
           ~flags:Unix.[O_RDONLY]
           filename
-          (fun ch -> (Lwt_io.read_value ch : entry M.t Lwt.t))
+          (fun ch -> (Lwt_io.read_value ch : cache Lwt.t))
       | false ->
-        Lwt.return M.empty
+        Lwt.return empty
   in
 
   let trusted = ref StringSet.empty in
@@ -93,18 +93,20 @@ let create cache_filename =
     trusted := StringSet.add filename !trusted
   in
 
-  let files = ref loaded in
+  let files = ref loaded.files in
   let update filename entry =
     files := M.add filename entry !files;
     add_trusted filename;
   in
+
+  let modules = ref loaded.modules in
 
   (* filename => set of files it changes *)
   let build_dependency_map = ref M.empty in
   let add_build_dependency filename changes =
     let set =
       match M.get filename !build_dependency_map with
-      | None -> StringSet.empty
+      | None -> StringSet.add changes StringSet.empty
       | Some set -> StringSet.add changes set
     in
     build_dependency_map := M.add filename set !build_dependency_map;
@@ -121,20 +123,21 @@ let create cache_filename =
   (* this is a special function required by Watcher
    * in order to setup minimum required dependency map only for modules
    * present in the last bundle. To be called once *)
-  let setup_build_dependencies filenames =
+  (* TODO: see, maybe Module.location is cleaner to use here *)
+  let setup_build_dependencies locations_str =
     build_dependency_map := M.empty;
     StringSet.iter
-      (fun filename ->
-         match M.get filename !files with
-         | Some { module_ = Some { modified = Some { build_dependencies; _ }; _ }; _ } ->
+      (fun location_str ->
+         match M.get location_str !modules with
+         | Some { build_dependencies; _ } ->
            build_dependencies
            |> M.bindings
            |> List.iter
-             (fun (dep, _) -> add_build_dependency dep filename)
+             (fun (dep, _) -> add_build_dependency dep location_str)
          | _ ->
            ()
       )
-      filenames
+      locations_str
   in
 
   let validate filename entry =
@@ -166,30 +169,30 @@ let create cache_filename =
         end
     in
     match entry with
-    | { module_ = Some m; package; _ } ->
-      let%lwt entry, cached = validate_file () in
-      if cached
-      then Lwt.return (entry, true)
-      else begin
-        let package =
-          match package with
-          | None -> None
-          | Some _ ->
-            Some (Package.of_json filename entry.content)
-        in
-        let () =
-          match m with
-          | { modified = Some { build_dependencies; _ }; _ } ->
-            build_dependencies
-            |> M.bindings
-            |> List.iter (fun (dep, _) -> remove_dependency dep filename)
-          | _ -> ()
-        in
-        let module_ = { m with state = Module.Initial; modified = None } in
-        let entry = { entry with module_ = Some module_; package } in
-        update filename entry;
-        Lwt.return (entry, false)
-      end
+    (* | { module_ = Some m; package; _ } -> *)
+    (*   let%lwt entry, cached = validate_file () in *)
+    (*   if cached *)
+    (*   then Lwt.return (entry, true) *)
+    (*   else begin *)
+    (*     let package = *)
+    (*       match package with *)
+    (*       | None -> None *)
+    (*       | Some _ -> *)
+    (*         Some (Package.of_json filename entry.content) *)
+    (*     in *)
+    (*     let () = *)
+    (*       match m with *)
+    (*       | { modified = Some { build_dependencies; _ }; _ } -> *)
+    (*         build_dependencies *)
+    (*         |> M.bindings *)
+    (*         |> List.iter (fun (dep, _) -> remove_dependency dep filename) *)
+    (*       | _ -> () *)
+    (*     in *)
+    (*     let module_ = { m with state = Module.Initial; modified = None } in *)
+    (*     let entry = { entry with module_ = Some module_; package } in *)
+    (*     update filename entry; *)
+    (*     Lwt.return (entry, false) *)
+    (*   end *)
     | { package = Some _; _ } ->
       let%lwt entry, cached = validate_file () in
       if cached
@@ -301,10 +304,17 @@ let create cache_filename =
       let%lwt stats = file_stat_opt filename in
       match stats with
       | Some (entry, _) ->
-        let%lwt content = Lwt_io.(with_file ~mode:Input filename read) in
-        let digest = Digest.string content in
-        let entry = { entry with content; digest } in
-        update filename entry;
+        let%lwt entry =
+          match entry.st_kind with
+          | Unix.S_REG ->
+            let%lwt content = Lwt_io.(with_file ~mode:Input filename read) in
+            let digest = Digest.string content in
+            let entry = { entry with content; digest } in
+            update filename entry;
+            Lwt.return entry
+          | _ ->
+            Lwt.return entry
+        in
         Lwt.return (entry, false)
       | None ->
         Lwt.fail (FileDoesNotExist filename)
@@ -338,7 +348,6 @@ let create cache_filename =
               content = "";
               digest = "";
               package = None;
-              module_ = None;
             } in
             update filename entry;
             Lwt.return (entry, false)
@@ -360,158 +369,95 @@ let create cache_filename =
       Lwt.return (package, cached)
   in
 
-  let get_module filename relname =
-    let check_build_dependencies entry =
-      match entry with
-      | { module_ = Some ({
-          modified = Some { build_dependencies; _};
-          _ } as module_); _} ->
-        let%lwt build_dependencies_changed =
-          build_dependencies
-          |> M.bindings
-          |> Lwt_list.exists_s
-            (fun (filename, known_digest) ->
-               let%lwt { digest; _ }, _ = get_file filename in
-               Lwt.return (digest <> known_digest)
-            )
-        in
-        if build_dependencies_changed
-        then begin
-          build_dependencies
-          |> M.bindings
-          |> List.iter (fun (dep, _) -> remove_dependency dep filename);
-          Lwt.return (
-            { entry with
-              module_ = Some { module_ with state = Module.Initial; modified = None}},
-            false
-          )
-        end
-        else
-          Lwt.return (entry, true)
-      | _ ->
-        Lwt.return (entry, true)
+  let get_module location =
+    let build_dependencies_changed build_dependencies =
+      build_dependencies
+      |> M.bindings
+      |> Lwt_list.exists_s
+        (fun (filename, known_digest) ->
+           let%lwt { digest; _ }, _ = get_file filename in
+           Lwt.return (digest <> known_digest)
+        )
     in
-
-    let module_of_entry entry =
-      let (
-        id,
-        resolved_dependencies,
-        state,
-        es_module,
-        content
-      ) =
-        match entry with
-        | { module_ = None; _ } ->
-          let id = Module.make_id relname in
-          let state = Module.Initial in
-          update filename { entry with module_ = Some { id; state; modified = None }};
-          (id, [], state, false, entry.content)
-
-        | { module_ = Some {id; state; modified = None }; _ } ->
-          (id, [], state, false, entry.content)
-
-        | { module_ = Some {id; state; modified = Some {
-            content;
-            es_module;
-            resolved_dependencies;
-            _
-          }}; _ } ->
-          (id, resolved_dependencies, state, es_module, content)
-      in
-      { Module.
+    let location_str = Module.location_to_string location in
+    match M.get location_str !modules with
+    | None ->
+      Lwt.return_none
+    | Some {
         id;
-        filename;
         state;
-        resolved_dependencies;
         es_module;
-        workspace = Workspace.of_string content;
-        scope = FastpackUtil.Scope.empty;
-        exports = []
-      }
-    in
-    let%lwt entry, cached = get_file filename in
-    let%lwt entry, build_dependencies_cached = check_build_dependencies entry in
-    Lwt.return (module_of_entry entry, build_dependencies_cached && cached)
+        content;
+        build_dependencies;
+        resolved_dependencies } ->
+      match%lwt build_dependencies_changed  build_dependencies with
+      | true ->
+        build_dependencies
+        |> M.bindings
+        |> List.iter (fun (dep, _) -> remove_dependency dep location_str);
+        modules := M.remove location_str !modules;
+        Lwt.return_none
+      | false ->
+        Lwt.return_some { Module.
+          id;
+          location;
+          state;
+          resolved_dependencies;
+          es_module;
+          workspace = Workspace.of_string content;
+          scope = FastpackUtil.Scope.empty;
+          exports = []
+        }
   in
 
+  (* TODO: Lwt seems redundant here *)
   let modify_content (m : Module.t) content =
-    match String.sub m.filename 0 8 with
-    | "builtin:" ->
+    match m.location with
+    | Module.EmptyModule | Module.Unknown | Module.Runtime ->
       Lwt.return_unit
     | _ ->
-      let%lwt entry, _ = get_file m.filename in
-      let modified =
-        match entry.module_ with
-        | Some { modified = Some modified; _ } ->
-          { modified with
-            es_module = m.es_module;
-            content;
-            resolved_dependencies = m.resolved_dependencies
-          }
-        | Some { modified = None; _ } ->
-          { build_dependencies = M.empty;
-            es_module = m.es_module;
-            content;
-            resolved_dependencies = m.resolved_dependencies
-          }
-        | None ->
-          Error.ie "Cannot modify module before creation"
+      let location_str = Module.location_to_string m.location in
+      let build_dependencies =
+        match M.get location_str !modules with
+        | Some { build_dependencies; _} -> build_dependencies
+        | None -> M.empty
       in
-      update m.filename {
-        entry with
-        module_ = Some { id = m.id; state = m.state; modified = Some modified }
-      };
+      let module_entry = {
+        ModuleEntry.
+        id = m.id;
+        state = m.state;
+        build_dependencies;
+        resolved_dependencies = m.resolved_dependencies;
+        es_module = m.es_module;
+        content;
+      }
+      in
+      modules := M.add location_str module_entry !modules;
       Lwt.return_unit
   in
 
-  let add_build_dependencies m dependencies =
-    let update_build_dependency_map () =
-      dependencies
-      |> List.iter (fun dep -> add_build_dependency dep m.Module.filename)
-    in
+  let add_build_dependencies (m : Module.t) dependencies =
+    let location_str = Module.location_to_string m.location in
     let add_build_dependencies existing_dependencies =
       Lwt_list.fold_left_s
         (fun acc filename ->
            let%lwt {digest; _ }, _ = get_file filename in
-           add_build_dependency filename m.Module.filename;
+           add_build_dependency filename location_str;
            Lwt.return (M.add filename digest acc)
         )
         existing_dependencies
         dependencies
     in
-    let%lwt entry, _ = get_file m.Module.filename in
-    match entry with
-    | { module_ = Some { id; state; modified = Some modified; }; _ } ->
-      let%lwt build_dependencies =
-        add_build_dependencies modified.build_dependencies
-      in
-      update m.Module.filename {
-        entry with module_ = Some {
-          id;
-          state;
-          modified = Some {modified with build_dependencies}
-        }};
-      update_build_dependency_map ();
-      Lwt.return_unit
-    | { module_ = Some { id; state; modified = None }; _ } ->
-      let%lwt build_dependencies =
-        add_build_dependencies M.empty
-      in
-      update m.Module.filename {
-        entry with module_ = Some {
-          id;
-          state;
-          modified = Some {
-              es_module = false;
-              content = entry.content;
-              build_dependencies;
-              resolved_dependencies = [];
-            }
-        }};
-      update_build_dependency_map ();
-      Lwt.return_unit
-    | _ ->
-      Error.ie ("Adding build_dependencies to a non-module: " ^ m.filename)
+    match M.get location_str !modules with
+    | Some module_entry ->
+        let%lwt build_dependencies =
+          add_build_dependencies module_entry.build_dependencies
+        in
+        modules :=
+          M.add location_str { module_entry with build_dependencies} !modules;
+        Lwt.return_unit
+    | None ->
+      Error.ie ("Adding build_dependencies to a non-module: " ^ location_str)
   in
 
   let get_potentially_invalid filename =
@@ -537,7 +483,8 @@ let create cache_filename =
         ~perm:0o640
         ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
         filename
-        (fun ch -> Lwt_io.write_value ch ~flags:[] !files)
+        (fun ch ->
+           Lwt_io.write_value ch ~flags:[] { files = !files; modules = !modules })
   in
 
   Lwt.return {

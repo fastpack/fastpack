@@ -86,19 +86,35 @@ let merge_options o1 o2 =
 
 (* TODO: this function may not be needed when tests are ported to Jest *)
 let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir channel =
+  let resolver = NodeResolver.make cache preprocessor in
+  let%lwt entry_package =
+    resolver.find_package package_dir entry_filename
+  in
   let ctx = { Context.
-    entry_filename;
+    entry_location = None;
     package = Package.empty;
     package_dir;
     stack = [];
-    current_filename = entry_filename;
+    current_location = None;
     mode;
     target;
-    resolver = NodeResolver.make cache;
+    resolver;
     preprocessor;
     graph = DependencyGraph.empty ();
   }
   in
+  let%lwt entry_location, _ =
+    resolve ctx entry_package {
+      Dependency.
+      request = entry_filename;
+      requested_from_filename = package_dir;
+    }
+  in
+  let ctx = {
+    ctx with
+    entry_location = Some entry_location;
+    current_location = Some entry_location
+  } in
   pack_f cache ctx channel
 
 let find_package_root start_dir =
@@ -164,8 +180,8 @@ let prepare_and_pack cl_options start_time =
     let%lwt () = makedirs @@ FilePath.dirname output_file in
     let%lwt preprocessor =
       match options.preprocess with
-      | None -> Preprocessor.make []
-      | Some preprocess -> Preprocessor.make preprocess
+      | None -> Preprocessor.make [] package_dir
+      | Some preprocess -> Preprocessor.make preprocess package_dir
     in
     let target =
       match options.target with
@@ -241,19 +257,45 @@ let prepare_and_pack cl_options start_time =
         Error.ie "mode is not set"
     in
     let get_context current_filename =
-      let resolver = NodeResolver.make cache in
+      (* current filename should be absolute path at this point
+       * TODO: assert *)
+      let resolver = NodeResolver.make cache preprocessor in
+      let%lwt entry_package =
+        resolver.find_package package_dir entry_filename
+      in
       let%lwt package = resolver.find_package package_dir current_filename in
-      Lwt.return { Context.
-        entry_filename;
+      let ctx = {
+        Context.
+        entry_location = None;
+        current_location = None;
         package_dir;
         package;
         stack = [];
-        current_filename;
         mode;
         target;
         resolver;
         preprocessor;
         graph = DependencyGraph.empty ()
+      }
+      in
+      let%lwt entry_location, _ =
+        resolve ctx entry_package {
+          Dependency.
+          request = entry_filename;
+          requested_from_filename = package_dir;
+        }
+      in
+      let%lwt current_location, _ =
+        resolve ctx package {
+          Dependency.
+          request = current_filename;
+          requested_from_filename = package_dir;
+        }
+      in
+      Lwt.return {
+        ctx with
+        entry_location = Some entry_location;
+        current_location = Some current_location;
       }
     in
     let pack_postprocess cache ctx ch =

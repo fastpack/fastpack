@@ -211,7 +211,6 @@ const $e__dep$$_$$esm$$_$$named__b = 2;
 $n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;
 $n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;
 $n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true;
-module.exports = $n__dep$$_$$esm$$_$$named.exports;
 
 return $n__dep$$_$$esm$$_$$named.exports;
 }
@@ -252,8 +251,6 @@ const $e__dep$$_$$esm$$_$$named__b = 2;
 $n__dep$$_$$esm$$_$$named.exports.a = $e__dep$$_$$esm$$_$$named__a;
 $n__dep$$_$$esm$$_$$named.exports.b = $e__dep$$_$$esm$$_$$named__b;
 $n__dep$$_$$esm$$_$$named.exports.__esModule = $n__dep$$_$$esm$$_$$named.exports.__esModule || true;
-export {$e__dep$$_$$esm$$_$$named__a as a};
-export {$e__dep$$_$$esm$$_$$named__b as b};
 
 return $n__dep$$_$$esm$$_$$named.exports;
 }

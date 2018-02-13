@@ -4,7 +4,7 @@ module Scope = FastpackUtil.Scope
 type reason =
   | CannotReadModule of string
   | CannotLeavePackageDir of string
-  | CannotResolveModules of Dependency.t list
+  | CannotResolveModule of (string * Dependency.t)
   | CannotParseFile of string * ((Loc.t * FlowParser.Parse_error.t) list)
   | NotImplemented of Loc.t option * string
   | CannotRenameModuleBinding of Loc.t * string * Dependency.t
@@ -27,19 +27,20 @@ let to_string package_dir error =
       "%s is out of the working directory\n"
       filename
 
-  | CannotResolveModules modules ->
-    "Cannot resolve modules:\n\t"
-    ^ (String.concat "\n\t"
-       @@ List.map (Dependency.to_string ~dir:(Some package_dir)) modules)
-    ^ "\n"
+  | CannotResolveModule (path, dep) ->
+    let dep_str = Dependency.to_string ~dir:(Some package_dir) dep in
+    Printf.sprintf
+      "Cannot resolve module:\n\t%s\nWhile processing dependency request:\n\t%s\n"
+      path
+      dep_str
 
-  | CannotParseFile (filename, errors) ->
+  | CannotParseFile (location_str, errors) ->
     let format_error (loc, error) =
       loc_to_string loc ^ " " ^ FlowParser.Parse_error.PP.error error
     in
     Printf.sprintf
       "Parse Error\nFile: %s\n\t"
-      (String.replace ~sub:(package_dir ^ "/") ~by:"" filename)
+      (String.replace ~sub:(package_dir ^ "/") ~by:"" location_str)
     ^ String.concat "\n\t" (List.map format_error errors)
     ^ "\n"
 

@@ -1,4 +1,5 @@
 module M = Map.Make(String)
+module FS = FastpackUtil.FS
 
 exception Error of string
 
@@ -11,30 +12,52 @@ type processor = Builtin | Node of string
 type config = {
   pattern_s : string;
   pattern : Re.re;
-  processor : processor;
-  options : option_value M.t;
+  processors : string list;
 }
 
 type process_f = string -> string * string list
 
 type t = {
-  process : string -> string -> (string * string list) Lwt.t;
+  get_processors : string -> string list;
+  process : Module.location -> string option -> (string * string list) Lwt.t;
   configs : config list;
   finalize : unit -> unit;
 }
 
-let config_re = Re_posix.compile_pat "^([^:]+)(:([a-zA-Z_][^?]+)(\\?(.*))?)?$"
+let debug = Logs.debug
 
 let of_string s =
-  let pattern_s, processor, options =
-    match Re.exec_opt config_re @@ String.trim s with
-    | None ->
-      raise (Failure "Incorrect config")
-    | Some groups ->
-      let parts = Re.Group.all groups in
-      String.trim parts.(1), String.trim parts.(3), String.trim parts.(5)
+  let pattern_s, processors =
+    match String.(s |> trim |> split_on_char ':') with
+    | [] | [""] ->
+      raise (Failure "Empty config")
+    | pattern_s :: [] | pattern_s :: "" :: [] ->
+      pattern_s, ["builtin"]
+    | pattern_s :: rest ->
+      let processors =
+        String.(rest |> concat ":" |> split_on_char '!')
+        |> List.filter_map
+          (fun s ->
+             let s = String.trim s in
+             match s = "" with
+             | true -> None
+             | false ->
+               match String.split_on_char '?' s  with
+               | [] ->
+                 raise (Failure "Empty processor")
+               | processor :: [] ->
+                 Some processor
+               | "builtin" :: "" :: [] ->
+                 Some "builtin"
+               | processor :: opts :: [] when processor <> "builtin" ->
+                 Some (processor ^ "?" ^ opts)
+               | _ ->
+                 raise (Failure "Incorrect preprocessor config")
+
+          )
+      in
+      pattern_s, processors
   in
-  let processor = if processor = "" then "builtin" else processor in
   let pattern =
     try
       Re_posix.compile_pat pattern_s
@@ -42,62 +65,14 @@ let of_string s =
     | Re_posix.Parse_error ->
       raise (Failure "Pattern regexp parse error. Use POSIX syntax")
   in
-  if processor = "builtin" && options <> ""
-  then raise (Failure "'builtin' processor does not expect any options (yet!)");
-  let processor =
-    match processor with
-    | "builtin" -> Builtin
-    | _ -> Node processor
-  in
-  let option_value_of_string s =
-    match s with
-    | "" | "true" -> Boolean true
-    | "false" -> Boolean false
-    | _ ->
-      try
-        Number (float_of_string s)
-      with
-      | Failure _ ->
-        String s
-  in
-  let options =
-    options
-    |> String.split_on_char '&'
-    |> List.filter_map
-      (fun s -> if s = "" then None else Some (String.split_on_char '=' s))
-    |> List.map
-      (fun parts ->
-         List.hd parts,
-         List.tl parts |> String.concat "" |> option_value_of_string
-      )
-    |> List.fold_left (fun opts (k, v) -> M.add k v opts) M.empty
-  in
-  { pattern_s; pattern; processor; options }
+  { pattern_s; pattern; processors }
 
-let to_string { pattern_s; processor; options; _ } =
-  let option_value_to_string opt =
-    match opt with
-    | Boolean true -> "true"
-    | Boolean false -> "false"
-    | Number n -> string_of_float n
-    | String s -> s
-  in
-  let options =
-    options
-    |> M.bindings
-    |> List.map (fun (k, v) -> k ^ "=" ^ option_value_to_string v)
-    |> String.concat ""
-  in
-  let processor =
-    match processor with
-    | Builtin -> "builtin"
-    | Node name -> name
-  in
+
+let to_string { pattern_s; processors; _ } =
   Printf.sprintf
-    "%s:%s%s"
+    "%s:%s"
     pattern_s
-    processor
-    (if options <> "" then "?" ^ options else "")
+    (String.concat "!" processors)
 
 
 let all_transpilers = FastpackTranspiler.[
@@ -108,6 +83,10 @@ let all_transpilers = FastpackTranspiler.[
 ]
 
 let builtin source =
+  match source with
+  | None ->
+    Lwt.fail (Error "Builtin transpiler always expects source")
+  | Some source ->
     try
       Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
     with
@@ -117,12 +96,14 @@ let builtin source =
       Lwt.fail exn
 
 let empty = {
-    process = (fun _ s -> Lwt.return (s, []));
+    get_processors = (fun _ -> []);
+    process = (fun _ s -> Lwt.return (CCOpt.get_or ~default:"" s, []));
     configs = [];
     finalize = (fun () -> ())
   }
 
 let transpile_all = {
+    get_processors = (fun _ -> ["builtin"]);
     process = (fun _ s -> builtin s);
     configs = [];
     finalize = (fun () -> ())
@@ -165,27 +146,16 @@ module NodeServer = struct
     processes := [process];
     Lwt.return_unit
 
-  let process loader options source =
+  let process loaders filename source =
     let%lwt () =
       if (List.length !processes) = 0 then start () else Lwt.return_unit;
     in
-    let options =
-      options
-      |> M.bindings
-      |> List.map
-        (fun (key, value) ->
-           key,
-           match value with
-           | Boolean value -> `Bool value
-           | Number value -> `Float value
-           | String value -> `String value
-        )
-    in
+    let to_json_string s = `String s in
     let message =
       `Assoc [
-        ("loader", `String loader);
-        ("params", `Assoc options);
-        ("source", `String source)
+        ("loaders", `List (List.map to_json_string loaders));
+        ("filename", CCOpt.map_or ~default:(`Null) to_json_string filename);
+        ("source", CCOpt.map_or ~default:(`Null) to_json_string source)
       ]
     in
     let%lwt () = Lwt_io.write !fp_out_ch (Yojson.to_string message ^ "\n") in
@@ -208,7 +178,7 @@ module NodeServer = struct
 
 end
 
-let make configs =
+let make configs base_dir =
 
   let processors = ref M.empty in
 
@@ -216,36 +186,75 @@ let make configs =
     match M.get filename !processors with
     | Some processors -> processors
     | None ->
+      let relname = FS.relative_path base_dir filename in
       let p =
         configs
-        |> List.filter_map
-          (fun { pattern; processor; options; _ } ->
-            match Re.exec_opt pattern filename with
-            | None -> None
-            | Some _ ->
-              match processor with
-              | Builtin -> Some builtin
-              | Node loader -> Some (NodeServer.process loader options)
+        |> List.fold_left
+          (fun acc { pattern; processors; _ } ->
+            match Re.exec_opt pattern relname with
+            | None -> acc
+            | Some _ -> acc @ processors
           )
+          []
+        |> List.rev
       in
       processors := M.add filename p !processors;
       p
   in
 
-  let process filename source =
-    let%lwt source, build_dependencies =
-      Lwt_list.fold_left_s
-        (fun (source, dependencies) processor ->
-           let%lwt (source, new_dependencies) = processor source in
-           Lwt.return (source, dependencies @ new_dependencies)
-        )
-        (source, [])
-        (get_processors filename)
-    in
-    Lwt.return (source, build_dependencies)
+  let process location source =
+    match location with
+    | Module.Unknown ->
+      Error.ie "Cannot process unknown module"
+    | Module.EmptyModule | Module.Runtime ->
+      begin
+        match source with
+        | None ->
+          Error.ie "Unexpeceted absence of source for builtin / empty module"
+        | Some source ->
+          Lwt.return (source, [])
+      end
+    | Module.File { filename; preprocessors } ->
+      let rec make_chain preprocessors chain =
+        match preprocessors with
+        | [] -> chain
+        | _ ->
+          let loaders, rest =
+            preprocessors
+            |> List.take_drop_while (fun p -> p <> "builtin")
+          in
+          match loaders with
+          | [] ->
+            make_chain (List.tl rest) (builtin :: chain)
+          | _ ->
+            make_chain
+              rest
+              ((NodeServer.process loaders filename) :: chain)
+      in
+      let preprocessors =
+        List.map
+          (fun (p, opt) -> p ^ (if opt <> "" then "?" ^ opt else ""))
+          preprocessors
+      in
+      let%lwt source, deps =
+        Lwt_list.fold_left_s
+          (fun (source, deps) process ->
+            let%lwt source, more_deps = process source in
+            Lwt.return (Some source, deps @ more_deps)
+          )
+          (source, [])
+          (make_chain preprocessors [])
+      in
+      match source with
+      | None ->
+        Error.ie "Unexpected absence of source after processing"
+      | Some source ->
+        Lwt.return (source, deps)
   in
 
-  Lwt.return { process; configs; finalize = NodeServer.finalize }
-
-
-
+  Lwt.return {
+    get_processors;
+    process;
+    configs;
+    finalize = NodeServer.finalize
+  }

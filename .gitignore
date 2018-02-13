@@ -6,8 +6,6 @@ _esyinstall
 yarn-error.log
 .merlin
 tags
-examples/*/fpack-test/*.js
-examples/*/.cache
 .DS_Store
 fpack-test
 *.corrected
