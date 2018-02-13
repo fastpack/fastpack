@@ -20,10 +20,25 @@ test: build-dev
 	@_build/default/bin/fpack_test.exe $(FPACK_TEST_PATH)
 
 setup-jest:
-	cd test && yarn
+	cd test && yarn \
+	&& for TEST in `ls`; \
+	   do [ -d "$$TEST" ] \
+	      && [ -f "$$TEST/package.json" ] \
+		  && echo "Test: $$TEST" \
+		  && cd "$$TEST" \
+		  && yarn \
+		  && cd ..; \
+		done \
+	|| echo "Setup tests: done"
 
 clean-jest:
-	cd test && rm -rf node_modules
+	cd test && rm -rf node_modules \
+	&& for TEST in `ls`; \
+	   do [ -d "$$TEST" ] \
+	      && [ -d "$$TEST/node_modules" ] \
+		  && rm -rf "$$TEST/node_modules"; \
+		done \
+	|| echo "Cleanup tests: done"
 
 test-jest: build-dev
 	cd test && yarn jest
@@ -35,38 +50,8 @@ fetch:
 	git submodule init
 	git submodule update
 
-# EXAMPLES
+bootstrap: fetch install build setup-jest
 
-## Simple CRA-based application
-
-build-react-app-simple:
-	@cd examples/react-app-simple && yarn install
-
-test-react-app-simple: build-dev
-	@scripts/test-example.sh \
-		react-app-simple \
-		src/index.js \
-		--transpile '^src'
-
-
-## Tranpiling Test
-
-test-transpile: build-dev
-	@scripts/test-example.sh \
-		transpile \
-		src/index.js \
-		-d --transpile '^src'
-
-
-build-examples: build-react-app-simple
-	@echo "Examples built."
-
-clean-examples:
-	@rm -rf examples/react-app-simple/node_modules
-
-
-bootstrap: fetch install build build-examples setup-jest
-
-clean: clean-examples clean-jest
+clean: clean-jest
 	@rm -rf _build/ node_modules/
 
