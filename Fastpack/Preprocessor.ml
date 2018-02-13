@@ -196,6 +196,7 @@ let make configs base_dir =
             | Some _ -> acc @ processors
           )
           []
+        |> List.rev
       in
       processors := M.add filename p !processors;
       p

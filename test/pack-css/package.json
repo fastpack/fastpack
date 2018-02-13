@@ -1,0 +1,16 @@
+{
+  "name": "pack-css",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "loader-runner": "^2.3.0",
+    "css-loader": "^0.28.9",
+    "style-loader": "^0.20.1"
+  },
+  "author": "",
+  "license": "ISC"
+}

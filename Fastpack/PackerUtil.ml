@@ -374,7 +374,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
 let is_ignored_request request =
   List.exists
     (fun e -> String.suffix ~suf:("." ^ e) request)
-    ["css"; "less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg";
+    ["less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg";
      "gif"; "ttf"]
 
 let is_json (location : Module.location) =
