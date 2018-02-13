@@ -1,9 +1,9 @@
-const { fpack } = require('../helpers.js');
+const { fpack } = require("../helpers.js");
 
 process.chdir(__dirname);
 
-test('transpile flow inside jsx', async () => {
+test("transpile flow inside jsx", async () => {
   expect(
-    (await fpack({ input: 'index-1.js', preprocess: "^.*" })).bundle
+    (await fpack(["index-1.js", "--preprocess=^.*"])).bundle
   ).toMatchSnapshot();
 });

@@ -16,50 +16,40 @@ const removeDir = async dir => {
 const readFile = promisify(fs.readFile);
 const makeTempDir = promisify(fs.mkdtemp);
 
-const getArgs = (options = {}) => {
-  const args = [];
-  if (typeof options.input === "string") {
-    args.push(options.input);
-  }
-  if (typeof options.output === "string") {
-    args.push(`--output=${options.output}`);
-  }
-  if (options.development === true) {
-    args.push("--development");
-  }
-  if (typeof options.target === "string") {
-    args.push(`--target=${options.target}`);
-  }
-  if (options.noCache === true) {
-    args.push("--no-cache");
-  }
-  if (options.debug === true) {
-    args.push("--debug");
-  }
-  if (typeof options.preprocess === "string") {
-    args.push(`--preprocess=${options.preprocess}`);
-  }
-  if (typeof options.postprocess === "string") {
-    args.push(`--postprocess=${options.postprocess}`);
-  }
-  if (typeof options.stats === "string") {
-    args.push(`--stats=${options.stats}`);
-  }
-  return args;
+
+const validateOptions = options => {
+  let ret = { ...options };
+  ret.keepCache = !!ret.keepCache;
+
+  const allowedOptions = [
+    "keepCache" // do not remove cache before the execution
+  ];
+  const allowedOptionsSet = new Set(allowedOptions);
+  const allowedOptionsStr = allowedOptions.join(", ");
+
+  Object.keys(ret).forEach(option => {
+    if (!allowedOptionsSet.has(option)) {
+      throw `"${option}" is not expected. Use one of: ${allowedOptionsStr}`;
+    }
+  });
+  return ret;
 };
 
-const fpack = async options => {
+const fpack = async (args, options) => {
+  const { keepCache } = validateOptions(options || {});
+
   const bundleDir = await makeTempDir(path.join(os.tmpdir(), "fpack-"));
   const bundleFile = path.join(bundleDir, "index.js");
-  await removeDir(path.join(__dirname, ".cache"));
-  await removeDir(path.join(__dirname, "node_modules", ".cache"));
+
+  if (!keepCache) {
+    await removeDir(path.join(__dirname, ".cache"));
+    await removeDir(path.join(__dirname, "node_modules", ".cache"));
+  }
 
   const proc = child_process.spawn(
     fpackFile,
-    getArgs({ ...options, output: bundleDir }),
-    {
-      cwd: process.cwd()
-    }
+    [...args, `--output=${bundleDir}`],
+    { cwd: process.cwd() }
   );
 
   let out = [];
@@ -75,7 +65,7 @@ const fpack = async options => {
 
   return new Promise((resolve, reject) => {
     proc.on("close", async code => {
-      let bundle = null;
+      let bundle = "";
       try {
         bundle = await readFile(bundleFile, "utf8");
       } catch (e) {
