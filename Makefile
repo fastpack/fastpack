@@ -46,6 +46,9 @@ test-jest: build-dev
 train-jest: build-dev
 	cd test && yarn jest --updateSnapshot
 
+test-server: test-jest
+	cd test && node server.js
+
 fetch:
 	git submodule init
 	git submodule update

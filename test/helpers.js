@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { promisify } = require("util");
 const child_process = require("child_process");
+
 const fpackFile = path.join(
   __dirname,
   "..",
@@ -15,14 +16,22 @@ const removeDir = async dir => {
 };
 const readFile = promisify(fs.readFile);
 const makeTempDir = promisify(fs.mkdtemp);
-
+const move = promisify(fs.rename);
 
 const validateOptions = options => {
   let ret = { ...options };
   ret.keepCache = !!ret.keepCache;
+  ret.copyOutputTo = ret.copyOutputTo || null;
+
+  if (typeof ret.copyOutputTo !== "string" && ret.copyOutputTo !== null) {
+    throw `"copyOutputTo" is expected to be string or null.` +
+      `Got ${typeof copyOutputTo}`;
+  }
 
   const allowedOptions = [
-    "keepCache" // do not remove cache before the execution
+    "keepCache", // Boolean. Do not remove cache before the execution
+    "copyOutputTo" // String | null.
+    // Copy output directory to the specified location
   ];
   const allowedOptionsSet = new Set(allowedOptions);
   const allowedOptionsStr = allowedOptions.join(", ");
@@ -36,7 +45,7 @@ const validateOptions = options => {
 };
 
 const fpack = async (args, options) => {
-  const { keepCache } = validateOptions(options || {});
+  const { keepCache, copyOutputTo } = validateOptions(options || {});
 
   const bundleDir = await makeTempDir(path.join(os.tmpdir(), "fpack-"));
   const bundleFile = path.join(bundleDir, "index.js");
@@ -68,6 +77,9 @@ const fpack = async (args, options) => {
       let bundle = "";
       try {
         bundle = await readFile(bundleFile, "utf8");
+        if (copyOutputTo) {
+          await move(bundleDir, copyOutputTo);
+        }
       } catch (e) {
       } finally {
         await removeDir(bundleDir);

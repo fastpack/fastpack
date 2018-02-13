@@ -3,11 +3,10 @@ const { fpack } = require("../helpers.js");
 process.chdir(__dirname);
 
 test("css-loader & style-loader in development mode", async () => {
-  const { bundle } = await fpack([
-    "index.js",
-    "--dev",
-    "--preprocess=css$:style-loader!css-loader"
-  ]);
+  const { bundle } = await fpack(
+    ["index.js", "--dev", "--preprocess=css$:style-loader!css-loader"],
+    { copyOutputTo: "build-dev" }
+  );
   expect(bundle).toMatchSnapshot();
 
   // same configuration, just another form
@@ -21,10 +20,10 @@ test("css-loader & style-loader in development mode", async () => {
 });
 
 test("css-loader & style-loader in production mode", async () => {
-  const { bundle } = await fpack([
-    "index.js",
-    "--preprocess=css$:style-loader!css-loader"
-  ]);
+  const { bundle } = await fpack(
+    ["index.js", "--preprocess=css$:style-loader!css-loader"],
+    { copyOutputTo: "build-prod" }
+  );
   expect(bundle).toMatchSnapshot();
 
   const { bundle: bundle1 } = await fpack([

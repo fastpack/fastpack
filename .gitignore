@@ -8,5 +8,6 @@ yarn-error.log
 tags
 .DS_Store
 fpack-test
+test/**/build*
 *.corrected
 *.tmp_corrected

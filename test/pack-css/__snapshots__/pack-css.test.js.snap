@@ -658,9 +658,11 @@ if(module.hot) {
 	module.hot.dispose(function() { update(); });
 }},
 \\"index\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
-
 const css = __fastpack_require__(/* \\"./test.css\\" */ \\"NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css\\");
 console.log(css);
+
+document.body.innerHTML =
+  'this text is red<div class=\\"x\\">this text is blue</div>';
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
@@ -1294,8 +1296,10 @@ if($n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.
 
 let $n__index = { exports: {}};
 
-
 console.log($n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.exports);
+
+document.body.innerHTML =
+  'this text is red<div class=\\"x\\">this text is blue</div>';
 $n__index.exports.__esModule = $n__index.exports.__esModule || true;
 })()
 "
