@@ -1,5 +1,5 @@
-const path = require('path');
-module.paths.unshift(path.join(process.cwd(), 'node_modules'));
+const path = require("path");
+module.paths.unshift(path.join(process.cwd(), "node_modules"));
 
 function handleError(e) {
   var message = e.message || e + "";
@@ -8,34 +8,76 @@ function handleError(e) {
   return { name: name, message: message, stack: stack };
 }
 
-function load(module, params, source) {
+function extractSource(result) {
+  if (result instanceof Array) {
+    return extractSource(result[0]);
+  } else if (result instanceof Buffer) {
+    return Buffer.from(result, "utf-8");
+  } else if (typeof result === "string") {
+    return result;
+  } else {
+    return null;
+  }
+}
+
+function load(message) {
   var ret = { dependencies: [], source: null, error: null };
-
-  var loaderContext = {
-    loaders: [],
-
-    query: params || {},
-
-    addDependency(file) {
-      ret.dependencies.push(file);
-    },
-
-    callback(error, code, map) {
-      if (error) {
-        ret.error = handleError(error);
-      } else {
-        ret.source = code;
-      }
-    }
-  };
-
   try {
-    var loader = require(module);
-    loader.call(loaderContext, source);
+    var message = JSON.parse(message);
   } catch (e) {
     ret.error = handleError(e);
+    write(ret);
+    return;
   }
-  return ret;
+
+  var loaders = message.loaders || [];
+  var filename = message.filename || null;
+  var source = message.source || null;
+
+  try {
+    // TODO: mock stdout / stderr
+    var runner = require("loader-runner");
+    runner.runLoaders(
+      {
+        resource: filename,
+        loaders: loaders,
+        context: {},
+        readResource: function(path, callback) {
+          if (path === filename) {
+            callback(null, Buffer.from(source, "utf-8"));
+          } else {
+            return fs.readFile(path, callback);
+          }
+        }
+      },
+      function(err, result) {
+        // TODO: Unmock stdout / stderr
+        if (err) {
+          ret.err = handleError(err);
+        } else if (result.result instanceof Array) {
+          ret.source = extractSource(result.result);
+          if (ret.source !== null) {
+            ret.dependencies = [].concat(
+              result.fileDependencies || [],
+              result.contextDependencies || []
+            );
+          } else {
+            ret.err = {
+              name: "UnexpectedResult",
+              message:
+                "Cannot extract result from loader. "
+                + "Expected results: Array of String, Buffer, String"
+            };
+          }
+        }
+        write(ret);
+      }
+    );
+  } catch (e) {
+    // TODO: Unmock stdout/stderr here
+    ret.error = handleError(e);
+    write(ret);
+  }
 }
 
 var stdin = process.stdin,
@@ -57,28 +99,7 @@ stdin.on("data", function(data) {
   } else {
     var message = rest + data.slice(0, nl);
     rest = data.slice(nl + 1);
-    try {
-      message = JSON.parse(message);
-      var loader = message.loader;
-      if (!loader)
-        throw { name: "ErrorNoLoader", message: '"loader" is not specified' };
-      var params = message.params || {};
-      if (!(params instanceof Object) || params instanceof Array)
-        throw {
-          name: "ErrorInvalidParams",
-          message: '"params" should be plain object'
-        };
-      var source = message.source;
-      if (typeof source !== "string")
-        throw {
-          name: "ErrorInvalidSource",
-          message: '"source" expected to be string'
-        };
-      var result = load(loader, params, source);
-      write(result);
-    } catch (e) {
-      write({ error: handleError(e), source: null, dependencies: [] });
-    }
+    load(message);
   }
 });
 
