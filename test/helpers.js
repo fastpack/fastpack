@@ -95,6 +95,19 @@ const fpack = async (args, options) => {
   });
 };
 
+const expectOK = async (args, options) => {
+  const data = await fpack(args, options);
+  expect(data.code).toEqual(0);
+  return data;
+};
+
+const expectError = async (args, options) => {
+  const data = await fpack(args, options);
+  expect(data.code).not.toEqual(0);
+  return data;
+};
+
 module.exports = {
-  fpack
+  expectOK,
+  expectError
 };

@@ -1,13 +1,13 @@
-const { fpack } = require("../helpers.js");
+const { expectOK } = require("../helpers.js");
 
 process.chdir(__dirname);
 
 test("--stats=json add modulesPaths in prod", async () => {
-  const { stdout } = await fpack(["index.js", "--stats=json"]);
+  const { stdout } = await expectOK(["index.js", "--stats=json"]);
   expect(JSON.parse(stdout)).toMatchSnapshot();
 });
 
 test("--stats=json add modulesPaths in dev", async () => {
-  const { stdout } = await fpack(["index.js", "--dev", "--stats=json"]);
+  const { stdout } = await expectOK(["index.js", "--dev", "--stats=json"]);
   expect(JSON.parse(stdout)).toMatchSnapshot();
 });
