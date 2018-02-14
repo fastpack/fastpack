@@ -4,7 +4,7 @@ process.chdir(__dirname);
 
 test("css-loader & style-loader in development mode", async () => {
   const { bundle } = await fpack(
-    ["index.js", "--dev", "--preprocess=css$:style-loader!css-loader"],
+    ["index.js", "--dev", "--preprocess=\\.css$:style-loader!css-loader"],
     { copyOutputTo: "build-dev" }
   );
   expect(bundle).toMatchSnapshot();
@@ -13,23 +13,23 @@ test("css-loader & style-loader in development mode", async () => {
   const { bundle: bundle1 } = await fpack([
     "index.js",
     "--dev",
-    "--preprocess=css$:style-loader",
-    "--preprocess=css$:css-loader"
+    "--preprocess=\\.css$:style-loader",
+    "--preprocess=\\.css$:css-loader"
   ]);
   expect(bundle1).toEqual(bundle);
 });
 
 test("css-loader & style-loader in production mode", async () => {
   const { bundle } = await fpack(
-    ["index.js", "--preprocess=css$:style-loader!css-loader"],
+    ["index.js", "--preprocess=\\.css$:style-loader!css-loader"],
     { copyOutputTo: "build-prod" }
   );
   expect(bundle).toMatchSnapshot();
 
   const { bundle: bundle1 } = await fpack([
     "index.js",
-    "--preprocess=css$:style-loader",
-    "--preprocess=css$:css-loader"
+    "--preprocess=\\.css$:style-loader",
+    "--preprocess=\\.css$:css-loader"
   ]);
   expect(bundle1).toEqual(bundle);
 });

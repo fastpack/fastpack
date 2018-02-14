@@ -35,13 +35,21 @@ function load(message) {
   var source = message.source || null;
 
   try {
-    // TODO: mock stdout / stderr
     var runner = require("loader-runner");
     runner.runLoaders(
       {
         resource: filename,
         loaders: loaders,
-        context: {},
+        context: {
+          _compiler: {
+            plugin: function() {}
+          },
+          _module: {
+            errors: [],
+            meta: {}
+          },
+          options: {}
+        },
         readResource: function(path, callback) {
           if (path === filename) {
             callback(null, Buffer.from(source, "utf-8"));
@@ -50,10 +58,9 @@ function load(message) {
           }
         }
       },
-      function(err, result) {
-        // TODO: Unmock stdout / stderr
-        if (err) {
-          ret.err = handleError(err);
+      function(error, result) {
+        if (error) {
+          ret.error = handleError(error);
         } else if (result.result instanceof Array) {
           ret.source = extractSource(result.result);
           if (ret.source !== null) {
@@ -62,7 +69,7 @@ function load(message) {
               result.contextDependencies || []
             );
           } else {
-            ret.err = {
+            ret.error = {
               name: "UnexpectedResult",
               message:
                 "Cannot extract result from loader. "
@@ -74,7 +81,6 @@ function load(message) {
       }
     );
   } catch (e) {
-    // TODO: Unmock stdout/stderr here
     ret.error = handleError(e);
     write(ret);
   }
@@ -84,9 +90,12 @@ var stdin = process.stdin,
   stdout = process.stdout,
   rest = "";
 
+var writeOrig = process.stdout.write.bind(process.stdout);
+process.stdout.write = function() {};
+process.stderr.write = function() {};
 function write(obj) {
   var message = JSON.stringify(obj);
-  stdout.write(message + "\n");
+  writeOrig(message + "\n");
 }
 
 stdin.resume();

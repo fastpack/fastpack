@@ -1,0 +1,11 @@
+{
+  "name": "pack-ts",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "devDependencies": {
+    "awesome-typescript-loader": "^3.4.1",
+    "loader-runner": "^2.3.0",
+    "ts-loader": "^3.0.3",
+    "typescript": "^2.3.4"
+  }
+}

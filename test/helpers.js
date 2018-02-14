@@ -78,6 +78,7 @@ const fpack = async (args, options) => {
       try {
         bundle = await readFile(bundleFile, "utf8");
         if (copyOutputTo) {
+          await removeDir(copyOutputTo);
           await move(bundleDir, copyOutputTo);
         }
       } catch (e) {
