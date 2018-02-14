@@ -170,8 +170,12 @@ module NodeServer = struct
       |> List.filter_map (fun item -> item)
     in
     match source with
-    | None -> failwith "node error received"
-    | Some source -> Lwt.return (source, dependencies)
+    | None ->
+      let error = member "error" data |> member "message" |> to_string in
+      failwith ("node error received: " ^ error)
+    | Some source ->
+      debug (fun x -> x "SOURCE: %s" source);
+      Lwt.return (source, dependencies)
 
   let finalize () =
     List.iter (fun p -> p#terminate) !processes

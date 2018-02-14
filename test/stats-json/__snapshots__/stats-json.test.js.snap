@@ -13,6 +13,8 @@ Object {
 exports[`--stats=json add modulesPaths in prod 1`] = `
 Object {
   "modulesPaths": Array [
+    "/.../dep1.js",
+    "/.../dep2.js",
     "/.../index.js",
   ],
 }

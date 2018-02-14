@@ -10,12 +10,13 @@ let abs_path dir filename =
   FilePath.reduce ~no_symlink:true @@ FilePath.make_absolute dir filename
 
 let relative_path dir filename =
-    String.(
-      sub
-        filename
-        (length dir + 1)
-        (length filename - length dir - 1)
-    )
+  let relative = FilePath.make_relative dir filename in
+  if relative = ""
+  then filename
+  else
+    match String.get relative 0 with
+    | '.' -> filename (* no single root *)
+    | _ -> relative
 
 let open_process cmd =
   (* TODO: handle Unix_error *)

@@ -755,18 +755,18 @@ function $i__NM$$css$$_$$loader$lib$css$$_$$base__toComment(sourceMap) {
 }
 $n__NM$$css$$_$$loader$lib$css$$_$$base.exports.__esModule = $n__NM$$css$$_$$loader$lib$css$$_$$base.exports.__esModule || false;
 
-/* NM$$css$$_$$loader$index$$B$$testDOT$$css */
+/* NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css */
 
-let $n__NM$$css$$_$$loader$index$$B$$testDOT$$css = { exports: {}};
-exports = $n__NM$$css$$_$$loader$index$$B$$testDOT$$css.exports = ($n__NM$$css$$_$$loader$lib$css$$_$$base.exports)(false);
+let $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css = { exports: {}};
+exports = $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports = ($n__NM$$css$$_$$loader$lib$css$$_$$base.exports)(false);
 // imports
 
 
 // module
-$n__NM$$css$$_$$loader$index$$B$$testDOT$$css.exports.push([$n__NM$$css$$_$$loader$index$$B$$testDOT$$css.id, \\"body { color: red; }\\\\n.x { color: blue; }\\\\n\\", \\"\\"]);
+$n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.push([$n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.id, \\"body { color: red; }\\\\n.x { color: blue; }\\\\n\\", \\"\\"]);
 
 // exports
-$n__NM$$css$$_$$loader$index$$B$$testDOT$$css.exports.__esModule = $n__NM$$css$$_$$loader$index$$B$$testDOT$$css.exports.__esModule || false;
+$n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule = $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule || false;
 
 /* NM$$style$$_$$loader$lib$urls */
 
@@ -1243,33 +1243,33 @@ function $i__NM$$style$$_$$loader$lib$addStyles__updateLink (link, options, obj)
 }
 $n__NM$$style$$_$$loader$lib$addStyles.exports.__esModule = $n__NM$$style$$_$$loader$lib$addStyles.exports.__esModule || false;
 
-/* NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css */
+/* NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css */
 
-let $n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css = { exports: {}};
+let $n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css = { exports: {}};
 
-var $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__content = ($n__NM$$css$$_$$loader$index$$B$$testDOT$$css.exports);
+var $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content = ($n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports);
 
-if(typeof $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__content === 'string') $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__content = [[$n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.id, $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__content, '']];
+if(typeof $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content === 'string') $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content = [[$n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.id, $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content, '']];
 
-var $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__transform;
-var $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__insertInto;
+var $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__transform;
+var $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__insertInto;
 
 
 
-var $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__options = {\\"hmr\\":true}
+var $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__options = {\\"hmr\\":true}
 
-$i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__options.transform = $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__transform
-$i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__options.insertInto = undefined;
+$i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__options.transform = $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__transform
+$i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__options.insertInto = undefined;
 
-var $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__update = ($n__NM$$style$$_$$loader$lib$addStyles.exports)($i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__content, $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__options);
+var $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__update = ($n__NM$$style$$_$$loader$lib$addStyles.exports)($i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content, $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__options);
 
-if($i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__content.locals) $n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.exports = $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__content.locals;
+if($i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content.locals) $n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports = $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content.locals;
 
-if($n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.hot) {
-	$n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.hot.accept(\\"!!./node_modules/css-loader/index.js!./test.css\\", function() {
-		var newContent = ($n__NM$$css$$_$$loader$index$$B$$testDOT$$css.exports);
+if($n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.hot) {
+	$n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.hot.accept(\\"!!./node_modules/css-loader/index.js!./test.css\\", function() {
+		var newContent = ($n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports);
 
-		if(typeof newContent === 'string') newContent = [[$n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.id, newContent, '']];
+		if(typeof newContent === 'string') newContent = [[$n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.id, newContent, '']];
 
 		var locals = (function(a, b) {
 			var key, idx = 0;
@@ -1282,21 +1282,21 @@ if($n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.
 			for(key in b) idx--;
 
 			return idx === 0;
-		}($i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__content.locals, newContent.locals));
+		}($i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content.locals, newContent.locals));
 
 		if(!locals) throw new Error('Aborting CSS HMR due to changed css-modules locals.');
 
-		$i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__update(newContent);
+		$i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__update(newContent);
 	});
 
-	$n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.hot.dispose(function() { $i__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css__update(); });
-}$n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.exports.__esModule = $n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.exports.__esModule || false;
+	$n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.hot.dispose(function() { $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__update(); });
+}$n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule = $n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule || false;
 
 /* index */
 
 let $n__index = { exports: {}};
 
-console.log($n__NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css.exports);
+console.log($n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports);
 
 document.body.innerHTML =
   'this text is red<div class=\\"x\\">this text is blue</div>';

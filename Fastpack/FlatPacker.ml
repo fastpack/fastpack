@@ -525,7 +525,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                 _ } ->
                 if (not @@ is_ignored_request request)
                 then begin
-                  (* let _ = add_static_dep request in *)
+                  let _ = add_static_dep request in
                   remove_loc loc;
                 end;
                 Visit.Continue visit_ctx;
