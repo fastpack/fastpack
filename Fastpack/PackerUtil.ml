@@ -371,11 +371,12 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
         cache.add_build_dependencies m (self_dependency @ build_dependencies) in
       Lwt.return m
 
-let is_ignored_request request =
-  List.exists
-    (fun e -> String.suffix ~suf:("." ^ e) request)
-    ["less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg";
-     "gif"; "ttf"]
+(* TODO: remove this as well as its usage in packers *)
+let is_ignored_request _request = false
+  (* List.exists *)
+  (*   (fun e -> String.suffix ~suf:("." ^ e) request) *)
+  (*   ["less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg"; *)
+  (*    "gif"; "ttf"] *)
 
 let is_json (location : Module.location) =
   match location with

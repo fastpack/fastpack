@@ -11,7 +11,7 @@
     }
     // Create a new module (and put it into the cache)
     var module = installedModules[moduleId] = {
-      i: moduleId,
+      id: moduleId,
       l: false,
       exports: {}
     };

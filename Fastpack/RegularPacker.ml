@@ -610,7 +610,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     }
     // Create a new module (and put it into the cache)
     var module = installedModules[moduleId] = {
-      i: moduleId,
+      id: moduleId,
       l: false,
       exports: {}
     };

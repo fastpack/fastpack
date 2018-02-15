@@ -2,7 +2,7 @@
 
 /* builtin$$COLON$$__fastpack_runtime__ */
 
-let $n__builtin$$COLON$$__fastpack_runtime__ = { exports: {}};
+let $n__builtin$$COLON$$__fastpack_runtime__ = { id: "builtin$$COLON$$__fastpack_runtime__", exports: {}};
 
 function $i__builtin$$COLON$$__fastpack_runtime____applyDecorator(decorator, proto, property, descriptor) {
   let ret = decorator(proto, property, descriptor);
@@ -60,24 +60,27 @@ $n__builtin$$COLON$$__fastpack_runtime__.exports = {
     //return classDecorators.reverse().reduce(decorator => decorator(cls), cls);
   }
 };
-$n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule = $n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule || false;
+
+try{$n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule = $n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule || false;}catch(_){}
 
 /* builtin$$COLON$$__empty_module__ */
 
-let $n__builtin$$COLON$$__empty_module__ = { exports: {}};
-$n__builtin$$COLON$$__empty_module__.exports = {};$n__builtin$$COLON$$__empty_module__.exports.__esModule = $n__builtin$$COLON$$__empty_module__.exports.__esModule || false;
+let $n__builtin$$COLON$$__empty_module__ = { id: "builtin$$COLON$$__empty_module__", exports: {}};
+$n__builtin$$COLON$$__empty_module__.exports = {};
+try{$n__builtin$$COLON$$__empty_module__.exports.__esModule = $n__builtin$$COLON$$__empty_module__.exports.__esModule || false;}catch(_){}
 
 /* builtin$$B$$esm */
 
-let $n__builtin$$B$$esm = { exports: {}};
+let $n__builtin$$B$$esm = { id: "builtin$$B$$esm", exports: {}};
 
 const $e__builtin$$B$$esm__default = $n__builtin$$COLON$$__empty_module__.exports.delimiter;
-$n__builtin$$B$$esm.exports.default = $e__builtin$$B$$esm__default;
-$n__builtin$$B$$esm.exports.__esModule = $n__builtin$$B$$esm.exports.__esModule || true;
+
+try{$n__builtin$$B$$esm.exports.default = $e__builtin$$B$$esm__default;
+$n__builtin$$B$$esm.exports.__esModule = $n__builtin$$B$$esm.exports.__esModule || true;}catch(_){}
 
 /* builtin$$B$$index */
 
-let $n__builtin$$B$$index = { exports: {}};
+let $n__builtin$$B$$index = { id: "builtin$$B$$index", exports: {}};
 const $i__builtin$$B$$index__$__fpack__ = ($n__builtin$$COLON$$__fastpack_runtime__.exports);
 const $i__builtin$$B$$index__path = ($n__builtin$$COLON$$__empty_module__.exports);
 const $i__builtin$$B$$index__module = ($n__builtin$$COLON$$__empty_module__.exports);
@@ -91,5 +94,6 @@ const $i__builtin$$B$$index__Component = props => React.createElement("div", nul
     
   }
   );
-$n__builtin$$B$$index.exports.__esModule = $n__builtin$$B$$index.exports.__esModule || false;
+
+try{$n__builtin$$B$$index.exports.__esModule = $n__builtin$$B$$index.exports.__esModule || false;}catch(_){}
 })()

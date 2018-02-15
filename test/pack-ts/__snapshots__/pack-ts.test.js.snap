@@ -14,7 +14,7 @@ exports[`ts-loader in development mode 1`] = `
     }
     // Create a new module (and put it into the cache)
     var module = installedModules[moduleId] = {
-      i: moduleId,
+      id: moduleId,
       l: false,
       exports: {}
     };
@@ -79,22 +79,24 @@ exports[`ts-loader in production mode 1`] = `
 
 /* NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts */
 
-let $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts = { exports: {}};
+let $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts = { id: \\"NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts\\", exports: {}};
 \\"use strict\\";
 function $i__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts__render() {
     document.body.innerHTML = \\"<h1> Hello World from TypeScript!</h1>\\";
 }
 $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts.exports = $i__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts__render;
-$n__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts.exports.__esModule = $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts.exports.__esModule || false;
+
+try{$n__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts.exports.__esModule = $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts.exports.__esModule || false;}catch(_){}
 
 /* NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts */
 
-let $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts = { exports: {}};
+let $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts = { id: \\"NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts\\", exports: {}};
 \\"use strict\\";
 $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts.exports.__esModule = true;
 var $i__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts__render = ($n__NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts.exports);
 $i__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts__render();
-$n__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts.exports.__esModule = $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts.exports.__esModule || true;
+
+try{$n__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts.exports.__esModule = $n__NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts.exports.__esModule || true;}catch(_){}
 })()
 "
 `;

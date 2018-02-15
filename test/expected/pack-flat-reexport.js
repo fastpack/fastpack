@@ -2,23 +2,26 @@
 
 /* b */
 
-let $n__b = { exports: {}};
+let $n__b = { id: "b", exports: {}};
 let $e__b__b = 1;
-$n__b.exports.b = $e__b__b;
-$n__b.exports.__esModule = $n__b.exports.__esModule || true;
+
+try{$n__b.exports.b = $e__b__b;
+$n__b.exports.__esModule = $n__b.exports.__esModule || true;}catch(_){}
 
 /* a */
 
-let $n__a = { exports: {}};
+let $n__a = { id: "a", exports: {}};
 
-$n__a.exports.a = $e__b__b;
-$n__a.exports.__esModule = $n__a.exports.__esModule || true;
+
+try{$n__a.exports.a = $e__b__b;
+$n__a.exports.__esModule = $n__a.exports.__esModule || true;}catch(_){}
 
 /* index */
 
-let $n__index = { exports: {}};
+let $n__index = { id: "index", exports: {}};
 
 
 console.log($e__b__b);
-$n__index.exports.__esModule = $n__index.exports.__esModule || true;
+
+try{$n__index.exports.__esModule = $n__index.exports.__esModule || true;}catch(_){}
 })()

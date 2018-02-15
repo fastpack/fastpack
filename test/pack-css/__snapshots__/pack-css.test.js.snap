@@ -14,7 +14,7 @@ exports[`css-loader & style-loader in development mode 1`] = `
     }
     // Create a new module (and put it into the cache)
     var module = installedModules[moduleId] = {
-      i: moduleId,
+      id: moduleId,
       l: false,
       exports: {}
     };
@@ -676,7 +676,7 @@ exports[`css-loader & style-loader in production mode 1`] = `
 
 /* NM$$css$$_$$loader$lib$css$$_$$base */
 
-let $n__NM$$css$$_$$loader$lib$css$$_$$base = { exports: {}};
+let $n__NM$$css$$_$$loader$lib$css$$_$$base = { id: \\"NM$$css$$_$$loader$lib$css$$_$$base\\", exports: {}};
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
@@ -753,11 +753,12 @@ function $i__NM$$css$$_$$loader$lib$css$$_$$base__toComment(sourceMap) {
 
 	return '/*# ' + data + ' */';
 }
-$n__NM$$css$$_$$loader$lib$css$$_$$base.exports.__esModule = $n__NM$$css$$_$$loader$lib$css$$_$$base.exports.__esModule || false;
+
+try{$n__NM$$css$$_$$loader$lib$css$$_$$base.exports.__esModule = $n__NM$$css$$_$$loader$lib$css$$_$$base.exports.__esModule || false;}catch(_){}
 
 /* NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css */
 
-let $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css = { exports: {}};
+let $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css = { id: \\"NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css\\", exports: {}};
 exports = $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports = ($n__NM$$css$$_$$loader$lib$css$$_$$base.exports)(false);
 // imports
 
@@ -766,11 +767,12 @@ exports = $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports = ($n__NM
 $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.push([$n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.id, \\"body { color: red; }\\\\n.x { color: blue; }\\\\n\\", \\"\\"]);
 
 // exports
-$n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule = $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule || false;
+
+try{$n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule = $n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule || false;}catch(_){}
 
 /* NM$$style$$_$$loader$lib$urls */
 
-let $n__NM$$style$$_$$loader$lib$urls = { exports: {}};
+let $n__NM$$style$$_$$loader$lib$urls = { id: \\"NM$$style$$_$$loader$lib$urls\\", exports: {}};
 
 /**
  * When source maps are enabled, \`style-loader\` uses a link element with a data-uri to
@@ -860,11 +862,12 @@ $n__NM$$style$$_$$loader$lib$urls.exports = function (css) {
 	// send back the fixed css
 	return fixedCss;
 };
-$n__NM$$style$$_$$loader$lib$urls.exports.__esModule = $n__NM$$style$$_$$loader$lib$urls.exports.__esModule || false;
+
+try{$n__NM$$style$$_$$loader$lib$urls.exports.__esModule = $n__NM$$style$$_$$loader$lib$urls.exports.__esModule || false;}catch(_){}
 
 /* NM$$style$$_$$loader$lib$addStyles */
 
-let $n__NM$$style$$_$$loader$lib$addStyles = { exports: {}};
+let $n__NM$$style$$_$$loader$lib$addStyles = { id: \\"NM$$style$$_$$loader$lib$addStyles\\", exports: {}};
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
@@ -1241,11 +1244,12 @@ function $i__NM$$style$$_$$loader$lib$addStyles__updateLink (link, options, obj)
 
 	if(oldSrc) URL.revokeObjectURL(oldSrc);
 }
-$n__NM$$style$$_$$loader$lib$addStyles.exports.__esModule = $n__NM$$style$$_$$loader$lib$addStyles.exports.__esModule || false;
+
+try{$n__NM$$style$$_$$loader$lib$addStyles.exports.__esModule = $n__NM$$style$$_$$loader$lib$addStyles.exports.__esModule || false;}catch(_){}
 
 /* NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css */
 
-let $n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css = { exports: {}};
+let $n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css = { id: \\"NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css\\", exports: {}};
 
 var $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__content = ($n__NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports);
 
@@ -1290,17 +1294,19 @@ if($n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$
 	});
 
 	$n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.hot.dispose(function() { $i__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css__update(); });
-}$n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule = $n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule || false;
+}
+try{$n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule = $n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports.__esModule || false;}catch(_){}
 
 /* index */
 
-let $n__index = { exports: {}};
+let $n__index = { id: \\"index\\", exports: {}};
 
 console.log($n__NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css.exports);
 
 document.body.innerHTML =
   'this text is red<div class=\\"x\\">this text is blue</div>';
-$n__index.exports.__esModule = $n__index.exports.__esModule || true;
+
+try{$n__index.exports.__esModule = $n__index.exports.__esModule || true;}catch(_){}
 })()
 "
 `;

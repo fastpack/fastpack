@@ -172,8 +172,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
           (* always add the namespace binding *)
           patch 0 0
-          @@ Printf.sprintf "let %s = { exports: {}};\n"
-          @@ gen_ext_namespace_binding module_id;
+          @@ Printf.sprintf "let %s = { id: \"%s\", exports: {}};\n"
+            (gen_ext_namespace_binding module_id)
+            module_id;
 
           let () =
             Scope.iter
@@ -271,7 +272,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   |> String.concat ""
                 in
                 Printf.sprintf
-                  "%s%s.exports.__esModule = %s.exports.__esModule || %s;\n"
+                  "\ntry{%s%s.exports.__esModule = %s.exports.__esModule || %s;}catch(_){}\n"
                   expr
                   namespace
                   namespace

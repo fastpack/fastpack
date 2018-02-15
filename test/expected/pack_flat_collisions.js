@@ -2,7 +2,7 @@
 
 /* a */
 
-let $n__a = { exports: {}};
+let $n__a = { id: "a", exports: {}};
 let $e__a__a1 = 1;
 let $e__a__a2 = 2;
 
@@ -46,16 +46,18 @@ try {
 catch({$w__x: $c__a__$w__x, ...$c__a__$c__y}) {
   console.log($c__a__$w__x, $c__a__$c__y);
 }
-$n__a.exports.a1 = $e__a__a1;
+
+try{$n__a.exports.a1 = $e__a__a1;
 $n__a.exports.a2 = $e__a__a2;
-$n__a.exports.__esModule = $n__a.exports.__esModule || true;
+$n__a.exports.__esModule = $n__a.exports.__esModule || true;}catch(_){}
 
 /* index */
 
-let $n__index = { exports: {}};
+let $n__index = { id: "index", exports: {}};
 
 
 console.log($n__a.exports);
 
-$n__index.exports.__esModule = $n__index.exports.__esModule || true;
+
+try{$n__index.exports.__esModule = $n__index.exports.__esModule || true;}catch(_){}
 })()
