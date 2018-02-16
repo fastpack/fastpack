@@ -19,7 +19,7 @@ const makeTempDir = promisify(fs.mkdtemp);
 const move = promisify(fs.rename);
 
 const validateOptions = options => {
-  let ret = { ...options };
+  let ret = Object.assign({}, options);
   ret.keepCache = !!ret.keepCache;
   ret.copyOutputTo = ret.copyOutputTo || null;
 
@@ -51,8 +51,8 @@ const fpack = async (args, options) => {
   const bundleFile = path.join(bundleDir, "index.js");
 
   if (!keepCache) {
-    await removeDir(path.join(__dirname, ".cache"));
-    await removeDir(path.join(__dirname, "node_modules", ".cache"));
+    await removeDir(path.join(process.cwd(), ".cache"));
+    await removeDir(path.join(process.cwd(), "node_modules", ".cache"));
   }
 
   const proc = child_process.spawn(

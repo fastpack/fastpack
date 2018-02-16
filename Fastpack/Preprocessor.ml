@@ -115,10 +115,10 @@ module NodeServer = struct
   let fp_in_ch = ref Lwt_io.zero
   let fp_out_ch = ref Lwt_io.null
 
-  let start () =
+  let start output_dir =
     let module FS = FastpackUtil.FS in
     let fpack_binary_path =
-      (* TODO: how to handle it on Windows? *)
+      (* TODO: handle on Windows? *)
       (match Sys.argv.(0).[0] with
       | '/' | '.' -> Sys.argv.(0)
       | _ -> FileUtil.which Sys.argv.(0))
@@ -137,8 +137,9 @@ module NodeServer = struct
       find_fpack_root @@ FilePath.dirname fpack_binary_path
     in
     let cmd =
-      Printf.sprintf "node %s"
-      @@ List.fold_left FilePath.concat fpack_root ["node-service"; "index.js"]
+      Printf.sprintf "node %s %s"
+        (List.fold_left FilePath.concat fpack_root ["node-service"; "index.js"])
+        output_dir
     in
     let%lwt (process, ch_in, ch_out) = FS.open_process cmd in
     fp_in_ch := ch_in;
@@ -146,9 +147,16 @@ module NodeServer = struct
     processes := [process];
     Lwt.return_unit
 
-  let process loaders filename source =
+  let process output_dir loaders filename source =
     let%lwt () =
-      if (List.length !processes) = 0 then start () else Lwt.return_unit;
+      if (List.length !processes) = 0 then start output_dir else Lwt.return_unit;
+    in
+    (* Do not pass binary data through the channel *)
+    let source =
+      match filename with
+      | None -> source
+      | Some filename ->
+        if FS.is_text_file filename then source else None
     in
     let to_json_string s = `String s in
     let message =
@@ -182,7 +190,7 @@ module NodeServer = struct
 
 end
 
-let make configs base_dir =
+let make configs base_dir output_dir =
 
   let processors = ref M.empty in
 
@@ -233,7 +241,7 @@ let make configs base_dir =
           | _ ->
             make_chain
               rest
-              ((NodeServer.process loaders filename) :: chain)
+              ((NodeServer.process output_dir loaders filename) :: chain)
       in
       let preprocessors =
         List.map

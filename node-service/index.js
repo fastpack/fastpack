@@ -1,4 +1,5 @@
-const path = require("path");
+var path = require("path");
+var fs = require("fs");
 module.paths.unshift(path.join(process.cwd(), "node_modules"));
 
 function handleError(e) {
@@ -35,6 +36,7 @@ function load(message) {
   var source = message.source || null;
 
   try {
+    var files = [];
     var runner = require("loader-runner");
     runner.runLoaders(
       {
@@ -48,10 +50,16 @@ function load(message) {
             errors: [],
             meta: {}
           },
-          options: {}
+          options: {},
+          emitFile: function(name, buffer) {
+            files.push({
+              name: name,
+              content: buffer
+            });
+          }
         },
         readResource: function(path, callback) {
-          if (path === filename) {
+          if (path === filename && source) {
             callback(null, Buffer.from(source, "utf-8"));
           } else {
             return fs.readFile(path, callback);
@@ -72,10 +80,13 @@ function load(message) {
             ret.error = {
               name: "UnexpectedResult",
               message:
-                "Cannot extract result from loader. "
-                + "Expected results: Array of String, Buffer, String"
+                "Cannot extract result from loader. " +
+                "Expected results: Array of String, Buffer, String"
             };
           }
+        }
+        for (var i = 0, l = files.length; i < l; i++) {
+          writeFile(files[i].name, files[i].content);
         }
         write(ret);
       }
@@ -86,8 +97,8 @@ function load(message) {
   }
 }
 
-var stdin = process.stdin,
-  stdout = process.stdout,
+var outputDir = process.argv[2],
+  stdin = process.stdin,
   rest = "";
 
 var writeOrig = process.stdout.write.bind(process.stdout);
@@ -96,6 +107,26 @@ process.stderr.write = function() {};
 function write(obj) {
   var message = JSON.stringify(obj);
   writeOrig(message + "\n");
+}
+
+function makeDirs(dir) {
+  if (fs.existsSync(dir)) {
+    return;
+  }
+  makeDirs(path.dirname(dir));
+  fs.mkdirSync(dir);
+}
+
+function writeFile(name, content) {
+  var absPath = path.join(outputDir, name);
+  if (absPath.substr(0, outputDir.length) !== outputDir) {
+    throw {
+      name: "FileWriteError",
+      message: "Path is out of the output directory: " + absPath
+    };
+  }
+  makeDirs(path.dirname(absPath));
+  fs.writeFileSync(absPath, content);
 }
 
 stdin.resume();

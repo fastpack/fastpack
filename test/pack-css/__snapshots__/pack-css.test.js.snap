@@ -132,7 +132,7 @@ function toComment(sourceMap) {
 	return '/*# ' + data + ' */';
 }
 },
-\\"NM$$css$$_$$loader$index$$B$$testDOT$$css\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+\\"NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
 exports = module.exports = __fastpack_require__(/* \\"./node_modules/css-loader/lib/css-base.js\\" */ \\"NM$$css$$_$$loader$lib$css$$_$$base\\")(false);
 // imports
 
@@ -611,9 +611,9 @@ function updateLink (link, options, obj) {
 	if(oldSrc) URL.revokeObjectURL(oldSrc);
 }
 },
-\\"NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+\\"NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
-var content = __fastpack_require__(/* \\"!!./node_modules/css-loader/index.js!./test.css\\" */ \\"NM$$css$$_$$loader$index$$B$$testDOT$$css\\");
+var content = __fastpack_require__(/* \\"!!./node_modules/css-loader/index.js!./test.css\\" */ \\"NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css\\");
 
 if(typeof content === 'string') content = [[module.id, content, '']];
 
@@ -633,7 +633,7 @@ if(content.locals) module.exports = content.locals;
 
 if(module.hot) {
 	module.hot.accept(\\"!!./node_modules/css-loader/index.js!./test.css\\", function() {
-		var newContent = __fastpack_require__(/* \\"!!./node_modules/css-loader/index.js!./test.css\\" */ \\"NM$$css$$_$$loader$index$$B$$testDOT$$css\\");
+		var newContent = __fastpack_require__(/* \\"!!./node_modules/css-loader/index.js!./test.css\\" */ \\"NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css\\");
 
 		if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 
@@ -658,7 +658,7 @@ if(module.hot) {
 	module.hot.dispose(function() { update(); });
 }},
 \\"index\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const css = __fastpack_require__(/* \\"./test.css\\" */ \\"NM$$style$$_$$loader$index$$B$$NM$$css$$_$$loader$index$$B$$testDOT$$css\\");
+const css = __fastpack_require__(/* \\"./test.css\\" */ \\"NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css\\");
 console.log(css);
 
 document.body.innerHTML =

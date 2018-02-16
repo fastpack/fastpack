@@ -54,3 +54,9 @@ let try_dir dir =
     | _ -> Lwt.return_none
   with Unix.Unix_error _ ->
     Lwt.return_none
+
+let pat_text_ext = Re_posix.compile_pat "\\.(js|jsx|mjs|ts|tsx|css|sass|scss|less)$"
+let is_text_file filename =
+  match Re.exec_opt pat_text_ext filename with
+  | Some _ -> true
+  | None -> false

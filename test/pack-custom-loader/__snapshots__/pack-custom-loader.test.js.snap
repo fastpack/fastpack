@@ -54,30 +54,30 @@ exports[`custom-loader in development mode 1`] = `
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
-\\"custom$$_$$loader$$B$$\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+\\"custom$$_$$loaderDOT$$js$$B$$\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 document.body.innerHTML = document.body.innerHTML
 + \\"<div>Source: \\" + \\"empty\\" + \\". Query: .</div>\\";
 module.exports = {};
   },
-\\"custom$$_$$loader$$Q$$bool=true$$B$$\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+\\"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 document.body.innerHTML = document.body.innerHTML
 + \\"<div>Source: \\" + \\"empty\\" + \\". Query: ?bool=true.</div>\\";
 module.exports = {};
   },
-\\"custom$$_$$loader$$Q$$bool=true$$B$$index\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+\\"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 document.body.innerHTML = document.body.innerHTML
 + \\"<div>Source: \\" + \\"not empty\\" + \\". Query: ?bool=true.</div>\\";
 module.exports = {};
   },
 \\"index\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
-__fastpack_require__(/* \\"./custom-loader!\\" */ \\"custom$$_$$loader$$B$$\\");
+__fastpack_require__(/* \\"./custom-loader!\\" */ \\"custom$$_$$loaderDOT$$js$$B$$\\");
 
-__fastpack_require__(/* \\"./custom-loader?bool=true!\\" */ \\"custom$$_$$loader$$Q$$bool=true$$B$$\\");
+__fastpack_require__(/* \\"./custom-loader?bool=true!\\" */ \\"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$\\");
 
-__fastpack_require__(/* \\"./custom-loader?bool=true!./index.js\\" */ \\"custom$$_$$loader$$Q$$bool=true$$B$$index\\");
+__fastpack_require__(/* \\"./custom-loader?bool=true!./index.js\\" */ \\"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index\\");
 
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
