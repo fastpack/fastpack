@@ -18,6 +18,15 @@ let debug = Logs.debug
 
 let pack (cache : Cache.t) (ctx : Context.t) channel =
 
+  let () =
+    let loc =
+      match ctx.entry_location with
+      | None -> "NONE"
+      | Some loc -> Module.location_to_string loc
+    in
+    debug (fun x -> x "HERE %s" loc)
+  in
+
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
   let%lwt () =
     if (ctx.Context.target = Target.ESM)
