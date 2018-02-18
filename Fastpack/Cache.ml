@@ -1,10 +1,3 @@
-(* if no entry exists - read what is requested
- * can be: existance, stats, file, package, module
- * if entry exists and not trusted, validate all properties which are present
- * if entry exists and trusted, but some properties are not present
- * - read only those properties *)
-
-
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
 module FS = FastpackUtil.FS
@@ -44,7 +37,7 @@ type t = {
   get_file_no_raise : string -> (entry * bool) Lwt.t;
   get_package : string -> (Package.t * bool) Lwt.t;
   get_module : Module.location -> Module.t option Lwt.t;
-  modify_content : Module.t -> string -> unit Lwt.t;
+  modify_content : Module.t -> string -> unit;
   add_build_dependencies: Module.t -> string list -> unit Lwt.t;
   get_potentially_invalid : string -> string list;
   setup_build_dependencies : StringSet.t -> unit;
@@ -120,10 +113,9 @@ let create cache_filename =
     build_dependency_map := M.add filename set !build_dependency_map;
   in
 
-  (* this is a special function required by Watcher
+  (* this is a special function required by the Watcher
    * in order to setup minimum required dependency map only for modules
    * present in the last bundle. To be called once *)
-  (* TODO: see, maybe Module.location is cleaner to use here *)
   let setup_build_dependencies locations_str =
     build_dependency_map := M.empty;
     StringSet.iter
@@ -414,7 +406,7 @@ let create cache_filename =
   let modify_content (m : Module.t) content =
     match m.location with
     | Module.EmptyModule | Module.Unknown | Module.Runtime ->
-      Lwt.return_unit
+      ()
     | _ ->
       let location_str = Module.location_to_string m.location in
       let build_dependencies =
@@ -432,8 +424,7 @@ let create cache_filename =
         content;
       }
       in
-      modules := M.add location_str module_entry !modules;
-      Lwt.return_unit
+      modules := M.add location_str module_entry !modules
   in
 
   let add_build_dependencies (m : Module.t) dependencies =

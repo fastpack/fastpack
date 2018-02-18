@@ -366,7 +366,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
         make_module (Module.make_id ctx.package_dir location) location source
       in
       let m = { m with state = Module.Preprocessed } in
-      let%lwt () = cache.modify_content m source in
+      let () = cache.modify_content m source in
       let%lwt () =
         cache.add_build_dependencies m (self_dependency @ build_dependencies) in
       Lwt.return m

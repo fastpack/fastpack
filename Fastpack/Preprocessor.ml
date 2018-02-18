@@ -3,10 +3,6 @@ module FS = FastpackUtil.FS
 
 exception Error of string
 
-type option_value = Boolean of bool
-                  | Number of float
-                  | String of string
-
 type processor = Builtin | Node of string
 
 type config = {
@@ -15,7 +11,6 @@ type config = {
   processors : string list;
 }
 
-type process_f = string -> string * string list
 
 type t = {
   get_processors : string -> string list;
@@ -180,6 +175,7 @@ module NodeServer = struct
     match source with
     | None ->
       let error = member "error" data |> member "message" |> to_string in
+      (* TODO: error reporting *)
       failwith ("node error received: " ^ error)
     | Some source ->
       debug (fun x -> x "SOURCE: %s" source);

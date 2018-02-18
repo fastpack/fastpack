@@ -685,12 +685,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         in
         let%lwt content = Workspace.write channel workspace dep_map in
         let m = { m with state = Module.Analyzed } in
-        let%lwt () =
+        let () =
           match m.location with
           | Module.File _ ->
             cache.modify_content m content
           | _ ->
-            Lwt.return_unit
+            ()
         in
         let () =
           DependencyGraph.add_module

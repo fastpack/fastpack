@@ -169,7 +169,6 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           in
 
           let program_scope, exports = Scope.of_program stmts in
-
           (* always add the namespace binding *)
           patch 0 0
           @@ Printf.sprintf "let %s = { id: \"%s\", exports: {}};\n"
