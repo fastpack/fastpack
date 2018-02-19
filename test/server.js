@@ -3,18 +3,24 @@ const path = require("path");
 const fs = require("fs");
 
 const reBuild = /^build/;
-function findBundles(dir, level = 1) {
-  return fs.readdirSync(dir).reduce((acc, file) => {
-    let absPath = path.join(dir, file);
+function findBundles() {
+  return fs.readdirSync(".").reduce((acc, file) => {
+    let absPath = path.join("./", file);
     if (file !== "node_modules" && fs.statSync(absPath).isDirectory()) {
-      let inside = level < 2 ? findBundles(absPath, level + 1) : [];
-      return [].concat(
-        acc,
-        inside,
-        reBuild.test(file) && fs.existsSync(path.join(absPath, "index.js"))
-          ? [absPath]
-          : []
-      );
+      return fs.readdirSync(absPath).reduce((acc, file) => {
+        let buildPath = path.join(absPath, file);
+        if (
+          !fs.statSync(buildPath) ||
+          file == "node_modules" ||
+          file == "src" ||
+          file.substr(0, 1) == "_" ||
+          !fs.existsSync(path.join(buildPath, "index.js"))
+        ) {
+          return acc;
+        } else {
+          return [].concat(acc, [buildPath]);
+        }
+      }, acc);
     } else {
       return acc;
     }

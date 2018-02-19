@@ -1,0 +1,7 @@
+{
+  "modulesPaths": [
+    "/.../test/stats-json/dep1.js",
+    "/.../test/stats-json/dep2.js",
+    "/.../test/stats-json/index.js"
+  ]
+}
