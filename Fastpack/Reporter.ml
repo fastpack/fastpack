@@ -39,5 +39,6 @@ let report_json _start_time { modules; _ } =
       ("modulesPaths", `List modulePaths)
     ]
     |> pretty_to_string
+    |> (fun s -> s ^ "\n")
     |> Lwt_io.write Lwt_io.stdout
 
