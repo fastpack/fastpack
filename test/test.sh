@@ -27,6 +27,7 @@ for file in `ls */*.sh | grep "$pattern"`; do
     file="$cwd/$file"
     tmp_dir=`mktemp -d -t XXXfpack`
     tmp_stdout=`mktemp -t XXXfpack-stdout`
+    tmp_stderr=`mktemp -t XXXfpack-stderr`
     test_dir=`dirname $file`
     test_name=`basename $file .sh`
     rm -rf "$test_dir/.cache"
@@ -34,11 +35,12 @@ for file in `ls */*.sh | grep "$pattern"`; do
     output_dir="$test_dir/$test_name"
     cd $test_dir
     env FPACK="../../_build/default/bin/fpack.exe --output=$tmp_dir"\
-        bash $file >$tmp_stdout 2>$tmp_stdout
+        bash $file >$tmp_stdout 2>$tmp_stderr
     result="$?"
     $sed_cmd "s-$base_dir-/...-" $tmp_stdout
+    $sed_cmd "s-$base_dir-/...-" $tmp_stderr
     if ! [ "$result" -eq "0" ]; then
-        mv $tmp_stdout "$tmp_dir/stderr.txt"
+        mv $tmp_stderr "$tmp_dir/stderr.txt"
     fi
     if [ -e $output_dir ] && ! [ "$mode" == "update" ]; then
         if [ "$result" -eq "0" ] && [ "$(echo $test_name | grep stdout)" ]; then
@@ -59,6 +61,8 @@ for file in `ls */*.sh | grep "$pattern"`; do
         report $OK $title "[OK] Snapshot saved"
     fi
     rm -rf $tmp_dir
+    rm -rf $tmp_stdout
+    rm -rf $tmp_stderr
     echo "-------------------------------------------"
     total=$(( $total + 1 ))
 done
