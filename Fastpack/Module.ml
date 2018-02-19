@@ -14,6 +14,7 @@ type file_location = {
   preprocessors: (string * string) list;
 }
 
+(* TODO: get rid of Unknown case *)
 type location = Unknown
               | Runtime
               | EmptyModule

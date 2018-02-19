@@ -136,7 +136,8 @@ let prepare_and_pack cl_options start_time =
   let%lwt current_dir = Lwt_unix.getcwd () in
   let start_dir =
     match cl_options.input with
-    | Some filename -> FilePath.dirname @@ FS.abs_path current_dir filename
+    | Some filename ->
+      FilePath.dirname @@ FS.abs_path current_dir filename
     | None -> current_dir
   in
   let%lwt package_dir =
@@ -173,7 +174,7 @@ let prepare_and_pack cl_options start_time =
   (* run pack with parameters calculated *)
   match options.input, options.output with
   | Some input, Some output ->
-    let entry_filename = FS.abs_path package_dir input in
+    let entry_path = FS.abs_path package_dir input in
     let output_file =
       FS.abs_path package_dir @@ FilePath.concat output "index.js"
     in
@@ -210,10 +211,7 @@ let prepare_and_pack cl_options start_time =
                 in
                 let short_filename =
                   String.(
-                    sub
-                      entry_filename
-                      (length package_dir + 1)
-                      (length entry_filename - length package_dir - 1)
+                    (FilePath.make_relative package_dir entry_path)
                     |> replace ~sub:"/" ~by:"__"
                     |> replace ~sub:"." ~by:"___"
                   )
@@ -261,7 +259,7 @@ let prepare_and_pack cl_options start_time =
        * TODO: assert *)
       let resolver = NodeResolver.make cache preprocessor in
       let%lwt entry_package =
-        resolver.find_package package_dir entry_filename
+        resolver.find_package package_dir entry_path
       in
       let%lwt package = resolver.find_package package_dir current_filename in
       let ctx = {
@@ -281,7 +279,7 @@ let prepare_and_pack cl_options start_time =
       let%lwt entry_location, _ =
         resolve ctx entry_package {
           Dependency.
-          request = entry_filename;
+          request = entry_path;
           requested_from_filename = package_dir;
         }
       in
@@ -358,7 +356,7 @@ let prepare_and_pack cl_options start_time =
            then Lwt_unix.unlink temp_file;
         )
     in
-    let%lwt ctx = get_context entry_filename in
+    let%lwt ctx = get_context entry_path in
     let init_run () =
       Lwt.catch
         (fun () -> pack_postprocess_report cache ctx start_time)
@@ -380,7 +378,7 @@ let prepare_and_pack cl_options start_time =
              ctx.graph
              modules
              package_dir
-             entry_filename
+             entry_path
              get_context
          | _, Some true ->
            (* TODO: convert this into proper error: IllegalConfiguration *)
