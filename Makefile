@@ -19,9 +19,8 @@ test: build-dev
 	@#@esy x fpack_test $(FPACK_TEST_PATH)
 	@_build/default/bin/fpack_test.exe $(FPACK_TEST_PATH)
 
-setup-jest:
-	cd test && yarn \
-	&& for TEST in `ls`; \
+setup-test:
+	cd test && for TEST in `ls`; \
 	   do [ -d "$$TEST" ] \
 	      && [ -f "$$TEST/package.json" ] \
 		  && echo "Test: $$TEST" \
@@ -31,30 +30,29 @@ setup-jest:
 		done \
 	|| echo "Setup tests: done"
 
-clean-jest:
-	cd test && rm -rf node_modules \
-	&& for TEST in `ls`; \
+clean-test:
+	cd test && for TEST in `ls`; \
 	   do [ -d "$$TEST" ] \
 	      && [ -d "$$TEST/node_modules" ] \
 		  && rm -rf "$$TEST/node_modules"; \
 		done \
 	|| echo "Cleanup tests: done"
 
-test-jest: build-dev
-	cd test && yarn jest
+test-integration: build-dev
+	cd test && ./test.sh
 
-train-jest: build-dev
-	cd test && yarn jest --updateSnapshot
+train-integration: build-dev
+	cd test && ./update.sh
 
-test-server: test-jest
+test-server:
 	cd test && node server.js
 
 fetch:
 	git submodule init
 	git submodule update
 
-bootstrap: fetch install build setup-jest
+bootstrap: fetch install build setup-test
 
-clean: clean-jest
+clean: clean-test
 	@rm -rf _build/ node_modules/
 

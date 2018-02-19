@@ -8,8 +8,10 @@ install:
   - travis_retry npm install -g esy@next
   - travis_retry make fetch install
   - travis_wait make build-dev
+  - travis_wait make setup-test
 script:
   - make test
+  - make test-integration
 cache:
   directories:
   - $HOME/.esy/
