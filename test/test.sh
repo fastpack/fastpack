@@ -2,9 +2,14 @@
 
 cwd=`pwd -L`
 pattern="$1"
-diff_cmd="git --no-pager diff --no-index --color"
+diff_cmd="diff -r"
 base_dir=`dirname $cwd`
 mode=`basename $0 .sh`
+if [ "$(uname -s)" == "Darwin" ]; then
+    sed_cmd="sed -i ''"
+else
+    sed_cmd="sed -i"
+fi
 
 total=0
 failed=0
@@ -31,7 +36,7 @@ for file in `ls */*.sh | grep "$pattern"`; do
     env FPACK="../../_build/default/bin/fpack.exe --output=$tmp_dir"\
         bash $file >$tmp_stdout 2>$tmp_stdout
     result="$?"
-    sed -i '' "s-$base_dir-/...-" $tmp_stdout
+    $sed_cmd "s-$base_dir-/...-" $tmp_stdout
     if ! [ "$result" -eq "0" ]; then
         mv $tmp_stdout "$tmp_dir/stderr.txt"
     fi
@@ -53,6 +58,7 @@ for file in `ls */*.sh | grep "$pattern"`; do
         mv $tmp_dir $output_dir
         report $OK $title "[OK] Snapshot saved"
     fi
+    rm -rf $tmp_dir
     echo "-------------------------------------------"
     total=$(( $total + 1 ))
 done
