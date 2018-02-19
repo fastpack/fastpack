@@ -1,10 +1,18 @@
 #!/bin/bash
 
+set -euo pipefail
+
 cwd=`pwd -L`
-pattern="$1"
-diff_cmd="diff --strip-trailing-cr -r"
+pattern="${1:-}"
 base_dir=`dirname $cwd`
 mode=`basename $0 .sh`
+
+if which colordiff >/dev/null; then
+    diff_cmd="colordiff -r"
+else
+    diff_cmd="diff -r"
+fi
+
 if [ "$(uname -s)" == "Darwin" ]; then
     sed_cmd="sed -i ''"
 else
@@ -34,9 +42,11 @@ for file in `ls */*.sh | grep "$pattern"`; do
     rm -rf "$test_dir/node_modules/.cache"
     output_dir="$test_dir/$test_name"
     cd $test_dir
+    set +e
     env FPACK="../../_build/default/bin/fpack.exe --output=$tmp_dir"\
         bash $file >$tmp_stdout 2>$tmp_stderr
     result="$?"
+    set -e
     $sed_cmd "s-$base_dir-/...-" $tmp_stdout
     $sed_cmd "s-$base_dir-/...-" $tmp_stderr
     if ! [ "$result" -eq "0" ]; then
@@ -77,5 +87,5 @@ fi
 if [ -n "$pattern" ]; then
     message="Pattern used. Consider running all tests"
 fi
-report $color "Total: $total. Failed: $failed." "$message"
+report $color "Total: $total. Failed: $failed." "${message:-}"
 exit "$exit_code"
