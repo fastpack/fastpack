@@ -20,8 +20,8 @@ report() {
 for file in `ls */*.sh | grep "$pattern"`; do
     title="$file"
     file="$cwd/$file"
-    tmp_dir=`mktemp -d -t fpack`
-    tmp_stdout=`mktemp -t fpack-stdout`
+    tmp_dir=`mktemp -d -t XXXfpack`
+    tmp_stdout=`mktemp -t XXXfpack-stdout`
     test_dir=`dirname $file`
     test_name=`basename $file .sh`
     rm -rf "$test_dir/.cache"
