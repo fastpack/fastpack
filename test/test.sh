@@ -2,7 +2,7 @@
 
 cwd=`pwd -L`
 pattern="$1"
-diff_cmd="diff -r"
+diff_cmd="diff --strip-trailing-cr -r"
 base_dir=`dirname $cwd`
 mode=`basename $0 .sh`
 if [ "$(uname -s)" == "Darwin" ]; then
