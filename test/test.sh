@@ -39,6 +39,7 @@ for file in `ls */*.sh | grep "$pattern"`; do
     $sed_cmd "s-$base_dir-/...-" $tmp_stdout
     if ! [ "$result" -eq "0" ]; then
         mv $tmp_stdout "$tmp_dir/stderr.txt"
+        cat "$tmp_dir/stderr.txt"
     fi
     if [ -e $output_dir ] && ! [ "$mode" == "update" ]; then
         if [ "$result" -eq "0" ] && [ "$(echo $test_name | grep stdout)" ]; then
