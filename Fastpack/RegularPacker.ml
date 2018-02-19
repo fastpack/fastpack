@@ -547,7 +547,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                  match resolved with
                  | Module.File _ ->
                    cache.add_build_dependencies m build_dependencies
-                 | Module.EmptyModule | Module.Runtime | Module.Unknown ->
+                 | Module.EmptyModule
+                 | Module.Runtime ->
                    Lwt.return_unit
                in
                Lwt.return (req, resolved)

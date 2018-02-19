@@ -310,9 +310,6 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
   in
 
   match location with
-  | Module.Unknown ->
-    Error.ie "Cannot read unknown module"
-
   | Module.EmptyModule ->
     Lwt.return empty_module
 

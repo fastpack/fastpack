@@ -464,10 +464,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                  match get_resolved_request dep with
                  | None ->
                    Error.ie "At this point dependency should be resolved"
-                 | Some Module.Unknown
                  | Some Module.EmptyModule
                  | Some Module.Runtime ->
-                   Error.ie "Unexpected module for dynamic dependency"
+                   Error.ie "Unexpected module for the dynamic dependency"
                  | Some location ->
                    let wrapper = gen_wrapper_binding location in
                    Printf.sprintf "%s(%s)" require wrapper
@@ -905,8 +904,6 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         Lwt_list.fold_left_s
           (fun seen (ctx, resolved) ->
              match resolved with
-             (* TODO: we should pass in resolved dependencies, not filenames *)
-             | Module.Unknown
              | Module.Runtime
              | Module.EmptyModule ->
                Error.ie ("Unexpected dynamic dependency")

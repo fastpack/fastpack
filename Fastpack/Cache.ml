@@ -405,7 +405,7 @@ let create cache_filename =
   (* TODO: Lwt seems redundant here *)
   let modify_content (m : Module.t) content =
     match m.location with
-    | Module.EmptyModule | Module.Unknown | Module.Runtime ->
+    | Module.EmptyModule | Module.Runtime ->
       ()
     | _ ->
       let location_str = Module.location_to_string m.location in

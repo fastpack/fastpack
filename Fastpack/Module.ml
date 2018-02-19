@@ -14,8 +14,7 @@ type file_location = {
   preprocessors: (string * string) list;
 }
 
-type location = Unknown
-              | Runtime
+type location = Runtime
               | EmptyModule
               | File of file_location
 
@@ -70,8 +69,6 @@ let location_to_string ?(base_dir=None) location =
       | _ -> filename
   in
   match location with
-  | Unknown ->
-    Error.ie "Should never happen: Unknown module in location_to_string"
   | File { filename; preprocessors } ->
     let preprocessors =
       preprocessors
@@ -108,8 +105,6 @@ let allowed_chars =
 
 let make_id base_dir location =
   match location with
-  | Unknown ->
-    Error.ie "Should never happen: Unknown module in make_id"
   | EmptyModule ->
     "builtin$$COLON$$__empty_module__"
   | Runtime ->

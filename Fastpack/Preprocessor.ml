@@ -212,8 +212,6 @@ let make configs base_dir output_dir =
 
   let process location source =
     match location with
-    | Module.Unknown ->
-      Error.ie "Cannot process unknown module"
     | Module.EmptyModule | Module.Runtime ->
       begin
         match source with

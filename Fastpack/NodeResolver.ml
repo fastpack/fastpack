@@ -258,7 +258,6 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
            | _ ->
              let%lwt resolved = resolve_file package p basedir in
              match resolved with
-             | Module.Unknown, _
              | Module.EmptyModule, _
              | Module.Runtime, _
              | Module.File { filename = None; _ }, _ ->
@@ -320,8 +319,6 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
             Lwt.return (resolved_file, deps, rest)
         in
         match resolved_file with
-        | Module.Unknown ->
-          Lwt.fail (Error "Unknown module should not happend here")
         | Module.EmptyModule ->
           Lwt.return (Module.EmptyModule, [])
         | Module.Runtime ->
