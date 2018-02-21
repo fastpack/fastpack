@@ -14,7 +14,7 @@ type config = {
 
 type t = {
   get_processors : string -> string list;
-  process : Module.location -> string option -> (string * string list) Lwt.t;
+  process : Module.location -> string option -> (string * string list * string list) Lwt.t;
   configs : config list;
   finalize : unit -> unit;
 }
@@ -83,7 +83,7 @@ let builtin source =
     Lwt.fail (Error "Builtin transpiler always expects source")
   | Some source ->
     try
-      Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [])
+      Lwt.return (FastpackTranspiler.transpile_source all_transpilers source, [], [])
     with
     | FastpackTranspiler.Error.TranspilerError err ->
       Lwt.fail (Error (FastpackTranspiler.Error.error_to_string err))
@@ -92,7 +92,7 @@ let builtin source =
 
 let empty = {
     get_processors = (fun _ -> []);
-    process = (fun _ s -> Lwt.return (CCOpt.get_or ~default:"" s, []));
+    process = (fun _ s -> Lwt.return (CCOpt.get_or ~default:"" s, [], []));
     configs = [];
     finalize = (fun () -> ())
   }
@@ -172,6 +172,12 @@ module NodeServer = struct
       |> List.map to_string_option
       |> List.filter_map (fun item -> item)
     in
+    let files =
+      member "files" data
+      |> to_list
+      |> List.map to_string_option
+      |> List.filter_map (fun item -> item)
+    in
     match source with
     | None ->
       let error = member "error" data |> member "message" |> to_string in
@@ -179,7 +185,7 @@ module NodeServer = struct
       failwith ("node error received: " ^ error)
     | Some source ->
       debug (fun x -> x "SOURCE: %s" source);
-      Lwt.return (source, dependencies)
+      Lwt.return (source, dependencies, files)
 
   let finalize () =
     List.iter (fun p -> p#terminate) !processes
@@ -218,7 +224,7 @@ let make configs base_dir output_dir =
         | None ->
           Error.ie "Unexpeceted absence of source for builtin / empty module"
         | Some source ->
-          Lwt.return (source, [])
+          Lwt.return (source, [], [])
       end
     | Module.File { filename; preprocessors } ->
       let rec make_chain preprocessors chain =
@@ -242,20 +248,20 @@ let make configs base_dir output_dir =
           (fun (p, opt) -> p ^ (if opt <> "" then "?" ^ opt else ""))
           preprocessors
       in
-      let%lwt source, deps =
+      let%lwt source, deps, files =
         Lwt_list.fold_left_s
-          (fun (source, deps) process ->
-            let%lwt source, more_deps = process source in
-            Lwt.return (Some source, deps @ more_deps)
+          (fun (source, deps, files) process ->
+            let%lwt source, more_deps, more_files = process source in
+            Lwt.return (Some source, deps @ more_deps, files @ more_files)
           )
-          (source, [])
+          (source, [], [])
           (make_chain preprocessors [])
       in
       match source with
       | None ->
         Error.ie "Unexpected absence of source after processing"
       | Some source ->
-        Lwt.return (source, deps)
+        Lwt.return (source, deps, files)
   in
 
   Lwt.return {

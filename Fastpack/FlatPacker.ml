@@ -808,6 +808,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         let emit bytes = Lwt_io.write channel bytes in
         let emit_module dep_map (m : Module.t) =
           debug (fun m_ -> m_ "Emitting: %s" (Module.location_to_string m.location));
+          let%lwt () = emit_module_files ctx m in
           let%lwt () = emit (Printf.sprintf "\n/* %s */\n\n" m.id) in
           let%lwt _ = Workspace.write channel m.Module.workspace dep_map in
           Lwt.return_unit

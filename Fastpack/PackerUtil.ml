@@ -200,6 +200,7 @@ end
 module Context = struct
   type t = {
     package_dir : string;
+    output_dir : string;
     entry_location : Module.location option;
     current_location : Module.location option;
     package : Package.t;
@@ -290,6 +291,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       location;
       resolved_dependencies = [];
       es_module = false;
+      files = [];
       state = Initial;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
@@ -345,7 +347,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
           Lwt.return (None, [])
       in
       let { Preprocessor. process; _ } = ctx.preprocessor in
-      let%lwt source, build_dependencies =
+      let%lwt source, build_dependencies, files =
         Lwt.catch
           (fun () -> process location source)
           (function
@@ -359,14 +361,46 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
           )
       in
 
+      let%lwt files =
+        Lwt_list.map_s
+          (fun filename ->
+            let%lwt {content; _}, _ = cache.get_file filename in
+            Lwt.return (filename, content)
+          )
+          files
+      in
+
       let m =
         make_module (Module.make_id ctx.package_dir location) location source
       in
-      let m = { m with state = Module.Preprocessed } in
+      let m = {
+        m with
+        state = Module.Preprocessed;
+        files
+      } in
+
       let () = cache.modify_content m source in
       let%lwt () =
         cache.add_build_dependencies m (self_dependency @ build_dependencies) in
       Lwt.return m
+
+
+let emit_module_files (ctx : Context.t) (m : Module.t) =
+  Lwt_list.iter_s
+    (fun (filename, content) ->
+      let path = FS.abs_path ctx.output_dir filename in
+      let%lwt () = FS.makedirs (FilePath.dirname path) in
+      Lwt_io.(with_file
+                ~mode:Lwt_io.Output
+                ~perm:0o640
+                ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+                path
+                (fun ch -> write ch content)
+             )
+    )
+    m.files
+
+
 
 (* TODO: remove this as well as its usage in packers *)
 let is_ignored_request _request = false

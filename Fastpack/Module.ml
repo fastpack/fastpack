@@ -35,6 +35,9 @@ type t = {
   (** EcmaScript Module *)
   es_module : bool;
 
+  (** "side-effect" files to be emitted with module *)
+  files : (string * string) list;
+
   (** Module source along with transformations applied *)
   workspace : t DependencyMap.t Workspace.t;
 

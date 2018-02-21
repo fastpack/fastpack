@@ -9,6 +9,7 @@ module ModuleEntry = struct
     id : string;
     state : Module.state;
     es_module : bool;
+    files : (string * string) list;
     content : string;
     build_dependencies : string M.t;
     resolved_dependencies : (Dependency.t * Module.location) list;
@@ -379,6 +380,7 @@ let create cache_filename =
         id;
         state;
         es_module;
+        files;
         content;
         build_dependencies;
         resolved_dependencies } ->
@@ -396,6 +398,7 @@ let create cache_filename =
           state;
           resolved_dependencies;
           es_module;
+          files;
           workspace = Workspace.of_string content;
           scope = FastpackUtil.Scope.empty;
           exports = []
@@ -420,6 +423,7 @@ let create cache_filename =
         build_dependencies;
         resolved_dependencies = m.resolved_dependencies;
         es_module = m.es_module;
+        files = m.files;
         content;
       }
       in

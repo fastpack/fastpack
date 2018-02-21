@@ -661,6 +661,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       then Lwt.return_unit
       else begin
         emitted_modules := MLSet.add m.location !emitted_modules;
+        let%lwt () = emit_module_files ctx m in
         let workspace = m.Module.workspace in
         let dep_map = Module.DependencyMap.empty in
         let dependencies = DependencyGraph.lookup_dependencies graph m in

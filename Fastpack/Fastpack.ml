@@ -94,6 +94,7 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
     entry_location = None;
     package = Package.empty;
     package_dir;
+    output_dir = ""; (* TODO: hack, fix later *)
     stack = [];
     current_location = None;
     mode;
@@ -177,7 +178,8 @@ let prepare_and_pack cl_options start_time =
     let output_file =
       FS.abs_path package_dir @@ FilePath.concat output "index.js"
     in
-    let%lwt () = makedirs @@ FilePath.dirname output_file in
+    let output_dir = FilePath.dirname output_file in
+    let%lwt () = makedirs output_dir in
     let%lwt preprocessor =
       match options.preprocess with
       | None -> Preprocessor.make [] package_dir (FilePath.dirname output_file)
@@ -269,6 +271,7 @@ let prepare_and_pack cl_options start_time =
         entry_location = None;
         current_location = None;
         package_dir;
+        output_dir;
         package;
         stack = [];
         mode;
