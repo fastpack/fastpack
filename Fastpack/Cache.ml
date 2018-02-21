@@ -402,7 +402,6 @@ let create cache_filename =
         }
   in
 
-  (* TODO: Lwt seems redundant here *)
   let modify_content (m : Module.t) content =
     match m.location with
     | Module.EmptyModule | Module.Runtime ->
@@ -463,6 +462,7 @@ let create cache_filename =
   let remove filename =
     trusted := StringSet.remove filename !trusted;
   in
+
 
   let dump () =
     match cache_filename with

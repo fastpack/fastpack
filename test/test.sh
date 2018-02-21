@@ -6,6 +6,7 @@ cwd=`pwd -L`
 pattern="${1:-}"
 base_dir=`dirname $cwd`
 mode=`basename $0 .sh`
+fpack_bin="../../_build/default/bin/fpack.exe"
 
 if which colordiff >/dev/null; then
     diff_cmd="colordiff -r"
@@ -43,7 +44,9 @@ for file in `ls */*.sh | grep "$pattern"`; do
     output_dir="$test_dir/$test_name"
     cd $test_dir
     set +e
-    env FPACK="../../_build/default/bin/fpack.exe --output=$tmp_dir"\
+    env FPACK="$fpack_bin --output=$tmp_dir" \
+        FPACK_BIN="$fpack_bin" \
+        FPACK_OUTPUT="$tmp_dir" \
         bash $file >$tmp_stdout 2>$tmp_stderr
     result="$?"
     set -e
