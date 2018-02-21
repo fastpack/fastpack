@@ -22,7 +22,7 @@ function extractSource(result) {
 }
 
 function load(message) {
-  var ret = { dependencies: [], source: null, error: null };
+  var ret = { files: [], dependencies: [], source: null, error: null };
   try {
     var message = JSON.parse(message);
   } catch (e) {
@@ -86,7 +86,9 @@ function load(message) {
           }
         }
         for (var i = 0, l = files.length; i < l; i++) {
-          writeFile(files[i].name, files[i].content);
+          var absPath = path.join(outputDir, files[i].name);
+          writeFile(absPath, files[i].content);
+          ret.files.push(absPath);
         }
         write(ret);
       }
@@ -117,8 +119,7 @@ function makeDirs(dir) {
   fs.mkdirSync(dir);
 }
 
-function writeFile(name, content) {
-  var absPath = path.join(outputDir, name);
+function writeFile(absPath, content) {
   if (absPath.substr(0, outputDir.length) !== outputDir) {
     throw {
       name: "FileWriteError",
