@@ -653,15 +653,18 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   callee = (_, E.Identifier (_, "require"));
                   arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
                 } ->
-                  let dep = add_static_dep request in
-                  patch_loc_with loc
-                    (fun dep_map ->
-                       match MDM.get dep dep_map with
-                       | None ->
-                         raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
-                       | Some m ->
-                         Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
-                    );
+                  if (not @@ Scope.has_binding "require" (top_scope ()))
+                  then begin
+                    let dep = add_static_dep request in
+                    patch_loc_with loc
+                      (fun dep_map ->
+                         match MDM.get dep dep_map with
+                         | None ->
+                           raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
+                         | Some m ->
+                           Printf.sprintf "(%s.exports)" @@ gen_ext_namespace_binding m.id
+                      );
+                  end;
                   Visit.Break;
 
               | E.Import (_, E.Literal { value = L.String request; _ }) ->

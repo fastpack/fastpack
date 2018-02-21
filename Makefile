@@ -39,10 +39,10 @@ clean-test:
 	|| echo "Cleanup tests: done"
 
 test-integration: build-dev
-	cd test && ./test.sh
+	@test/test.sh $(pattern)
 
 train-integration: build-dev
-	cd test && ./update.sh
+	@test/update.sh $(pattern)
 
 test-server:
 	cd test && node server.js

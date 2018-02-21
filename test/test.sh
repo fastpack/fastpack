@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-cwd=`pwd -L`
+tests_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 pattern="${1:-}"
-base_dir=`dirname $cwd`
+base_dir=`dirname $tests_dir`
 mode=`basename $0 .sh`
 fpack_bin="../../_build/default/bin/fpack.exe"
 
@@ -31,9 +31,8 @@ report() {
     printf "$1$2${NC} $3\n"
 }
 
-for file in `ls */*.sh | grep "$pattern"`; do
-    title="$file"
-    file="$cwd/$file"
+for file in `ls $tests_dir/*/*.sh | grep "$pattern"`; do
+    title="$(dirname $file | xargs basename)/$(basename $file)"
     tmp_dir=`mktemp -d -t XXXfpack`
     tmp_stdout=`mktemp -t XXXfpack-stdout`
     tmp_stderr=`mktemp -t XXXfpack-stderr`
@@ -88,7 +87,7 @@ else
     exit_code="1"
 fi
 if [ -n "$pattern" ]; then
-    message="Pattern used. Consider running all tests"
+    message="Pattern mode. Consider running all the tests."
 fi
 report $color "Total: $total. Failed: $failed." "${message:-}"
 exit "$exit_code"
