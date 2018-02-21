@@ -364,7 +364,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       let%lwt files =
         Lwt_list.map_s
           (fun filename ->
-            let%lwt content = Lwt_io.(with_file ~mode:Input filename read) in
+            let%lwt {content; _}, _ = cache.get_file filename in
             Lwt.return (filename, content)
           )
           files
