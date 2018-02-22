@@ -1,7 +1,7 @@
 module StringSet = Set.Make(String)
 type t = {
   modules : StringSet.t;
-  cache : bool;
+  cache : string option;
   message : string;
   size : int;
 }
@@ -19,12 +19,17 @@ let report_string start_time { modules; cache; message; size } =
         else sprintf "%db" size
     )
   in
+  let cache =
+    match cache with
+    | None -> ""
+    | Some message -> Printf.sprintf "Cache: %s. " message
+  in
   Printf.sprintf
-    "Packed in %.3fs. Bundle: %s. Modules: %d. Cache: %s. %s\n"
+    "Packed in %.3fs. Bundle: %s. Modules: %d. %s%s\n"
     (Unix.gettimeofday () -. start_time)
     pretty_size
     (modules |> StringSet.elements |> List.length)
-    (if cache then "yes" else "no")
+    cache
     message
   |> Lwt_io.write Lwt_io.stdout
 

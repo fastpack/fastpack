@@ -44,18 +44,18 @@ type t = {
   setup_build_dependencies : StringSet.t -> unit;
   remove : string -> unit;
   dump : unit -> unit Lwt.t;
-  loaded : bool;
+  message : string option;
 }
 
 exception FileDoesNotExist of string
-type strategy = Normal | Ignore
+type strategy = Normal | Disable
 
 let empty = {
   files = M.empty;
   modules = M.empty;
 }
 
-let create cache_filename =
+let create (strategy : strategy option) (cache_filename : string option) =
   let no_file = {
     exists = false;
     st_mtime = 0.0;
@@ -66,20 +66,29 @@ let create cache_filename =
   }
   in
 
-  let%lwt loaded =
-    match cache_filename with
+  let%lwt (message, loaded) =
+    match strategy with
     | None ->
-      Lwt.return empty
-    | Some filename ->
-      match%lwt Lwt_unix.file_exists filename with
-      | true ->
-        Lwt_io.with_file
-          ~mode:Lwt_io.Input
-          ~flags:Unix.[O_RDONLY]
-          filename
-          (fun ch -> (Lwt_io.read_value ch : cache Lwt.t))
-      | false ->
-        Lwt.return empty
+      Lwt.return (None, empty)
+    | Some Disable ->
+      Lwt.return (Some "disabled", empty)
+    | Some Normal ->
+      match cache_filename with
+      | None ->
+        Lwt.return (Some "empty", empty)
+      | Some filename ->
+        match%lwt Lwt_unix.file_exists filename with
+        | true ->
+          let%lwt loaded =
+            Lwt_io.with_file
+              ~mode:Lwt_io.Input
+              ~flags:Unix.[O_RDONLY]
+              filename
+              (fun ch -> (Lwt_io.read_value ch : cache Lwt.t))
+          in
+          Lwt.return (Some "used", loaded)
+        | false ->
+          Lwt.return (Some "empty", empty)
   in
 
   let trusted = ref StringSet.empty in
@@ -496,7 +505,7 @@ let create cache_filename =
     get_potentially_invalid;
     remove;
     dump;
-    loaded = !files <> M.empty
+    message;
   }
 
 
