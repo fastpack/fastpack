@@ -1,12 +1,12 @@
 module StringSet = Set.Make(String)
 type t = {
   modules : StringSet.t;
-  cache : string option;
+  cache_status : Cache.status option;
   message : string;
   size : int;
 }
 
-let report_string start_time { modules; cache; message; size } =
+let report_string start_time { modules; cache_status; message; size } =
   let pretty_size =
     Printf.(
       if size >= 1048576
@@ -20,9 +20,16 @@ let report_string start_time { modules; cache; message; size } =
     )
   in
   let cache =
-    match cache with
+    match cache_status with
     | None -> ""
-    | Some message -> Printf.sprintf "Cache: %s. " message
+    | Some cache_status ->
+      let message =
+        match cache_status with
+        | Cache.Empty -> "empty"
+        | Cache.Used -> "used"
+        | Cache.Disabled -> "disabled"
+      in
+      Printf.sprintf "Cache: %s. " message
   in
   Printf.sprintf
     "Packed in %.3fs. Bundle: %s. Modules: %d. %s%s\n"

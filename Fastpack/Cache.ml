@@ -44,18 +44,25 @@ type t = {
   setup_build_dependencies : StringSet.t -> unit;
   remove : string -> unit;
   dump : unit -> unit Lwt.t;
-  message : string option;
+  status : status option;
 }
+and status = | Empty
+             | Used
+             | Disabled
 
 exception FileDoesNotExist of string
-type strategy = Normal | Disable
+
+type strategy = | Use
+                | Disable
+
+
 
 let empty = {
   files = M.empty;
   modules = M.empty;
 }
 
-let create (strategy : strategy option) (cache_filename : string option) =
+let create ?(strategy=None) (cache_filename : string option) =
   let no_file = {
     exists = false;
     st_mtime = 0.0;
@@ -66,16 +73,16 @@ let create (strategy : strategy option) (cache_filename : string option) =
   }
   in
 
-  let%lwt (message, loaded) =
+  let%lwt (status, loaded) =
     match strategy with
     | None ->
       Lwt.return (None, empty)
     | Some Disable ->
-      Lwt.return (Some "disabled", empty)
-    | Some Normal ->
+      Lwt.return (Some Disabled, empty)
+    | Some Use ->
       match cache_filename with
       | None ->
-        Lwt.return (Some "empty", empty)
+        Lwt.return (Some Empty, empty)
       | Some filename ->
         match%lwt Lwt_unix.file_exists filename with
         | true ->
@@ -86,9 +93,9 @@ let create (strategy : strategy option) (cache_filename : string option) =
               filename
               (fun ch -> (Lwt_io.read_value ch : cache Lwt.t))
           in
-          Lwt.return (Some "used", loaded)
+          Lwt.return (Some Used, loaded)
         | false ->
-          Lwt.return (Some "empty", empty)
+          Lwt.return (Some Empty, empty)
   in
 
   let trusted = ref StringSet.empty in
@@ -505,7 +512,9 @@ let create (strategy : strategy option) (cache_filename : string option) =
     get_potentially_invalid;
     remove;
     dump;
-    message;
+    status;
   }
 
+let memory () =
+  create None
 

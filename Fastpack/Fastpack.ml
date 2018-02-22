@@ -58,7 +58,7 @@ let default_options =
     output = Some "./bundle";
     mode = Some Production;
     target = Some Application;
-    cache = Some Normal;
+    cache = Some Use;
     preprocess = None;
     postprocess = None;
     stats = None;
@@ -196,13 +196,13 @@ let prepare_and_pack cl_options start_time =
         let%lwt cache, pack_f =
           match mode with
           | Mode.Production ->
-            let%lwt cache = Cache.create None None in
+            let%lwt cache = Cache.memory () in
             Lwt.return (cache, FlatPacker.pack)
           | Mode.Test
           | Mode.Development ->
             let%lwt cache_filename =
               match options.cache with
-              | Some Cache.Normal ->
+              | Some Cache.Use ->
                 let digest s = s |> Digest.string |> Digest.to_hex in
                 let preprocessors =
                   preprocessor.Preprocessor.configs
@@ -251,7 +251,7 @@ let prepare_and_pack cl_options start_time =
               | None ->
                 Error.ie "Cache strategy is not set"
             in
-            let%lwt cache = Cache.create options.cache cache_filename in
+            let%lwt cache = Cache.create ~strategy:options.cache cache_filename in
             Lwt.return (cache, RegularPacker.pack)
         in
         Lwt.return (mode, cache, pack_f)
