@@ -83,8 +83,8 @@ let () =
     let cache_t =
         let open Fastpack.Cache in
         let doc = "Do not use cache at all" in
-        let ignore = Ignore, Arg.info ["no-cache"] ~doc in
-        Arg.(value & vflag Normal [ignore])
+        let disable = Disable, Arg.info ["no-cache"] ~doc in
+        Arg.(value & vflag Normal [disable])
     in
 
     let preprocess_t =

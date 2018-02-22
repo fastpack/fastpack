@@ -196,7 +196,7 @@ let prepare_and_pack cl_options start_time =
         let%lwt cache, pack_f =
           match mode with
           | Mode.Production ->
-            let%lwt cache = Cache.create None in
+            let%lwt cache = Cache.create None None in
             Lwt.return (cache, FlatPacker.pack)
           | Mode.Test
           | Mode.Development ->
@@ -246,12 +246,12 @@ let prepare_and_pack cl_options start_time =
                 in
                 let%lwt () = FS.makedirs dir in
                 FilePath.concat dir filename |> Lwt.return_some
-              | Some Cache.Ignore ->
+              | Some Cache.Disable ->
                 Lwt.return_none
               | None ->
                 Error.ie "Cache strategy is not set"
             in
-            let%lwt cache = Cache.create cache_filename in
+            let%lwt cache = Cache.create options.cache cache_filename in
             Lwt.return (cache, RegularPacker.pack)
         in
         Lwt.return (mode, cache, pack_f)
