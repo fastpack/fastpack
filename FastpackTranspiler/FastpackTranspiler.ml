@@ -58,8 +58,6 @@ module.exports = {
       _cls = classDecorators[i](_cls);
     }
     return _cls;
-
-    //return classDecorators.reverse().reduce(decorator => decorator(cls), cls);
   }
 };
 "
