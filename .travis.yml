@@ -1,4 +1,9 @@
 language: node_js
+
+# use container infra for linux
+dist: trusty
+sudo: false
+
 os:
   - linux
   - osx
