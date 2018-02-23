@@ -164,7 +164,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       |> List.map
         (fun (name, value) ->
            Printf.sprintf
-             "Object.defineProperty(exports%s, \"%s\", {get: () => %s});"
+             "Object.defineProperty(exports%s, \"%s\", {get: function() {return %s;}});"
              property
              name
              value
@@ -593,12 +593,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
   (* emit required runtime *)
   let emit_runtime out prefix entry_id =
-    (**
-       TODO: Give webpack team proper credits!
-    *)
     Lwt_io.write out
     @@ Printf.sprintf
-"%s(function(modules) {
+"
+// This function is a modified version of the one created by the Webpack project
+%s(function(modules) {
   // The module cache
   var installedModules = {};
 
@@ -633,7 +632,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
   }
 
   function __fastpack_import__(moduleId) {
-    return new Promise((resolve, reject) => {
+    if (!window.Promise) {
+      throw 'window.Promise is undefined, consider using a polyfill';
+    }
+    return new Promise(function(resolve, reject) {
       try {
         resolve(__fastpack_require__(moduleId));
       } catch (e) {

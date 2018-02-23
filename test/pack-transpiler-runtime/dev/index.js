@@ -116,28 +116,61 @@ module.exports = {
   }
 };
 },
-"builtin$$COLON$$__empty_module__": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports = {};},
-"builtin$$B$$esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
-exports.default = $lib1.delimiter;
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
-},
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
-const path = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
-const module = __fastpack_require__(/* "module" */ "builtin$$COLON$$__empty_module__");
-const esm = __fastpack_require__(/* "./esm" */ "builtin$$B$$esm");
-const {delimiter} = path,
-  rest = $__fpack__.omitProps(path, ["delimiter"]);
-console.log(path, module, delimiter, rest, esm);
-// The following test makes sure that builtin transpiler strips type annotations
-// from inside JSX
-const Component = props => React.createElement("div", null, item => {
+function decorator1(proto, property, descriptor) {
+  let oldValue = descriptor.value;
+  descriptor.value = function () {
+    let ret = oldValue.call(this);
+    return `@decorator1 ${ret}`;
     
   }
-  );
+  ;
+  return descriptor;
+  
+}
+function decorator2(proto, property, descriptor) {
+  let oldValue = descriptor.value;
+  descriptor.value = function () {
+    let ret = oldValue.call(this);
+    return `@decorator2 ${ret}`;
+    
+  }
+  ;
+  return descriptor;
+  
+}
+function classDecorator1(cls) {
+  cls.staticProp = `@classDecorator1 ${cls.staticProp}`;
+  return cls;
+  
+}
+function classDecorator2(cls) {
+  cls.staticProp = `@classDecorator2 ${cls.staticProp}`;
+  return cls;
+  
+}
+let Test = $__fpack__.defineClass(class Test {
+    constructor() {
+      Object.defineProperty(this, "prop", {"configurable": true, "enumerable": true, "writable": true, "value": "instance property"});
+      
+    }
+    
+    method() {
+      return "method";
+      
+    }
+    
+  }, [{"name": "staticProp", "value": "class property"}], [classDecorator2, classDecorator1], [{"method": "method", "decorators": [decorator2, decorator1]}]);
+let __fpack__1 = {test: new Test(), a: 1, b: 2, c: 3},
+  {test} = __fpack__1,
+  rest = $__fpack__.omitProps(__fpack__1, ["test"]);
+document.body.innerHTML = `
+<div>Static property: <b>${Test.staticProp}</b></div>
+<div>Property: <b>${test.prop}</b></div>
+<div>method: <b>${test.method()}</b></div>
+<div>...rest: <b>${JSON.stringify(rest)}</b></div>
+`;
 },
 
 });

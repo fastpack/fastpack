@@ -1,3 +1,5 @@
+
+// This function is a modified version of the one created by the Webpack project
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -33,7 +35,10 @@
   }
 
   function __fastpack_import__(moduleId) {
-    return new Promise((resolve, reject) => {
+    if (!window.Promise) {
+      throw 'window.Promise is undefined, consider using a polyfill';
+    }
+    return new Promise(function(resolve, reject) {
       try {
         resolve(__fastpack_require__(moduleId));
       } catch (e) {
@@ -60,13 +65,13 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 exports.default = 1;
 
 let a = 1;
-Object.defineProperty(exports, "a", {get: () => a});
+Object.defineProperty(exports, "a", {get: function() {return a;}});
 
 
 function updateA (newA) {
   a = newA;
 }
-Object.defineProperty(exports, "updateA", {get: () => updateA});
+Object.defineProperty(exports, "updateA", {get: function() {return updateA;}});
 
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
@@ -74,9 +79,9 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 "yz": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 const $lib1 = __fastpack_require__(/* "./z" */ "z");
-Object.defineProperty(exports, "Z", {get: () => $lib1});
+Object.defineProperty(exports, "Z", {get: function() {return $lib1;}});
 const $lib2 = __fastpack_require__(/* "./y" */ "y");
-Object.defineProperty(exports, "default", {get: () => $lib2.default}); Object.defineProperty(exports, "a", {get: () => $lib2.a}); Object.defineProperty(exports, "updateA", {get: () => $lib2.updateA});
+Object.defineProperty(exports, "default", {get: function() {return $lib2.default;}}); Object.defineProperty(exports, "a", {get: function() {return $lib2.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return $lib2.updateA;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
@@ -99,10 +104,10 @@ const ZModule = __fastpack_require__(/* "./z" */ "z");
 
 
 let z = 1, zz = 1;
-Object.defineProperty(exports, "z", {get: () => z}); Object.defineProperty(exports, "Z", {get: () => zz});
+Object.defineProperty(exports, "z", {get: function() {return z;}}); Object.defineProperty(exports, "Z", {get: function() {return zz;}});
 
 let x = 1, y = 2;
-Object.defineProperty(exports, "x", {get: () => x}); Object.defineProperty(exports, "y", {get: () => y});
+Object.defineProperty(exports, "x", {get: function() {return x;}}); Object.defineProperty(exports, "y", {get: function() {return y;}});
 
 
 // export default function () {
@@ -117,12 +122,12 @@ function updateX() {
   x++;
   console.log('updated X', x);
 }
-Object.defineProperty(exports, "updateX", {get: () => updateX});
+Object.defineProperty(exports, "updateX", {get: function() {return updateX;}});
 
 
 const $lib1 = __fastpack_require__(/* "./y" */ "y");
-Object.defineProperty(exports, "X", {get: () => $lib1.default}); Object.defineProperty(exports, "xA", {get: () => $lib1.a}); Object.defineProperty(exports, "updateA", {get: () => $lib1.updateA});
-Object.defineProperty(exports, "ZM", {get: () => ZModule.default});
+Object.defineProperty(exports, "X", {get: function() {return $lib1.default;}}); Object.defineProperty(exports, "xA", {get: function() {return $lib1.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return $lib1.updateA;}});
+Object.defineProperty(exports, "ZM", {get: function() {return ZModule.default;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },

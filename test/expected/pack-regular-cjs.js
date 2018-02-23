@@ -1,3 +1,5 @@
+
+// This function is a modified version of the one created by the Webpack project
 module.exports = (function(modules) {
   // The module cache
   var installedModules = {};
@@ -33,7 +35,10 @@ module.exports = (function(modules) {
   }
 
   function __fastpack_import__(moduleId) {
-    return new Promise((resolve, reject) => {
+    if (!window.Promise) {
+      throw 'window.Promise is undefined, consider using a polyfill';
+    }
+    return new Promise(function(resolve, reject) {
       try {
         resolve(__fastpack_require__(moduleId));
       } catch (e) {
@@ -53,18 +58,18 @@ module.exports = (function(modules) {
 ({
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
 let a = 1;
-Object.defineProperty(exports, "a", {get: () => a});
+Object.defineProperty(exports, "a", {get: function() {return a;}});
 
 function f() { a = a + 1};
-Object.defineProperty(exports, "changeA", {get: () => f});
+Object.defineProperty(exports, "changeA", {get: function() {return f;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./a" */ "a");
-Object.defineProperty(exports, "a", {get: () => $lib1.a}); Object.defineProperty(exports, "changeA", {get: () => $lib1.changeA});
+Object.defineProperty(exports, "a", {get: function() {return $lib1.a;}}); Object.defineProperty(exports, "changeA", {get: function() {return $lib1.changeA;}});
 let index = 1;
-Object.defineProperty(exports, "index", {get: () => index});
+Object.defineProperty(exports, "index", {get: function() {return index;}});
 
 exports.default = function() {console.log('Hello, world!')};
 

@@ -64,37 +64,63 @@ $n__builtin$$COLON$$__fastpack_runtime__.exports = {
 
 try{$n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule = $n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule || false;}catch(_){}
 
-/* builtin$$COLON$$__empty_module__ */
-
-let $n__builtin$$COLON$$__empty_module__ = { id: "builtin$$COLON$$__empty_module__", exports: {}};
-$n__builtin$$COLON$$__empty_module__.exports = {};
-try{$n__builtin$$COLON$$__empty_module__.exports.__esModule = $n__builtin$$COLON$$__empty_module__.exports.__esModule || false;}catch(_){}
-
-/* builtin$$B$$esm */
-
-let $n__builtin$$B$$esm = { id: "builtin$$B$$esm", exports: {}};
-
-const $e__builtin$$B$$esm__default = $n__builtin$$COLON$$__empty_module__.exports.delimiter;
-
-try{$n__builtin$$B$$esm.exports.default = $e__builtin$$B$$esm__default;
-$n__builtin$$B$$esm.exports.__esModule = $n__builtin$$B$$esm.exports.__esModule || true;}catch(_){}
-
 /* builtin$$B$$index */
 
 let $n__builtin$$B$$index = { id: "builtin$$B$$index", exports: {}};
 const $i__builtin$$B$$index__$__fpack__ = ($n__builtin$$COLON$$__fastpack_runtime__.exports);
-const $i__builtin$$B$$index__path = ($n__builtin$$COLON$$__empty_module__.exports);
-const $i__builtin$$B$$index__module = ($n__builtin$$COLON$$__empty_module__.exports);
-const $i__builtin$$B$$index__esm = ($n__builtin$$B$$esm.exports);
-const {delimiter: $i__builtin$$B$$index__delimiter} = $i__builtin$$B$$index__path,
-  $i__builtin$$B$$index__rest = $i__builtin$$B$$index__$__fpack__.omitProps($i__builtin$$B$$index__path, ["delimiter"]);
-console.log($i__builtin$$B$$index__path, $i__builtin$$B$$index__module, $i__builtin$$B$$index__delimiter, $i__builtin$$B$$index__rest, $i__builtin$$B$$index__esm);
-// The following test makes sure that builtin transpiler strips type annotations
-// from inside JSX
-const $i__builtin$$B$$index__Component = props => React.createElement("div", null, item => {
+function $i__builtin$$B$$index__decorator1(proto, property, descriptor) {
+  let oldValue = descriptor.value;
+  descriptor.value = function () {
+    let ret = oldValue.call(this);
+    return `@decorator1 ${ret}`;
     
   }
-  );
+  ;
+  return descriptor;
+  
+}
+function $i__builtin$$B$$index__decorator2(proto, property, descriptor) {
+  let oldValue = descriptor.value;
+  descriptor.value = function () {
+    let ret = oldValue.call(this);
+    return `@decorator2 ${ret}`;
+    
+  }
+  ;
+  return descriptor;
+  
+}
+function $i__builtin$$B$$index__classDecorator1(cls) {
+  cls.staticProp = `@classDecorator1 ${cls.staticProp}`;
+  return cls;
+  
+}
+function $i__builtin$$B$$index__classDecorator2(cls) {
+  cls.staticProp = `@classDecorator2 ${cls.staticProp}`;
+  return cls;
+  
+}
+let $i__builtin$$B$$index__Test = $i__builtin$$B$$index__$__fpack__.defineClass(class Test {
+    constructor() {
+      Object.defineProperty(this, "prop", {"configurable": true, "enumerable": true, "writable": true, "value": "instance property"});
+      
+    }
+    
+    method() {
+      return "method";
+      
+    }
+    
+  }, [{"name": "staticProp", "value": "class property"}], [$i__builtin$$B$$index__classDecorator2, $i__builtin$$B$$index__classDecorator1], [{"method": "method", "decorators": [$i__builtin$$B$$index__decorator2, $i__builtin$$B$$index__decorator1]}]);
+let $i__builtin$$B$$index____fpack__1 = {test: new $i__builtin$$B$$index__Test(), a: 1, b: 2, c: 3},
+  {test: $i__builtin$$B$$index__test} = $i__builtin$$B$$index____fpack__1,
+  $i__builtin$$B$$index__rest = $i__builtin$$B$$index__$__fpack__.omitProps($i__builtin$$B$$index____fpack__1, ["test"]);
+document.body.innerHTML = `
+<div>Static property: <b>${$i__builtin$$B$$index__Test.staticProp}</b></div>
+<div>Property: <b>${$i__builtin$$B$$index__test.prop}</b></div>
+<div>method: <b>${$i__builtin$$B$$index__test.method()}</b></div>
+<div>...rest: <b>${JSON.stringify($i__builtin$$B$$index__rest)}</b></div>
+`;
 
 try{$n__builtin$$B$$index.exports.__esModule = $n__builtin$$B$$index.exports.__esModule || false;}catch(_){}
 })()

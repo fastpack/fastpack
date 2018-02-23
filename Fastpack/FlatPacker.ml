@@ -958,7 +958,10 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 "var __fastpack_cache__ = {};
 
 function __fastpack_import__(f) {
-  return new Promise((resolve, reject) => {
+  if (!window.Promise) {
+    throw 'window.Promise is undefined, consider using a polyfill';
+  }
+  return new Promise(function(resolve, reject) {
     try {
       if (__fastpack_cache__[f.name] === undefined) {
         __fastpack_cache__[f.name] = f();
