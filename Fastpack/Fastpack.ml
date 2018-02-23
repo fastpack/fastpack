@@ -94,7 +94,7 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
     entry_location = None;
     package = Package.empty;
     package_dir;
-    output_dir = ""; (* TODO: hack, fix later *)
+    output_dir = "";
     stack = [];
     current_location = None;
     mode;
@@ -259,8 +259,6 @@ let prepare_and_pack cl_options start_time =
         Error.ie "mode is not set"
     in
     let get_context current_filename =
-      (* current filename should be absolute path at this point
-       * TODO: assert *)
       let resolver = NodeResolver.make cache preprocessor in
       let%lwt entry_package =
         resolver.find_package package_dir entry_filename
