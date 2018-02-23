@@ -7,31 +7,31 @@ module ObjectSpread = ObjectSpread
 (* TODO: make sure it is ES2015 compatible *)
 let runtime = "
 function applyDecorator(decorator, proto, property, descriptor) {
-  let ret = decorator(proto, property, descriptor);
+  var ret = decorator(proto, property, descriptor);
   // TODO: assert all descriptor properties;
   return ret;
 }
 
 function decorateProperty(cls, property, decorators) {
-  let proto = cls.prototype;
-  let descriptor = Object.assign(
+  var proto = cls.prototype;
+  var descriptor = Object.assign(
     {},
     Object.getOwnPropertyDescriptor(proto, property)
   );
 
-  // TODO: Babel also accounts for descriptor.initializer. Is it needed?
-  descriptor = decorators.reverse().reduce(
-    (descriptor, decorator) => applyDecorator(decorator, proto, property, descriptor),
-    descriptor
-  );
+  for(var i = 0, reversed = decorators.reverse(), l = reversed.length;
+      i < l;
+      i++) {
+    descriptor = applyDecorator(reversed[i], proto, property, descriptor);
+  }
 
   Object.defineProperty(proto, property, descriptor);
 }
 
 module.exports = {
-  omitProps(target, props) {
-    let ret = {};
-    for(let prop in target) {
+  omitProps: function(target, props) {
+    var ret = {};
+    for(var prop in target) {
       if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {
         ret[prop] = target[prop];
       }
@@ -39,22 +39,25 @@ module.exports = {
     return ret;
   },
 
-  defineClass(cls, statics, classDecorators, propertyDecorators) {
-    propertyDecorators.forEach(
-      ({method, decorators}) => decorateProperty(cls, method, decorators)
-    );
+  defineClass: function(cls, statics, classDecorators, propertyDecorators) {
+    for(var i = 0, l = propertyDecorators.length; i < l; i++) {
+      decorateProperty(cls,
+                       propertyDecorators[i].method,
+                       propertyDecorators[i].decorators);
+    }
 
-    statics.forEach(({name, value}) =>
-      Object.defineProperty(cls, name, {
+    for(var i = 0, l = statics.length; i < l; i++) {
+      Object.defineProperty(cls, statics[i].name, {
         configurable: true,
         enumerable: true,
         writable: true,
-        value: value
+        value: statics[i].value
       })
-    );
-    let _cls = cls;
+    }
+
+    var _cls = cls;
     classDecorators = classDecorators.reverse();
-    for(let i = 0; i < classDecorators.length; i++) {
+    for(var i = 0; i < classDecorators.length; i++) {
       _cls = classDecorators[i](_cls);
     }
     return _cls;
