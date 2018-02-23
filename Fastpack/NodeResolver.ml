@@ -168,6 +168,7 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
       (* absolute module path *)
       | '/' ->
         begin
+          (* TODO: consider adding resolve_browser call here *)
           match%lwt resolve_extensionless_path path with
           | None ->
             Lwt.fail (Error path)

@@ -175,6 +175,11 @@ let prepare_and_pack cl_options start_time =
   match options.input, options.output with
   | Some input, Some output ->
     let entry_path = FS.abs_path package_dir input in
+    let entry_path =
+      if entry_path = package_dir
+      then entry_path ^ "/."
+      else entry_path
+    in
     let output_file =
       FS.abs_path package_dir @@ FilePath.concat output "index.js"
     in
@@ -261,6 +266,9 @@ let prepare_and_pack cl_options start_time =
       let%lwt entry_package =
         resolver.find_package package_dir entry_path
       in
+      print_endline ("CUR: " ^ current_filename);
+      print_endline ("ENTRY_PATH: " ^ entry_path);
+      print_endline ("PKG: " ^ package_dir);
       let%lwt package = resolver.find_package package_dir current_filename in
       let ctx = {
         Context.

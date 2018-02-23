@@ -1,0 +1,109 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`development mode 1`] = `
+"(function(modules) {
+  // The module cache
+  var installedModules = {};
+
+  // The require function
+  function __fastpack_require__(moduleId) {
+
+    // Check if module is in cache
+    if(installedModules[moduleId]) {
+      return installedModules[moduleId].exports;
+    }
+    // Create a new module (and put it into the cache)
+    var module = installedModules[moduleId] = {
+      id: moduleId,
+      l: false,
+      exports: {}
+    };
+
+    // Execute the module function
+    modules[moduleId].call(
+      module.exports,
+      module,
+      module.exports,
+      __fastpack_require__,
+      __fastpack_import__
+    );
+
+    // Flag the module as loaded
+    module.l = true;
+
+    // Return the exports of the module
+    return module.exports;
+  }
+
+  function __fastpack_import__(moduleId) {
+    return new Promise((resolve, reject) => {
+      try {
+        resolve(__fastpack_require__(moduleId));
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  // expose the modules object
+  __fastpack_require__.m = modules;
+
+  // expose the module cache
+  __fastpack_require__.c = installedModules;
+
+  return __fastpack_require__(__fastpack_require__.s = 'index');
+})
+({
+\\"local\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+console.log(\\"local.js: oops\\");
+},
+\\"ignore\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+console.log('ignore.js: oops');
+},
+\\"NM$$module$$_$$a$index\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+console.log('module-a: oops');
+},
+\\"index\\": function(module, exports, __fastpack_require__, __fastpack_import__) {
+__fastpack_require__(/* \\"./local.js\\" */ \\"local\\");
+__fastpack_require__(/* \\"./ignore.js\\" */ \\"ignore\\");
+__fastpack_require__(/* \\"module-a\\" */ \\"NM$$module$$_$$a$index\\");
+},
+
+});
+"
+`;
+
+exports[`production mode 1`] = `
+"(function() {
+
+/* local$$_$$shim */
+
+let $n__local$$_$$shim = { id: \\"local$$_$$shim\\", exports: {}};
+console.log('local-shim.js: ok')
+
+try{$n__local$$_$$shim.exports.__esModule = $n__local$$_$$shim.exports.__esModule || false;}catch(_){}
+
+/* builtin$$COLON$$__empty_module__ */
+
+let $n__builtin$$COLON$$__empty_module__ = { id: \\"builtin$$COLON$$__empty_module__\\", exports: {}};
+$n__builtin$$COLON$$__empty_module__.exports = {};
+try{$n__builtin$$COLON$$__empty_module__.exports.__esModule = $n__builtin$$COLON$$__empty_module__.exports.__esModule || false;}catch(_){}
+
+/* module$$_$$a$$_$$shim */
+
+let $n__module$$_$$a$$_$$shim = { id: \\"module$$_$$a$$_$$shim\\", exports: {}};
+console.log('module-shim.js: ok');
+
+try{$n__module$$_$$a$$_$$shim.exports.__esModule = $n__module$$_$$a$$_$$shim.exports.__esModule || false;}catch(_){}
+
+/* index */
+
+let $n__index = { id: \\"index\\", exports: {}};
+($n__local$$_$$shim.exports);
+($n__builtin$$COLON$$__empty_module__.exports);
+($n__module$$_$$a$$_$$shim.exports);
+
+try{$n__index.exports.__esModule = $n__index.exports.__esModule || false;}catch(_){}
+})()
+"
+`;
