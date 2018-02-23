@@ -1,3 +1,5 @@
+
+// This function is a modified version of the one created by the Webpack project
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -33,7 +35,10 @@
   }
 
   function __fastpack_import__(moduleId) {
-    return new Promise((resolve, reject) => {
+    if (!window.Promise) {
+      throw 'window.Promise is undefined, consider using a polyfill';
+    }
+    return new Promise(function(resolve, reject) {
       try {
         resolve(__fastpack_require__(moduleId));
       } catch (e) {
@@ -53,16 +58,16 @@
 ({
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
 let a1 = "Тест";
-Object.defineProperty(exports, "a1", {get: () => a1});
+Object.defineProperty(exports, "a1", {get: function() {return a1;}});
 
 let a2 = "Привет, мир";
-Object.defineProperty(exports, "a2", {get: () => a2});
+Object.defineProperty(exports, "a2", {get: function() {return a2;}});
 
 let a3 = "哈囉世界";
-Object.defineProperty(exports, "a3", {get: () => a3});
+Object.defineProperty(exports, "a3", {get: function() {return a3;}});
 
 let a4 = "💩";
-Object.defineProperty(exports, "a4", {get: () => a4});
+Object.defineProperty(exports, "a4", {get: function() {return a4;}});
 
 exports.default = {a1: a1, a2: a2, a3: a3, a4: a4};
 

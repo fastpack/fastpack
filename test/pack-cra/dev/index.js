@@ -1,3 +1,5 @@
+
+// This function is a modified version of the one created by the Webpack project
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -33,7 +35,10 @@
   }
 
   function __fastpack_import__(moduleId) {
-    return new Promise((resolve, reject) => {
+    if (!window.Promise) {
+      throw 'window.Promise is undefined, consider using a polyfill';
+    }
+    return new Promise(function(resolve, reject) {
       try {
         resolve(__fastpack_require__(moduleId));
       } catch (e) {
@@ -18441,7 +18446,7 @@ function unregister() {
     
   }
 }
-Object.defineProperty(exports, "unregister", {get: () => unregister});
+Object.defineProperty(exports, "unregister", {get: function() {return unregister;}});
 
 ;
 
