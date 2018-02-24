@@ -4,7 +4,15 @@ open PackerUtil
 let debug = Logs.debug
 
 
-let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_context =
+let watch
+    ~pack
+    ~(cache : Cache.t)
+    ~graph
+    ~modules
+    ~package_dir
+    ~entry_filename
+    get_context
+  =
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
    * *)
@@ -33,10 +41,12 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
       raise exn
   in
 
+  let report = Reporter.report_string ~cache:None ~mode:None in
+
   let pack cache ctx start_time =
     Lwt.catch
       (fun () ->
-         let%lwt {Reporter. modules; _} = pack cache ctx start_time in
+         let%lwt {Reporter. modules; _} = pack ~report ~cache ~ctx start_time in
          Lwt.return_some modules
       )
       handle_error

@@ -222,7 +222,7 @@ let prepare_and_pack options start_time =
     | JSON -> Reporter.report_json
     | Text -> Reporter.report_string ~cache:cache_report ~mode:(Some options.mode)
   in
-  let pack_postprocess_report cache ctx start_time =
+  let pack_postprocess_report ~report ~cache ~ctx start_time =
     let temp_file = Filename.temp_file "" ".bundle.js" in
     Lwt.finalize
       (fun () ->
@@ -246,7 +246,7 @@ let prepare_and_pack options start_time =
   let%lwt ctx = get_context entry_filename in
   let init_run () =
     Lwt.catch
-      (fun () -> pack_postprocess_report cache ctx start_time)
+      (fun () -> pack_postprocess_report ~report ~cache ~ctx start_time)
       (function
        | PackError (ctx, error) ->
          raise (ExitError (string_of_error ctx error))
@@ -264,12 +264,12 @@ let prepare_and_pack options start_time =
          match options.mode with
          | Development ->
            Watcher.watch
-             pack_postprocess_report
-             cache
-             ctx.graph
-             modules
-             package_dir
-             entry_filename
+             ~pack:pack_postprocess_report
+             ~cache
+             ~graph:ctx.graph
+             ~modules
+             ~package_dir
+             ~entry_filename
              get_context
          | _ ->
            (* TODO: noop warning*)
