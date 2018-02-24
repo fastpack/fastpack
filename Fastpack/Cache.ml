@@ -44,16 +44,16 @@ type t = {
   setup_build_dependencies : StringSet.t -> unit;
   remove : string -> unit;
   dump : unit -> unit Lwt.t;
-  status : status option;
+  starts_empty : bool;
 }
-and status = | Empty
-             | Used
-             | Disabled
 
 exception FileDoesNotExist of string
 
 type strategy = | Use
                 | Disable
+
+type init = | Persistent of string
+            | Memory
 
 
 
@@ -62,7 +62,7 @@ let empty = {
   modules = M.empty;
 }
 
-let create ?(strategy=None) (cache_filename : string option) =
+let create (init : init) =
   let no_file = {
     exists = false;
     st_mtime = 0.0;
@@ -72,30 +72,24 @@ let create ?(strategy=None) (cache_filename : string option) =
     package = None;
   }
   in
-
-  let%lwt (status, loaded) =
-    match strategy with
-    | None ->
-      Lwt.return (None, empty)
-    | Some Disable ->
-      Lwt.return (Some Disabled, empty)
-    | Some Use ->
-      match cache_filename with
-      | None ->
-        Lwt.return (Some Empty, empty)
-      | Some filename ->
-        match%lwt Lwt_unix.file_exists filename with
-        | true ->
-          let%lwt loaded =
-            Lwt_io.with_file
-              ~mode:Lwt_io.Input
-              ~flags:Unix.[O_RDONLY]
-              filename
-              (fun ch -> (Lwt_io.read_value ch : cache Lwt.t))
-          in
-          Lwt.return (Some Used, loaded)
-        | false ->
-          Lwt.return (Some Empty, empty)
+  
+  let%lwt loaded =
+    match init with
+    | Memory ->
+      Lwt.return empty
+    | Persistent filename ->
+      match%lwt Lwt_unix.file_exists filename with
+      | true ->
+        let%lwt loaded =
+          Lwt_io.with_file
+            ~mode:Lwt_io.Input
+            ~flags:Unix.[O_RDONLY]
+            filename
+            (fun ch -> (Lwt_io.read_value ch : cache Lwt.t))
+        in
+        Lwt.return loaded
+      | false ->
+        Lwt.return empty
   in
 
   let trusted = ref StringSet.empty in
@@ -485,10 +479,10 @@ let create ?(strategy=None) (cache_filename : string option) =
 
 
   let dump () =
-    match cache_filename with
-    | None ->
+    match init with
+    | Memory ->
       Lwt.return_unit
-    | Some filename ->
+    | Persistent filename ->
       Lwt_io.with_file
         ~mode:Lwt_io.Output
         ~perm:0o640
@@ -512,9 +506,6 @@ let create ?(strategy=None) (cache_filename : string option) =
     get_potentially_invalid;
     remove;
     dump;
-    status;
+    starts_empty = !files = M.empty;
   }
-
-let memory () =
-  create None
 

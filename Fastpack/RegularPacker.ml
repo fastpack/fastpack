@@ -744,8 +744,6 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
           !emitted_modules
           StringSet.empty
       ;
-      cache_status = cache.status;
-      message = "Mode: development.";
       size = Lwt_io.position channel |> Int64.to_int
     }
   | _ ->

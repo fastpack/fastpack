@@ -21,7 +21,7 @@ let pack ~mode ~target ~preprocessor pack_f entry_filename _ =
   let pack' () =
     let bytes = Lwt_bytes.create 50000000 in
     let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-    let%lwt cache = Fastpack.Cache.create None in
+    let%lwt cache = Fastpack.Cache.(create Memory) in
     let%lwt _ =
       Fastpack.pack
         ~pack_f

@@ -232,14 +232,14 @@
 
 "@opam/jbuilder@ >= 1.0.0-beta12", "@opam/jbuilder@ >= 1.0.0-beta14":
   version "1.0.0-beta17"
-  uid fa843d1276caa97411fa08fad16ea291
+  uid e8d0e9607c4c56ef0570b44db8f0d7cd
   resolved "@opam/jbuilder@1.0.0-beta17-fa843d1276caa97411fa08fad16ea291.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"
     "@opam/ocamlfind" "*"
   peerDependencies:
-    ocaml " >= 4.2.3000"
+    ocaml " >= 4.2.3"
 
 "@opam/lambda-term@ >= 1.2.0":
   version "1.12.0"
