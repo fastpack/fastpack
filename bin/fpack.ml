@@ -12,7 +12,7 @@ let () =
         cache
         preprocess
         postprocess
-        stats
+        report
         watch
         debug
       =
@@ -25,13 +25,13 @@ let () =
           { Fastpack.
             input;
             output;
-            mode = Some mode;
+            mode;
             target;
-            cache = Some cache;
-            preprocess = Some (List.map snd preprocess);
-            postprocess = Some postprocess;
-            stats;
-            watch = Some watch;
+            cache;
+            preprocess = (List.map snd preprocess);
+            postprocess;
+            report;
+            watch;
           }
         in
         `Ok (Fastpack.pack_main options time)
@@ -45,19 +45,20 @@ let () =
 
     let input_t =
       let doc =
-        "Entry point JavaScript file"
+        "Entry path. Default: '.'"
       in
-      let docv = "INPUT" in
-      Arg.(value & pos 0 (some string) None & info [] ~docv ~doc)
+      let docv = "ENTRY PATH" in
+      Arg.(value & pos 0 string "." & info [] ~docv ~doc)
     in
 
     let output_t =
       let doc =
         "Output Directory. "
-        ^ "The target bundle will be $(docv)/index.js. 'bundle' is used by default"
+        ^ "The target bundle will be $(docv)/index.js."
+        ^ "'bundle' is used by default"
       in
       let docv = "DIR" in
-      Arg.(value & opt (some string) None & info ["o"; "output"] ~docv ~doc)
+      Arg.(value & opt string "./bundle" & info ["o"; "output"] ~docv ~doc)
     in
 
     let mode_t =
@@ -71,18 +72,20 @@ let () =
       let doc = "Deployment target." in
       let docv = "[ app | esm | cjs ]" in
       let target =
-        Arg.enum [
-          "app", Fastpack.Target.Application;
-          "esm", Fastpack.Target.ESM;
-          "cjs", Fastpack.Target.CommonJS;
+        Arg.enum Fastpack.Target.[
+          "app", Application;
+          "esm", ESM;
+          "cjs", CommonJS;
         ]
       in
-      Arg.(value & opt (some target) None & info ["target"] ~docv ~doc)
+      Arg.(value & opt target Fastpack.Target.Application & info ["target"] ~docv ~doc)
     in
 
     let cache_t =
         let open Fastpack.Cache in
-        let doc = "Do not use cache at all" in
+        let doc =
+          "Do not use cache at all (effective in development mode only)"
+        in
         let disable = Disable, Arg.info ["no-cache"] ~doc in
         Arg.(value & vflag Use [disable])
     in
@@ -114,7 +117,7 @@ let () =
         ^ "absolutely equal. An example of using the Webpack loader: "
         ^ "'\\\\.js\\$:babel-loader?filename=.babelrc'."
       in
-      let docv = "PATTERN:PROCESSOR?OPTIONS" in
+      let docv = "PATTERN:PROCESSOR?OPTIONS[!...]" in
       Arg.(value & opt_all preprocess [] & info ["preprocess"] ~docv ~doc)
     in
 
@@ -128,15 +131,16 @@ let () =
       Arg.(value & opt_all string [] & info ["postprocess"] ~docv ~doc)
     in
 
-    let stats_t =
-      let doc = "Command output stats" in
+    let report_t =
+      let doc = "Output packer statistics" in
       let docv = "[ json ]" in
-      let target =
-        Arg.enum [
-          "json", Fastpack.Stats.JSON;
+      let report =
+        Arg.enum Fastpack.Reporter.[
+          "json", JSON;
+          "text", Text;
         ]
       in
-      Arg.(value & opt (some target) None & info ["stats"] ~docv ~doc)
+      Arg.(value & opt report Fastpack.Reporter.Text & info ["report"] ~docv ~doc)
     in
 
     let watch_t =
@@ -158,7 +162,7 @@ let () =
         $ cache_t
         $ preprocess_t
         $ postprocess_t
-        $ stats_t
+        $ report_t
         $ watch_t
         $ debug_t
     ))

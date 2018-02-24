@@ -13,7 +13,6 @@ let watch pack (cache : Cache.t) graph modules package_dir entry_filename get_co
   Lwt_unix.on_signal Sys.sigterm (fun _ -> Lwt.wakeup_exn u ExitOK) |> ignore;
 
   cache.setup_build_dependencies modules;
-  let cache = { cache with status = None } in
 
   let%lwt () = Lwt_io.(
       write stdout "Watching file changes (Ctrl+C to stop)\n"

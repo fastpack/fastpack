@@ -1,4 +1,4 @@
 Packed in 0.XXXs. Bundle: 1Kb. Modules: 1. Cache: empty. Mode: development.
 Packed in 0.XXXs. Bundle: 1Kb. Modules: 1. Cache: used. Mode: development.
 Packed in 0.XXXs. Bundle: 1Kb. Modules: 1. Cache: disabled. Mode: development.
-Packed in 0.XXXs. Bundle: 212b. Modules: 1. Mode: production
+Packed in 0.XXXs. Bundle: 212b. Modules: 1. Mode: production.

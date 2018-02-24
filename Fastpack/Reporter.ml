@@ -1,12 +1,13 @@
 module StringSet = Set.Make(String)
+
 type t = {
   modules : StringSet.t;
-  cache_status : Cache.status option;
-  message : string;
   size : int;
 }
 
-let report_string start_time { modules; cache_status; message; size } =
+type report = | JSON | Text
+
+let report_string ?(cache=None) ?(mode=None) start_time { modules; size } =
   let pretty_size =
     Printf.(
       if size >= 1048576
@@ -20,16 +21,14 @@ let report_string start_time { modules; cache_status; message; size } =
     )
   in
   let cache =
-    match cache_status with
+    match cache with
     | None -> ""
-    | Some cache_status ->
-      let message =
-        match cache_status with
-        | Cache.Empty -> "empty"
-        | Cache.Used -> "used"
-        | Cache.Disabled -> "disabled"
-      in
-      Printf.sprintf "Cache: %s. " message
+    | Some message -> Printf.sprintf "Cache: %s. " message
+  in
+  let mode =
+    match mode with
+    | None -> ""
+    | Some mode -> PackerUtil.Mode.to_string mode |> Printf.sprintf "Mode: %s."
   in
   Printf.sprintf
     "Packed in %.3fs. Bundle: %s. Modules: %d. %s%s\n"
@@ -37,7 +36,7 @@ let report_string start_time { modules; cache_status; message; size } =
     pretty_size
     (modules |> StringSet.elements |> List.length)
     cache
-    message
+    mode
   |> Lwt_io.write Lwt_io.stdout
 
 let report_json _start_time { modules; _ } =

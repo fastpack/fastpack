@@ -863,16 +863,6 @@
   peerDependencies:
     ocaml " >= 4.2.3000"
 
-cpython@fastpack/cpython#2.7.14-esy:
-  version "2.7.14"
-  resolved "https://codeload.github.com/fastpack/cpython/tar.gz/b7b639ff3d77c106922b1fc991af94b7088c211f"
-
 ocaml@~4.6.0:
   version "4.6.1"
   resolved "https://registry.yarnpkg.com/ocaml/-/ocaml-4.6.1.tgz#8babea2c41a9f734313b4fc1841ec0963c9d7a07"
-
-watchman@fastpack/watchman#4.9.0-esy:
-  version "4.9.0"
-  resolved "https://codeload.github.com/fastpack/watchman/tar.gz/b42caf4f0aa4c3c027a0030a3751fb8f8e33914f"
-  dependencies:
-    cpython fastpack/cpython#2.7.14-esy

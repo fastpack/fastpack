@@ -49,7 +49,6 @@
     "@opam/fmt": "0.8.5",
     "@opam/re": "1.7.1",
     "@opam/ppx_expect": "*",
-    "watchman": "fastpack/watchman#4.9.0-esy",
     "ocaml": "~4.6.0"
   }
 }
