@@ -721,7 +721,6 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     Lwt.return_unit
   in
 
-  (* TODO: fix next line *)
   match ctx.entry_location, ctx.current_location with
   | Some entry_location, Some current_location ->
     let%lwt entry = read_module ctx cache current_location in

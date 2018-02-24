@@ -26,7 +26,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
   let bytes = Lwt_bytes.create 50_000_000 in
   let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-  let total_modules = ref [] in
+  let total_modules = ref (StringSet.empty) in
   let has_dynamic_modules = ref false in
 
   (* internal top-level bindings in the file *)
@@ -933,7 +933,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           graph
           |> DependencyGraph.get_modules
         in
-        total_modules := List.concat [ !total_modules; new_modules; ];
+        total_modules := StringSet.(of_list new_modules |> union !total_modules);
         Lwt.return_unit
   in
   match ctx.entry_location with
@@ -982,8 +982,7 @@ function __fastpack_import__(f) {
     let%lwt () = Lwt_io.write result_channel footer in
     Lwt.return {
       Reporter.
-      (* TODO: use StringSet to accumulate modules, this is temporary hack *)
-      modules = StringSet.of_list !total_modules;
+      modules = !total_modules;
       size = Lwt_io.position result_channel |> Int64.to_int
     }
   | _ ->
