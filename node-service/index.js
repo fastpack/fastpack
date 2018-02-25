@@ -50,6 +50,15 @@ function load(message) {
             errors: [],
             meta: {}
           },
+          resolve: function(context, request, callback) {
+            var request =
+              request[0] == "." ? "./" + path.join(context, request) : request;
+            try {
+              callback(null, require.resolve(request));
+            } catch(e) {
+              callback(e, null);
+            }
+          },
           options: {},
           emitFile: function(name, buffer) {
             files.push({
@@ -144,7 +153,4 @@ stdin.on("data", function(data) {
   }
 });
 
-function loop() {
-  setImmediate(loop);
-}
-loop();
+// require('net').createServer().listen();
