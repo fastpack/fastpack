@@ -213,9 +213,6 @@ module Context = struct
   }
 
   let to_string { entry_location; package_dir; stack; mode; current_location; _ } =
-    let relative filename =
-      String.replace ~sub:(package_dir ^ "/") ~by:"" filename
-    in
     let stack =
       stack
       |> List.map (Dependency.to_string ~dir:(Some package_dir))
@@ -224,7 +221,7 @@ module Context = struct
     let location_of_opt location =
       match location with
       | Some location ->
-        Module.location_to_string location |> relative
+        Module.location_to_string ~base_dir:(Some package_dir) location
       | None ->
         "(not yet resolved)"
     in
@@ -235,7 +232,7 @@ module Context = struct
         "Call Stack:" ^ if stack <> ""
                         then sprintf "\n\t%s" stack
                         else " (empty)";
-        sprintf "Processing File: %s" (location_of_opt current_location);
+        sprintf "Processing Module: %s" (location_of_opt current_location);
       ])
     |> List.fold_left
       (fun acc part -> if part <> "" then acc ^ part ^ "\n" else acc)

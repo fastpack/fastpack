@@ -218,16 +218,55 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               let dep = add_dependency request in
               patch_loc_with
                 loc
-                (fun ctx ->
-                  let {Module. id = module_id; _} = get_module dep ctx in
-                  let namespace =
+                (fun dep_map ->
+                  let
+                    {Module.
+                      id = module_id;
+                      exports;
+                      module_type;
+                      location;
+                      _
+                    } = get_module dep dep_map
+                  in
+                  let namespace, names =
                     match specifiers with
                     | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
-                      Some name
-                    | _ ->
-                      None
+                      Some name, []
+                    | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
+                      None,
+                      specifiers
+                      |> List.map
+                        (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
+                    | None ->
+                      None, []
                   in
                   let has_names = default <> None || specifiers <> None in
+                  (* Verify all names to be in exports of the target *)
+                  if has_names && module_type = Module.ESM
+                  then begin
+                    let names =
+                      match default with
+                      | Some _ -> "default" :: names
+                      | None -> names
+                    in
+                    List.iter
+                      (fun remote ->
+                         let exists =
+                           exports
+                           |> List.exists (fun (name, _, _) -> name = remote)
+                         in
+                         if exists
+                         then ()
+                         else
+                           let location_str =
+                             Module.location_to_string
+                               ~base_dir:(Some ctx.package_dir)
+                               location
+                           in
+                           raise (PackError (ctx, CannotFindExportedName (remote, location_str)))
+                      )
+                      names;
+                  end;
                   match has_names, get_module_binding dep.request, namespace with
                   | false, _, _ ->
                     fastpack_require module_id dep.request ^ ";\n"

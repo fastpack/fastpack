@@ -3,6 +3,6 @@ Working Directory: /.../test/pack-target
 Entry Point: index.js
 Mode: production
 Call Stack: (empty)
-Processing File: index.js
+Processing Module: index.js
 
 EcmaScript6 target is not supported for the regular packer - use flat

@@ -166,11 +166,6 @@ let tests = [
     pack_flat_prod
   );
   Test (
-    "error-cannot-find-exported-name/index.js",
-    "error-cannot-find-exported-name.txt",
-    pack_flat_prod
-  );
-  Test (
     "error-scope-naming-collision/index.js",
     "error-scope-naming-collision.txt",
     pack_flat_prod

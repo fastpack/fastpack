@@ -4,7 +4,7 @@ Entry Point: index.js
 Mode: production
 Call Stack:
 	'./a' from file: index.js
-Processing File: a.js
+Processing Module: a.js
 
 Parse Error
 File: a.js

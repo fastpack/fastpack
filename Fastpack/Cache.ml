@@ -13,6 +13,7 @@ module ModuleEntry = struct
     content : string;
     build_dependencies : string M.t;
     resolved_dependencies : (Dependency.t * Module.location) list;
+    exports: (string * string option * FastpackUtil.Scope.binding) list;
   }
 end
 
@@ -393,7 +394,9 @@ let create (init : init) =
         files;
         content;
         build_dependencies;
-        resolved_dependencies } ->
+        resolved_dependencies;
+        exports
+      } ->
       match%lwt build_dependencies_changed  build_dependencies with
       | true ->
         build_dependencies
@@ -411,7 +414,7 @@ let create (init : init) =
           files;
           workspace = Workspace.of_string content;
           scope = FastpackUtil.Scope.empty;
-          exports = []
+          exports;
         }
   in
 
@@ -434,6 +437,7 @@ let create (init : init) =
         resolved_dependencies = m.resolved_dependencies;
         module_type = m.module_type;
         files = m.files;
+        exports = m.exports;
         content;
       }
       in
