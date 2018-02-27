@@ -8,11 +8,12 @@ module ModuleEntry = struct
   type t = {
     id : string;
     state : Module.state;
-    es_module : bool;
+    module_type : Module.module_type;
     files : (string * string) list;
     content : string;
     build_dependencies : string M.t;
     resolved_dependencies : (Dependency.t * Module.location) list;
+    exports: (string * string option * FastpackUtil.Scope.binding) list;
   }
 end
 
@@ -389,11 +390,13 @@ let create (init : init) =
     | Some {
         id;
         state;
-        es_module;
+        module_type;
         files;
         content;
         build_dependencies;
-        resolved_dependencies } ->
+        resolved_dependencies;
+        exports
+      } ->
       match%lwt build_dependencies_changed  build_dependencies with
       | true ->
         build_dependencies
@@ -407,11 +410,11 @@ let create (init : init) =
           location;
           state;
           resolved_dependencies;
-          es_module;
+          module_type;
           files;
           workspace = Workspace.of_string content;
           scope = FastpackUtil.Scope.empty;
-          exports = []
+          exports;
         }
   in
 
@@ -432,8 +435,9 @@ let create (init : init) =
         state = m.state;
         build_dependencies;
         resolved_dependencies = m.resolved_dependencies;
-        es_module = m.es_module;
+        module_type = m.module_type;
         files = m.files;
+        exports = m.exports;
         content;
       }
       in

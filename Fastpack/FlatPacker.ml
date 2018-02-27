@@ -215,7 +215,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                 Printf.sprintf "%s.exports"
                 @@ gen_ext_namespace_binding m.Module.id
               | Some remote ->
-                match m.Module.es_module, remote with
+                match Module.(m.module_type = ESM || m.module_type = CJS_esModule), remote with
                 | false, "default" ->
                   Printf.sprintf "%s.exports"
                   @@ gen_ext_namespace_binding m.Module.id
@@ -232,10 +232,18 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   in
                   match names with
                   | [] ->
-                    Printf.sprintf "%s.exports.%s"
-                      (gen_ext_namespace_binding m.id)
-                      remote
-                    (* raise (PackError (ctx, CannotFindExportedName (remote, m.filename))) *)
+                    if m.module_type = Module.ESM
+                    then
+                      let location_str =
+                        Module.location_to_string
+                          ~base_dir:(Some ctx.package_dir)
+                          m.location
+                      in
+                      raise (PackError (ctx, CannotFindExportedName (remote, location_str)))
+                    else
+                      Printf.sprintf "%s.exports.%s"
+                        (gen_ext_namespace_binding m.id)
+                        remote
                   | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
                     match typ with
                     | Scope.Import import -> resolve_import dep_map m.location import
@@ -712,9 +720,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             enter_block;
             leave_block;
           } in
-          let es_module = is_es_module stmts in
+          let module_type = get_module_type stmts in
           Visit.visit handler program;
-          add_exports es_module;
+          add_exports (module_type = Module.ESM || module_type = Module.CJS_esModule);
           if (Some location = ctx.entry_location) then add_target_export ();
 
           !used_imports
@@ -728,11 +736,11 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
            !static_deps,
            program_scope,
            exports,
-           es_module)
+           module_type)
         in
 
         let source = m.Module.workspace.Workspace.value in
-        let (workspace, static_deps, scope, exports, es_module) =
+        let (workspace, static_deps, scope, exports, module_type) =
           match is_json m.location with
           | true ->
             let workspace =
@@ -741,7 +749,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                 (gen_ext_namespace_binding m.id)
                 source
             in
-            (workspace, [], Scope.empty, [], false)
+            (workspace, [], Scope.empty, [], Module.CJS)
           | false ->
             try
                 analyze m.id m.location source
@@ -757,7 +765,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           workspace;
           scope;
           exports;
-          es_module;
+          module_type;
         } in
         DependencyGraph.add_module graph m;
 
@@ -859,7 +867,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   then true
                   else
                     match DependencyGraph.lookup_module graph resolved_str with
-                    | Some m -> m.es_module
+                    | Some m ->
+                      Module.(m.module_type = ESM || m.module_type = CJS_esModule)
                     | None -> false
                )
              |> List.fold_left

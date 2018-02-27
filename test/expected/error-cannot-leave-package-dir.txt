@@ -5,6 +5,6 @@ Mode: production
 Call Stack:
 	'../LeavePackageDir' from file: a.js	
 './a' from file: index.js
-Processing File: a.js
+Processing Module: a.js
 
 /.../test/LeavePackageDir.js is out of the working directory

@@ -213,9 +213,6 @@ module Context = struct
   }
 
   let to_string { entry_location; package_dir; stack; mode; current_location; _ } =
-    let relative filename =
-      String.replace ~sub:(package_dir ^ "/") ~by:"" filename
-    in
     let stack =
       stack
       |> List.map (Dependency.to_string ~dir:(Some package_dir))
@@ -224,7 +221,7 @@ module Context = struct
     let location_of_opt location =
       match location with
       | Some location ->
-        Module.location_to_string location |> relative
+        Module.location_to_string ~base_dir:(Some package_dir) location
       | None ->
         "(not yet resolved)"
     in
@@ -235,7 +232,7 @@ module Context = struct
         "Call Stack:" ^ if stack <> ""
                         then sprintf "\n\t%s" stack
                         else " (empty)";
-        sprintf "Processing File: %s" (location_of_opt current_location);
+        sprintf "Processing Module: %s" (location_of_opt current_location);
       ])
     |> List.fold_left
       (fun acc part -> if part <> "" then acc ^ part ^ "\n" else acc)
@@ -290,7 +287,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       id;
       location;
       resolved_dependencies = [];
-      es_module = false;
+      module_type = Module.CJS;
       files = [];
       state = Initial;
       workspace = Workspace.of_string source;
@@ -417,28 +414,32 @@ let is_json (location : Module.location) =
     false
 
 
-let is_es_module stmts =
+let get_module_type stmts =
   (* TODO: what if module has only import() expression? *)
-  let import_or_export ((_, stmt) : Loc.t S.t) =
-    match stmt with
-    | S.Expression {
-        expression = (_, E.Assignment {
-            operator = E.Assignment.Assign;
-            left = (_, P.Expression (_, E.Member {
-                _object = (_, E.Identifier (_, "exports"));
-                property = E.Member.PropertyIdentifier (_, "__esModule");
-                computed = false
-              }));
-            right = (_, E.Literal { value = L.Boolean true; _});
-        });
-        _
-      }
-    | S.ExportDefaultDeclaration _
-    | S.ExportNamedDeclaration _
-    | S.ImportDeclaration _ ->
-      true
-    | _ ->
-      false
+  let import_or_export module_type ((_, stmt) : Loc.t S.t) =
+    match module_type with
+    | Module.ESM | Module.CJS_esModule -> module_type
+    | Module.CJS ->
+      match stmt with
+      | S.Expression {
+          expression = (_, E.Assignment {
+              operator = E.Assignment.Assign;
+              left = (_, P.Expression (_, E.Member {
+                  _object = (_, E.Identifier (_, "exports"));
+                  property = E.Member.PropertyIdentifier (_, "__esModule");
+                  computed = false
+                }));
+              right = (_, E.Literal { value = L.Boolean true; _});
+          });
+          _
+        } ->
+        Module.CJS_esModule
+      | S.ExportDefaultDeclaration _
+      | S.ExportNamedDeclaration _
+      | S.ImportDeclaration _ ->
+        Module.ESM
+      | _ ->
+        module_type
   in
-  List.exists import_or_export stmts
+  List.fold_left import_or_export Module.CJS stmts
 

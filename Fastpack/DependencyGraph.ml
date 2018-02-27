@@ -69,14 +69,16 @@ let sort graph entry =
     let location_str = Module.location_to_string m.location in
     match List.mem location_str seen with
     | true ->
-      let prev_m =
-        match lookup_module graph (List.hd seen) with
-        | Some prev_m -> prev_m
-        | None -> Error.ie "DependencyGraph.sort - imporssible state"
-      in
-      if m.es_module && prev_m.es_module
-      then ()
-      else raise (Cycle (location_str :: seen))
+      (* let prev_m = *)
+      (*   match lookup_module graph (List.hd seen) with *)
+      (*   | Some prev_m -> prev_m *)
+      (*   | None -> Error.ie "DependencyGraph.sort - imporssible state" *)
+      (* in *)
+      begin
+        match m.module_type with
+        | Module.ESM | Module.CJS_esModule -> ()
+        | Module.CJS -> raise (Cycle (location_str :: seen))
+      end
     | false ->
       match check_module m with
       | true -> ()

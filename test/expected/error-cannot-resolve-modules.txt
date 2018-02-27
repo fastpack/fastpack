@@ -3,7 +3,7 @@ Working Directory: /.../test/error-cannot-resolve-modules
 Entry Point: index.js
 Mode: production
 Call Stack: (empty)
-Processing File: index.js
+Processing Module: index.js
 
 Cannot resolve module:
 	/.../test/error-cannot-resolve-modules/c

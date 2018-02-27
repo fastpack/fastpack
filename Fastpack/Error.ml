@@ -71,12 +71,11 @@ the code.
       (fun filename -> String.replace ~sub:(package_dir ^ "/") ~by:"" filename)
       filenames
 
-  | CannotFindExportedName (name, filename) ->
-    let filename = String.replace ~sub:(package_dir ^ "/") ~by:"" filename in
+  | CannotFindExportedName (name, location_str) ->
     Printf.sprintf
       "Cannot find exported name '%s' in module '%s'\n"
       name
-      filename
+      location_str
 
   | ScopeError reason ->
     Scope.error_to_string reason
