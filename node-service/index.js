@@ -1,6 +1,18 @@
 var path = require("path");
 var fs = require("fs");
+var Module = require("module");
+
 module.paths.unshift(path.join(process.cwd(), "node_modules"));
+module.paths.unshift(process.cwd());
+
+var fromFile = path.join(process.cwd(), "noop.js");
+function resolve(request) {
+  return Module._resolveFilename(request, {
+    id: fromFile,
+    filename: fromFile,
+    paths: module.paths
+  });
+}
 
 function handleError(e) {
   var message = e.message || e + "";
@@ -49,6 +61,28 @@ function load(message) {
           _module: {
             errors: [],
             meta: {}
+          },
+          fs: fs,
+          loadModule: function(request, callback) {
+            callback(
+              "Fastpack cannot load modules from Webpack loaders: " + request,
+              null
+            );
+          },
+          resolve: function(context, request, callback) {
+            if (context === "") {
+              context = ".";
+            }
+            if (request[0] === ".") {
+              request = path.join(context, request);
+              if (request[0] !== "/") request = "./" + request;
+            }
+
+            try {
+              callback(null, resolve(request));
+            } catch (e) {
+              callback(e, null);
+            }
           },
           options: {},
           emitFile: function(name, buffer) {
@@ -144,7 +178,4 @@ stdin.on("data", function(data) {
   }
 });
 
-function loop() {
-  setImmediate(loop);
-}
-loop();
+// require('net').createServer().listen();
