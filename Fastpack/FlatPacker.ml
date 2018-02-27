@@ -232,10 +232,18 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   in
                   match names with
                   | [] ->
-                    Printf.sprintf "%s.exports.%s"
-                      (gen_ext_namespace_binding m.id)
-                      remote
-                    (* raise (PackError (ctx, CannotFindExportedName (remote, m.filename))) *)
+                    if m.module_type = Module.ESM
+                    then
+                      let location_str =
+                        Module.location_to_string
+                          ~base_dir:(Some ctx.package_dir)
+                          m.location
+                      in
+                      raise (PackError (ctx, CannotFindExportedName (remote, location_str)))
+                    else
+                      Printf.sprintf "%s.exports.%s"
+                        (gen_ext_namespace_binding m.id)
+                        remote
                   | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
                     match typ with
                     | Scope.Import import -> resolve_import dep_map m.location import
