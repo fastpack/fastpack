@@ -290,7 +290,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       id;
       location;
       resolved_dependencies = [];
-      es_module = false;
+      module_type = Module.CJS;
       files = [];
       state = Initial;
       workspace = Workspace.of_string source;
@@ -417,28 +417,32 @@ let is_json (location : Module.location) =
     false
 
 
-let is_es_module stmts =
+let get_module_type stmts =
   (* TODO: what if module has only import() expression? *)
-  let import_or_export ((_, stmt) : Loc.t S.t) =
-    match stmt with
-    | S.Expression {
-        expression = (_, E.Assignment {
-            operator = E.Assignment.Assign;
-            left = (_, P.Expression (_, E.Member {
-                _object = (_, E.Identifier (_, "exports"));
-                property = E.Member.PropertyIdentifier (_, "__esModule");
-                computed = false
-              }));
-            right = (_, E.Literal { value = L.Boolean true; _});
-        });
-        _
-      }
-    | S.ExportDefaultDeclaration _
-    | S.ExportNamedDeclaration _
-    | S.ImportDeclaration _ ->
-      true
-    | _ ->
-      false
+  let import_or_export module_type ((_, stmt) : Loc.t S.t) =
+    match module_type with
+    | Module.ESM | Module.CJS_esModule -> module_type
+    | Module.CJS ->
+      match stmt with
+      | S.Expression {
+          expression = (_, E.Assignment {
+              operator = E.Assignment.Assign;
+              left = (_, P.Expression (_, E.Member {
+                  _object = (_, E.Identifier (_, "exports"));
+                  property = E.Member.PropertyIdentifier (_, "__esModule");
+                  computed = false
+                }));
+              right = (_, E.Literal { value = L.Boolean true; _});
+          });
+          _
+        } ->
+        Module.CJS_esModule
+      | S.ExportDefaultDeclaration _
+      | S.ExportNamedDeclaration _
+      | S.ImportDeclaration _ ->
+        Module.ESM
+      | _ ->
+        module_type
   in
-  List.exists import_or_export stmts
+  List.fold_left import_or_export Module.CJS stmts
 

@@ -458,7 +458,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                    match get_module_binding source with
                    | Some module_binding ->
                      let m = get_module dep dep_map in
-                     if (m.Module.es_module || remote <> "default")
+                     if (m.Module.module_type = Module.ESM || m.Module.module_type = Module.CJS_esModule || remote <> "default")
                      then module_binding ^ "." ^ remote
                      else module_binding
                    | None ->
@@ -489,7 +489,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       }
     in
     Visit.visit handler program;
-    let es_module = is_es_module stmts in
+    let module_type = get_module_type stmts in
+    let es_module =
+      module_type = Module.ESM || module_type = Module.CJS_esModule
+    in
     let () =
       if es_module
       then
@@ -501,7 +504,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         ()
     in
 
-    (!workspace, !dependencies, program_scope, exports, es_module)
+    (!workspace, !dependencies, program_scope, exports, module_type)
   in
 
   (* Gather dependencies *)
@@ -511,14 +514,14 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       if m.state <> Module.Analyzed
       then begin
         let source = m.Module.workspace.Workspace.value in
-        let (workspace, dependencies, scope, exports, es_module) =
+        let (workspace, dependencies, scope, exports, module_type) =
           match is_json m.location with
           | true ->
             let workspace =
               Printf.sprintf "module.exports = %s;" source
               |> Workspace.of_string
             in
-            (workspace, [], Scope.empty, [], false)
+            (workspace, [], Scope.empty, [], Module.CJS)
           | false ->
             try
                 analyze m.id m.location source
@@ -529,7 +532,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             | Scope.ScopeError reason ->
               raise (PackError (ctx, ScopeError reason))
         in
-        { m with workspace; scope; exports; es_module }, dependencies
+        { m with workspace; scope; exports; module_type }, dependencies
       end
       else
         m, []

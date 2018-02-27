@@ -8,7 +8,7 @@ module ModuleEntry = struct
   type t = {
     id : string;
     state : Module.state;
-    es_module : bool;
+    module_type : Module.module_type;
     files : (string * string) list;
     content : string;
     build_dependencies : string M.t;
@@ -389,7 +389,7 @@ let create (init : init) =
     | Some {
         id;
         state;
-        es_module;
+        module_type;
         files;
         content;
         build_dependencies;
@@ -407,7 +407,7 @@ let create (init : init) =
           location;
           state;
           resolved_dependencies;
-          es_module;
+          module_type;
           files;
           workspace = Workspace.of_string content;
           scope = FastpackUtil.Scope.empty;
@@ -432,7 +432,7 @@ let create (init : init) =
         state = m.state;
         build_dependencies;
         resolved_dependencies = m.resolved_dependencies;
-        es_module = m.es_module;
+        module_type = m.module_type;
         files = m.files;
         content;
       }

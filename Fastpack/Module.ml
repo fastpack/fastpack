@@ -18,6 +18,8 @@ type location = Runtime
               | EmptyModule
               | File of file_location
 
+type module_type = | CJS | CJS_esModule | ESM
+
 
 type t = {
   (** Opaque module id *)
@@ -32,8 +34,8 @@ type t = {
   (** If module is analyzed when packing *)
   state : state;
 
-  (** EcmaScript Module *)
-  es_module : bool;
+  (** CJS / CSJ with __esModule flag / EcmaScript *)
+  module_type : module_type;
 
   (** "side-effect" files to be emitted with module *)
   files : (string * string) list;
