@@ -1,5 +1,5 @@
-import * as css from "./test.css";
 import 'style-loader!css-loader!sass-loader!./test.scss'
+import * as css from "./test.css";
 
 
 console.log(css);

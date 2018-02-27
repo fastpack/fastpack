@@ -155,14 +155,14 @@
 
 "@opam/easy-format@*":
   version "1.3.1"
-  uid "4e537c470132ac4ef36e738fde0736a7"
+  uid "0c2f9b085eba4175086013e7ef48ba05"
   resolved "@opam/easy-format@1.3.1-4e537c470132ac4ef36e738fde0736a7.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"
     "@opam/jbuilder" "*"
   peerDependencies:
-    ocaml " >= 4.2.3"
+    ocaml " >= 4.2.3000"
 
 "@opam/fieldslib@ >= 100000000.10.0  < 100000000.11.0":
   version "100000000.10.0"
@@ -302,7 +302,7 @@
 
 "@opam/merlin@*":
   version "3.0.5"
-  uid "8ae0471d01a563b5552199bffb5b1da5"
+  uid "43a4ee2722d4484e3b65826d613451a7"
   resolved "@opam/merlin@3.0.5-8ae0471d01a563b5552199bffb5b1da5.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -310,7 +310,7 @@
     "@opam/ocamlfind" " >= 1.5.2"
     "@opam/yojson" "*"
   peerDependencies:
-    ocaml " >= 4.2.1  < 4.7.0"
+    ocaml " >= 4.2.1000  < 4.7.0"
 
 "@opam/num@*":
   version "1.1.0"
@@ -489,13 +489,13 @@
 
 "@opam/ppx_driver@ >= 100000000.10.0  < 100000000.11.0":
   version "100000000.10.2"
-  uid "3672f1997608416e639d8938d803d7d1"
+  uid "96cc26061aef5b90c72df269bc6090b1"
   resolved "@opam/ppx_driver@100000000.10.2-c1344d25ead3faab44154815b1d13118.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"
     "@opam/jbuilder" " >= 1.0.0-beta12"
-    "@opam/ocaml-migrate-parsetree" " >= 0.4.0"
+    "@opam/ocaml-migrate-parsetree" " >= 1.0.0"
     "@opam/ppx_core" " >= 100000000.10.0  < 100000000.11.0"
     "@opam/ppx_optcomp" " >= 100000000.10.0  < 100000000.11.0"
   peerDependencies:
@@ -837,7 +837,7 @@
 
 "@opam/yojson@*", "@opam/yojson@1.4.0":
   version "1.4.0"
-  uid c155d6491e9922eec9e88e06b4339e36
+  uid "139a44cad85290f31b72aecca4e60c65"
   resolved "@opam/yojson@1.4.0-c155d6491e9922eec9e88e06b4339e36.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -847,7 +847,7 @@
     "@opam/easy-format" "*"
     "@opam/jbuilder" "*"
   peerDependencies:
-    ocaml " >= 4.2.3"
+    ocaml " >= 4.2.3000"
 
 "@opam/zed@ >= 1.2.0":
   version "1.6.0"
