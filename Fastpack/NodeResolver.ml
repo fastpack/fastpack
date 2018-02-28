@@ -212,51 +212,43 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
         then
           Lwt.return (Module.EmptyModule, [])
         else
-          if path = "__fastpack_runtime__"
-          then
-            Lwt.return (Module.Runtime, [])
-          else
-            match Package.resolve_browser package path with
-            | Some resolved ->
-              Lwt.return (resolved, get_package_dependency package)
+        if path = "__fastpack_runtime__"
+        then
+          Lwt.return (Module.Runtime, [])
+        else
+          match Package.resolve_browser package path with
+          | Some resolved ->
+            Lwt.return (resolved, get_package_dependency package)
+          | None ->
+            let package_name, path_in_package =
+              match String.split_on_char '/' path with
+              | [] -> (None, None)
+              | package::[] -> (Some package, None)
+              | package::rest -> (Some package, Some (String.concat "/" rest))
+            in
+            match package_name with
             | None ->
-              let package_name, path_in_package =
-                match String.split_on_char '/' path with
-                | [] -> (None, None)
-                | package::[] -> (Some package, None)
-                | package::rest -> (Some package, Some (String.concat "/" rest))
-              in
-              match package_name with
+              Lwt.fail (Error path)
+            | Some package_name ->
+              match%lwt resolve_package package_name path_in_package basedir with
               | None ->
                 Lwt.fail (Error path)
-              | Some package_name ->
-                match%lwt resolve_package package_name path_in_package basedir with
-                | None ->
-                  Lwt.fail (Error path)
-                | Some resolved ->
-                  Lwt.return resolved
+              | Some resolved ->
+                Lwt.return resolved
 
   in
 
   let resolve (package : Package.t) request basedir =
+    let open Processor in
     let resolve_preprocessors preprocessors =
       Lwt_list.fold_left_s
         (fun (preprocessors, all_deps) p ->
-           let%lwt p, opts =
-             match String.split_on_char '?' p with
-             | [p] ->
-               Lwt.return (p, "")
-             | [p; opts] ->
-               Lwt.return (p, opts)
-             | _ ->
-               (* TODO: better error reporting *)
-               Lwt.fail (Error "bad preprrocessor format")
-           in
            match p with
-           | "builtin" ->
-             Lwt.return (("builtin", "") :: preprocessors, all_deps)
-           | _ ->
-             let%lwt resolved = resolve_file package p basedir in
+           | Builtin
+           | Base64Url _ ->
+             Lwt.return (p :: preprocessors, all_deps)
+           | Webpack (loader, opts) ->
+             let%lwt resolved = resolve_file package loader basedir in
              match resolved with
              | Module.EmptyModule, _
              | Module.Runtime, _
@@ -264,7 +256,7 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
                (* TODO: better error handling *)
                Lwt.fail (Error "Something weird when resolving preprocessors")
              | Module.File { filename = Some filename; _}, deps ->
-               Lwt.return ((filename, opts) :: preprocessors,
+               Lwt.return ((Webpack (filename, opts)) :: preprocessors,
                            deps @ all_deps)
         )
         ([], [])
@@ -274,7 +266,6 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
       match parts with
       | [] ->
         Lwt.fail (Error "Empty path")
-
       | [ filename ] ->
         let%lwt resolved = resolve_file package filename basedir in
         let%lwt resolved =
@@ -324,7 +315,7 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
         | Module.Runtime ->
           Lwt.return (Module.Runtime, [])
         | Module.File { preprocessors; filename } ->
-          let%lwt more_preprocessors, more_deps = resolve_preprocessors rest in
+          let%lwt more_preprocessors, more_deps = resolve_preprocessors (Processor.of_string String.(rest |> concat "!")) in
           Lwt.return (
             Module.File {
               filename;

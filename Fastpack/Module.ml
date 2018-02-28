@@ -11,7 +11,7 @@ type state = Initial
 
 type file_location = {
   filename : string option;
-  preprocessors: (string * string) list;
+  preprocessors: Processor.t list;
 }
 
 type location = Runtime
@@ -19,7 +19,6 @@ type location = Runtime
               | File of file_location
 
 type module_type = | CJS | CJS_esModule | ESM
-
 
 type t = {
   (** Opaque module id *)
@@ -77,11 +76,7 @@ let location_to_string ?(base_dir=None) location =
   | File { filename; preprocessors } ->
     let preprocessors =
       preprocessors
-      |> List.map
-        (fun (p, opt) ->
-          let p = filename_to_string p in
-          if opt <> "" then p ^ "?" ^ opt else p
-        )
+      |> Processor.to_string_list
       |> String.concat "!"
     in
     let filename =
@@ -135,11 +130,12 @@ let make_id base_dir location =
       |> List.map fix_char
       |> String.concat ""
     in
-    let to_var_name s =
-      match s with
+    let to_var_name = function
       | "builtin" ->
         "builtin"
-      | _ ->
+      | "to-base64-url" ->
+        "to-base64-url"
+      | s ->
         let suf = ".js" in
         String.(
           (if suffix ~suf s then sub s 0 (length s - length suf) else s)
@@ -148,7 +144,6 @@ let make_id base_dir location =
         )
     in
     location_to_string ~base_dir:(Some base_dir) location |> to_var_name
-
 
 let resolved_file filename =
   File {filename = Some filename; preprocessors = []}

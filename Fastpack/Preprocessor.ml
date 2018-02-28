@@ -3,17 +3,14 @@ module FS = FastpackUtil.FS
 
 exception Error of string
 
-type processor = Builtin | Node of string
-
 type config = {
   pattern_s : string;
   pattern : Re.re;
-  processors : string list;
+  processors : Processor.t list;
 }
 
-
 type t = {
-  get_processors : string -> string list;
+  get_processors : string -> Processor.t list;
   process : Module.location -> string option -> (string * string list * string list) Lwt.t;
   configs : config list;
   finalize : unit -> unit;
@@ -22,34 +19,17 @@ type t = {
 let debug = Logs.debug
 
 let of_string s =
+  let open Processor in
   let pattern_s, processors =
     match String.(s |> trim |> split_on_char ':') with
     | [] | [""] ->
       raise (Failure "Empty config")
     | pattern_s :: [] | pattern_s :: "" :: [] ->
-      pattern_s, ["builtin"]
+      pattern_s, [Builtin]
     | pattern_s :: rest ->
       let processors =
-        String.(rest |> concat ":" |> split_on_char '!')
-        |> List.filter_map
-          (fun s ->
-             let s = String.trim s in
-             match s = "" with
-             | true -> None
-             | false ->
-               match String.split_on_char '?' s  with
-               | [] ->
-                 raise (Failure "Empty processor")
-               | processor :: [] ->
-                 Some processor
-               | "builtin" :: "" :: [] ->
-                 Some "builtin"
-               | processor :: opts :: [] when processor <> "builtin" ->
-                 Some (processor ^ "?" ^ opts)
-               | _ ->
-                 raise (Failure "Incorrect preprocessor config")
-
-          )
+        String.(rest |> concat ":")
+        |> Processor.of_string
       in
       pattern_s, processors
   in
@@ -67,8 +47,8 @@ let to_string { pattern_s; processors; _ } =
   Printf.sprintf
     "%s:%s"
     pattern_s
-    (String.concat "!" processors)
-
+    (* (String.concat "!" processors) *)
+    (String.concat "!" (processors |> List.map Processor.to_string))
 
 let all_transpilers = FastpackTranspiler.[
   ReactJSX.transpile;
@@ -90,6 +70,13 @@ let builtin source =
     | exn ->
       Lwt.fail exn
 
+let preprocessUrl = function
+  | None ->
+    Lwt.fail (Error "Url always expects source")
+  | Some file ->
+    Lwt.return (Processor.to_base64 file, [], [])
+
+
 let empty = {
     get_processors = (fun _ -> []);
     process = (fun _ s -> Lwt.return (CCOpt.get_or ~default:"" s, [], []));
@@ -98,7 +85,7 @@ let empty = {
   }
 
 let transpile_all = {
-    get_processors = (fun _ -> ["builtin"]);
+    get_processors = (fun _ -> [Builtin]);
     process = (fun _ s -> builtin s);
     configs = [];
     finalize = (fun () -> ())
@@ -156,7 +143,7 @@ module NodeServer = struct
     let to_json_string s = `String s in
     let message =
       `Assoc [
-        ("loaders", `List (List.map to_json_string loaders));
+        ("loaders", `List (List.map to_json_string (Processor.to_string_list loaders)));
         ("filename", CCOpt.map_or ~default:(`Null) to_json_string filename);
         ("source", CCOpt.map_or ~default:(`Null) to_json_string source)
       ]
@@ -227,27 +214,40 @@ let make configs base_dir output_dir =
           Lwt.return (source, [], [])
       end
     | Module.File { filename; preprocessors } ->
+      let open Processor in
       let rec make_chain preprocessors chain =
         match preprocessors with
         | [] -> chain
         | _ ->
           let loaders, rest =
             preprocessors
-            |> List.take_drop_while (fun p -> p <> "builtin")
+            (* |> List.take_drop_while (fun p -> p <> "builtin" && p <> "to-base64-url") *)
+            |> List.take_drop_while
+            (fun p -> match p with
+            | Builtin
+            | Base64Url _ -> false
+            | _ -> true
+            )
           in
           match loaders with
           | [] ->
-            make_chain (List.tl rest) (builtin :: chain)
+            let loader = match List.hd rest with
+            | Base64Url _ ->
+              preprocessUrl
+            | _ -> builtin
+            in
+
+            make_chain (List.tl rest) (loader :: chain)
           | _ ->
             make_chain
               rest
               ((NodeServer.process output_dir loaders filename) :: chain)
       in
-      let preprocessors =
+      (* let preprocessors =
         List.map
           (fun (p, opt) -> p ^ (if opt <> "" then "?" ^ opt else ""))
           preprocessors
-      in
+      in *)
       let%lwt source, deps, files =
         Lwt_list.fold_left_s
           (fun (source, deps, files) process ->

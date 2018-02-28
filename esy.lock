@@ -41,6 +41,18 @@
   peerDependencies:
     ocaml "*"
 
+"@opam/base64@^2.2.0":
+  version "2.2.0"
+  uid "1b45d5d9589e0712d34a95636c663c8b"
+  resolved "@opam/base64@2.2.0-1b45d5d9589e0712d34a95636c663c8b.tgz"
+  dependencies:
+    "@esy-ocaml/esy-installer" "^0.0.0"
+    "@esy-ocaml/substs" "^0.0.1"
+    "@opam/base-bytes" "*"
+    "@opam/jbuilder" " >= 1.0.0-beta10"
+  peerDependencies:
+    ocaml "*"
+
 "@opam/base@ >= 100000000.10.0  < 100000000.11.0":
   version "100000000.10.0"
   uid "61a1898496c450e7f69b8cc9372c37d3"
@@ -334,7 +346,7 @@
   peerDependencies:
     ocaml " >= 4.4.1000"
 
-"@opam/ocaml-migrate-parsetree@ >= 0.4.0", "@opam/ocaml-migrate-parsetree@*":
+"@opam/ocaml-migrate-parsetree@ >= 0.4.0", "@opam/ocaml-migrate-parsetree@ >= 1.0.0", "@opam/ocaml-migrate-parsetree@*":
   version "1.0.7"
   uid "8dd63da93ee2ed29313f5b50471c94ae"
   resolved "@opam/ocaml-migrate-parsetree@1.0.7-8dd63da93ee2ed29313f5b50471c94ae.tgz"

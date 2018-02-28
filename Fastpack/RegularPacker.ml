@@ -42,12 +42,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let dependency_id = ref 0 in
     let workspace = ref (Workspace.of_string source) in
     let ({Workspace.
-          patch;
-          patch_loc_with;
-          remove_loc;
-          remove;
-          _
-        } as patcher) = Workspace.make_patcher workspace
+           patch;
+           patch_loc_with;
+           remove_loc;
+           remove;
+           _
+         } as patcher) = Workspace.make_patcher workspace
     in
 
     let program_scope, exports = Scope.of_program stmts in
@@ -117,16 +117,16 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       match get_binding local with
       | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
         begin
-             match get_module_binding source with
-             | Some module_binding ->
-               module_binding ^ "." ^ remote
-             | None ->
-               let dep = {
-                 Dependency.
-                 request = source;
-                 requested_from_filename = filename;
-               } in
-               raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
+          match get_module_binding source with
+          | Some module_binding ->
+            module_binding ^ "." ^ remote
+          | None ->
+            let dep = {
+              Dependency.
+              request = source;
+              requested_from_filename = filename;
+            } in
+            raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
         end
       | _ -> local
     in
@@ -136,12 +136,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
                   local = (loc, local);
                   exported }) ->
-           let exported =
-             match exported with
-             | Some (_, name) -> name
-             | None -> local
-           in
-           exported, get_local_name (loc, local)
+          let exported =
+            match exported with
+            | Some (_, name) -> name
+            | None -> local
+          in
+          exported, get_local_name (loc, local)
         )
     in
 
@@ -219,69 +219,69 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               patch_loc_with
                 loc
                 (fun dep_map ->
-                  let
-                    {Module.
-                      id = module_id;
-                      exports;
-                      module_type;
-                      location;
-                      _
-                    } = get_module dep dep_map
-                  in
-                  let namespace, names =
-                    match specifiers with
-                    | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
-                      Some name, []
-                    | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
-                      None,
-                      specifiers
-                      |> List.map
-                        (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
-                    | None ->
-                      None, []
-                  in
-                  let has_names = default <> None || specifiers <> None in
-                  (* Verify all names to be in exports of the target *)
-                  if has_names && module_type = Module.ESM
-                  then begin
-                    let names =
-                      match default with
-                      | Some _ -> "default" :: names
-                      | None -> names
-                    in
-                    List.iter
-                      (fun remote ->
-                         let exists =
-                           exports
-                           |> List.exists (fun (name, _, _) -> name = remote)
-                         in
-                         if exists
-                         then ()
-                         else
-                           let location_str =
-                             Module.location_to_string
-                               ~base_dir:(Some ctx.package_dir)
-                               location
-                           in
-                           raise (PackError (ctx, CannotFindExportedName (remote, location_str)))
-                      )
-                      names;
-                  end;
-                  match has_names, get_module_binding dep.request, namespace with
-                  | false, _, _ ->
-                    fastpack_require module_id dep.request ^ ";\n"
-                  | _, Some binding, Some spec ->
-                    define_binding spec binding
-                  | _, None, Some spec ->
-                    define_binding
-                      (add_module_binding ~binding:(Some spec) dep.request)
-                      (fastpack_require module_id dep.request)
-                  | _, Some _, None ->
-                    ""
-                  | _, None, None ->
-                    define_binding
-                      (add_module_binding dep.request)
-                      (fastpack_require module_id dep.request)
+                   let
+                     {Module.
+                       id = module_id;
+                       exports;
+                       module_type;
+                       location;
+                       _
+                     } = get_module dep dep_map
+                   in
+                   let namespace, names =
+                     match specifiers with
+                     | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
+                       Some name, []
+                     | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
+                       None,
+                       specifiers
+                       |> List.map
+                         (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
+                     | None ->
+                       None, []
+                   in
+                   let has_names = default <> None || specifiers <> None in
+                   (* Verify all names to be in exports of the target *)
+                   if has_names && module_type = Module.ESM
+                   then begin
+                     let names =
+                       match default with
+                       | Some _ -> "default" :: names
+                       | None -> names
+                     in
+                     List.iter
+                       (fun remote ->
+                          let exists =
+                            exports
+                            |> List.exists (fun (name, _, _) -> name = remote)
+                          in
+                          if exists
+                          then ()
+                          else
+                            let location_str =
+                              Module.location_to_string
+                                ~base_dir:(Some ctx.package_dir)
+                                location
+                            in
+                            raise (PackError (ctx, CannotFindExportedName (remote, location_str)))
+                       )
+                       names;
+                   end;
+                   match has_names, get_module_binding dep.request, namespace with
+                   | false, _, _ ->
+                     fastpack_require module_id dep.request ^ ";\n"
+                   | _, Some binding, Some spec ->
+                     define_binding spec binding
+                   | _, None, Some spec ->
+                     define_binding
+                       (add_module_binding ~binding:(Some spec) dep.request)
+                       (fastpack_require module_id dep.request)
+                   | _, Some _, None ->
+                     ""
+                   | _, None, None ->
+                     define_binding
+                       (add_module_binding dep.request)
+                       (fastpack_require module_id dep.request)
                 );
 
           | S.ExportNamedDeclaration {
@@ -325,17 +325,17 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             patch_loc_with
               loc
               (fun ctx ->
-                let {Module. id = module_id; _} = get_module dep ctx in
-                match get_module_binding dep.request with
-                | Some binding ->
-                  exports_from binding
-                | None ->
-                  let binding = add_module_binding dep.request in
-                  define_binding
-                    binding
-                    (fastpack_require module_id dep.request)
-                  ^ "\n"
-                  ^ exports_from binding
+                 let {Module. id = module_id; _} = get_module dep ctx in
+                 match get_module_binding dep.request with
+                 | Some binding ->
+                   exports_from binding
+                 | None ->
+                   let binding = add_module_binding dep.request in
+                   define_binding
+                     binding
+                     (fastpack_require module_id dep.request)
+                   ^ "\n"
+                   ^ exports_from binding
               );
 
           | S.ExportNamedDeclaration {
@@ -349,17 +349,17 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             patch_loc_with
               loc
               (fun ctx ->
-                let {Module. id = module_id; _} = get_module dep ctx in
-                match get_module_binding dep.request with
-                | Some binding ->
-                  update_exports [(spec, binding)]
-                | None ->
-                  let binding = add_module_binding dep.request in
-                  define_binding
-                    binding
-                    (fastpack_require module_id dep.request)
-                  ^ "\n"
-                  ^ update_exports [(spec, binding)]
+                 let {Module. id = module_id; _} = get_module dep ctx in
+                 match get_module_binding dep.request with
+                 | Some binding ->
+                   update_exports [(spec, binding)]
+                 | None ->
+                   let binding = add_module_binding dep.request in
+                   define_binding
+                     binding
+                     (fastpack_require module_id dep.request)
+                   ^ "\n"
+                   ^ update_exports [(spec, binding)]
               )
 
           | S.ExportNamedDeclaration {
@@ -373,23 +373,23 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             patch_loc_with
               loc
               (fun ctx ->
-                let {Module. id = module_id; exports; _} =
-                  get_module dep ctx
-                in
-                let exports_from binding =
-                  exports
-                  |> List.map (fun (name, _, _) -> name, binding ^ "." ^ name)
-                in
-                match get_module_binding dep.request with
-                | Some binding ->
-                  update_exports @@ exports_from binding
-                | None ->
-                  let binding = add_module_binding dep.request in
-                  define_binding
-                    binding
-                    (fastpack_require module_id dep.request)
-                  ^ "\n"
-                  ^ update_exports @@ exports_from binding
+                 let {Module. id = module_id; exports; _} =
+                   get_module dep ctx
+                 in
+                 let exports_from binding =
+                   exports
+                   |> List.map (fun (name, _, _) -> name, binding ^ "." ^ name)
+                 in
+                 match get_module_binding dep.request with
+                 | Some binding ->
+                   update_exports @@ exports_from binding
+                 | None ->
+                   let binding = add_module_binding dep.request in
+                   define_binding
+                     binding
+                     (fastpack_require module_id dep.request)
+                   ^ "\n"
+                   ^ update_exports @@ exports_from binding
 
               )
 
@@ -400,14 +400,14 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               declaration = S.ExportDefaultDeclaration.Declaration (
                   expr_loc,
                   S.FunctionDeclaration { id=None; _ }
-              );
+                );
               _
             }
           | S.ExportDefaultDeclaration {
               declaration = S.ExportDefaultDeclaration.Declaration (
                   expr_loc,
                   S.ClassDeclaration { id=None; _ }
-              );
+                );
               _
             } ->
             patch
@@ -419,21 +419,21 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               declaration = S.ExportDefaultDeclaration.Declaration (
                   expr_loc,
                   S.FunctionDeclaration { id = Some (_, id); _ }
-              );
+                );
               _
             }
           | S.ExportDefaultDeclaration {
               declaration = S.ExportDefaultDeclaration.Declaration (
                   expr_loc,
                   S.ClassDeclaration { id = Some (_, id); _ }
-              );
+                );
               _
             } ->
             remove
               loc.start.offset
               (expr_loc.start.offset - loc.start.offset);
-              patch loc._end.offset 0
-                (Printf.sprintf "\nexports.default = %s;\n" id);
+            patch loc._end.offset 0
+              (Printf.sprintf "\nexports.default = %s;\n" id);
 
           | _ -> ()
         in Visit.Continue visit_ctx
@@ -448,18 +448,18 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       | Visit.Continue visit_ctx ->
         match expr with
         | E.Object { properties } ->
-            properties
-            |> List.iter
-              (fun prop ->
-                 match prop with
-                  | E.Object.Property (loc, E.Object.Property.Init {
-                      key = E.Object.Property.Identifier (_, name) ;
-                      shorthand = true;
-                      _
-                    })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
-                  | _ -> ()
-              );
-            Visit.Continue visit_ctx
+          properties
+          |> List.iter
+            (fun prop ->
+               match prop with
+               | E.Object.Property (loc, E.Object.Property.Init {
+                   key = E.Object.Property.Identifier (_, name) ;
+                   shorthand = true;
+                   _
+                 })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
+               | _ -> ()
+            );
+          Visit.Continue visit_ctx
 
         | E.Import (_, E.Literal { value = L.String request; _ }) ->
           let dep = add_dependency request in
@@ -536,9 +536,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       if es_module
       then
         patch (UTF8.length source) 0
-          @@ Printf.sprintf
-            "\ntry {module.exports.__esModule = module.exports.__esModule || %s}catch(_){}\n"
-            (if es_module then "true" else "false")
+        @@ Printf.sprintf
+          "\ntry {module.exports.__esModule = module.exports.__esModule || %s}catch(_){}\n"
+          (if es_module then "true" else "false")
       else
         ()
     in
@@ -563,7 +563,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             (workspace, [], Scope.empty, [], Module.CJS)
           | false ->
             try
-                analyze m.id m.location source
+              analyze m.id m.location source
             with
             | FlowParser.Parse_error.Error args ->
               let location_str = Module.location_to_string m.location in
@@ -607,26 +607,26 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let%lwt () =
       Lwt_list.iter_s
         (fun (req, resolved) ->
-          let resolved_str = Module.location_to_string resolved in
-          let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
-            | None ->
-              let ctx = { ctx with stack = req :: ctx.stack } in
-              let%lwt m = read_module ctx cache resolved in
-              let%lwt package =
-                match resolved with
-                | Module.File { filename = Some filename; _ } ->
-                  ctx.resolver.NodeResolver.find_package
-                    ctx.package_dir
-                    filename
-                | _ ->
-                  Lwt.return Package.empty
-              in
-              process { ctx with package } graph m
-            | Some m ->
-              Lwt.return m
-          in
-          DependencyGraph.add_dependency graph m (req, Some dep_module.location);
-          Lwt.return_unit
+           let resolved_str = Module.location_to_string resolved in
+           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
+             | None ->
+               let ctx = { ctx with stack = req :: ctx.stack } in
+               let%lwt m = read_module ctx cache resolved in
+               let%lwt package =
+                 match resolved with
+                 | Module.File { filename = Some filename; _ } ->
+                   ctx.resolver.NodeResolver.find_package
+                     ctx.package_dir
+                     filename
+                 | _ ->
+                   Lwt.return Package.empty
+               in
+               process { ctx with package } graph m
+             | Some m ->
+               Lwt.return m
+           in
+           DependencyGraph.add_dependency graph m (req, Some dep_module.location);
+           Lwt.return_unit
         )
         m.resolved_dependencies
     in
@@ -637,7 +637,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
   let emit_runtime out prefix entry_id =
     Lwt_io.write out
     @@ Printf.sprintf
-"
+      "
 // This function is a modified version of the one created by the Webpack project
 %s(function(modules) {
   // The module cache
@@ -780,11 +780,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       modules =
         MLSet.fold
           (fun location acc ->
-            StringSet.add (Module.location_to_string location) acc
+             StringSet.add (Module.location_to_string location) acc
           )
           !emitted_modules
           StringSet.empty
-      ;
+    ;
       size = Lwt_io.position channel |> Int64.to_int
     }
   | _ ->
