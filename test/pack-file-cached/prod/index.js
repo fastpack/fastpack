@@ -56,10 +56,10 @@
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
-"NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$B$$logoDOT$$svg": function(module, exports, __fastpack_require__, __fastpack_import__) {
 module.exports = "./5d5d9eefa31e5e13a6610d9fa7a283bb.svg";},
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg");
+const $lib1 = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$B$$logoDOT$$svg");
 document.body.innerHTML = '<img src="' + $lib1 + '"/>';
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
