@@ -77,6 +77,7 @@ let location_to_string ?(base_dir=None) location =
     let preprocessors =
       preprocessors
       |> Processor.to_string_list
+      |> List.map filename_to_string
       |> String.concat "!"
     in
     let filename =
@@ -134,7 +135,7 @@ let make_id base_dir location =
       | "builtin" ->
         "builtin"
       | "to-base64-url" ->
-        "to-base64-url"
+        "to_base64_url"
       | s ->
         let suf = ".js" in
         String.(
