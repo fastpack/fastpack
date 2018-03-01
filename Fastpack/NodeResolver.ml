@@ -244,20 +244,21 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
       Lwt_list.fold_left_s
         (fun (preprocessors, all_deps) p ->
            match p with
-           | Builtin
-           | Base64Url _ ->
-             Lwt.return (p :: preprocessors, all_deps)
            | Webpack (loader, opts) ->
-             let%lwt resolved = resolve_file package loader basedir in
-             match resolved with
-             | Module.EmptyModule, _
-             | Module.Runtime, _
-             | Module.File { filename = None; _ }, _ ->
-               (* TODO: better error handling *)
-               Lwt.fail (Error "Something weird when resolving preprocessors")
-             | Module.File { filename = Some filename; _}, deps ->
-               Lwt.return ((Webpack (filename, opts)) :: preprocessors,
-                           deps @ all_deps)
+             begin
+               let%lwt resolved = resolve_file package loader basedir in
+               match resolved with
+               | Module.EmptyModule, _
+               | Module.Runtime, _
+               | Module.File { filename = None; _ }, _ ->
+                 (* TODO: better error handling *)
+                 Lwt.fail (Error "Something weird when resolving preprocessors")
+               | Module.File { filename = Some filename; _}, deps ->
+                 Lwt.return ((Webpack (filename, opts)) :: preprocessors,
+                             deps @ all_deps)
+             end
+           | _ ->
+             Lwt.return (p :: preprocessors, all_deps)
         )
         ([], [])
         preprocessors
