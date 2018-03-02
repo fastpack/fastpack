@@ -250,14 +250,16 @@ let transpile {Context. require_runtime; _ } program =
       begin
         match Transform.transform_class cls with
         | cls, _, [], [], [] ->
-          (loc, S.ClassDeclaration cls)
+          [(loc, S.ClassDeclaration cls)]
         | cls, Some (_, name), statics, classDecorators, decorators ->
           require_runtime ();
-          let_stmt ~loc name
-            @@ Transform.wrap_class cls statics classDecorators decorators
+          [
+            let_stmt ~loc name
+              @@ Transform.wrap_class cls statics classDecorators decorators
+          ]
         | _ -> Error.ie "Unexpected result of the transform_class"
       end
-    | _ -> (loc, stmt)
+    | _ -> [(loc, stmt)]
   in
 
   let mapper = {

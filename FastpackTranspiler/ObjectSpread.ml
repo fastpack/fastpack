@@ -747,7 +747,7 @@ let transpile ({Context. require_runtime; _ } as context) program =
 
       | _ -> node
     in
-    loc, node
+    [loc, node]
   in
 
   let map_expression {AstMapper. scope; _} ((loc, node) : Loc.t E.t) =

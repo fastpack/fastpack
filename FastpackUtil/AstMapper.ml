@@ -17,7 +17,7 @@ type ctx = {
   parents : APS.parent list;
 }
 and mapper = {
-  map_statement : ctx -> Loc.t Statement.t -> Loc.t Statement.t;
+  map_statement : ctx -> Loc.t Statement.t -> Loc.t Statement.t list;
   map_expression : ctx -> Loc.t Expression.t -> Loc.t Expression.t;
   map_function : ctx -> (Loc.t * Loc.t Function.t) -> (Loc.t * Loc.t Function.t);
   map_pattern : ctx -> Loc.t Pattern.t -> Loc.t Pattern.t;
@@ -29,7 +29,7 @@ let do_nothing _ node =
 
 let default_mapper =
   {
-    map_statement = do_nothing;
+    map_statement = (fun _ node -> [node]);
     map_expression = do_nothing;
     map_function = do_nothing;
     map_pattern = do_nothing;
@@ -38,11 +38,24 @@ let default_mapper =
 let map_list ctx map list =
   List.map (map ctx) list
 
+
 let map_if_some ctx map_with = function
   | None -> None
   | Some item -> Some (map_with ctx item)
 
-let rec map_statement ctx (loc, statement) =
+let rec map_statements ctx stmts =
+  List.fold_left
+    (fun acc stmt ->
+       let stmts = map_statement ctx stmt in
+       acc @ stmts
+    )
+    []
+    stmts
+and to_block_if_many stmts =
+  match stmts with
+  | [stmt] -> stmt
+  | _ -> Loc.none, Statement.Block { body = stmts}
+and map_statement ctx (loc, statement) =
   let statement =
     let ctx = { ctx with
       scope = Scope.of_statement ctx.parents (loc, statement) ctx.scope;
@@ -62,17 +75,24 @@ let rec map_statement ctx (loc, statement) =
     | Statement.If { test; consequent; alternate }->
       Statement.If {
         test = map_expression ctx test;
-        consequent = map_statement ctx consequent;
-        alternate = map_if_some ctx map_statement alternate;
+        consequent = map_statement ctx consequent |> to_block_if_many;
+        alternate =
+          map_if_some
+            ctx
+            (fun ctx stmt -> map_statement ctx stmt |> to_block_if_many)
+            alternate;
       }
 
     | Statement.Labeled ({ body; _ } as n) ->
-      Statement.Labeled { n with body = map_statement ctx body }
+      Statement.Labeled {
+        n with
+        body = map_statement ctx body |> to_block_if_many
+      }
 
     | Statement.With { _object; body } ->
       Statement.With {
         _object = map_expression ctx _object;
-        body = map_statement ctx body
+        body = map_statement ctx body |> to_block_if_many
       }
 
     | Statement.Switch { discriminant; cases } ->
@@ -83,7 +103,7 @@ let rec map_statement ctx (loc, statement) =
                (loc, {
                    Statement.Switch.Case.
                    test = map_if_some ctx map_expression test;
-                   consequent = map_list ctx map_statement consequent;
+                   consequent = map_statements ctx consequent;
                  })
             ) cases;
       }
@@ -116,12 +136,12 @@ let rec map_statement ctx (loc, statement) =
     | Statement.While { test; body } ->
       Statement.While {
         test = map_expression ctx test;
-        body = map_statement ctx body
+        body = map_statement ctx body |> to_block_if_many
       }
 
     | Statement.DoWhile { body; test } ->
       Statement.DoWhile {
-        body = map_statement ctx body;
+        body = map_statement ctx body |> to_block_if_many;
         test = map_expression ctx test;
       }
 
@@ -138,7 +158,7 @@ let rec map_statement ctx (loc, statement) =
                  Statement.For.InitExpression expression) init;
         test = map_if_some ctx map_expression test;
         update = map_if_some ctx map_expression update;
-        body = map_statement ctx body;
+        body = map_statement ctx body |> to_block_if_many;
       }
 
     | Statement.ForIn ({ left; right; body; _ } as n) ->
@@ -152,7 +172,7 @@ let rec map_statement ctx (loc, statement) =
               let pattern = map_pattern ctx pattern in
               Statement.ForIn.LeftPattern pattern);
         right = map_expression ctx right;
-        body = map_statement ctx body;
+        body = map_statement ctx body |> to_block_if_many;
       }
 
     | Statement.ForOf ({ left; right; body; async = _async } as n) ->
@@ -166,7 +186,7 @@ let rec map_statement ctx (loc, statement) =
               let pattern = map_pattern ctx pattern in
               Statement.ForOf.LeftPattern pattern);
         right = map_expression ctx right;
-        body = map_statement ctx body;
+        body = map_statement ctx body |> to_block_if_many;
       }
 
     | Statement.FunctionDeclaration func ->
@@ -182,18 +202,28 @@ let rec map_statement ctx (loc, statement) =
       Statement.ClassDeclaration cls
 
     | Statement.ExportNamedDeclaration ({declaration = Some stmt; _} as e) ->
-      let stmt = map_statement ctx stmt in
-      Statement.ExportNamedDeclaration { e with declaration = Some stmt }
+      begin
+        match map_statement ctx stmt with
+        | [stmt] ->
+          Statement.ExportNamedDeclaration { e with declaration = Some stmt }
+        | _ ->
+          Error.ie "Cannot have multiple statements in the named export"
+      end
 
     | Statement.ExportDefaultDeclaration ({
         declaration = Statement.ExportDefaultDeclaration.Declaration stmt;
         _
       } as e) ->
-      let stmt = map_statement ctx stmt in
-      Statement.ExportDefaultDeclaration {
-        e with
-        declaration = Statement.ExportDefaultDeclaration.Declaration stmt
-      }
+      begin
+        match map_statement ctx stmt with
+        | [stmt] ->
+          Statement.ExportDefaultDeclaration {
+            e with
+            declaration = Statement.ExportDefaultDeclaration.Declaration stmt
+          }
+        | _ ->
+          Error.ie "Cannot have multiple statements in the default export"
+      end
 
     | Statement.ExportDefaultDeclaration ({
         declaration = Statement.ExportDefaultDeclaration.Expression expr;
@@ -488,7 +518,7 @@ and map_block ctx (loc, block) =
     parents = APS.push_block (loc, block) ctx.parents
   }
   in
-  (loc, { body = map_list ctx map_statement block.body })
+  (loc, { body = map_statements ctx block.body })
 
 and map_variable_declaration ctx (loc, ({ declarations; _ } as n)) =
   let declarations = map_list ctx map_variable_declarator declarations in
@@ -516,5 +546,5 @@ let map handler (loc, statements, comments) =
     handler
   }
   in
-  let statements = map_list ctx map_statement statements in
+  let statements = map_statements ctx statements in
   (loc, statements, comments)
