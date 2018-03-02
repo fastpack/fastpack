@@ -186,6 +186,11 @@ let tests = [
     "pack-builtins-flat-prod.js",
     pack_transpile_flat_prod
   );
+  Test (
+    "pack-export-class/index.js",
+    "pack-export-class.js",
+    pack_transpile_regular_dev
+  )
   (* ("current.js", "", transpile); *)
 ]
 

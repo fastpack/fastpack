@@ -7,6 +7,8 @@ module F = Ast.Function
 module L = Ast.Literal
 
 module AstMapper = FastpackUtil.AstMapper
+module AstHelper = FastpackUtil.AstHelper
+module APS = FastpackUtil.AstParentStack
 open FastpackUtil.AstHelper
 
 module Helper = struct
@@ -230,7 +232,7 @@ end
 
 
 let transpile {Context. require_runtime; _ } program =
-  let map_expression _scope ((loc, node) : Loc.t E.t) =
+  let map_expression _ ((loc, node) : Loc.t E.t) =
     match node with
     | E.Class cls ->
       begin
@@ -244,20 +246,73 @@ let transpile {Context. require_runtime; _ } program =
     | _ -> (loc, node)
   in
 
-  let map_statement _scope ((loc, stmt) : Loc.t S.t) =
+  let map_statement {AstMapper. parents; _ } ((loc, stmt) : Loc.t S.t) =
     match stmt with
-    | S.ClassDeclaration cls ->
+    | S.ExportDefaultDeclaration ({
+        declaration = S.ExportDefaultDeclaration.Declaration (
+            _,
+            S.ClassDeclaration ({ id = Some (_, name); _ } as cls)
+          );
+        _
+      } as export) ->
       begin
         match Transform.transform_class cls with
         | cls, _, [], [], [] ->
-          [(loc, S.ClassDeclaration cls)]
-        | cls, Some (_, name), statics, classDecorators, decorators ->
+          [
+            loc,
+            S.ExportDefaultDeclaration {
+              export with
+              declaration = S.ExportDefaultDeclaration.Declaration (
+                  Loc.none,
+                  S.ClassDeclaration cls
+                )
+            }
+          ]
+        | cls, _, statics, classDecorators, decorators ->
           require_runtime ();
           [
-            let_stmt ~loc name
-              @@ Transform.wrap_class cls statics classDecorators decorators
+            (Transform.wrap_class cls statics classDecorators decorators
+                       |> let_stmt ~loc:Loc.none name);
+            (loc,
+             S.ExportDefaultDeclaration {
+               export with
+               declaration = S.ExportDefaultDeclaration.Expression (
+                   AstHelper.e_identifier name
+                 )
+             }
+            )
           ]
-        | _ -> Error.ie "Unexpected result of the transform_class"
+      end
+
+    | S.ClassDeclaration cls ->
+      begin
+        match APS.top_statement parents with
+        | Some (_, S.ExportDefaultDeclaration {
+            declaration = S.ExportDefaultDeclaration.Declaration (
+                _,
+                S.ClassDeclaration { id = Some _; _ }
+              );
+            _
+          }) ->
+          [loc, stmt]
+        | _ ->
+          begin
+            match Transform.transform_class cls with
+            | cls, _, [], [], [] ->
+              [(loc, S.ClassDeclaration cls)]
+            | cls, name, statics, classDecorators, decorators ->
+              require_runtime ();
+              let transformed =
+                Transform.wrap_class cls statics classDecorators decorators
+              in
+              match name with
+              | None ->
+                [loc, S.Expression {expression = transformed; directive = None} ]
+              | Some (_, name) ->
+                [
+                  let_stmt ~loc name transformed
+                ]
+          end
       end
     | _ -> [(loc, stmt)]
   in
