@@ -21,14 +21,14 @@ module Helper = struct
       lit
     | E.Object.Property.PrivateName (loc, _) ->
       raise (Error.TranspilerError (
-        loc,
-        "PrivateName is not implemented yet"
-      ))
+          loc,
+          "PrivateName is not implemented yet"
+        ))
     | E.Object.Property.Computed (loc, _) ->
       raise (Error.TranspilerError (
-        loc,
-        "Computed properties are not supported here"
-      ))
+          loc,
+          "Computed properties are not supported here"
+        ))
 
   let op_value_to_expr value =
     match value with
@@ -101,12 +101,12 @@ module Transform = struct
           props
           |> List.map
             (fun (key, value) ->
-              (Loc.none, S.Expression {
-                 expression = object_define_property
-                     (Helper.op_key_to_literal key)
-                     (Helper.op_value_to_expr value);
-               directive = None;
-              })
+               (Loc.none, S.Expression {
+                   expression = object_define_property
+                       (Helper.op_key_to_literal key)
+                       (Helper.op_value_to_expr value);
+                   directive = None;
+                 })
             )
         in
         let insert_after_super stmts =
@@ -153,10 +153,10 @@ module Transform = struct
                       value with
                       body = F.BodyBlock (body_loc, {
                           body = insert_after_super body
-                      })
+                        })
                     })
                 }
-            ))
+              ))
           | None ->
             (0, 0, C.Body.Method (
                 Loc.none, {
@@ -175,7 +175,7 @@ module Transform = struct
                       expression = false;
                       returnType = None;
                       typeParameters = None;
-                  })
+                    })
                 }))
           | _ -> Error.ie "Only constructor is expected here"
         in
@@ -216,11 +216,11 @@ module Transform = struct
       decorators
       |> to_array
         (fun (key, decorators) ->
-          object_ [
-            object_property "method"
-              (Loc.none, E.Literal (Helper.op_key_to_literal key));
-            object_property "decorators" (to_expr_array decorators)
-          ]
+           object_ [
+             object_property "method"
+               (Loc.none, E.Literal (Helper.op_key_to_literal key));
+             object_property "decorators" (to_expr_array decorators)
+           ]
         )
     in
     fpack_define_class
@@ -272,7 +272,7 @@ let transpile {Context. require_runtime; _ } program =
           require_runtime ();
           [
             (Transform.wrap_class cls statics classDecorators decorators
-                       |> let_stmt ~loc:Loc.none name);
+             |> let_stmt ~loc:Loc.none name);
             (loc,
              S.ExportDefaultDeclaration {
                export with

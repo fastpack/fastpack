@@ -134,9 +134,21 @@ exports.default = $__fpack__.defineClass(class  {
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
+"builtin$$B$$ExportNamedClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
+const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
+let ExportNamedClass = $__fpack__.defineClass(class ExportNamedClass {
+    
+  }, [{"name": "prop", "value": "ExportNamedClass"}], [], []);
+Object.defineProperty(exports, "ExportNamedClass", {get: function() {return ExportNamedClass;}});
+
+;
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+},
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./ExportDefaultNamedClass" */ "builtin$$B$$ExportDefaultNamedClass");
 const $lib2 = __fastpack_require__(/* "./ExportDefaultClass" */ "builtin$$B$$ExportDefaultClass");
+const $lib3 = __fastpack_require__(/* "./ExportNamedClass" */ "builtin$$B$$ExportNamedClass");
 console.log($lib1.default.prop);
 console.log($lib2.default.prop);
 
