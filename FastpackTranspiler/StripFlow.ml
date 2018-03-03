@@ -114,7 +114,7 @@ let transpile _context program =
         S.Empty
       | node -> node
     in
-    (loc, stmt)
+    [(loc, stmt)]
   in
 
   let mapper = {
