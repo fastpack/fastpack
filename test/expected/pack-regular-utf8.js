@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -72,6 +73,7 @@ Object.defineProperty(exports, "a4", {get: function() {return a4;}});
 exports.default = {a1: a1, a2: a2, a3: a3, a4: a4};
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./a" */ "a");
@@ -82,6 +84,7 @@ exports.default = function() {
 }
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 
 });

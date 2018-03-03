@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -61,19 +62,22 @@
 document.body.innerHTML = document.body.innerHTML
 + "<div>Source: " + "empty" + ". Query: .</div>";
 module.exports = {};
-  },
+  
+},
 "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 document.body.innerHTML = document.body.innerHTML
 + "<div>Source: " + "empty" + ". Query: ?bool=true.</div>";
 module.exports = {};
-  },
+  
+},
 "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 document.body.innerHTML = document.body.innerHTML
 + "<div>Source: " + "not empty" + ". Query: ?bool=true.</div>";
 module.exports = {};
-  },
+  
+},
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./custom-loader!" */ "custom$$_$$loaderDOT$$js$$B$$");
 
@@ -83,6 +87,7 @@ __fastpack_require__(/* "./custom-loader?bool=true!./index.js" */ "custom$$_$$lo
 
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 
 });

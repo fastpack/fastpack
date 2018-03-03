@@ -1,1 +1,3 @@
-let ie s = failwith ("Internal Error: " ^ s)
+
+exception UnhandledCondition of string
+let ie s = raise (UnhandledCondition s)

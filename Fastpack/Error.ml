@@ -12,6 +12,7 @@ type reason =
   | CannotFindExportedName of string * string
   | ScopeError of Scope.reason
   | PreprocessorError of string
+  | UnhandledCondition of string
 
 let loc_to_string {Loc. start; _end; _} =
   Printf.sprintf "(%d:%d) - (%d:%d):"
@@ -19,6 +20,9 @@ let loc_to_string {Loc. start; _end; _} =
 
 let to_string package_dir error =
   match error with
+  | UnhandledCondition message ->
+    message
+
   | CannotReadModule filename ->
     "Cannot read file: " ^ filename
 

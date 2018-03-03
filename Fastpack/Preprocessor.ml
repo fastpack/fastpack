@@ -181,8 +181,7 @@ module NodeServer = struct
     match source with
     | None ->
       let error = member "error" data |> member "message" |> to_string in
-      (* TODO: error reporting *)
-      failwith ("node error received: " ^ error)
+      Lwt.fail (Error error)
     | Some source ->
       debug (fun x -> x "SOURCE: %s" source);
       Lwt.return (source, dependencies, files)

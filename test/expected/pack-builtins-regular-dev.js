@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -115,14 +116,17 @@ module.exports = {
     return _cls;
   }
 };
+
 },
 "builtin$$COLON$$__empty_module__": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports = {};},
+module.exports = {};
+},
 "builtin$$B$$esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
 exports.default = $lib1.delimiter;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
@@ -138,6 +142,7 @@ const Component = props => React.createElement("div", null, item => {
     
   }
   );
+
 },
 
 });

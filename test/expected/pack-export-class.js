@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -115,6 +116,7 @@ module.exports = {
     return _cls;
   }
 };
+
 },
 "builtin$$B$$ExportDefaultNamedClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
@@ -124,6 +126,7 @@ let C = $__fpack__.defineClass(class C {
 exports.default = C;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "builtin$$B$$ExportDefaultClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
@@ -133,6 +136,7 @@ exports.default = $__fpack__.defineClass(class  {
 ;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "builtin$$B$$ExportNamedClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
@@ -144,6 +148,7 @@ Object.defineProperty(exports, "ExportNamedClass", {get: function() {return Expo
 ;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./ExportDefaultNamedClass" */ "builtin$$B$$ExportDefaultNamedClass");
@@ -153,6 +158,7 @@ console.log($lib1.default.prop);
 console.log($lib2.default.prop);
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 
 });

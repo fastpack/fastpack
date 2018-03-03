@@ -87,7 +87,10 @@ let transpile _ program =
                | Opening.Attribute (loc, { name; value }) ->
                  let key = match name with
                    | Attribute.Identifier (loc, { name }) ->
-                     E.Object.Property.Literal (loc, { value = Ast.Literal.String name; raw = name })
+                     E.Object.Property.Literal (loc, {
+                         value = Ast.Literal.String name;
+                         raw = "\"" ^ name ^ "\""
+                       })
                    | Attribute.NamespacedName (loc, _) ->
                      raise (Error.TranspilerError (
                        loc,
@@ -97,8 +100,14 @@ let transpile _ program =
                  let value = match value with
                    | None ->
                      true_expression
-                   | Some (Attribute.Literal (loc, lit)) ->
-                     loc, E.Literal lit
+                   | Some (Attribute.Literal (loc, {value; raw})) ->
+                     loc, E.Literal {
+                       value;
+                       raw = raw
+                             |> String.split_on_char '\n'
+                             |> List.map String.trim
+                             |> String.concat "\\n"
+                     }
                    | Some (Attribute.ExpressionContainer (_loc, { expression = ExpressionContainer.Expression expr })) ->
                      AstMapper.map_expression context expr
                    | Some (Attribute.ExpressionContainer (loc, { expression = ExpressionContainer.EmptyExpression _ })) ->

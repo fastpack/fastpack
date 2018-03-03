@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -115,6 +116,7 @@ module.exports = {
     return _cls;
   }
 };
+
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
@@ -171,6 +173,7 @@ document.body.innerHTML = `
 <div>method: <b>${test.method()}</b></div>
 <div>...rest: <b>${JSON.stringify(rest)}</b></div>
 `;
+
 },
 
 });

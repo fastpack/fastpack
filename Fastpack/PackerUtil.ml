@@ -353,6 +353,8 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
              Lwt.fail (PackError (ctx, CannotParseFile (location_str, args)))
            | Preprocessor.Error message ->
              Lwt.fail (PackError (ctx, PreprocessorError message))
+           | FastpackUtil.Error.UnhandledCondition message ->
+             Lwt.fail (PackError (ctx, UnhandledCondition message))
            | exn ->
              Lwt.fail exn
           )

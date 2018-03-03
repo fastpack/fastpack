@@ -1144,8 +1144,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     (** TODO: handle `predicate`, `expression` ? *)
     let omit_parameter_parens =
       match as_arrow, params, rest with
-      | true, [(_, P.Object _)], _ -> false
-      | true, [_], None -> true
+      | true, [(_, P.Identifier _)], None -> true
       | _ -> false
     in
     ctx

@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -60,6 +61,7 @@
 exports.default = "dep.js";
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 var dep = __fastpack_require__(/* "./dep" */ "dep");
@@ -77,6 +79,7 @@ function g() {
 }
 
 g();
+
 },
 
 });

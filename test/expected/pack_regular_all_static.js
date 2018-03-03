@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -59,6 +60,7 @@
 "b": function(module, exports, __fastpack_require__, __fastpack_import__) {
 console.log('side effect of b');
 module.exports = function() {console.log('b')};
+
 },
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const b = __fastpack_require__(/* "./b" */ "b");
@@ -67,6 +69,7 @@ module.exports = function() {
   console.log('b in a');
   b();
 };
+
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const a = __fastpack_require__(/* "./a" */ "a");
@@ -93,6 +96,7 @@ b
 b in promise
 b
 */
+
 },
 
 });

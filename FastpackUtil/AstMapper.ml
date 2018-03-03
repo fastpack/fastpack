@@ -270,6 +270,11 @@ and map_expression ctx (loc, expression) =
     }
     in
     match expression with
+    | Expression.TypeCast { expression; typeAnnotation } ->
+      Expression.TypeCast {
+        expression = map_expression ctx expression;
+        typeAnnotation
+      }
     | Expression.Array { elements } ->
       Expression.Array {
         elements = map_list ctx

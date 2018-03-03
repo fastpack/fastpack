@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -60,6 +61,7 @@
 exports.default = 1;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "y": function(module, exports, __fastpack_require__, __fastpack_import__) {
 exports.default = 1;
@@ -75,15 +77,17 @@ Object.defineProperty(exports, "updateA", {get: function() {return updateA;}});
 
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "yz": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 const $lib1 = __fastpack_require__(/* "./z" */ "z");
 Object.defineProperty(exports, "Z", {get: function() {return $lib1;}});
 const $lib2 = __fastpack_require__(/* "./y" */ "y");
-Object.defineProperty(exports, "default", {get: function() {return $lib2.default;}}); Object.defineProperty(exports, "a", {get: function() {return $lib2.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return $lib2.updateA;}});
+Object.assign(module.exports, $lib2);
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "yz_reimport": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib1 = __fastpack_require__(/* "./y" */ "y");
@@ -92,12 +96,14 @@ const $lib2 = __fastpack_require__(/* "./z" */ "z");
 exports.default = {a: $lib1.a, updateA: $lib1.updateA, Z: $lib2.default};
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "cjs": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 module.exports = function() {
   console.log('cjs');
 }
+
 },
 "x": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const ZModule = __fastpack_require__(/* "./z" */ "z");
@@ -130,6 +136,7 @@ Object.defineProperty(exports, "X", {get: function() {return $lib1.default;}}); 
 Object.defineProperty(exports, "ZM", {get: function() {return ZModule.default;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "util": function(module, exports, __fastpack_require__, __fastpack_import__) {
 const $lib2 = __fastpack_require__(/* "./x" */ "x");
@@ -160,6 +167,7 @@ module.exports.sayHello = function() {
 };
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./yz" */ "yz");
@@ -179,6 +187,7 @@ else {
 
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 
 });

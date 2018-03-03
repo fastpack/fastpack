@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -57,18 +58,21 @@
 })
 ({
 "dep2": function(module, exports, __fastpack_require__, __fastpack_import__) {
+
 },
 "dep1": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./dep2.js" */ "dep2");
 
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./dep1.js" */ "dep1");
 
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
 },
 
 });

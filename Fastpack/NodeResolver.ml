@@ -297,6 +297,10 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
         in
         Lwt.return resolved
 
+      (* TODO: this is sent by webpack loaders, have no idea what to do with it*)
+      | "-" :: rest ->
+        resolve_parts ~preprocess rest
+
       | "" :: "" :: rest
       | "" :: rest ->
         resolve_parts ~preprocess:false rest

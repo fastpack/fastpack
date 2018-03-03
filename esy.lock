@@ -334,7 +334,7 @@
   peerDependencies:
     ocaml " >= 4.4.1000"
 
-"@opam/ocaml-migrate-parsetree@ >= 0.4.0", "@opam/ocaml-migrate-parsetree@*":
+"@opam/ocaml-migrate-parsetree@ >= 0.4.0", "@opam/ocaml-migrate-parsetree@ >= 1.0.0", "@opam/ocaml-migrate-parsetree@*":
   version "1.0.7"
   uid "8dd63da93ee2ed29313f5b50471c94ae"
   resolved "@opam/ocaml-migrate-parsetree@1.0.7-8dd63da93ee2ed29313f5b50471c94ae.tgz"

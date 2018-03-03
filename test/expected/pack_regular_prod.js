@@ -1,5 +1,6 @@
 
 // This function is a modified version of the one created by the Webpack project
+global = window;
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -58,9 +59,11 @@
 ({
 "prod": function(module, exports, __fastpack_require__, __fastpack_import__) {
 module.exports = {prod: true};
+
 },
 "dev": function(module, exports, __fastpack_require__, __fastpack_import__) {
 module.exports = {dev: true};
+
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
@@ -117,6 +120,7 @@ console.log("production");
 // bug
 if (true) {} else {console.log("prod!")}
 if (false) {} else {}
+
 },
 
 });
