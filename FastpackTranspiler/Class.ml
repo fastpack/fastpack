@@ -55,7 +55,7 @@ module Transform = struct
     }
 
   let transform_class cls =
-    let {C. id; classDecorators; body = (_, { body }); _ } = cls in
+    let {C. id; classDecorators; superClass; body = (_, { body }); _ } = cls in
 
     let props, methods =
       List.partition
@@ -158,6 +158,18 @@ module Transform = struct
                 }
               ))
           | None ->
+            let maybe_super =
+              match superClass with
+              | None -> []
+              | Some _ ->
+                [Loc.none, S.Expression {
+                    expression = Loc.none, E.Call {
+                        callee = Loc.none, E.Super; arguments = [] 
+                      };
+                    directive = None
+                  }
+                ]
+            in
             (0, 0, C.Body.Method (
                 Loc.none, {
                   kind = C.Method.Constructor;
@@ -168,7 +180,10 @@ module Transform = struct
                   value = (Loc.none, {
                       id = None;
                       params = (Loc.none, { params = []; rest = None });
-                      body = F.BodyBlock (Loc.none, { body = prop_stmts });
+                      body = F.BodyBlock (
+                          Loc.none,
+                          { body = maybe_super @ prop_stmts }
+                        );
                       async = false;
                       generator = false;
                       predicate = None;
