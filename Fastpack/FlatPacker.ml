@@ -194,7 +194,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             patch_loc loc patch_content;
           in
 
-          let rec resolve_import dep_map location {Scope. source; remote } =
+          let rec resolve_import dep_map location source remote =
             let dep = {
               Dependency.
               request = source;
@@ -225,13 +225,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                     (gen_ext_namespace_binding m.Module.id)
                     remote
                 | true, remote ->
-                  let names =
-                    m.exports
-                    |> List.filter
-                      (fun (name, _, _) -> name = remote)
-                  in
-                  match names with
-                  | [] ->
+                  (* TODO: this doesn't take into account batch re-exports *)
+                  match M.get remote m.exports.Scope.names with
+                  | None ->
                     if m.module_type = Module.ESM
                     then
                       let location_str =
@@ -244,10 +240,15 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                       Printf.sprintf "%s.exports.%s"
                         (gen_ext_namespace_binding m.id)
                         remote
-                  | (name, _, ({ Scope. typ; _} as binding)) :: _ ->
-                    match typ with
-                    | Scope.Import import -> resolve_import dep_map m.location import
-                    | _ -> name_of_binding m.id name binding
+                  | Some export ->
+                    match export with
+                    | Scope.Default ->
+                      gen_ext_binding m.id "default"
+                    | Scope.Own (_, {typ = Scope.Import {source; remote}; _})
+                    | Scope.ReExport (remote, source) ->
+                      resolve_import dep_map m.location source remote
+                    | Scope.Own (_, binding) ->
+                      name_of_binding m.id remote binding
           in
 
           let add_exports es_module =
@@ -255,26 +256,21 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             patch_with (UTF8.length source) 0
               (fun dep_map ->
                 let expr =
-                  exports
+                  exports.names
+                  |> M.bindings
                   |> List.map
-                    (fun (exported_name, internal_name, binding) ->
+                    (fun (exported_name, export) ->
                        let value =
-                         match binding.Scope.typ with
-                         | Scope.Import import ->
-                           resolve_import dep_map location import
-                         | _ ->
-                           match internal_name with
-                           | Some internal_name ->
-                             name_of_binding module_id internal_name binding
-                           | None ->
-                             gen_ext_binding module_id "default"
+                         match export with
+                         | Scope.Default ->
+                           gen_ext_binding module_id "default"
+                         | Scope.ReExport (remote, source)
+                         | Scope.Own (_, {typ = Scope.Import { source; remote }; _}) ->
+                           resolve_import dep_map m.location source remote
+                         | Scope.Own (internal_name, binding) ->
+                           name_of_binding module_id internal_name binding
                        in
-                       let key =
-                         match internal_name with
-                         | Some _ -> exported_name
-                         | None -> "default"
-                       in
-                       Printf.sprintf "%s.exports.%s = %s;\n" namespace key value
+                       Printf.sprintf "%s.exports.%s = %s;\n" namespace exported_name value
                     )
                   |> String.concat ""
                 in
@@ -294,28 +290,23 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                 | Target.Application ->
                   ""
                 | Target.ESM ->
-                  exports
+                  exports.names
+                  |> M.bindings
                   |> List.map
-                    (fun (exported_name, internal_name, binding) ->
+                    (fun (exported_name, export) ->
                        let value =
-                         match binding.Scope.typ with
-                         | Scope.Import import ->
-                           resolve_import dep_map location import
-                         | _ ->
-                           match internal_name with
-                           | Some internal_name ->
-                             name_of_binding module_id internal_name binding
-                           | None ->
-                             gen_ext_binding module_id "default"
+                         match export with
+                         | Scope.Default ->
+                           gen_ext_binding module_id "default"
+                         | Scope.ReExport (remote, source)
+                         | Scope.Own (_, {typ = Scope.Import { source; remote }; _}) ->
+                           resolve_import dep_map m.location source remote
+                         | Scope.Own (internal_name, binding) ->
+                           name_of_binding module_id internal_name binding
                        in
-                       let key =
-                         match internal_name with
-                         | Some _ -> exported_name
-                         | None -> "default"
-                       in
-                       if key = "default"
+                       if exported_name = "default"
                        then Printf.sprintf "export default %s;\n" value
-                       else Printf.sprintf "export {%s as %s};\n" value key
+                       else Printf.sprintf "export {%s as %s};\n" value exported_name
                     )
                   |> String.concat ""
                 | Target.CommonJS ->
@@ -422,8 +413,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                 loc
                 (fun dep_map ->
                    match binding.typ with
-                   | Scope.Import import ->
-                     resolve_import dep_map location import
+                   | Scope.Import { source; remote } ->
+                     resolve_import dep_map location source remote
                    | _ ->
                      name_of_binding module_id name binding
                 )
@@ -749,7 +740,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                 (gen_ext_namespace_binding m.id)
                 source
             in
-            (workspace, [], Scope.empty, [], Module.CJS)
+            (workspace, [], Scope.empty, Scope.empty_exports, Module.CJS)
           | false ->
             try
                 analyze m.id m.location source

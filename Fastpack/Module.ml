@@ -47,7 +47,7 @@ type t = {
   scope: FastpackUtil.Scope.t;
 
   (** Module exports *)
-  exports: (string * string option * FastpackUtil.Scope.binding) list;
+  exports: FastpackUtil.Scope.exports;
 }
 
 let debug = Logs.debug
