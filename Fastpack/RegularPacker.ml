@@ -573,7 +573,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               Printf.sprintf "module.exports = %s;" source
               |> Workspace.of_string
             in
-            (workspace, [], Scope.empty, [], Module.CJS)
+            (workspace, [], Scope.empty, Scope.empty_exports, Module.CJS)
           | false ->
             try
                 analyze m.id m.location source

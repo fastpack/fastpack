@@ -292,7 +292,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       state = Initial;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
-      exports = [];
+      exports = FastpackUtil.Scope.empty_exports;
     }
   in
 

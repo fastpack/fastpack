@@ -31,6 +31,15 @@ and import = {
   remote: string option;
 }
 
+type exports = {
+  has_default : bool;
+  batches : string list;
+  names : export M.t;
+}
+and export = | Default
+             | Own of string * binding
+             | ReExport of string option * string
+
 type reason =
   | NamingCollision of string * Loc.t * Loc.t
   | PreviouslyUndefinedExport of string
@@ -55,6 +64,8 @@ let error_to_string (error : reason) =
 
 
 let empty = { bindings = M.empty; parent = None }
+
+let empty_exports = { has_default = false; batches = []; names = M.empty }
 
 let string_of_binding { typ; loc; exported; _ } =
   (match typ with
@@ -281,35 +292,45 @@ let of_function_block stmts =
       @@ names_of_node node
   in
 
+  let exports = ref {
+      has_default = false;
+      batches = [];
+      names = M.empty
+  } in
+
   let export_bindings =
     List.iter
-      (fun (name, remote) -> bindings := export_binding name remote !bindings)
+      (fun (name, remote) ->
+         bindings := export_binding name remote !bindings;
+         match M.get name !bindings with
+         | None ->
+           Error.ie "Binding should exist at this point"
+         | Some binding ->
+           exports := {
+             !exports with
+             names = M.add remote (Own (name, binding)) !exports.names
+           }
+      )
   in
 
-  let reexports = ref [] in
   let add_reexports source =
     List.iter
       (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
-                local = (loc, name);
+                local = (_, name);
                 exported }) ->
          let exported =
            match exported with
            | Some (_, name) -> name
            | None -> name
          in
-         let binding = {
-           typ = Import { source; remote = Some name };
-           loc;
-           shorthand = false;
-           exported = Some [exported];
+         exports := {
+           !exports with
+           names = M.add exported (ReExport (Some name, source)) !exports.names
          }
-         in
-         reexports := (exported, Some exported, binding) :: !reexports;
       )
   in
 
 
-  let export_default = ref false in
   let level = ref 0 in
 
   let enter_statement _ctx _ =
@@ -366,13 +387,13 @@ let of_function_block stmts =
           (fun ((_, name), _, _) -> (name, "default"))
           @@ names_of_node declaration
       in
-      export_default := true;
+      exports := {!exports with has_default = true};
       add_bindings declaration;
       export_bindings names;
       Visit.Break
 
     | S.ExportDefaultDeclaration _ ->
-      export_default := true;
+      exports := {!exports with has_default = true};
       Visit.Break
 
     | S.ExportNamedDeclaration {
@@ -425,7 +446,8 @@ let of_function_block stmts =
       add_reexports source specifiers;
       Visit.Break
 
-    | _ -> Visit.Continue visit_ctx
+    | _ ->
+      Visit.Continue visit_ctx
   in
 
   let visit_expression _ _ =
@@ -442,14 +464,14 @@ let of_function_block stmts =
   let () =
     Visit.visit handler ([], stmts, [])
   in
-  !export_default, (List.rev !reexports), !bindings
+  !bindings, !exports
 
 
 let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
   let bindings =
     match parents with
     | [] | (AstParentStack.Function _) :: _ ->
-      let _, _, bindings = of_function_block body in
+      let bindings, _ = of_function_block body in
       bindings
     | _ ->
       let init =
@@ -495,52 +517,14 @@ let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
   { bindings; parent = Some scope; }
 
 let of_program stmts =
-  let export_default, reexports, bindings = of_function_block stmts in
+  let bindings, exports = of_function_block stmts in
   let scope = { bindings; parent = Some empty } in
-  let named_default = ref false in
   let exports =
-    scope.bindings
-    |> M.bindings
-    |> List.filter_map
-      (fun (name, ({ exported; _ } as binding)) ->
-         match exported with
-         | Some exported ->
-           Some (
-             List.map
-               (fun e ->
-                  if e = "default" then named_default := true;
-                  (e, Some name, binding)
-               )
-               exported
-           )
-         | None ->
-           None
-      )
-    |> List.flatten
+    if exports.has_default && not (M.mem "default" exports.names)
+    then { exports with names = M.add "default" Default exports.names }
+    else exports
   in
-  let exports =
-    (if export_default && (not !named_default)
-     then
-      ("default",
-       None,
-       {
-         typ = Const;
-         loc = Loc.none;
-         exported = Some ["default"];
-         shorthand = false
-       }) :: exports
-     else exports
-    ) |> List.map
-      (fun (exp, internal, binding) ->
-         let exported =
-           match binding.exported with
-           | Some exported -> Some (List.sort compare exported)
-           | None -> None
-         in
-         (exp, internal, { binding with exported })
-      )
-  in
-  (scope, exports @ reexports)
+  (scope, exports)
 
 
 let rec get_binding name { bindings; parent; _ } =
