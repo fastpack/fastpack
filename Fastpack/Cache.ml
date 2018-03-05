@@ -13,7 +13,7 @@ module ModuleEntry = struct
     content : string;
     build_dependencies : string M.t;
     resolved_dependencies : (Dependency.t * Module.location) list;
-    exports: (string * string option * FastpackUtil.Scope.binding) list;
+    exports: FastpackUtil.Scope.exports;
   }
 end
 
