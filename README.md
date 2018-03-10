@@ -148,10 +148,12 @@ And execute commands from there.
 Currently release process is assumed to be performed on macOS with Docker
 installed. Docker is needed to produce Linux x64 binaries.
 
-Run:
+Run either of those:
 
 ```
-% make dist-build
+% make release-patch
+% make release-minor
+% make release-major
 ```
 
 After that succeeds follow the printed instructions.
