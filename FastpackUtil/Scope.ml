@@ -38,7 +38,7 @@ type exports = {
 }
 and export = | Default
              | Own of string * binding
-             | ReExport of string option * string
+             | ReExport of import
 
 type reason =
   | NamingCollision of string * Loc.t * Loc.t
@@ -325,7 +325,7 @@ let of_function_block stmts =
          in
          exports := {
            !exports with
-           names = M.add exported (ReExport (Some name, source)) !exports.names
+           names = M.add exported (ReExport {source; remote = Some name}) !exports.names
          }
       )
   in

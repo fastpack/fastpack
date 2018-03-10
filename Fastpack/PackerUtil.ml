@@ -380,7 +380,8 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
 
       let () = cache.modify_content m source in
       let%lwt () =
-        cache.add_build_dependencies m (self_dependency @ build_dependencies) in
+        cache.add_build_dependencies m (self_dependency @ build_dependencies)
+      in
       Lwt.return m
 
 
@@ -398,15 +399,6 @@ let emit_module_files (ctx : Context.t) (m : Module.t) =
              )
     )
     m.files
-
-
-
-(* TODO: remove this as well as its usage in packers *)
-let is_ignored_request _request = false
-  (* List.exists *)
-  (*   (fun e -> String.suffix ~suf:("." ^ e) request) *)
-  (*   ["less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg"; *)
-  (*    "gif"; "ttf"] *)
 
 let is_json (location : Module.location) =
   match location with
