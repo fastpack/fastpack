@@ -245,7 +245,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                     | Scope.Default ->
                       gen_ext_binding m.id "default"
                     | Scope.Own (_, {typ = Scope.Import {source; remote}; _})
-                    | Scope.ReExport (remote, source) ->
+                    | Scope.ReExport {Scope. remote;  source} ->
                       resolve_import dep_map m.location source remote
                     | Scope.Own (_, binding) ->
                       name_of_binding m.id remote binding
@@ -264,7 +264,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                          match export with
                          | Scope.Default ->
                            gen_ext_binding module_id "default"
-                         | Scope.ReExport (remote, source)
+                         | Scope.ReExport {Scope. remote; source}
                          | Scope.Own (_, {typ = Scope.Import { source; remote }; _}) ->
                            resolve_import dep_map m.location source remote
                          | Scope.Own (internal_name, binding) ->
@@ -298,7 +298,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                          match export with
                          | Scope.Default ->
                            gen_ext_binding module_id "default"
-                         | Scope.ReExport (remote, source)
+                         | Scope.ReExport {Scope. remote; source}
                          | Scope.Own (_, {typ = Scope.Import { source; remote }; _}) ->
                            resolve_import dep_map m.location source remote
                          | Scope.Own (internal_name, binding) ->
@@ -520,22 +520,14 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   source = (_, { value = request; _ });
                   specifiers = None;
                   default = None;
-                _ } ->
-                if (not @@ is_ignored_request request)
-                then begin
-                  let _ = add_static_dep request in
-                  remove_loc loc;
-                end;
+                _
+                } ->
+                let _ = add_static_dep request in
+                remove_loc loc;
                 Visit.Continue visit_ctx;
 
-              | S.ImportDeclaration { source = (_, { value = request; _ }); _ } ->
-                if (not @@ is_ignored_request request)
-                then begin
-                  (* let _ = add_static_dep request in *)
-                  remove_loc loc;
-                end
-                else
-                  remove_loc loc;
+              | S.ImportDeclaration _ ->
+                remove_loc loc;
                 Visit.Continue visit_ctx;
 
               | S.ExportNamedDeclaration { source = Some (_, { value; _ }); _} ->

@@ -45,7 +45,6 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
           patch;
           patch_loc;
           patch_loc_with;
-          remove_loc;
           remove;
           _
         } as patcher) = Workspace.make_patcher workspace
@@ -206,84 +205,82 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       | Visit.Break ->
         Visit.Break
       | Visit.Continue visit_ctx ->
-        let _ = match stmt with
+        let _ =
+          match stmt with
           | S.ImportDeclaration {
               source = (_, { value = request; _ });
               specifiers;
               default;
               _;
             } ->
-            if is_ignored_request request
-            then remove_loc loc
-            else
-              let dep = add_dependency request in
-              patch_loc_with
-                loc
-                (fun dep_map ->
-                  let
-                    {Module.
-                      id = module_id;
-                      (* exports; *)
-                      (* module_type; *)
-                      (* location; *)
-                      _
-                    } = get_module dep dep_map
-                  in
-                  let namespace, _names =
-                    match specifiers with
-                    | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
-                      Some name, []
-                    | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
-                      None,
-                      specifiers
-                      |> List.map
-                        (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
-                    | None ->
-                      None, []
-                  in
-                  let has_names = default <> None || specifiers <> None in
-                  (* Verify all names to be in exports of the target *)
-                  (* if has_names && module_type = Module.ESM *)
-                  (* then begin *)
-                  (*   let names = *)
-                  (*     match default with *)
-                  (*     | Some _ -> "default" :: names *)
-                  (*     | None -> names *)
-                  (*   in *)
-                  (*   List.iter *)
-                  (*     (fun remote -> *)
-                  (*        let exists = *)
-                  (*          exports *)
-                  (*          |> List.exists (fun (name, _, _) -> name = remote) *)
-                  (*        in *)
-                  (*        if exists *)
-                  (*        then () *)
-                  (*        else *)
-                  (*          let location_str = *)
-                  (*            Module.location_to_string *)
-                  (*              ~base_dir:(Some ctx.package_dir) *)
-                  (*              location *)
-                  (*          in *)
-                  (*          raise (PackError (ctx, CannotFindExportedName (remote, location_str))) *)
-                  (*     ) *)
-                  (*     names; *)
-                  (* end; *)
-                  match has_names, get_module_binding dep.request, namespace with
-                  | false, _, _ ->
-                    fastpack_require module_id dep.request ^ ";\n"
-                  | _, Some binding, Some spec ->
-                    define_binding spec binding
-                  | _, None, Some spec ->
-                    define_binding
-                      (add_module_binding ~binding:(Some spec) dep.request)
-                      (fastpack_require module_id dep.request)
-                  | _, Some _, None ->
-                    ""
-                  | _, None, None ->
-                    define_binding
-                      (add_module_binding dep.request)
-                      (fastpack_require module_id dep.request)
-                );
+            let dep = add_dependency request in
+            patch_loc_with
+              loc
+              (fun dep_map ->
+                let
+                  {Module.
+                    id = module_id;
+                    (* exports; *)
+                    (* module_type; *)
+                    (* location; *)
+                    _
+                  } = get_module dep dep_map
+                in
+                let namespace, _names =
+                  match specifiers with
+                  | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
+                    Some name, []
+                  | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
+                    None,
+                    specifiers
+                    |> List.map
+                      (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
+                  | None ->
+                    None, []
+                in
+                let has_names = default <> None || specifiers <> None in
+                (* Verify all names to be in exports of the target *)
+                (* if has_names && module_type = Module.ESM *)
+                (* then begin *)
+                (*   let names = *)
+                (*     match default with *)
+                (*     | Some _ -> "default" :: names *)
+                (*     | None -> names *)
+                (*   in *)
+                (*   List.iter *)
+                (*     (fun remote -> *)
+                (*        let exists = *)
+                (*          exports *)
+                (*          |> List.exists (fun (name, _, _) -> name = remote) *)
+                (*        in *)
+                (*        if exists *)
+                (*        then () *)
+                (*        else *)
+                (*          let location_str = *)
+                (*            Module.location_to_string *)
+                (*              ~base_dir:(Some ctx.package_dir) *)
+                (*              location *)
+                (*          in *)
+                (*          raise (PackError (ctx, CannotFindExportedName (remote, location_str))) *)
+                (*     ) *)
+                (*     names; *)
+                (* end; *)
+                match has_names, get_module_binding dep.request, namespace with
+                | false, _, _ ->
+                  fastpack_require module_id dep.request ^ ";\n"
+                | _, Some binding, Some spec ->
+                  define_binding spec binding
+                | _, None, Some spec ->
+                  define_binding
+                    (add_module_binding ~binding:(Some spec) dep.request)
+                    (fastpack_require module_id dep.request)
+                | _, Some _, None ->
+                  ""
+                | _, None, None ->
+                  define_binding
+                    (add_module_binding dep.request)
+                    (fastpack_require module_id dep.request)
+              );
 
           | S.ExportNamedDeclaration {
               exportKind = S.ExportValue;
@@ -441,7 +438,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                 (Printf.sprintf "\nexports.default = %s;\n" id);
 
           | _ -> ()
-        in Visit.Continue visit_ctx
+        in
+        Visit.Continue visit_ctx
     in
 
     let visit_expression visit_ctx ((loc: Loc.t), expr) =
