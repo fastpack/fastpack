@@ -6,7 +6,7 @@
     "fpack": "fpack"
   },
   "scripts": {
-    "postinstall": "make install"
+    "postinstall": "make --silent --no-print-directory install"
   },
   "repository": {
     "type": "git",

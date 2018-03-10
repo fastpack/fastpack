@@ -56,3 +56,24 @@ bootstrap: fetch install build setup-test
 clean: clean-test
 	@rm -rf _build/ node_modules/
 
+#
+# RELEASE
+#
+
+dist-build:
+	@echo "[INFO] [RELEASE]: Building macOS binary release..."
+	@$(MAKE) build
+	@echo "[INFO] [RELEASE]: Building Linux x64 binary release..."
+	@$(MAKE) -C linux-build build
+	@echo "[INFO] [RELEASE]: Composing release package..."
+	@cp linux-build/fpack.exe dist/vendor-linux/fpack.exe
+	@cp _build/default/bin/fpack.exe dist/vendor-darwin/fpack.exe
+	@echo "[INFO] [RELEASE]: DONE, now you can do the following:"
+	@echo "[INFO]"
+	@echo "[INFO]            1. cd dist"
+	@echo "[INFO]            2. npm version patch|minor|major"
+	@echo "[INFO]            3. npm publish"
+
+dist-clean:
+	@rm -rf dist/vendor-darwin/fpack.exe
+	@rm -rf dist/vendor-linux/fpack.exe

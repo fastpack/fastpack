@@ -142,3 +142,16 @@ esy shell
 ```
 
 And execute commands from there.
+
+## Release Process
+
+Currently release process is assumed to be performed on macOS with Docker
+installed. Docker is needed to produce Linux x64 binaries.
+
+Run:
+
+```
+% make dist-build
+```
+
+After that succeeds follow the printed instructions.
