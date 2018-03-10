@@ -38,7 +38,7 @@
     "@opam/containers": "1.3.0",
     "@opam/fileutils": "0.5.3",
     "@opam/jbuilder": "*",
-    "@opam/lwt": "3.2.1",
+    "@opam/lwt": "3.3.0",
     "@opam/merlin": "*",
     "@opam/ocp-indent": "*",
     "@opam/sedlex": "^1.99.4",
