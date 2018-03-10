@@ -280,7 +280,6 @@ let of_statement _ ((_, stmt) as node) scope =
   else scope
 
 
-
 let of_function_block stmts =
   let bindings = ref (M.empty) in
 
@@ -396,6 +395,9 @@ let of_function_block stmts =
       exports := {!exports with has_default = true};
       Visit.Break
 
+    (* export let x = 1; *)
+    (* export class X {}; *)
+    (* export function x() {}; *)
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
         declaration = Some declaration;
@@ -412,6 +414,7 @@ let of_function_block stmts =
         Visit.Break
       end
 
+    (* export {x, y as z}; *)
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
         specifiers = Some S.ExportNamedDeclaration.ExportSpecifiers specifiers;
@@ -437,6 +440,7 @@ let of_function_block stmts =
         Visit.Break
       end
 
+    (* export {x, y as z} from './other'; *)
     | S.ExportNamedDeclaration {
         exportKind = S.ExportValue;
         declaration = None;
