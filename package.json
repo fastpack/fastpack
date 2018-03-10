@@ -21,14 +21,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/andreypopp/fastpack.git"
+    "url": "git+https://github.com/fastpack/fastpack.git"
   },
-  "author": "Andrey Popp <8mayday@gmail.com> (http://andreypopp.com/)",
+  "author": [
+    "Oleksiy Golovko <alexei.golovko@gmail.com>",
+    "Andrey Popp <8mayday@gmail.com> (http://andreypopp.com/)"
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/andreypopp/fastpack/issues"
+    "url": "https://github.com/fastpack/fastpack/issues"
   },
-  "homepage": "https://github.com/andreypopp/fastpack#readme",
+  "homepage": "https://github.com/fastpack/fastpack#readme",
   "resolutions": {
     "**/@opam/ocamlbuild": "esy-ocaml/ocamlbuild#0.11.0-esy"
   },
