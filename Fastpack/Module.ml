@@ -1,9 +1,5 @@
 module FS = FastpackUtil.FS
 
-module DependencyMap = Map.Make(struct
-    type t = Dependency.t
-    let compare = Pervasives.compare
-  end)
 
 type state = Initial
            | Preprocessed
@@ -21,34 +17,6 @@ type location = Runtime
 type module_type = | CJS | CJS_esModule | ESM
 
 
-type t = {
-  (** Opaque module id *)
-  id : string;
-
-  (** Absolute module filename *)
-  location : location;
-
-  (** List of resolved dependencies, populated for cached modules *)
-  resolved_dependencies : (Dependency.t * location) list;
-
-  (** If module is analyzed when packing *)
-  state : state;
-
-  (** CJS / CSJ with __esModule flag / EcmaScript *)
-  module_type : module_type;
-
-  (** "side-effect" files to be emitted with module *)
-  files : (string * string) list;
-
-  (** Module source along with transformations applied *)
-  workspace : t DependencyMap.t Workspace.t;
-
-  (** Module scope *)
-  scope: FastpackUtil.Scope.t;
-
-  (** Module exports *)
-  exports: FastpackUtil.Scope.exports;
-}
 
 let debug = Logs.debug
 (*
@@ -152,3 +120,62 @@ let make_id base_dir location =
 
 let resolved_file filename =
   File {filename = Some filename; preprocessors = []}
+
+module Dependency = struct
+  type t = {
+    (** Original request to a dependency *)
+    request : string;
+
+    (** The filename this dependency was requested from *)
+    requested_from : requested_from;
+  }
+  and requested_from = | EntryPoint
+                       | Location of location
+
+  let compare = Pervasives.compare
+
+
+  let to_string ?(dir=None) { request; requested_from } =
+    let requested_from =
+      match requested_from with
+      | EntryPoint -> ""
+      | Location location ->
+        location_to_string ~base_dir:dir location
+        |> Printf.sprintf " from module: %s"
+    in
+    Printf.sprintf "'%s'%s" request requested_from
+end
+
+module DependencyMap = Map.Make(struct
+    type t = Dependency.t
+    let compare = Pervasives.compare
+  end)
+
+type t = {
+  (** Opaque module id *)
+  id : string;
+
+  (** Absolute module filename *)
+  location : location;
+
+  (** List of resolved dependencies, populated for cached modules *)
+  resolved_dependencies : (Dependency.t * location) list;
+
+  (** If module is analyzed when packing *)
+  state : state;
+
+  (** CJS / CSJ with __esModule flag / EcmaScript *)
+  module_type : module_type;
+
+  (** "side-effect" files to be emitted with module *)
+  files : (string * string) list;
+
+  (** Module source along with transformations applied *)
+  workspace : t DependencyMap.t Workspace.t;
+
+  (** Module scope *)
+  scope: FastpackUtil.Scope.t;
+
+  (** Module exports *)
+  exports: FastpackUtil.Scope.exports;
+}

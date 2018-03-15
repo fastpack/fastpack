@@ -4,7 +4,7 @@ let debug = Logs.debug
 
 type t = {
   modules : (string, Module.t) Hashtbl.t;
-  dependencies : (string, (Dependency.t * Module.location option)) Hashtbl.t;
+  dependencies : (string, (Module.Dependency.t * Module.location option)) Hashtbl.t;
 }
 
 let iter_modules iter graph =
@@ -41,7 +41,7 @@ let add_module graph (m : Module.t) =
   Hashtbl.remove graph.modules location_str;
   Hashtbl.add graph.modules location_str m
 
-let add_dependency graph (m : Module.t) (dep : (Dependency.t * Module.location option)) =
+let add_dependency graph (m : Module.t) (dep : (Module.Dependency.t * Module.location option)) =
   let location_str = Module.location_to_string m.location in
   Hashtbl.add graph.dependencies location_str dep
 

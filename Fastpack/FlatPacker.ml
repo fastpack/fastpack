@@ -15,7 +15,7 @@ module FS = FastpackUtil.FS
 
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
-module DM = Map.Make(Dependency)
+module DM = Map.Make(Module.Dependency)
 module MDM = Module.DependencyMap
 
 let debug = Logs.debug
@@ -128,15 +128,11 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       let dynamic_deps = ref [] in
       let add_dynamic_dep ctx request location =
         let dep = {
-          Dependency.
+          Module.Dependency.
           request;
-          requested_from =
-            match location with
-            | Module.File { filename = Some filename; _ } ->
-              Filename filename
-            | _ ->
-              Error.ie "Cannot add dependency"
-        } in
+          requested_from = Location location
+        }
+        in
         let () = dynamic_deps := (ctx, dep) :: !dynamic_deps in
         let () = has_dynamic_modules := true in
         dep
@@ -198,13 +194,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
           let rec resolve_import dep_map location source remote =
             let dep = {
-              Dependency.
+              Module.Dependency.
               request = source;
-              requested_from = match location with
-                | Module.File { filename = Some filename; _ } ->
-                  Filename filename
-                | _ ->
-                  Error.ie "Cannot add dependency"
+              requested_from = Location location
             }
             in
             let m = MDM.get dep dep_map in
@@ -327,15 +319,11 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           let static_deps = ref [] in
           let add_static_dep request =
             let dep = {
-              Dependency.
+              Module.Dependency.
               request;
-              requested_from =
-                match location with
-                | Module.File { filename = Some filename; _ } ->
-                  Filename filename
-                | _ ->
-                  Error.ie "Cannot add dependency"
-            } in
+              requested_from = Location location
+            }
+            in
             begin
               static_deps := dep :: !static_deps;
               dep

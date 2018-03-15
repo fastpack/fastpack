@@ -54,7 +54,7 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
   in
   let%lwt entry_location, _ =
     resolve ctx entry_package {
-      Dependency.
+      Module.Dependency.
       request = entry_filename;
       requested_from = EntryPoint;
     }
@@ -165,14 +165,14 @@ let prepare_and_pack options start_time =
     in
     let%lwt entry_location, _ =
       resolve ctx entry_package {
-        Dependency.
+        Module.Dependency.
         request = entry_filename;
         requested_from = EntryPoint;
       }
     in
     let%lwt current_location, _ =
       resolve ctx package {
-        Dependency.
+        Module.Dependency.
         request = current_filename;
         requested_from = EntryPoint;
       }

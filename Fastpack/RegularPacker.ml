@@ -87,25 +87,19 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       end
     in
 
-    let get_module dep dep_map =
+    let get_module (dep : Module.Dependency.t) dep_map =
       match Module.DependencyMap.get dep dep_map with
       | Some m -> m
       | None ->
-        raise (PackError (ctx, CannotResolveModule (dep.Dependency.request, dep)))
-    in
-
-    let filename =
-      match location with
-      | Module.File { filename = Some filename; _ } -> filename
-      | _ -> "(empty filename)"
+        raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
     in
 
     let add_dependency request =
       dependency_id := !dependency_id + 1;
       let dep = {
-        Dependency.
+        Module.Dependency.
         request;
-        requested_from = Dependency.Filename filename;
+        requested_from = Location location;
       } in
       begin
         dependencies := dep :: !dependencies;
@@ -122,9 +116,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                module_binding ^ "." ^ remote
              | None ->
                let dep = {
-                 Dependency.
+                 Module.Dependency.
                  request = source;
-                 requested_from = Dependency.Filename filename;
+                 requested_from = Location location;
                } in
                raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
         end
@@ -500,10 +494,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               patch_loc_with
                 loc
                 (fun dep_map ->
-                   let dep =
-                     { Dependency.
-                       request = source;
-                       requested_from = Filename filename }
+                   let dep = {
+                     Module.Dependency.
+                     request = source;
+                     requested_from = Location location
+                   }
                    in
                    match get_module_binding source with
                    | Some module_binding ->

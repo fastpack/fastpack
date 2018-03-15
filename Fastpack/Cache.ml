@@ -14,7 +14,7 @@ module ModuleEntry = struct
     files : (string * string) list;
     content : string;
     build_dependencies : string M.t;
-    resolved_dependencies : (Dependency.t * Module.location) list;
+    resolved_dependencies : (Module.Dependency.t * Module.location) list;
     scope: Scope.t;
     exports: Scope.exports;
   }
