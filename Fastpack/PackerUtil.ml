@@ -264,9 +264,9 @@ let relative_name {Context. package_dir; _} filename =
 
 let resolve (ctx : Context.t) package (request : Dependency.t) =
   let base_dir =
-    if ctx.package_dir = request.requested_from_filename
-    then ctx.package_dir
-    else FilePath.dirname request.requested_from_filename
+    match request.requested_from with
+    | Dependency.EntryPoint -> ctx.package_dir
+    | Dependency.Filename filename -> FilePath.dirname filename
   in
   Lwt.catch
     (fun () ->

@@ -2,7 +2,7 @@ module FS = FastpackUtil.FS
 
 module DependencyMap = Map.Make(struct
     type t = Dependency.t
-    let compare = Dependency.compare
+    let compare = Pervasives.compare
   end)
 
 type state = Initial

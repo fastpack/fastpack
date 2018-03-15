@@ -56,7 +56,7 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
     resolve ctx entry_package {
       Dependency.
       request = entry_filename;
-      requested_from_filename = package_dir;
+      requested_from = EntryPoint;
     }
   in
   let ctx = {
@@ -167,14 +167,14 @@ let prepare_and_pack options start_time =
       resolve ctx entry_package {
         Dependency.
         request = entry_filename;
-        requested_from_filename = package_dir;
+        requested_from = EntryPoint;
       }
     in
     let%lwt current_location, _ =
       resolve ctx package {
         Dependency.
         request = current_filename;
-        requested_from_filename = package_dir;
+        requested_from = EntryPoint;
       }
     in
     Lwt.return {

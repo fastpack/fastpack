@@ -3,17 +3,21 @@ type t = {
   (** Original request to a dependency *)
   request : string;
   (** The filename this dependency was requested from *)
-  requested_from_filename : string;
+  requested_from : requested_from;
 }
+and requested_from = | EntryPoint | Filename of string
+
+let compare = Pervasives.compare
 
 
-let compare a b = compare
-    (a.request, a.requested_from_filename)
-    (b.request, b.requested_from_filename)
-
-let to_string ?(dir=None) { request; requested_from_filename } =
+let to_string ?(dir=None) { request; requested_from } =
+  let requested_from =
+    match requested_from with
+    | EntryPoint -> ""
+    | Filename filename -> Printf.sprintf " from file: %s" filename
+  in
   let s =
-    Printf.sprintf "'%s' from file: %s" request requested_from_filename
+    Printf.sprintf "'%s'%s" request requested_from
   in
   match dir with
   | None ->

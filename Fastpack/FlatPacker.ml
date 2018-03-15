@@ -130,10 +130,12 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         let dep = {
           Dependency.
           request;
-          requested_from_filename =
+          requested_from =
             match location with
-            | Module.File { filename = Some filename; _ } -> filename
-            | _ -> "(empty filename)"
+            | Module.File { filename = Some filename; _ } ->
+              Filename filename
+            | _ ->
+              Error.ie "Cannot add dependency"
         } in
         let () = dynamic_deps := (ctx, dep) :: !dynamic_deps in
         let () = has_dynamic_modules := true in
@@ -198,11 +200,11 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             let dep = {
               Dependency.
               request = source;
-              requested_from_filename = match location with
+              requested_from = match location with
                 | Module.File { filename = Some filename; _ } ->
-                  filename
+                  Filename filename
                 | _ ->
-                  "(empty file)"
+                  Error.ie "Cannot add dependency"
             }
             in
             let m = MDM.get dep dep_map in
@@ -327,10 +329,12 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             let dep = {
               Dependency.
               request;
-              requested_from_filename =
+              requested_from =
                 match location with
-                | Module.File { filename = Some filename; _ } -> filename
-                | _ -> "(empty filename)"
+                | Module.File { filename = Some filename; _ } ->
+                  Filename filename
+                | _ ->
+                  Error.ie "Cannot add dependency"
             } in
             begin
               static_deps := dep :: !static_deps;

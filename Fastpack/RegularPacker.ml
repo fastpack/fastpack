@@ -105,7 +105,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       let dep = {
         Dependency.
         request;
-        requested_from_filename = filename;
+        requested_from = Dependency.Filename filename;
       } in
       begin
         dependencies := dep :: !dependencies;
@@ -124,7 +124,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                let dep = {
                  Dependency.
                  request = source;
-                 requested_from_filename = filename;
+                 requested_from = Dependency.Filename filename;
                } in
                raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
         end
@@ -503,7 +503,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                    let dep =
                      { Dependency.
                        request = source;
-                       requested_from_filename = filename }
+                       requested_from = Filename filename }
                    in
                    match get_module_binding source with
                    | Some module_binding ->
