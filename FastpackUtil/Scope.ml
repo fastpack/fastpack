@@ -39,6 +39,7 @@ type exports = {
 and export = | Default
              | Own of string * binding
              | ReExport of import
+             | ReExportNamespace of string
 
 type reason =
   | NamingCollision of string * Loc.t * Loc.t
@@ -303,7 +304,7 @@ let of_function_block stmts =
          bindings := export_binding name remote !bindings;
          match M.get name !bindings with
          | None ->
-           Error.ie "Binding should exist at this point"
+           Error.ie ("Binding should exist at this point: " ^ name)
          | Some binding ->
            exports := {
              !exports with
@@ -327,6 +328,13 @@ let of_function_block stmts =
            names = M.add exported (ReExport {source; remote = Some name}) !exports.names
          }
       )
+  in
+
+  let add_batch source =
+    exports := {
+      !exports with
+      batches = source :: !exports.batches
+    }
   in
 
 
@@ -450,6 +458,27 @@ let of_function_block stmts =
       add_reexports source specifiers;
       Visit.Break
 
+    | S.ExportNamedDeclaration {
+        exportKind = S.ExportValue;
+        declaration = None;
+        specifiers = Some (S.ExportNamedDeclaration.ExportBatchSpecifier (_, Some (_, name)));
+        source = Some (_, { value = source; _ });
+      } ->
+      exports := {
+        !exports with
+        names = M.add name (ReExportNamespace source) !exports.names
+      };
+      Visit.Break;
+
+    | S.ExportNamedDeclaration {
+        exportKind = S.ExportValue;
+        declaration = None;
+        specifiers = Some (S.ExportNamedDeclaration.ExportBatchSpecifier (_, None));
+        source = Some (_, { value = source; _ });
+      } ->
+      add_batch source;
+      Visit.Break;
+
     | _ ->
       Visit.Continue visit_ctx
   in
@@ -519,6 +548,7 @@ let of_function _ (_, {F. params = (_, { params; rest }); _}) scope =
       )
   in
   { bindings; parent = Some scope; }
+
 
 let of_program stmts =
   let bindings, exports = of_function_block stmts in

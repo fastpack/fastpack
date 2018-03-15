@@ -249,6 +249,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                       resolve_import dep_map m.location source remote
                     | Scope.Own (_, binding) ->
                       name_of_binding m.id remote binding
+                    | Scope.ReExportNamespace _ ->
+                      failwith "not impl"
           in
 
           let add_exports es_module =
@@ -269,6 +271,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                            resolve_import dep_map m.location source remote
                          | Scope.Own (internal_name, binding) ->
                            name_of_binding module_id internal_name binding
+                         | Scope.ReExportNamespace _ ->
+                           failwith "not impl"
                        in
                        Printf.sprintf "%s.exports.%s = %s;\n" namespace exported_name value
                     )
@@ -303,6 +307,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                            resolve_import dep_map m.location source remote
                          | Scope.Own (internal_name, binding) ->
                            name_of_binding module_id internal_name binding
+                         | Scope.ReExportNamespace _ ->
+                           failwith "not impl"
                        in
                        if exported_name = "default"
                        then Printf.sprintf "export default %s;\n" value
