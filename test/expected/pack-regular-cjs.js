@@ -68,8 +68,8 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "./a" */ "a");
-Object.defineProperty(exports, "a", {get: function() {return $lib1.a;}}); Object.defineProperty(exports, "changeA", {get: function() {return $lib1.changeA;}});
+const __a = __fastpack_require__(/* "./a" */ "a");
+Object.defineProperty(exports, "a", {get: function() {return __a.a;}}); Object.defineProperty(exports, "changeA", {get: function() {return __a.changeA;}});
 let index = 1;
 Object.defineProperty(exports, "index", {get: function() {return index;}});
 

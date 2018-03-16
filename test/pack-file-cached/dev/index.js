@@ -61,8 +61,8 @@ global = window;
 module.exports = "./5d5d9eefa31e5e13a6610d9fa7a283bb.svg";
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg");
-document.body.innerHTML = '<img src="' + $lib1 + '"/>';
+const _file_loader_publicPath_logo_svg = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg");
+document.body.innerHTML = '<img src="' + _file_loader_publicPath_logo_svg + '"/>';
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

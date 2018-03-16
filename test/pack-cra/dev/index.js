@@ -18343,13 +18343,13 @@ if(module.hot) {
 }
 },
 "builtin$$B$$src$App": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "react" */ "NM$$react$index");
-const $lib2 = __fastpack_require__(/* "./logo.svg" */ "NM$$url$$_$$loader$indexDOT$$js$$B$$src$logoDOT$$svg");
+const _react = __fastpack_require__(/* "react" */ "NM$$react$index");
+const __logo_svg = __fastpack_require__(/* "./logo.svg" */ "NM$$url$$_$$loader$indexDOT$$js$$B$$src$logoDOT$$svg");
 __fastpack_require__(/* "./App.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$AppDOT$$css");
 
-class App extends $lib1.Component {
+class App extends _react.Component {
   render() {
-    return $lib1.createElement("div", {"className": "App"}, $lib1.createElement("header", {"className": "App-header"}, $lib1.createElement("img", {"src": $lib2, "className": "App-logo", "alt": "logo"}), $lib1.createElement("h1", {"className": "App-title"}, 'Welcome to React')), $lib1.createElement("p", {"className": "App-intro"}, '          To get started, edit ', $lib1.createElement("code", null, 'src/App.js'), ' and save to reload.'));
+    return _react.createElement("div", {"className": "App"}, _react.createElement("header", {"className": "App-header"}, _react.createElement("img", {"src": __logo_svg, "className": "App-logo", "alt": "logo"}), _react.createElement("h1", {"className": "App-title"}, 'Welcome to React')), _react.createElement("p", {"className": "App-intro"}, '          To get started, edit ', _react.createElement("code", null, 'src/App.js'), ' and save to reload.'));
     
   }
   
@@ -18487,14 +18487,14 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$src$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "react" */ "NM$$react$index");
-const $lib2 = __fastpack_require__(/* "react-dom" */ "NM$$react$$_$$dom$index");
+const _react = __fastpack_require__(/* "react" */ "NM$$react$index");
+const _react_dom = __fastpack_require__(/* "react-dom" */ "NM$$react$$_$$dom$index");
 __fastpack_require__(/* "./index.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$indexDOT$$css");
 
-const $lib3 = __fastpack_require__(/* "./App" */ "builtin$$B$$src$App");
-const $lib4 = __fastpack_require__(/* "./registerServiceWorker" */ "builtin$$B$$src$registerServiceWorker");
-$lib2.render($lib1.createElement($lib3.default, null), document.getElementById('root'));
-$lib4.default();
+const __App = __fastpack_require__(/* "./App" */ "builtin$$B$$src$App");
+const __registerServiceWorker = __fastpack_require__(/* "./registerServiceWorker" */ "builtin$$B$$src$registerServiceWorker");
+_react_dom.render(_react.createElement(__App.default, null), document.getElementById('root'));
+__registerServiceWorker.default();
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

@@ -16,6 +16,8 @@ module Visit = FastpackUtil.Visit
 
 let debug = Logs.debug
 
+let re_name = Re.Posix.compile_pat "[^A-Za-z0-9_]+"
+
 let pack (cache : Cache.t) (ctx : Context.t) channel =
 
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
@@ -63,36 +65,55 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       Scope.get_binding name (top_scope ())
     in
 
-    let module_bindings = ref M.empty in
-    let n_module = ref 0 in
-    let get_module_binding module_request =
-      M.get module_request !module_bindings
-    in
-    let add_module_binding ?(binding=None) module_request =
-      let rec gen_module_binding () =
-        n_module := !n_module + 1;
-        let binding = "$lib" ^ (string_of_int !n_module) in
-        if not (Scope.has_binding binding (top_scope ()))
-        then binding
-        else gen_module_binding ()
-      in
-      let binding =
-        match binding with
-        | Some binding -> binding
-        | None -> gen_module_binding ()
-      in
-      begin
-        module_bindings := M.add module_request binding !module_bindings;
-        binding
-      end
-    in
-
     let get_module (dep : Module.Dependency.t) dep_map =
       match Module.DependencyMap.get dep dep_map with
       | Some m -> m
       | None ->
         raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
     in
+
+    let module_vars = ref M.empty in
+    let get_module_var ~dep_map request =
+      let dep = {
+        Module.Dependency.
+        request;
+        requested_from = Location location
+      }
+      in
+      let m = get_module dep dep_map in
+      M.get m.Module.id !module_vars
+    in
+    let add_module_var ?(name=None) ~dep_map request =
+      let dep = {
+        Module.Dependency.
+        request;
+        requested_from = Location location
+      }
+      in
+      let m = get_module dep dep_map in
+      match M.get m.Module.id !module_vars with
+      | None ->
+        let rec avoid_collisions ?(n=1) name =
+          if not (Scope.has_binding name (top_scope ()))
+          then name
+          else Printf.sprintf "%s_%d" name n |> avoid_collisions ~n:(n + 1)
+        in
+        let var =
+          match name with
+          | Some name ->
+            name
+          | None ->
+            let name = Re.replace ~f:(fun _ -> "_") re_name request in
+            avoid_collisions ("_" ^ name)
+        in
+        begin
+          module_vars := M.add m.Module.id var !module_vars;
+          var
+        end
+      | Some binding ->
+        binding
+    in
+
 
     let add_dependency request =
       dependency_id := !dependency_id + 1;
@@ -107,11 +128,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       end
     in
 
-    let get_local_name (loc, local) =
+    let get_local_name ~dep_map (loc, local) =
       match get_binding local with
       | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
         begin
-             match get_module_binding source with
+             match get_module_var ~dep_map source with
              | Some module_binding ->
                module_binding ^ "." ^ remote
              | None ->
@@ -125,7 +146,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       | _ -> local
     in
 
-    let exports_from_specifiers =
+    let exports_from_specifiers ~dep_map =
       List.map
         (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
                   local = (loc, local);
@@ -135,7 +156,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
              | Some (_, name) -> name
              | None -> local
            in
-           exported, get_local_name (loc, local)
+           exported, get_local_name ~dep_map (loc, local)
         )
     in
 
@@ -153,13 +174,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         id
     in
 
-    let update_exports ?(property="") exports =
+    let update_exports exports =
       exports
       |> List.map
         (fun (name, value) ->
            Printf.sprintf
-             "Object.defineProperty(exports%s, \"%s\", {get: function() {return %s;}});"
-             property
+             "Object.defineProperty(exports, \"%s\", {get: function() {return %s;}});"
              name
              value
         )
@@ -259,20 +279,26 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                 (*     ) *)
                 (*     names; *)
                 (* end; *)
-                match has_names, get_module_binding dep.request, namespace with
+                match has_names, get_module_var ~dep_map dep.request, namespace with
+                (* import 'some'; *)
                 | false, _, _ ->
                   fastpack_require module_id dep.request ^ ";\n"
+                (* import * as X from 'some'; // 'some' is already imported *)
                 | _, Some binding, Some spec ->
                   define_binding spec binding
+                (* same as above, but 'some' is not imported
+                 * X is used as module binding *)
                 | _, None, Some spec ->
                   define_binding
-                    (add_module_binding ~binding:(Some spec) dep.request)
+                    (add_module_var ~name:(Some spec) ~dep_map dep.request)
                     (fastpack_require module_id dep.request)
+                (* 'some' is imported previously, nothing to do here *)
                 | _, Some _, None ->
                   ""
+                (* any other import statement requires the auto-generated name *)
                 | _, None, None ->
                   define_binding
-                    (add_module_binding dep.request)
+                    (add_module_var ~dep_map dep.request)
                     (fastpack_require module_id dep.request)
               );
 
@@ -300,7 +326,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             } ->
             patch_loc_with
               loc
-              (fun _ -> update_exports @@ exports_from_specifiers specifiers)
+              (fun dep_map ->
+                 exports_from_specifiers ~dep_map specifiers
+                 |> update_exports
+              )
 
           | S.ExportNamedDeclaration {
               exportKind = S.ExportValue;
@@ -309,8 +338,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               source = Some (_, { value = request; _ });
             } ->
             let dep = add_dependency request in
-            let exports_from module_type binding =
-              exports_from_specifiers specifiers
+            let exports_from ~dep_map module_type binding =
+              exports_from_specifiers ~dep_map specifiers
               |> List.map
                 (fun (exported, local) ->
                    exported,
@@ -322,18 +351,18 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             in
             patch_loc_with
               loc
-              (fun ctx ->
-                 let {Module. id = module_id; module_type; _} = get_module dep ctx in
-                match get_module_binding dep.request with
-                | Some binding ->
-                  exports_from module_type binding
-                | None ->
-                  let binding = add_module_binding dep.request in
-                  define_binding
-                    binding
-                    (fastpack_require module_id dep.request)
-                  ^ "\n"
-                  ^ exports_from module_type binding
+              (fun dep_map ->
+                 let {Module. id = module_id; module_type; _} = get_module dep dep_map in
+                 match get_module_var ~dep_map dep.request with
+                 | Some binding ->
+                   exports_from ~dep_map module_type binding
+                 | None ->
+                   let binding = add_module_var ~dep_map dep.request in
+                   define_binding
+                     binding
+                     (fastpack_require module_id dep.request)
+                   ^ "\n"
+                   ^ exports_from ~dep_map module_type binding
               );
 
           | S.ExportNamedDeclaration {
@@ -346,13 +375,13 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             let dep = add_dependency request in
             patch_loc_with
               loc
-              (fun ctx ->
-                let {Module. id = module_id; _} = get_module dep ctx in
-                match get_module_binding dep.request with
+              (fun dep_map ->
+                let {Module. id = module_id; _} = get_module dep dep_map in
+                match get_module_var ~dep_map dep.request with
                 | Some binding ->
                   update_exports [(spec, binding)]
                 | None ->
-                  let binding = add_module_binding dep.request in
+                  let binding = add_module_var ~dep_map dep.request in
                   define_binding
                     binding
                     (fastpack_require module_id dep.request)
@@ -370,16 +399,16 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             let dep = add_dependency request in
             patch_loc_with
               loc
-              (fun ctx ->
-                let {Module. id = module_id; _} = get_module dep ctx in
+              (fun dep_map ->
+                let {Module. id = module_id; _} = get_module dep dep_map in
                 let export_all_from binding =
                   Printf.sprintf "Object.assign(module.exports, %s);" binding
                 in
-                match get_module_binding dep.request with
+                match get_module_var ~dep_map dep.request with
                 | Some binding ->
                   export_all_from binding
                 | None ->
-                  let binding = add_module_binding dep.request in
+                  let binding = add_module_var ~dep_map dep.request in
                   define_binding
                     binding
                     (fastpack_require module_id dep.request)
@@ -428,8 +457,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             remove
               loc.start.offset
               (expr_loc.start.offset - loc.start.offset);
-              patch loc._end.offset 0
-                (Printf.sprintf "\nexports.default = %s;\n" id);
+            patch loc._end.offset 0
+              (Printf.sprintf "\nexports.default = %s;\n" id);
 
           | _ -> ()
         in
@@ -460,8 +489,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
         | E.Import (_, E.Literal { value = L.String request; _ }) ->
           let dep = add_dependency request in
-          patch_loc_with loc (fun ctx ->
-              let {Module. id = module_id; _} = get_module dep ctx in
+          patch_loc_with
+            loc
+            (fun dep_map ->
+              let {Module. id = module_id; _} = get_module dep dep_map in
               fastpack_import module_id dep.request
             );
           Visit.Break
@@ -472,8 +503,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
           } ->
           if (not @@ Scope.has_binding "require" (top_scope ())) then begin
             let dep = add_dependency request in
-            patch_loc_with loc (fun ctx ->
-                let {Module. id = module_id; _} = get_module dep ctx in
+            patch_loc_with
+              loc
+              (fun dep_map ->
+                let {Module. id = module_id; _} = get_module dep dep_map in
                 fastpack_require module_id dep.request
               );
           end;
@@ -500,7 +533,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                      requested_from = Location location
                    }
                    in
-                   match get_module_binding source with
+                   match get_module_var ~dep_map source with
                    | Some module_binding ->
                      let m = get_module dep dep_map in
                      if (m.Module.module_type = Module.ESM || m.Module.module_type = Module.CJS_esModule || remote <> "default")

@@ -151,11 +151,11 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "./ExportDefaultNamedClass" */ "builtin$$B$$ExportDefaultNamedClass");
-const $lib2 = __fastpack_require__(/* "./ExportDefaultClass" */ "builtin$$B$$ExportDefaultClass");
-const $lib3 = __fastpack_require__(/* "./ExportNamedClass" */ "builtin$$B$$ExportNamedClass");
-console.log($lib1.default.prop);
-console.log($lib2.default.prop);
+const __ExportDefaultNamedClass = __fastpack_require__(/* "./ExportDefaultNamedClass" */ "builtin$$B$$ExportDefaultNamedClass");
+const __ExportDefaultClass = __fastpack_require__(/* "./ExportDefaultClass" */ "builtin$$B$$ExportDefaultClass");
+const __ExportNamedClass = __fastpack_require__(/* "./ExportNamedClass" */ "builtin$$B$$ExportNamedClass");
+console.log(__ExportDefaultNamedClass.default.prop);
+console.log(__ExportDefaultClass.default.prop);
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

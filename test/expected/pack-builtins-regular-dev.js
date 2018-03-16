@@ -122,8 +122,8 @@ module.exports = {
 module.exports = {};
 },
 "builtin$$B$$esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
-exports.default = $lib1.delimiter;
+const _path = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
+exports.default = _path.delimiter;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

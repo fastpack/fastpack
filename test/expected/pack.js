@@ -81,19 +81,19 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "yz": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
-const $lib1 = __fastpack_require__(/* "./z" */ "z");
-Object.defineProperty(exports, "Z", {get: function() {return $lib1;}});
-const $lib2 = __fastpack_require__(/* "./y" */ "y");
-Object.assign(module.exports, $lib2);
+const __z = __fastpack_require__(/* "./z" */ "z");
+Object.defineProperty(exports, "Z", {get: function() {return __z;}});
+const __y = __fastpack_require__(/* "./y" */ "y");
+Object.assign(module.exports, __y);
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "yz_reimport": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "./y" */ "y");
-const $lib2 = __fastpack_require__(/* "./z" */ "z");
+const __y = __fastpack_require__(/* "./y" */ "y");
+const __z = __fastpack_require__(/* "./z" */ "z");
 
-exports.default = {a: $lib1.a, updateA: $lib1.updateA, Z: $lib2.default};
+exports.default = {a: __y.a, updateA: __y.updateA, Z: __z.default};
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
@@ -131,18 +131,18 @@ function updateX() {
 Object.defineProperty(exports, "updateX", {get: function() {return updateX;}});
 
 
-const $lib1 = __fastpack_require__(/* "./y" */ "y");
-Object.defineProperty(exports, "X", {get: function() {return $lib1.default;}}); Object.defineProperty(exports, "xA", {get: function() {return $lib1.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return $lib1.updateA;}});
+const __y = __fastpack_require__(/* "./y" */ "y");
+Object.defineProperty(exports, "X", {get: function() {return __y.default;}}); Object.defineProperty(exports, "xA", {get: function() {return __y.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return __y.updateA;}});
 Object.defineProperty(exports, "ZM", {get: function() {return ZModule.default;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "util": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib2 = __fastpack_require__(/* "./x" */ "x");
+const __x = __fastpack_require__(/* "./x" */ "x");
 
 
-const allX = $lib2;
+const allX = __x;
 const YZ = __fastpack_require__(/* "./yz" */ "yz");
 
 function xShouldRemain() {
@@ -160,10 +160,10 @@ let $lib1 = {};
 console.log($lib1.x);
 
 module.exports.sayHello = function() {
-  $lib2.default();
-  console.log("x before update", $lib2.x);
-  $lib2.updateX();
-  console.log("x after update:", $lib2.x);
+  __x.default();
+  console.log("x before update", __x.x);
+  __x.updateX();
+  console.log("x after update:", __x.x);
 };
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
@@ -174,7 +174,7 @@ __fastpack_require__(/* "./yz" */ "yz");
 
 __fastpack_require__(/* "./yz_reimport.js" */ "yz_reimport");
 
-const $lib1 = __fastpack_require__(/* "./cjs" */ "cjs");
+const __cjs = __fastpack_require__(/* "./cjs" */ "cjs");
 
 const util = __fastpack_require__(/* "./util" */ "util");
 
@@ -182,7 +182,7 @@ if (true) {
   let yz = __fastpack_import__(/* "./yz" */ "yz");
 }
 else {
-  $lib1();
+  __cjs();
 }
 
 

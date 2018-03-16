@@ -299,7 +299,7 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
 
       (* TODO: this is sent by webpack loaders, have no idea what to do with it*)
       | "-" :: rest ->
-        resolve_parts ~preprocess rest
+        resolve_parts ~preprocess:false rest
 
       | "" :: "" :: rest
       | "" :: rest ->
