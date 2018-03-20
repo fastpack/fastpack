@@ -7,6 +7,11 @@ type export = {
   parent_module : Module.t;
 }
 
+type all_exports = {
+  reexport_cjs : bool;
+  exports : export M.t;
+}
+
 let make () =
 
   (* infra for unwrapping `export * from 'module';` statements *)

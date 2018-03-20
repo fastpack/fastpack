@@ -72,42 +72,59 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
     in
 
-    let module_vars = ref M.empty in
-    let get_module_var ~dep_map request =
-      let dep = {
-        Module.Dependency.
-        request;
-        requested_from = Location location
-      }
+    let rec avoid_name_collision ?(n=0) name =
+      let name =
+        match n with
+        | 0 -> name
+        | _ -> Printf.sprintf "%s_%d" name n
       in
-      let m = get_module dep dep_map in
-      M.get m.Module.id !module_vars
+      if not (Scope.has_binding name (top_scope ()))
+      then name
+      else avoid_name_collision ~n:(n + 1) name
     in
-    let add_module_var ?(name=None) ~dep_map request =
-      let dep = {
-        Module.Dependency.
-        request;
-        requested_from = Location location
-      }
-      in
-      let m = get_module dep dep_map in
+
+    let n_module = ref 0 in
+    let module_vars = ref M.empty in
+    let get_module_var (m : Module.t) =
+      M.get m.id !module_vars
+    in
+    let add_module_var ?(name=None) request (m : Module.t) =
       match M.get m.Module.id !module_vars with
       | None ->
-        let rec avoid_collisions ?(n=1) name =
-          if not (Scope.has_binding name (top_scope ()))
-          then name
-          else Printf.sprintf "%s_%d" name n |> avoid_collisions ~n:(n + 1)
+        let var =
+          match name with
+          | Some name ->
+            name
+          | None ->
+            n_module := !n_module + 1;
+            let name = Re.replace ~f:(fun _ -> "_") re_name request in
+            avoid_name_collision (Printf.sprintf "_%d_%s" !n_module name)
         in
+        begin
+          module_vars := M.add m.Module.id var !module_vars;
+          var
+        end
+      | Some binding ->
+        binding
+    in
+
+    let module_default_vars = ref M.empty in
+    let get_module_default_var (m : Module.t) =
+      M.get m.id !module_default_vars
+    in
+    let add_module_default_var ?(name=None) m request =
+      match M.get m.Module.id !module_default_vars with
+      | None ->
         let var =
           match name with
           | Some name ->
             name
           | None ->
             let name = Re.replace ~f:(fun _ -> "_") re_name request in
-            avoid_collisions ("_" ^ name)
+            avoid_name_collision ("_" ^ name ^ "__default")
         in
         begin
-          module_vars := M.add m.Module.id var !module_vars;
+          module_default_vars := M.add m.Module.id var !module_default_vars;
           var
         end
       | Some binding ->
@@ -131,17 +148,27 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let get_local_name ~dep_map (loc, local) =
       match get_binding local with
       | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
+        let dep =
+          { Module.Dependency. request = source; requested_from = Location location }
+        in
+        let (m : Module.t) = get_module dep dep_map in
         begin
-             match get_module_var ~dep_map source with
-             | Some module_binding ->
-               module_binding ^ "." ^ remote
-             | None ->
-               let dep = {
-                 Module.Dependency.
-                 request = source;
-                 requested_from = Location location;
-               } in
-               raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
+          match m.module_type, remote with
+          | Module.CJS_esModule, "default"
+          | Module.CJS, "default" ->
+            begin
+              match get_module_default_var m with
+              | Some var ->
+                var
+              | None ->
+                raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
+            end
+          | _ ->
+            match get_module_var m with
+            | Some module_var ->
+              module_var ^ "." ^ remote
+            | None ->
+              raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
         end
       | _ -> local
     in
@@ -160,7 +187,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         )
     in
 
-    let define_binding = Printf.sprintf "const %s = %s;" in
+    let define_var = Printf.sprintf "const %s = %s;" in
 
     let fastpack_require id request =
       Printf.sprintf "__fastpack_require__(/* \"%s\" */ \"%s\")"
@@ -179,7 +206,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       |> List.map
         (fun (name, value) ->
            Printf.sprintf
-             "Object.defineProperty(exports, \"%s\", {get: function() {return %s;}});"
+             "Object.defineProperty(exports, \"%s\", {enumerable: true, get: function() {return %s;}});"
              name
              value
         )
@@ -231,14 +258,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             patch_loc_with
               loc
               (fun dep_map ->
-                let
-                  {Module.
-                    id = module_id;
-                    (* exports; *)
-                    (* module_type; *)
-                    (* location; *)
-                    _
-                  } = get_module dep dep_map
+                let (m : Module.t) = get_module dep dep_map
                 in
                 let namespace, _names =
                   match specifiers with
@@ -253,53 +273,54 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                     None, []
                 in
                 let has_names = default <> None || specifiers <> None in
-                (* Verify all names to be in exports of the target *)
-                (* if has_names && module_type = Module.ESM *)
-                (* then begin *)
-                (*   let names = *)
-                (*     match default with *)
-                (*     | Some _ -> "default" :: names *)
-                (*     | None -> names *)
-                (*   in *)
-                (*   List.iter *)
-                (*     (fun remote -> *)
-                (*        let exists = *)
-                (*          exports *)
-                (*          |> List.exists (fun (name, _, _) -> name = remote) *)
-                (*        in *)
-                (*        if exists *)
-                (*        then () *)
-                (*        else *)
-                (*          let location_str = *)
-                (*            Module.location_to_string *)
-                (*              ~base_dir:(Some ctx.package_dir) *)
-                (*              location *)
-                (*          in *)
-                (*          raise (PackError (ctx, CannotFindExportedName (remote, location_str))) *)
-                (*     ) *)
-                (*     names; *)
-                (* end; *)
-                match has_names, get_module_var ~dep_map dep.request, namespace with
+                match has_names with
                 (* import 'some'; *)
-                | false, _, _ ->
-                  fastpack_require module_id dep.request ^ ";\n"
-                (* import * as X from 'some'; // 'some' is already imported *)
-                | _, Some binding, Some spec ->
-                  define_binding spec binding
-                (* same as above, but 'some' is not imported
-                 * X is used as module binding *)
-                | _, None, Some spec ->
-                  define_binding
-                    (add_module_var ~name:(Some spec) ~dep_map dep.request)
-                    (fastpack_require module_id dep.request)
-                (* 'some' is imported previously, nothing to do here *)
-                | _, Some _, None ->
-                  ""
-                (* any other import statement requires the auto-generated name *)
-                | _, None, None ->
-                  define_binding
-                    (add_module_var ~dep_map dep.request)
-                    (fastpack_require module_id dep.request)
+                | false ->
+                  fastpack_require m.id dep.request ^ ";\n"
+                | true ->
+                  let module_var_definition =
+                    match get_module_var m, namespace with
+                    (* import * as X from 'some'; // 'some' is already imported *)
+                    | Some module_var, Some namespace ->
+                      define_var namespace module_var
+                    (* same as above, but 'some' is not imported
+                     * X is used as module binding *)
+                    | None, Some spec ->
+                      define_var
+                        (add_module_var ~name:(Some spec) dep.request m)
+                        (fastpack_require m.id dep.request)
+                    (* 'some' is imported previously, nothing to do here *)
+                    | Some _, None ->
+                      ""
+                    (* any other import statement requires the auto-generated name *)
+                    | None, None ->
+                      define_var
+                        (add_module_var dep.request m)
+                        (fastpack_require m.id dep.request)
+                  in
+                  let module_var =
+                    match get_module_var m with
+                    | Some var -> var
+                    | None -> Error.ie "impossible state"
+                  in
+                  let module_default_definition =
+                    match m.module_type, default with
+                    | Module.CJS_esModule, Some (_, name)
+                    | Module.CJS, Some (_, name) ->
+                      let default_expr =
+                        Printf.sprintf "%s.__esModule ? %s.default : %s"
+                          module_var
+                          module_var
+                          module_var
+                      in
+                      define_var
+                        (add_module_default_var ~name:(Some name) m request)
+                        default_expr
+                    | _ ->
+                      ""
+                  in
+                  module_var_definition
+                  ^ module_default_definition
               );
 
           | S.ExportNamedDeclaration {
@@ -352,17 +373,17 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             patch_loc_with
               loc
               (fun dep_map ->
-                 let {Module. id = module_id; module_type; _} = get_module dep dep_map in
-                 match get_module_var ~dep_map dep.request with
+                 let m = get_module dep dep_map in
+                 match get_module_var m with
                  | Some binding ->
-                   exports_from ~dep_map module_type binding
+                   exports_from ~dep_map m.module_type binding
                  | None ->
-                   let binding = add_module_var ~dep_map dep.request in
-                   define_binding
+                   let binding = add_module_var dep.request m in
+                   define_var
                      binding
-                     (fastpack_require module_id dep.request)
+                     (fastpack_require m.id dep.request)
                    ^ "\n"
-                   ^ exports_from ~dep_map module_type binding
+                   ^ exports_from ~dep_map m.module_type binding
               );
 
           | S.ExportNamedDeclaration {
@@ -376,15 +397,15 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             patch_loc_with
               loc
               (fun dep_map ->
-                let {Module. id = module_id; _} = get_module dep dep_map in
-                match get_module_var ~dep_map dep.request with
+                let m = get_module dep dep_map in
+                match get_module_var m with
                 | Some binding ->
                   update_exports [(spec, binding)]
                 | None ->
-                  let binding = add_module_var ~dep_map dep.request in
-                  define_binding
+                  let binding = add_module_var dep.request m in
+                  define_var
                     binding
-                    (fastpack_require module_id dep.request)
+                    (fastpack_require m.id dep.request)
                   ^ "\n"
                   ^ update_exports [(spec, binding)]
               )
@@ -400,18 +421,18 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             patch_loc_with
               loc
               (fun dep_map ->
-                let {Module. id = module_id; _} = get_module dep dep_map in
+                let m = get_module dep dep_map in
                 let export_all_from binding =
                   Printf.sprintf "Object.assign(module.exports, %s);" binding
                 in
-                match get_module_var ~dep_map dep.request with
+                match get_module_var m with
                 | Some binding ->
                   export_all_from binding
                 | None ->
-                  let binding = add_module_var ~dep_map dep.request in
-                  define_binding
+                  let binding = add_module_var dep.request m in
+                  define_var
                     binding
-                    (fastpack_require module_id dep.request)
+                    (fastpack_require m.id dep.request)
                   ^ "\n"
                   ^ export_all_from binding
 
@@ -533,12 +554,23 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                      requested_from = Location location
                    }
                    in
-                   match get_module_var ~dep_map source with
-                   | Some module_binding ->
-                     let m = get_module dep dep_map in
-                     if (m.Module.module_type = Module.ESM || m.Module.module_type = Module.CJS_esModule || remote <> "default")
-                     then module_binding ^ "." ^ remote
-                     else module_binding
+                   let m = get_module dep dep_map in
+                   match get_module_var m with
+                   | Some module_var ->
+                     begin
+                       match m.module_type, remote with
+                       | Module.CJS_esModule, "default"
+                       | Module.CJS, "default" ->
+                         begin
+                           match get_module_default_var m with
+                           | Some var ->
+                             var
+                           | None ->
+                             raise (PackError (ctx, CannotRenameModuleBinding (loc, name, dep)))
+                         end
+                       | _ ->
+                         module_var ^ "." ^ remote
+                     end
                    | None ->
                      raise (PackError (ctx, CannotRenameModuleBinding (loc, name, dep)))
                 )
@@ -569,7 +601,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     Visit.visit handler program;
     let module_type = get_module_type stmts in
     let es_module =
-      module_type = Module.ESM || module_type = Module.CJS_esModule
+      module_type = Module.ESM
     in
     let () =
       if es_module
@@ -679,6 +711,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 "
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 %s(function(modules) {
   // The module cache
   var installedModules = {};

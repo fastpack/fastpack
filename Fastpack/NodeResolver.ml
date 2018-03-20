@@ -17,7 +17,6 @@ let empty =
   |> StringSet.add "os"
   |> StringSet.add "module"
   |> StringSet.add "path"
-  |> StringSet.add "util"
   |> StringSet.add "fs"
   |> StringSet.add "tty"
   |> StringSet.add "net"
