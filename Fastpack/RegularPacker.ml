@@ -41,7 +41,6 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let module L = Ast.Literal in
 
     let dependencies = ref [] in
-    let dependency_id = ref 0 in
     let workspace = ref (Workspace.of_string source) in
     let ({Workspace.
           patch;
@@ -64,6 +63,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let get_binding name =
       Scope.get_binding name (top_scope ())
     in
+    let has_binding name =
+      Scope.has_binding name (top_scope ())
+    in
 
     let get_module (dep : Module.Dependency.t) dep_map =
       match Module.DependencyMap.get dep dep_map with
@@ -78,7 +80,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         | 0 -> name
         | _ -> Printf.sprintf "%s_%d" name n
       in
-      if not (Scope.has_binding name (top_scope ()))
+      if not (has_binding name)
       then name
       else avoid_name_collision ~n:(n + 1) name
     in
@@ -131,9 +133,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         binding
     in
 
-
     let add_dependency request =
-      dependency_id := !dependency_id + 1;
       let dep = {
         Module.Dependency.
         request;
@@ -206,7 +206,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       |> List.map
         (fun (name, value) ->
            Printf.sprintf
-             "Object.defineProperty(exports, \"%s\", {enumerable: true, get: function() {return %s;}});"
+             "Object.defineProperty(exports, \"%s\", {get: function() {return %s;}});"
              name
              value
         )
@@ -329,8 +329,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               _
             } ->
             let exports =
-              List.map (fun ((_, name), _, _) -> (name, name))
-              @@ Scope.names_of_node declaration
+              Scope.names_of_node declaration
+              |> List.map (fun ((_, name), _, _) -> (name, name))
             in
             begin
               remove
@@ -378,12 +378,12 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                  | Some binding ->
                    exports_from ~dep_map m.module_type binding
                  | None ->
-                   let binding = add_module_var dep.request m in
+                   let var = add_module_var dep.request m in
                    define_var
-                     binding
+                     var
                      (fastpack_require m.id dep.request)
                    ^ "\n"
-                   ^ exports_from ~dep_map m.module_type binding
+                   ^ exports_from ~dep_map m.module_type var
               );
 
           | S.ExportNamedDeclaration {
@@ -414,7 +414,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               exportKind = S.ExportValue;
               declaration = None;
               specifiers = Some (
-                  S.ExportNamedDeclaration.ExportBatchSpecifier (_, None));
+                  S.ExportNamedDeclaration.ExportBatchSpecifier (_, None)
+                );
               source = Some (_, { value = request; _ });
             } ->
             let dep = add_dependency request in
@@ -422,20 +423,32 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               loc
               (fun dep_map ->
                 let m = get_module dep dep_map in
-                let export_all_from binding =
-                  Printf.sprintf "Object.assign(module.exports, %s);" binding
+                let module_var, module_var_definition =
+                  match get_module_var m with
+                  | Some var ->
+                    var, ""
+                  | None ->
+                    let var = add_module_var dep.request m in
+                    var, define_var var (fastpack_require m.id dep.request)
                 in
-                match get_module_var m with
-                | Some binding ->
-                  export_all_from binding
-                | None ->
-                  let binding = add_module_var dep.request m in
-                  define_var
-                    binding
-                    (fastpack_require m.id dep.request)
-                  ^ "\n"
-                  ^ export_all_from binding
-
+                let updated_exports =
+                  match m.module_type with
+                  | Module.CJS
+                  | Module.CJS_esModule ->
+                    Printf.sprintf
+                      "Object.assign(module.exports, __fastpack_require__.omitDefault(%s));"
+                      module_var
+                  | Module.ESM ->
+                    let {ExportFinder. exports; _ } =
+                      ctx.export_finder.get_all dep_map m
+                    in
+                    exports
+                    |> M.bindings
+                    |> List.filter (fun (name, _) -> name <> "default")
+                    |> List.map (fun (name, _) -> (name, module_var ^ "." ^ name))
+                    |> update_exports
+                in
+                module_var_definition ^ " " ^ updated_exports
               )
 
           | S.ExportDefaultDeclaration {
@@ -522,7 +535,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             callee = (_, E.Identifier (_, "require"));
             arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
           } ->
-          if (not @@ Scope.has_binding "require" (top_scope ())) then begin
+          if (not @@ has_binding "require") then begin
             let dep = add_dependency request in
             patch_loc_with
               loc
@@ -535,7 +548,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
         | E.Identifier (loc, "require") ->
           let () =
-            if (not @@ Scope.has_binding "require" (top_scope ()))
+            if (not @@ has_binding "require")
             then patch_loc loc "__fastpack_require__"
             else ()
           in
@@ -759,12 +772,19 @@ process = { env: {} };
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = '%s');
 })
 " prefix entry_id

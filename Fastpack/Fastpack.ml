@@ -48,6 +48,7 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
     mode;
     target;
     resolver;
+    export_finder = ExportFinder.make ();
     preprocessor;
     graph = DependencyGraph.empty ();
   }
@@ -160,6 +161,7 @@ let prepare_and_pack options start_time =
       target = options.target;
       resolver;
       preprocessor;
+      export_finder = ExportFinder.make ();
       graph = DependencyGraph.empty ()
     }
     in

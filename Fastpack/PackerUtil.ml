@@ -209,6 +209,7 @@ module Context = struct
     target : Target.t;
     resolver : NodeResolver.t;
     preprocessor : Preprocessor.t;
+    export_finder : ExportFinder.t;
     graph : DependencyGraph.t;
   }
 

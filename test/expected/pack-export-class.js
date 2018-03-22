@@ -1,6 +1,7 @@
 
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -48,12 +49,19 @@ global = window;
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = 'builtin$$B$$index');
 })
 ({
@@ -151,11 +159,11 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const __ExportDefaultNamedClass = __fastpack_require__(/* "./ExportDefaultNamedClass" */ "builtin$$B$$ExportDefaultNamedClass");
-const __ExportDefaultClass = __fastpack_require__(/* "./ExportDefaultClass" */ "builtin$$B$$ExportDefaultClass");
-const __ExportNamedClass = __fastpack_require__(/* "./ExportNamedClass" */ "builtin$$B$$ExportNamedClass");
-console.log(__ExportDefaultNamedClass.default.prop);
-console.log(__ExportDefaultClass.default.prop);
+const _1__ExportDefaultNamedClass = __fastpack_require__(/* "./ExportDefaultNamedClass" */ "builtin$$B$$ExportDefaultNamedClass");
+const _2__ExportDefaultClass = __fastpack_require__(/* "./ExportDefaultClass" */ "builtin$$B$$ExportDefaultClass");
+const _3__ExportNamedClass = __fastpack_require__(/* "./ExportNamedClass" */ "builtin$$B$$ExportNamedClass");
+console.log(_1__ExportDefaultNamedClass.default.prop);
+console.log(_2__ExportDefaultClass.default.prop);
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

@@ -1,6 +1,7 @@
 
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -48,12 +49,19 @@ global = window;
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = 'builtin$$B$$src$index');
 })
 ({
@@ -18343,13 +18351,13 @@ if(module.hot) {
 }
 },
 "builtin$$B$$src$App": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const _react = __fastpack_require__(/* "react" */ "NM$$react$index");
-const __logo_svg = __fastpack_require__(/* "./logo.svg" */ "NM$$url$$_$$loader$indexDOT$$js$$B$$src$logoDOT$$svg");
+const _1_react = __fastpack_require__(/* "react" */ "NM$$react$index");const React = _1_react.__esModule ? _1_react.default : _1_react;
+const _2__logo_svg = __fastpack_require__(/* "./logo.svg" */ "NM$$url$$_$$loader$indexDOT$$js$$B$$src$logoDOT$$svg");const logo = _2__logo_svg.__esModule ? _2__logo_svg.default : _2__logo_svg;
 __fastpack_require__(/* "./App.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$AppDOT$$css");
 
-class App extends _react.Component {
+class App extends _1_react.Component {
   render() {
-    return _react.createElement("div", {"className": "App"}, _react.createElement("header", {"className": "App-header"}, _react.createElement("img", {"src": __logo_svg, "className": "App-logo", "alt": "logo"}), _react.createElement("h1", {"className": "App-title"}, 'Welcome to React')), _react.createElement("p", {"className": "App-intro"}, '          To get started, edit ', _react.createElement("code", null, 'src/App.js'), ' and save to reload.'));
+    return React.createElement("div", {"className": "App"}, React.createElement("header", {"className": "App-header"}, React.createElement("img", {"src": logo, "className": "App-logo", "alt": "logo"}), React.createElement("h1", {"className": "App-title"}, 'Welcome to React')), React.createElement("p", {"className": "App-intro"}, '          To get started, edit ', React.createElement("code", null, 'src/App.js'), ' and save to reload.'));
     
   }
   
@@ -18487,14 +18495,14 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$src$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const _react = __fastpack_require__(/* "react" */ "NM$$react$index");
-const _react_dom = __fastpack_require__(/* "react-dom" */ "NM$$react$$_$$dom$index");
+const _1_react = __fastpack_require__(/* "react" */ "NM$$react$index");const React = _1_react.__esModule ? _1_react.default : _1_react;
+const _2_react_dom = __fastpack_require__(/* "react-dom" */ "NM$$react$$_$$dom$index");const ReactDOM = _2_react_dom.__esModule ? _2_react_dom.default : _2_react_dom;
 __fastpack_require__(/* "./index.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$indexDOT$$css");
 
-const __App = __fastpack_require__(/* "./App" */ "builtin$$B$$src$App");
-const __registerServiceWorker = __fastpack_require__(/* "./registerServiceWorker" */ "builtin$$B$$src$registerServiceWorker");
-_react_dom.render(_react.createElement(__App.default, null), document.getElementById('root'));
-__registerServiceWorker.default();
+const _3__App = __fastpack_require__(/* "./App" */ "builtin$$B$$src$App");
+const _4__registerServiceWorker = __fastpack_require__(/* "./registerServiceWorker" */ "builtin$$B$$src$registerServiceWorker");
+ReactDOM.render(React.createElement(_3__App.default, null), document.getElementById('root'));
+_4__registerServiceWorker.default();
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

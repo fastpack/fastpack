@@ -8,8 +8,12 @@ type export = {
 }
 
 type all_exports = {
-  reexport_cjs : bool;
+  has_cjs : bool;
   exports : export M.t;
+}
+
+type t = {
+  get_all : Module.t Module.DependencyMap.t -> Module.t -> all_exports;
 }
 
 let make () =
@@ -23,7 +27,7 @@ let make () =
       M.map (fun export -> { export; parent_module = m }) exports
     in
     List.fold_left
-      (fun names batch_request ->
+      (fun { exports; has_cjs } batch_request ->
          let dep = {
            Module.Dependency.
            request = batch_request;
@@ -32,26 +36,38 @@ let make () =
          in
          match Module.DependencyMap.get dep dep_map with
          | Some m ->
-           let batch_names = get_all_exports dep_map m in
-           M.merge
-             (fun key v1 v2 ->
-                match v1, v2 with
-                | Some _, Some _ ->
-                  failwith ("Cannot export twice: " ^ key)
-                | Some v, None | None, Some v ->
-                  Some v
-                | None, None ->
-                  None
-             )
-             names
-             batch_names
+           begin
+             match m.Module.module_type with
+             | Module.ESM ->
+               let {
+                 has_cjs = batch_has_cjs;
+                 exports = batch_exports
+               } = get_all dep_map m in
+               let exports =
+                 M.merge
+                   (fun key v1 v2 ->
+                      match v1, v2 with
+                      | Some _, Some _ ->
+                        failwith ("Cannot export twice: " ^ key)
+                      | Some v, None | None, Some v ->
+                        Some v
+                      | None, None ->
+                        None
+                   )
+                   exports
+                   batch_exports
+               in
+               { exports; has_cjs = has_cjs || batch_has_cjs}
+             | _ ->
+               {exports; has_cjs = true}
+           end
          | None ->
            failwith ("Cannot find module: " ^ batch_request)
       )
-      (decorate m m.exports.names)
+      { exports = decorate m m.exports.names; has_cjs = m.module_type <> Module.ESM }
       m.exports.batches
 
-  and get_all_exports dep_map (m : Module.t) =
+  and get_all dep_map (m : Module.t) =
     match M.get m.id !unwrapped_batches with
     | Some exports ->
       exports
@@ -60,5 +76,5 @@ let make () =
       unwrapped_batches := M.add m.id m_unwrapped_batches !unwrapped_batches;
       m_unwrapped_batches
   in
-  get_all_exports
+  { get_all; }
 

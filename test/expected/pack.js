@@ -1,6 +1,7 @@
 
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -48,12 +49,19 @@ global = window;
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
@@ -81,19 +89,18 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 },
 "yz": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
-const __z = __fastpack_require__(/* "./z" */ "z");
-Object.defineProperty(exports, "Z", {get: function() {return __z;}});
-const __y = __fastpack_require__(/* "./y" */ "y");
-Object.assign(module.exports, __y);
+const _1__z = __fastpack_require__(/* "./z" */ "z");
+Object.defineProperty(exports, "Z", {get: function() {return _1__z;}});
+const _2__y = __fastpack_require__(/* "./y" */ "y"); Object.defineProperty(exports, "a", {get: function() {return _2__y.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return _2__y.updateA;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "yz_reimport": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const __y = __fastpack_require__(/* "./y" */ "y");
-const __z = __fastpack_require__(/* "./z" */ "z");
+const _1__y = __fastpack_require__(/* "./y" */ "y");
+const _2__z = __fastpack_require__(/* "./z" */ "z");
 
-exports.default = {a: __y.a, updateA: __y.updateA, Z: __z.default};
+exports.default = {a: _1__y.a, updateA: _1__y.updateA, Z: _2__z.default};
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
@@ -131,18 +138,18 @@ function updateX() {
 Object.defineProperty(exports, "updateX", {get: function() {return updateX;}});
 
 
-const __y = __fastpack_require__(/* "./y" */ "y");
-Object.defineProperty(exports, "X", {get: function() {return __y.default;}}); Object.defineProperty(exports, "xA", {get: function() {return __y.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return __y.updateA;}});
+const _1__y = __fastpack_require__(/* "./y" */ "y");
+Object.defineProperty(exports, "X", {get: function() {return _1__y.default;}}); Object.defineProperty(exports, "xA", {get: function() {return _1__y.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return _1__y.updateA;}});
 Object.defineProperty(exports, "ZM", {get: function() {return ZModule.default;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "util": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const __x = __fastpack_require__(/* "./x" */ "x");
+const _1__x = __fastpack_require__(/* "./x" */ "x");
 
 
-const allX = __x;
+const allX = _1__x;
 const YZ = __fastpack_require__(/* "./yz" */ "yz");
 
 function xShouldRemain() {
@@ -160,10 +167,10 @@ let $lib1 = {};
 console.log($lib1.x);
 
 module.exports.sayHello = function() {
-  __x.default();
-  console.log("x before update", __x.x);
-  __x.updateX();
-  console.log("x after update:", __x.x);
+  _1__x.default();
+  console.log("x before update", _1__x.x);
+  _1__x.updateX();
+  console.log("x after update:", _1__x.x);
 };
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
@@ -174,7 +181,7 @@ __fastpack_require__(/* "./yz" */ "yz");
 
 __fastpack_require__(/* "./yz_reimport.js" */ "yz_reimport");
 
-const __cjs = __fastpack_require__(/* "./cjs" */ "cjs");
+const _1__cjs = __fastpack_require__(/* "./cjs" */ "cjs");const CJS = _1__cjs.__esModule ? _1__cjs.default : _1__cjs;
 
 const util = __fastpack_require__(/* "./util" */ "util");
 
@@ -182,7 +189,7 @@ if (true) {
   let yz = __fastpack_import__(/* "./yz" */ "yz");
 }
 else {
-  __cjs();
+  CJS();
 }
 
 

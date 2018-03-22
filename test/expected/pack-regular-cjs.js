@@ -1,6 +1,7 @@
 
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 module.exports = (function(modules) {
   // The module cache
   var installedModules = {};
@@ -48,12 +49,19 @@ module.exports = (function(modules) {
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
@@ -68,8 +76,8 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const __a = __fastpack_require__(/* "./a" */ "a");
-Object.defineProperty(exports, "a", {get: function() {return __a.a;}}); Object.defineProperty(exports, "changeA", {get: function() {return __a.changeA;}});
+const _1__a = __fastpack_require__(/* "./a" */ "a");
+Object.defineProperty(exports, "a", {get: function() {return _1__a.a;}}); Object.defineProperty(exports, "changeA", {get: function() {return _1__a.changeA;}});
 let index = 1;
 Object.defineProperty(exports, "index", {get: function() {return index;}});
 
