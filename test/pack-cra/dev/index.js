@@ -18351,13 +18351,13 @@ if(module.hot) {
 }
 },
 "builtin$$B$$src$App": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const _1_react = __fastpack_require__(/* "react" */ "NM$$react$index");const React = _1_react.__esModule ? _1_react.default : _1_react;
-const _2__logo_svg = __fastpack_require__(/* "./logo.svg" */ "NM$$url$$_$$loader$indexDOT$$js$$B$$src$logoDOT$$svg");const logo = _2__logo_svg.__esModule ? _2__logo_svg.default : _2__logo_svg;
+const _1_react = __fastpack_require__(/* "react" */ "NM$$react$index");const _1_react__default = _1_react.__esModule ? _1_react.default : _1_react;
+const _2__logo_svg = __fastpack_require__(/* "./logo.svg" */ "NM$$url$$_$$loader$indexDOT$$js$$B$$src$logoDOT$$svg");const _2__logo_svg__default = _2__logo_svg.__esModule ? _2__logo_svg.default : _2__logo_svg;
 __fastpack_require__(/* "./App.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$AppDOT$$css");
 
 class App extends _1_react.Component {
   render() {
-    return React.createElement("div", {"className": "App"}, React.createElement("header", {"className": "App-header"}, React.createElement("img", {"src": logo, "className": "App-logo", "alt": "logo"}), React.createElement("h1", {"className": "App-title"}, 'Welcome to React')), React.createElement("p", {"className": "App-intro"}, '          To get started, edit ', React.createElement("code", null, 'src/App.js'), ' and save to reload.'));
+    return _1_react__default.createElement("div", {"className": "App"}, _1_react__default.createElement("header", {"className": "App-header"}, _1_react__default.createElement("img", {"src": _2__logo_svg__default, "className": "App-logo", "alt": "logo"}), _1_react__default.createElement("h1", {"className": "App-title"}, 'Welcome to React')), _1_react__default.createElement("p", {"className": "App-intro"}, '          To get started, edit ', _1_react__default.createElement("code", null, 'src/App.js'), ' and save to reload.'));
     
   }
   
@@ -18495,13 +18495,13 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$src$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const _1_react = __fastpack_require__(/* "react" */ "NM$$react$index");const React = _1_react.__esModule ? _1_react.default : _1_react;
-const _2_react_dom = __fastpack_require__(/* "react-dom" */ "NM$$react$$_$$dom$index");const ReactDOM = _2_react_dom.__esModule ? _2_react_dom.default : _2_react_dom;
+const _1_react = __fastpack_require__(/* "react" */ "NM$$react$index");const _1_react__default = _1_react.__esModule ? _1_react.default : _1_react;
+const _2_react_dom = __fastpack_require__(/* "react-dom" */ "NM$$react$$_$$dom$index");const _2_react_dom__default = _2_react_dom.__esModule ? _2_react_dom.default : _2_react_dom;
 __fastpack_require__(/* "./index.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$indexDOT$$css");
 
 const _3__App = __fastpack_require__(/* "./App" */ "builtin$$B$$src$App");
 const _4__registerServiceWorker = __fastpack_require__(/* "./registerServiceWorker" */ "builtin$$B$$src$registerServiceWorker");
-ReactDOM.render(React.createElement(_3__App.default, null), document.getElementById('root'));
+_2_react_dom__default.render(_1_react__default.createElement(_3__App.default, null), document.getElementById('root'));
 _4__registerServiceWorker.default();
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}

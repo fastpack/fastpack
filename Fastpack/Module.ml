@@ -171,7 +171,7 @@ type t = {
   files : (string * string) list;
 
   (** Module source along with transformations applied *)
-  workspace : t DependencyMap.t Workspace.t;
+  workspace : (t * t DependencyMap.t) Workspace.t;
 
   (** Module scope *)
   scope: FastpackUtil.Scope.t;

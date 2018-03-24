@@ -12,8 +12,13 @@ type all_exports = {
   exports : export M.t;
 }
 
+type export_exists = Yes (* truly exists in ESM *)
+                   | Maybe (* there are some re-exports from the CJS *)
+                   | No (* does not exist in ESM *)
+
 type t = {
   get_all : Module.t Module.DependencyMap.t -> Module.t -> all_exports;
+  exists : Module.t Module.DependencyMap.t -> Module.t -> string -> export_exists;
 }
 
 let make () =
@@ -76,5 +81,11 @@ let make () =
       unwrapped_batches := M.add m.id m_unwrapped_batches !unwrapped_batches;
       m_unwrapped_batches
   in
-  { get_all; }
+  let exists dep_map m name =
+    let { exports; has_cjs } = get_all dep_map m in
+    match M.get name exports with
+    | Some _ -> Yes
+    | None -> if has_cjs then Maybe else No
+  in
+  { get_all; exists }
 

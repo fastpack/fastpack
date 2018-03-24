@@ -250,7 +250,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           let add_exports es_module =
             let namespace = gen_ext_namespace_binding module_id in
             patch_with (UTF8.length source) 0
-              (fun dep_map ->
+              (fun (_, dep_map) ->
                 let expr =
                   exports.names
                   |> M.bindings
@@ -283,7 +283,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
           let add_target_export () =
             patch_with (UTF8.length source) 0
-              (fun dep_map ->
+              (fun (_, dep_map) ->
                 match ctx.target with
                 | Target.Application ->
                   ""
@@ -409,7 +409,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
               use_name name;
               patch_loc_with
                 loc
-                (fun dep_map ->
+                (fun (_, dep_map) ->
                    match binding.typ with
                    | Scope.Import { source; remote } ->
                      resolve_import dep_map location source remote
@@ -646,7 +646,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   then begin
                     let dep = add_static_dep request in
                     patch_loc_with loc
-                      (fun dep_map ->
+                      (fun (_, dep_map) ->
                          match MDM.get dep dep_map with
                          | None ->
                            raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
@@ -802,7 +802,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           debug (fun m_ -> m_ "Emitting: %s" (Module.location_to_string m.location));
           let%lwt () = emit_module_files ctx m in
           let%lwt () = emit (Printf.sprintf "\n/* %s */\n\n" m.id) in
-          let%lwt _ = Workspace.write channel m.Module.workspace dep_map in
+          let%lwt _ = Workspace.write channel m.Module.workspace (m, dep_map) in
           Lwt.return_unit
         in
 

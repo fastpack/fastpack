@@ -69,11 +69,11 @@ process = { env: {} };
 module.exports = "Hello, world!\n\nLorem Ipsum is simply dummy text of the printing and typesetting industry.\nLorem Ipsum has been the industry's standard dummy text ever since the 1500s,\nwhen an unknown printer took a galley of type and scrambled it to make a type\nspecimen book. It has survived not only five centuries, but also the leap into\nelectronic typesetting, remaining essentially unchanged. It was popularised in\nthe 1960s with the release of Letraset sheets containing Lorem Ipsum passages,\nand more recently with desktop publishing software like Aldus PageMaker\nincluding versions of Lorem Ipsum.\n"
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const _1_raw_loader_test_txt = __fastpack_require__(/* "raw-loader!./test.txt" */ "NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt");const text = _1_raw_loader_test_txt.__esModule ? _1_raw_loader_test_txt.default : _1_raw_loader_test_txt;
+const _1_raw_loader_test_txt = __fastpack_require__(/* "raw-loader!./test.txt" */ "NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt");const _1_raw_loader_test_txt__default = _1_raw_loader_test_txt.__esModule ? _1_raw_loader_test_txt.default : _1_raw_loader_test_txt;
 
 document.body.innerHTML = `
 <h1>test.txt</h1>
-<pre>${text}</pre>
+<pre>${_1_raw_loader_test_txt__default}</pre>
 `;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}

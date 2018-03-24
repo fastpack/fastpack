@@ -69,8 +69,8 @@ process = { env: {} };
 module.exports = "./5d5d9eefa31e5e13a6610d9fa7a283bb.svg";
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const _1_file_loader_publicPath_logo_svg = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg");const url = _1_file_loader_publicPath_logo_svg.__esModule ? _1_file_loader_publicPath_logo_svg.default : _1_file_loader_publicPath_logo_svg;
-document.body.innerHTML = '<img src="' + url + '"/>';
+const _1_file_loader_publicPath_logo_svg = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg");const _1_file_loader_publicPath_logo_svg__default = _1_file_loader_publicPath_logo_svg.__esModule ? _1_file_loader_publicPath_logo_svg.default : _1_file_loader_publicPath_logo_svg;
+document.body.innerHTML = '<img src="' + _1_file_loader_publicPath_logo_svg__default + '"/>';
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
