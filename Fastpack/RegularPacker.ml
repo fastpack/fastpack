@@ -44,6 +44,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let workspace = ref (Workspace.of_string source) in
     let ({Workspace.
           patch;
+          patch_with;
           patch_loc;
           patch_loc_with;
           remove;
@@ -101,9 +102,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
     let n_module = ref 0 in
     let module_vars = ref M.empty in
-    let get_module_var (m : Module.t) =
-      M.get m.id !module_vars
-    in
+    (* let get_module_var (m : Module.t) = *)
+    (*   M.get m.id !module_vars *)
+    (* in *)
     let ensure_module_var ?(name=None) request (m : Module.t) =
       match M.get m.Module.id !module_vars, name with
       | Some var, None ->
@@ -126,9 +127,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     in
 
     let module_default_vars = ref M.empty in
-    let get_module_default_var (m : Module.t) =
-      M.get m.id !module_default_vars
-    in
+    (* let get_module_default_var (m : Module.t) = *)
+    (*   M.get m.id !module_default_vars *)
+    (* in *)
 
     let ensure_module_default_var m =
       match M.get m.Module.id !module_default_vars with
@@ -136,10 +137,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         var, ""
       | None ->
         let module_var, module_var_definition = ensure_module_var "" m in
-        assert (module_var_definition = "");
         match m.module_type with
         | Module.ESM ->
-          module_var ^ ".default", ""
+          module_var ^ ".default", module_var_definition
         | Module.CJS | Module.CJS_esModule ->
           let var = avoid_name_collision (module_var ^ "__default") in
           let expression =
@@ -149,7 +149,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               module_var
           in
           module_default_vars := M.add m.Module.id var !module_default_vars;
-          var, define_var var expression
+          var, module_var_definition ^ (define_var var expression)
     in
 
     let add_dependency request =
@@ -164,51 +164,6 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       end
     in
 
-    let get_local_name ~dep_map (loc, local) =
-      match get_binding local with
-      | Some { typ = Scope.Import { source; remote = Some remote}; _ } ->
-        let dep = {
-          Module.Dependency.
-          request = source;
-          requested_from = Location location
-        }
-        in
-        let (m : Module.t) = get_module dep dep_map in
-        begin
-          match m.module_type, remote with
-          | Module.CJS_esModule, "default"
-          | Module.CJS, "default" ->
-            begin
-              match get_module_default_var m with
-              | Some var ->
-                var
-              | None ->
-                raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
-            end
-          | _ ->
-            match get_module_var m with
-            | Some module_var ->
-              module_var ^ "." ^ remote
-            | None ->
-              raise (PackError (ctx, CannotRenameModuleBinding (loc, local, dep)))
-        end
-      | _ -> local
-    in
-
-    let exports_from_specifiers ~dep_map =
-      List.map
-        (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
-                  local = (loc, local);
-                  exported }) ->
-           let exported =
-             match exported with
-             | Some (_, name) -> name
-             | None -> local
-           in
-           exported, get_local_name ~dep_map (loc, local)
-        )
-    in
-
     let ensure_export_exists ~dep_map (m: Module.t) name =
       match ctx.export_finder.exists dep_map m name with
       | ExportFinder.Yes | ExportFinder.Maybe -> ()
@@ -219,42 +174,100 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         raise (PackError (ctx, CannotFindExportedName (name, location_str)))
     in
 
-    let _exports_from_module ~own_exports ~dep_map (m: Module.t) specifiers =
-      specifiers
-      |> List.map
+    let export_from_specifiers =
+      List.map
         (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
-                  local = (loc, local);
+                  local = (_, local);
                   exported }) ->
            let exported =
              match exported with
              | Some (_, name) -> name
              | None -> local
            in
-           exported, (loc, local)
-        )
-      |> List.map
-        (fun (exported, (loc, local)) ->
-           let () = ensure_export_exists ~dep_map m local in
-           match own_exports with
-           | false ->
-             exported, local
-           | true ->
-             exported, get_local_name ~dep_map (loc, local)
+           exported, local
         )
     in
 
+    let define_export exported local =
+      Printf.sprintf
+        "Object.defineProperty(exports, \"%s\", {get: function() {return %s;}});"
+        exported
+        local
+    in
 
-    let update_exports exports =
+    let patch_imported_name ~dep_map ~from_request (loc, local_name) remote =
+      let dep = {
+        Module.Dependency.
+        request = from_request;
+        requested_from = Location location
+      }
+      in
+      let m = get_module dep dep_map in
+      let () = ensure_export_exists ~dep_map m remote in
+      match remote with
+      | "default" ->
+        let default_var, default_definition =
+          ensure_module_default_var m
+        in
+        if default_definition <> ""
+        then raise (PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
+        else default_var
+      | _ ->
+        let module_var, module_var_definition =
+          ensure_module_var "" m
+        in
+        assert (module_var_definition = "");
+        if module_var_definition <> ""
+        then raise (PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
+        else module_var ^ "." ^ remote
+    in
+
+    let define_local_exports ~dep_map exports =
       exports
       |> List.map
-        (fun (name, value) ->
-           Printf.sprintf
-             "Object.defineProperty(exports, \"%s\", {get: function() {return %s;}});"
-             name
-             value
+        (fun (exported, local) ->
+           let local =
+             match get_binding local with
+             | Some { typ = Scope.Import { source; remote = Some remote}; loc; _ } ->
+               patch_imported_name
+                 ~dep_map
+                 ~from_request:source
+                 (loc, local)
+                 remote
+             | None ->
+
+               failwith ("Cannot export previously undefined name:" ^ local)
+             | _ ->
+               local
+           in
+           define_export exported local
         )
-      |> String.concat " "
+      |> String.concat ""
     in
+
+    let define_remote_exports ~dep_map ~request ~from_module exports =
+      let module_var, module_var_definition =
+        ensure_module_var request from_module
+      in
+      let exports =
+        exports
+        |> List.map
+          (fun (exported, remote) ->
+             let () = ensure_export_exists ~dep_map from_module remote in
+             match remote with
+             | "default" ->
+               let default_var, default_definition =
+                 ensure_module_default_var from_module
+               in
+               default_definition ^ (define_export exported default_var)
+             | _ ->
+               define_export exported (module_var ^ "." ^ remote)
+          )
+        |> String.concat ""
+      in
+      module_var_definition ^ exports
+    in
+
 
     let enter_function {Visit. parents; _} f =
       push_scope (Scope.of_function parents f (top_scope ()))
@@ -341,12 +354,13 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               Scope.names_of_node declaration
               |> List.map (fun ((_, name), _, _) -> (name, name))
             in
-            begin
-              remove
-                loc.start.offset
-                (stmt_loc.start.offset - loc.start.offset);
-              patch loc._end.offset 0 @@ "\n" ^ update_exports exports ^ "\n";
-            end;
+            remove
+              loc.start.offset
+              (stmt_loc.start.offset - loc.start.offset);
+            patch_with loc._end.offset 0
+              (fun (_, dep_map) ->
+                 ";" ^ (define_local_exports ~dep_map exports)
+              )
 
           | S.ExportNamedDeclaration {
               exportKind = S.ExportValue;
@@ -357,8 +371,9 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
             patch_loc_with
               loc
               (fun (_, dep_map) ->
-                 exports_from_specifiers ~dep_map specifiers
-                 |> update_exports
+                 specifiers
+                 |> export_from_specifiers
+                 |> define_local_exports ~dep_map
               )
 
           | S.ExportNamedDeclaration {
@@ -368,26 +383,13 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               source = Some (_, { value = request; _ });
             } ->
             let dep = add_dependency request in
-            let exports_from ~dep_map module_type binding =
-              exports_from_specifiers ~dep_map specifiers
-              |> List.map
-                (fun (exported, local) ->
-                   exported,
-                   if (module_type = Module.ESM || module_type = Module.CJS_esModule || local <> "default")
-                   then binding ^ "." ^ local
-                   else binding
-                )
-              |> update_exports
-            in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
                  let m = get_module dep dep_map in
-                 let module_var, module_var_definition =
-                   ensure_module_var dep.request m
-                 in
-                 module_var_definition
-                 ^ (exports_from ~dep_map m.module_type module_var)
+                 specifiers
+                 |> export_from_specifiers
+                 |> define_remote_exports ~dep_map ~request ~from_module:m
               );
 
           | S.ExportNamedDeclaration {
@@ -405,8 +407,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                  let module_var, module_var_definition =
                    ensure_module_var dep.request m
                  in
-                 module_var_definition
-                 ^ update_exports [(spec, module_var)]
+                 module_var_definition ^ define_export spec module_var
               )
 
           | S.ExportNamedDeclaration {
@@ -440,9 +441,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                     |> M.bindings
                     |> List.filter (fun (name, _) -> name <> "default")
                     |> List.map (fun (name, _) -> (name, module_var ^ "." ^ name))
-                    |> update_exports
+                    |> List.map (fun (exported, local) -> define_export exported local)
+                    |> String.concat ""
                 in
-                module_var_definition ^ " " ^ updated_exports
+                module_var_definition ^ "" ^ updated_exports
               )
 
           | S.ExportDefaultDeclaration {
@@ -555,31 +557,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               patch_loc_with
                 loc
                 (fun (_, dep_map) ->
-                   let dep = {
-                     Module.Dependency.
-                     request = source;
-                     requested_from = Location location
-                   }
-                   in
-                   let m = get_module dep dep_map in
-                   match get_module_var m with
-                   | Some module_var ->
-                     begin
-                       match m.module_type, remote with
-                       | Module.CJS_esModule, "default"
-                       | Module.CJS, "default" ->
-                         begin
-                           match get_module_default_var m with
-                           | Some var ->
-                             var
-                           | None ->
-                             raise (PackError (ctx, CannotRenameModuleBinding (loc, name, dep)))
-                         end
-                       | _ ->
-                         module_var ^ "." ^ remote
-                     end
-                   | None ->
-                     raise (PackError (ctx, CannotRenameModuleBinding (loc, name, dep)))
+                   patch_imported_name
+                     ~dep_map
+                     ~from_request:source
+                     (loc, name)
+                     remote
                 )
             | _ -> ()
           in Visit.Break;

@@ -18486,9 +18486,7 @@ function unregister() {
     );
     
   }
-}
-Object.defineProperty(exports, "unregister", {get: function() {return unregister;}});
-
+};Object.defineProperty(exports, "unregister", {get: function() {return unregister;}});
 ;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}

@@ -74,15 +74,11 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 "y": function(module, exports, __fastpack_require__, __fastpack_import__) {
 exports.default = 1;
 
-let a = 1;
-Object.defineProperty(exports, "a", {get: function() {return a;}});
-
+let a = 1;;Object.defineProperty(exports, "a", {get: function() {return a;}});
 
 function updateA (newA) {
   a = newA;
-}
-Object.defineProperty(exports, "updateA", {get: function() {return updateA;}});
-
+};Object.defineProperty(exports, "updateA", {get: function() {return updateA;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
@@ -90,7 +86,7 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 "yz": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 const _1__z = __fastpack_require__(/* "./z" */ "z");Object.defineProperty(exports, "Z", {get: function() {return _1__z;}});
-const _2__y = __fastpack_require__(/* "./y" */ "y"); Object.defineProperty(exports, "a", {get: function() {return _2__y.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return _2__y.updateA;}});
+const _2__y = __fastpack_require__(/* "./y" */ "y");Object.defineProperty(exports, "a", {get: function() {return _2__y.a;}});Object.defineProperty(exports, "updateA", {get: function() {return _2__y.updateA;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
@@ -116,11 +112,9 @@ const ZModule = __fastpack_require__(/* "./z" */ "z");
 
 
 let z = 1, zz = 1;
-Object.defineProperty(exports, "z", {get: function() {return z;}}); Object.defineProperty(exports, "Z", {get: function() {return zz;}});
+Object.defineProperty(exports, "z", {get: function() {return z;}});Object.defineProperty(exports, "Z", {get: function() {return zz;}});
 
-let x = 1, y = 2;
-Object.defineProperty(exports, "x", {get: function() {return x;}}); Object.defineProperty(exports, "y", {get: function() {return y;}});
-
+let x = 1, y = 2;;Object.defineProperty(exports, "x", {get: function() {return x;}});Object.defineProperty(exports, "y", {get: function() {return y;}});
 
 // export default function () {
 //   x = 1;
@@ -133,11 +127,9 @@ exports.default = F;
 function updateX() {
   x++;
   console.log('updated X', x);
-}
-Object.defineProperty(exports, "updateX", {get: function() {return updateX;}});
+};Object.defineProperty(exports, "updateX", {get: function() {return updateX;}});
 
-
-const _1__y = __fastpack_require__(/* "./y" */ "y");Object.defineProperty(exports, "X", {get: function() {return _1__y.default;}}); Object.defineProperty(exports, "xA", {get: function() {return _1__y.a;}}); Object.defineProperty(exports, "updateA", {get: function() {return _1__y.updateA;}});
+const _1__y = __fastpack_require__(/* "./y" */ "y");Object.defineProperty(exports, "X", {get: function() {return _1__y.default;}});Object.defineProperty(exports, "xA", {get: function() {return _1__y.a;}});Object.defineProperty(exports, "updateA", {get: function() {return _1__y.updateA;}});
 Object.defineProperty(exports, "ZM", {get: function() {return ZModule.default;}});
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}

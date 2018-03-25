@@ -66,9 +66,7 @@ module.exports = (function(modules) {
 })
 ({
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
-let a = 1;
-Object.defineProperty(exports, "a", {get: function() {return a;}});
-
+let a = 1;;Object.defineProperty(exports, "a", {get: function() {return a;}});
 function f() { a = a + 1};
 Object.defineProperty(exports, "changeA", {get: function() {return f;}});
 
@@ -76,10 +74,8 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const _1__a = __fastpack_require__(/* "./a" */ "a");Object.defineProperty(exports, "a", {get: function() {return _1__a.a;}}); Object.defineProperty(exports, "changeA", {get: function() {return _1__a.changeA;}});
-let index = 1;
-Object.defineProperty(exports, "index", {get: function() {return index;}});
-
+const _1__a = __fastpack_require__(/* "./a" */ "a");Object.defineProperty(exports, "a", {get: function() {return _1__a.a;}});Object.defineProperty(exports, "changeA", {get: function() {return _1__a.changeA;}});
+let index = 1;;Object.defineProperty(exports, "index", {get: function() {return index;}});
 exports.default = function() {console.log('Hello, world!')};
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}

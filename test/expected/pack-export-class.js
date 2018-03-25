@@ -150,9 +150,7 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
 let ExportNamedClass = $__fpack__.defineClass(class ExportNamedClass {
     
-  }, [{"name": "prop", "value": "ExportNamedClass"}], [], []);
-Object.defineProperty(exports, "ExportNamedClass", {get: function() {return ExportNamedClass;}});
-
+  }, [{"name": "prop", "value": "ExportNamedClass"}], [], []);;Object.defineProperty(exports, "ExportNamedClass", {get: function() {return ExportNamedClass;}});
 ;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
