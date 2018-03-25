@@ -164,7 +164,12 @@ module Transform = struct
               | Some _ ->
                 [Loc.none, S.Expression {
                     expression = Loc.none, E.Call {
-                        callee = Loc.none, E.Super; arguments = [] 
+                        callee = Loc.none, E.Super;
+                        arguments = [
+                          E.Spread (Loc.none, {
+                              argument =  AstHelper.e_identifier "args"
+                            })
+                        ]
                       };
                     directive = None
                   }
@@ -179,7 +184,12 @@ module Transform = struct
                                                       "constructor");
                   value = (Loc.none, {
                       id = None;
-                      params = (Loc.none, { params = []; rest = None });
+                      params = (Loc.none, {
+                          params = [];
+                          rest = Some (Loc.none, {
+                              argument = (Loc.none, AstHelper.p_identifier "args")
+                            })
+                        });
                       body = F.BodyBlock (
                           Loc.none,
                           { body = maybe_super @ prop_stmts }

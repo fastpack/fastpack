@@ -216,7 +216,6 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
         let module_var, module_var_definition =
           ensure_module_var "" m
         in
-        assert (module_var_definition = "");
         if module_var_definition <> ""
         then raise (PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
         else module_var ^ "." ^ remote

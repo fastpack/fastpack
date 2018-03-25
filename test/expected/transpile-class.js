@@ -15,7 +15,7 @@ class CC {
   
 }/* no costructor */
 class C {
-  constructor() {
+  constructor( ...args) {
     Object.defineProperty(this, "state", {"configurable": true, "enumerable": true, "writable": true, "value": 1});
     
   }
@@ -70,14 +70,14 @@ let C4 = $__fpack__.defineClass(class C4 {
   }, [], [], [{"method": "method1", "decorators": [dec]}, {"method": "method2", "decorators": [m => m, dec2]}]);
 /* class expressions */
 (class  {
-  constructor() {
+  constructor( ...args) {
     Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
     
   }
   
 });
 let C5 = $__fpack__.defineClass(class  {
-    constructor() {
+    constructor( ...args) {
       Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
       
     }
@@ -109,3 +109,12 @@ let C6 = $__fpack__.defineClass(class C6 extends C5 {
     }
     
   }, [{"name": "static_prop", "value": void 0}], [cls, cls => cls], [{"method": "methodDecorated2", "decorators": [m => m]}, {"method": "methodDecorated3", "decorators": [mDec1, mDec2]}]);
+/* constructor & super with arguments */
+class MyComponent extends Component {
+  constructor( ...args) {
+    super(...args);
+    Object.defineProperty(this, "state", {"configurable": true, "enumerable": true, "writable": true, "value": {content: this.props.content}});
+    
+  }
+  
+}

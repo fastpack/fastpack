@@ -101,7 +101,7 @@ function $i__builtin$$B$$index__classDecorator2(cls) {
   
 }
 let $i__builtin$$B$$index__Test = $i__builtin$$B$$index__$__fpack__.defineClass(class Test {
-    constructor() {
+    constructor( ...args) {
       Object.defineProperty(this, "prop", {"configurable": true, "enumerable": true, "writable": true, "value": "instance property"});
       
     }
