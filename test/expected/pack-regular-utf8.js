@@ -1,6 +1,7 @@
 
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -48,36 +49,35 @@ global = window;
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
-let a1 = "Тест";
-Object.defineProperty(exports, "a1", {get: function() {return a1;}});
-
-let a2 = "Привет, мир";
-Object.defineProperty(exports, "a2", {get: function() {return a2;}});
-
-let a3 = "哈囉世界";
-Object.defineProperty(exports, "a3", {get: function() {return a3;}});
-
-let a4 = "💩";
-Object.defineProperty(exports, "a4", {get: function() {return a4;}});
-
+let a1 = "Тест";;Object.defineProperty(exports, "a1", {get: function() {return a1;}});
+let a2 = "Привет, мир";;Object.defineProperty(exports, "a2", {get: function() {return a2;}});
+let a3 = "哈囉世界";;Object.defineProperty(exports, "a3", {get: function() {return a3;}});
+let a4 = "💩";;Object.defineProperty(exports, "a4", {get: function() {return a4;}});
 exports.default = {a1: a1, a2: a2, a3: a3, a4: a4};
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "./a" */ "a");
-console.log($lib1.a1, $lib1.a2, $lib1.a3);
+const _1__a = __fastpack_require__(/* "./a" */ "a");
+console.log(_1__a.a1, _1__a.a2, _1__a.a3);
 exports.default = function() {
   console.log("Русский", "production",
               "релиз!");

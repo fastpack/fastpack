@@ -3,7 +3,7 @@ Working Directory: /.../test/error-parse
 Entry Point: index.js
 Mode: production
 Call Stack:
-	'./a' from file: index.js
+	'./a' from module: index.js
 Processing Module: a.js
 
 Parse Error

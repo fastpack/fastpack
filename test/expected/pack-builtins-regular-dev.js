@@ -1,6 +1,7 @@
 
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -48,12 +49,19 @@ global = window;
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = 'builtin$$B$$index');
 })
 ({
@@ -122,8 +130,8 @@ module.exports = {
 module.exports = {};
 },
 "builtin$$B$$esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
-exports.default = $lib1.delimiter;
+const _1_path = __fastpack_require__(/* "path" */ "builtin$$COLON$$__empty_module__");
+exports.default = _1_path.delimiter;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

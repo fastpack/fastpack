@@ -3,8 +3,8 @@ Working Directory: /.../test/error-cannot-leave-package-dir
 Entry Point: index.js
 Mode: production
 Call Stack:
-	'../LeavePackageDir' from file: a.js	
-'./a' from file: index.js
+	'../LeavePackageDir' from module: a.js	
+'./a' from module: index.js
 Processing Module: a.js
 
 /.../test/LeavePackageDir.js is out of the working directory

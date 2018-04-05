@@ -1,6 +1,7 @@
 
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -48,12 +49,19 @@ global = window;
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
@@ -61,8 +69,8 @@ global = window;
 module.exports = "./5d5d9eefa31e5e13a6610d9fa7a283bb.svg";
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg");
-document.body.innerHTML = '<img src="' + $lib1 + '"/>';
+const _1_file_loader_publicPath_logo_svg = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg");const _1_file_loader_publicPath_logo_svg__default = _1_file_loader_publicPath_logo_svg.__esModule ? _1_file_loader_publicPath_logo_svg.default : _1_file_loader_publicPath_logo_svg;
+document.body.innerHTML = '<img src="' + _1_file_loader_publicPath_logo_svg__default + '"/>';
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

@@ -1,41 +1,43 @@
 lib: [
   "_build/install/default/lib/FastpackTranspiler/META" {"META"}
   "_build/install/default/lib/FastpackTranspiler/opam" {"opam"}
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmt"
-  "_build/install/default/lib/FastpackTranspiler/Class.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Context.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Context.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Context.cmt"
-  "_build/install/default/lib/FastpackTranspiler/Context.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Error.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Error.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Error.cmt"
-  "_build/install/default/lib/FastpackTranspiler/Error.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmt"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__.cmti"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__.mli-gen"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ObjectSpread.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ObjectSpread.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ObjectSpread.cmt"
-  "_build/install/default/lib/FastpackTranspiler/ObjectSpread.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ReactJSX.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ReactJSX.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ReactJSX.cmt"
-  "_build/install/default/lib/FastpackTranspiler/ReactJSX.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__StripFlow.cmi"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__StripFlow.cmx"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__StripFlow.cmt"
-  "_build/install/default/lib/FastpackTranspiler/StripFlow.ml"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cma"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmxa"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.a"
-  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmxs"
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmi" {"FastpackTranspiler__Class.cmi"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmx" {"FastpackTranspiler__Class.cmx"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Class.cmt" {"FastpackTranspiler__Class.cmt"}
+  "_build/install/default/lib/FastpackTranspiler/Class.ml" {"Class.ml"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Context.cmi" {"FastpackTranspiler__Context.cmi"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Context.cmx" {"FastpackTranspiler__Context.cmx"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Context.cmt" {"FastpackTranspiler__Context.cmt"}
+  "_build/install/default/lib/FastpackTranspiler/Context.ml" {"Context.ml"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Error.cmi" {"FastpackTranspiler__Error.cmi"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Error.cmx" {"FastpackTranspiler__Error.cmx"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__Error.cmt" {"FastpackTranspiler__Error.cmt"}
+  "_build/install/default/lib/FastpackTranspiler/Error.ml" {"Error.ml"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmi" {"FastpackTranspiler.cmi"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmx" {"FastpackTranspiler.cmx"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmt" {"FastpackTranspiler.cmt"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.ml" {"FastpackTranspiler.ml"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__.cmi" {"FastpackTranspiler__.cmi"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__.cmx" {"FastpackTranspiler__.cmx"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__.cmt" {"FastpackTranspiler__.cmt"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__.ml-gen" {"FastpackTranspiler__.ml-gen"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ObjectSpread.cmi" {"FastpackTranspiler__ObjectSpread.cmi"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ObjectSpread.cmx" {"FastpackTranspiler__ObjectSpread.cmx"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ObjectSpread.cmt" {"FastpackTranspiler__ObjectSpread.cmt"}
+  "_build/install/default/lib/FastpackTranspiler/ObjectSpread.ml" {"ObjectSpread.ml"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ReactJSX.cmi" {"FastpackTranspiler__ReactJSX.cmi"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ReactJSX.cmx" {"FastpackTranspiler__ReactJSX.cmx"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__ReactJSX.cmt" {"FastpackTranspiler__ReactJSX.cmt"}
+  "_build/install/default/lib/FastpackTranspiler/ReactJSX.ml" {"ReactJSX.ml"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__StripFlow.cmi" {"FastpackTranspiler__StripFlow.cmi"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__StripFlow.cmx" {"FastpackTranspiler__StripFlow.cmx"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler__StripFlow.cmt" {"FastpackTranspiler__StripFlow.cmt"}
+  "_build/install/default/lib/FastpackTranspiler/StripFlow.ml" {"StripFlow.ml"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cma" {"FastpackTranspiler.cma"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmxa" {"FastpackTranspiler.cmxa"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.a" {"FastpackTranspiler.a"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.cmxs" {"FastpackTranspiler.cmxs"}
+  "_build/install/default/lib/FastpackTranspiler/FastpackTranspiler.dune" {"FastpackTranspiler.dune"}
 ]
 doc: [
   "_build/install/default/doc/FastpackTranspiler/README.md"

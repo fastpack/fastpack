@@ -30,16 +30,8 @@ class C1 {
   
 }
 class C2 {
-  constructor() {
-    Object.defineProperty(this, "p", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
-    
-  }
   
 }class C3 {
-  constructor() {
-    Object.defineProperty(this, "p", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
-    
-  }
   
 }/* Babel: strip-call-properties */
 var a;
@@ -232,17 +224,8 @@ class Foo44 {
   
 }
 class Foo9 {
-  constructor() {
-    Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
-    Object.defineProperty(this, "prop2", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
-    
-  }
   
 }let Foo10 = $__fpack__.defineClass(class Foo10 {
-    constructor() {
-      Object.defineProperty(this, "prop2", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
-      
-    }
     
   }, [{"name": "prop1", "value": void 0}], [], []);
 var x = 4;

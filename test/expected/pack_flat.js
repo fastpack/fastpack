@@ -106,9 +106,9 @@ function $e__b__b2() {
 
 const $e__b__default = {b1: $e__b__b1, b2: $e__b__b2, b3: $e__a__a1};
 
-try{$n__b.exports.default = $e__b__default;
-$n__b.exports.b1 = $e__b__b1;
+try{$n__b.exports.b1 = $e__b__b1;
 $n__b.exports.b2 = $e__b__b2;
+$n__b.exports.default = $e__b__default;
 $n__b.exports.__esModule = $n__b.exports.__esModule || true;}catch(_){}
 
 /* c */

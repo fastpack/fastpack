@@ -17,7 +17,6 @@ let empty =
   |> StringSet.add "os"
   |> StringSet.add "module"
   |> StringSet.add "path"
-  |> StringSet.add "util"
   |> StringSet.add "fs"
   |> StringSet.add "tty"
   |> StringSet.add "net"
@@ -299,7 +298,7 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
 
       (* TODO: this is sent by webpack loaders, have no idea what to do with it*)
       | "-" :: rest ->
-        resolve_parts ~preprocess rest
+        resolve_parts ~preprocess:false rest
 
       | "" :: "" :: rest
       | "" :: rest ->

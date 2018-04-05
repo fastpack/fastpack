@@ -1,6 +1,8 @@
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
 module FS = FastpackUtil.FS
+module Scope = FastpackUtil.Scope
+
 
 let debug = Logs.debug
 
@@ -12,8 +14,9 @@ module ModuleEntry = struct
     files : (string * string) list;
     content : string;
     build_dependencies : string M.t;
-    resolved_dependencies : (Dependency.t * Module.location) list;
-    exports: (string * string option * FastpackUtil.Scope.binding) list;
+    resolved_dependencies : (Module.Dependency.t * Module.location) list;
+    scope: Scope.t;
+    exports: Scope.exports;
   }
 end
 
@@ -395,6 +398,7 @@ let create (init : init) =
         content;
         build_dependencies;
         resolved_dependencies;
+        scope;
         exports
       } ->
       match%lwt build_dependencies_changed  build_dependencies with
@@ -413,7 +417,7 @@ let create (init : init) =
           module_type;
           files;
           workspace = Workspace.of_string content;
-          scope = FastpackUtil.Scope.empty;
+          scope;
           exports;
         }
   in
@@ -437,6 +441,7 @@ let create (init : init) =
         resolved_dependencies = m.resolved_dependencies;
         module_type = m.module_type;
         files = m.files;
+        scope = m.scope;
         exports = m.exports;
         content;
       }

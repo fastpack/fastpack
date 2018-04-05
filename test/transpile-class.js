@@ -92,3 +92,10 @@ class C6 extends C5 {
   @mDec2
   methodDecorated3() {}
 }
+
+/* constructor & super with arguments */
+class MyComponent extends Component {
+  state = {
+    content: this.props.content
+  }
+}

@@ -204,18 +204,19 @@ module Context = struct
     entry_location : Module.location option;
     current_location : Module.location option;
     package : Package.t;
-    stack : Dependency.t list;
+    stack : Module.Dependency.t list;
     mode : Mode.t;
     target : Target.t;
     resolver : NodeResolver.t;
     preprocessor : Preprocessor.t;
+    export_finder : ExportFinder.t;
     graph : DependencyGraph.t;
   }
 
   let to_string { entry_location; package_dir; stack; mode; current_location; _ } =
     let stack =
       stack
-      |> List.map (Dependency.to_string ~dir:(Some package_dir))
+      |> List.map (Module.Dependency.to_string ~dir:(Some package_dir))
       |> String.concat "\t\n"
     in
     let location_of_opt location =
@@ -262,11 +263,16 @@ let relative_name {Context. package_dir; _} filename =
         (length filename - length package_dir - 1)
     )
 
-let resolve (ctx : Context.t) package (request : Dependency.t) =
+let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
   let base_dir =
-    if ctx.package_dir = request.requested_from_filename
-    then ctx.package_dir
-    else FilePath.dirname request.requested_from_filename
+    match request.requested_from with
+    | Module.Dependency.Location (Module.File { filename = Some filename; _ }) ->
+      FilePath.dirname filename
+    | Module.Dependency.Location (Module.File { filename = None; _ })
+    | Module.Dependency.Location (Module.Runtime)
+    | Module.Dependency.Location (Module.EmptyModule)
+    | Module.Dependency.EntryPoint ->
+      ctx.package_dir
   in
   Lwt.catch
     (fun () ->
@@ -292,7 +298,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       state = Initial;
       workspace = Workspace.of_string source;
       scope = FastpackUtil.Scope.empty;
-      exports = [];
+      exports = FastpackUtil.Scope.empty_exports;
     }
   in
 
@@ -380,7 +386,8 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
 
       let () = cache.modify_content m source in
       let%lwt () =
-        cache.add_build_dependencies m (self_dependency @ build_dependencies) in
+        cache.add_build_dependencies m (self_dependency @ build_dependencies)
+      in
       Lwt.return m
 
 
@@ -398,15 +405,6 @@ let emit_module_files (ctx : Context.t) (m : Module.t) =
              )
     )
     m.files
-
-
-
-(* TODO: remove this as well as its usage in packers *)
-let is_ignored_request _request = false
-  (* List.exists *)
-  (*   (fun e -> String.suffix ~suf:("." ^ e) request) *)
-  (*   ["less"; "sass"; "woff"; "svg"; "png"; "jpg"; "jpeg"; *)
-  (*    "gif"; "ttf"] *)
 
 let is_json (location : Module.location) =
   match location with

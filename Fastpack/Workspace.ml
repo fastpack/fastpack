@@ -88,7 +88,7 @@ let write out w ctx =
                   match (patch.offset_start < last.offset_end,
                          patch.offset_end <= last.offset_end) with
                   | true, true -> (Some last, patches)
-                  | true, false -> Error.ie "Unexpected patch combination"
+                  | true, false -> FastpackUtil.Error.ie "Unexpected patch combination"
                   | false, _ -> (Some patch, patch :: patches)
               end
           )

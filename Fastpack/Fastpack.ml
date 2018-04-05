@@ -48,15 +48,16 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir
     mode;
     target;
     resolver;
+    export_finder = ExportFinder.make ();
     preprocessor;
     graph = DependencyGraph.empty ();
   }
   in
   let%lwt entry_location, _ =
     resolve ctx entry_package {
-      Dependency.
+      Module.Dependency.
       request = entry_filename;
-      requested_from_filename = package_dir;
+      requested_from = EntryPoint;
     }
   in
   let ctx = {
@@ -160,21 +161,22 @@ let prepare_and_pack options start_time =
       target = options.target;
       resolver;
       preprocessor;
+      export_finder = ExportFinder.make ();
       graph = DependencyGraph.empty ()
     }
     in
     let%lwt entry_location, _ =
       resolve ctx entry_package {
-        Dependency.
+        Module.Dependency.
         request = entry_filename;
-        requested_from_filename = package_dir;
+        requested_from = EntryPoint;
       }
     in
     let%lwt current_location, _ =
       resolve ctx package {
-        Dependency.
+        Module.Dependency.
         request = current_filename;
-        requested_from_filename = package_dir;
+        requested_from = EntryPoint;
       }
     in
     Lwt.return {

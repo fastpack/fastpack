@@ -1,6 +1,7 @@
 
 // This function is a modified version of the one created by the Webpack project
 global = window;
+process = { env: {} };
 (function(modules) {
   // The module cache
   var installedModules = {};
@@ -48,12 +49,19 @@ global = window;
     });
   }
 
-  // expose the modules object
   __fastpack_require__.m = modules;
-
-  // expose the module cache
   __fastpack_require__.c = installedModules;
-
+  __fastpack_require__.omitDefault = function(moduleVar) {
+    var keys = Object.keys(moduleVar);
+    var ret = {};
+    for(var i = 0, l = keys.length; i < l; i++) {
+      var key = keys[i];
+      if (key !== 'default') {
+        ret[key] = moduleVar[key];
+      }
+    }
+    return ret;
+  }
   return __fastpack_require__(__fastpack_require__.s = 'index');
 })
 ({
@@ -61,11 +69,11 @@ global = window;
 module.exports = "Hello, world!\n\nLorem Ipsum is simply dummy text of the printing and typesetting industry.\nLorem Ipsum has been the industry's standard dummy text ever since the 1500s,\nwhen an unknown printer took a galley of type and scrambled it to make a type\nspecimen book. It has survived not only five centuries, but also the leap into\nelectronic typesetting, remaining essentially unchanged. It was popularised in\nthe 1960s with the release of Letraset sheets containing Lorem Ipsum passages,\nand more recently with desktop publishing software like Aldus PageMaker\nincluding versions of Lorem Ipsum.\n"
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $lib1 = __fastpack_require__(/* "raw-loader!./test.txt" */ "NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt");
+const _1_raw_loader_test_txt = __fastpack_require__(/* "raw-loader!./test.txt" */ "NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt");const _1_raw_loader_test_txt__default = _1_raw_loader_test_txt.__esModule ? _1_raw_loader_test_txt.default : _1_raw_loader_test_txt;
 
 document.body.innerHTML = `
 <h1>test.txt</h1>
-<pre>${$lib1}</pre>
+<pre>${_1_raw_loader_test_txt__default}</pre>
 `;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}

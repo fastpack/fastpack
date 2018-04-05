@@ -4,10 +4,10 @@ module Scope = FastpackUtil.Scope
 type reason =
   | CannotReadModule of string
   | CannotLeavePackageDir of string
-  | CannotResolveModule of (string * Dependency.t)
+  | CannotResolveModule of (string * Module.Dependency.t)
   | CannotParseFile of string * ((Loc.t * FlowParser.Parse_error.t) list)
   | NotImplemented of Loc.t option * string
-  | CannotRenameModuleBinding of Loc.t * string * Dependency.t
+  | CannotRenameModuleBinding of Loc.t * string * Module.Dependency.t
   | DependencyCycle of string list
   | CannotFindExportedName of string * string
   | ScopeError of Scope.reason
@@ -32,7 +32,7 @@ let to_string package_dir error =
       filename
 
   | CannotResolveModule (path, dep) ->
-    let dep_str = Dependency.to_string ~dir:(Some package_dir) dep in
+    let dep_str = Module.Dependency.to_string ~dir:(Some package_dir) dep in
     Printf.sprintf
       "Cannot resolve module:\n\t%s\nWhile processing dependency request:\n\t%s\n"
       path
@@ -66,7 +66,7 @@ the code.
 "
     (loc_to_string loc)
     id
-    (Dependency.to_string ~dir:(Some package_dir) dep)
+    (Module.Dependency.to_string ~dir:(Some package_dir) dep)
 
   | DependencyCycle filenames ->
     Printf.sprintf "Dependency cycle detected:\n\t%s\n"
