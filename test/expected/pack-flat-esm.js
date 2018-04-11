@@ -22,7 +22,10 @@ $n__index.exports.changeA = $e__a__changeA;
 $n__index.exports.default = $e__index__default;
 $n__index.exports.index = $e__index__index;
 $n__index.exports.__esModule = $n__index.exports.__esModule || true;}catch(_){}
-export {$e__a__a as a};
-export {$e__a__changeA as changeA};
-export default $e__index__default;
-export {$e__index__index as index};
+
+/* fp$main */
+
+let $n__fp$main = { id: "fp$main", exports: {}};
+
+
+try{$n__fp$main.exports.__esModule = $n__fp$main.exports.__esModule || true;}catch(_){}

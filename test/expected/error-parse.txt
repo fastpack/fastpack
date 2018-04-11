@@ -1,9 +1,10 @@
 
 Project Directory: /.../test/error-parse
-Entry Point: index.js
+Entry Point: fp$main
 Mode: production
 Call Stack:
-	'./a' from module: index.js
+	'./a' from module: index.js	
+'./index.js' from module: fp$main
 Processing Module: a.js
 
 Parse Error

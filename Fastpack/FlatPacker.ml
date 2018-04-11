@@ -130,7 +130,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         let dep = {
           Module.Dependency.
           request;
-          requested_from = Location location
+          requested_from = location
         }
         in
         let () = dynamic_deps := (ctx, dep) :: !dynamic_deps in
@@ -196,7 +196,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             let dep = {
               Module.Dependency.
               request = source;
-              requested_from = Location location
+              requested_from = location
             }
             in
             let m = MDM.get dep dep_map in
@@ -321,7 +321,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             let dep = {
               Module.Dependency.
               request;
-              requested_from = Location location
+              requested_from = location
             }
             in
             begin

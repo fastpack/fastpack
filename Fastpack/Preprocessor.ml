@@ -217,11 +217,13 @@ let make configs base_dir output_dir =
 
   let process location source =
     match location with
-    | Module.EmptyModule | Module.Runtime ->
+    | Module.Main _
+    | Module.EmptyModule
+    | Module.Runtime ->
       begin
         match source with
         | None ->
-          Error.ie "Unexpeceted absence of source for builtin / empty module"
+          Error.ie "Unexpeceted absence of source for main / builtin / empty module"
         | Some source ->
           Lwt.return (source, [], [])
       end

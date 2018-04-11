@@ -36,7 +36,7 @@ let make () =
          let dep = {
            Module.Dependency.
            request = batch_request;
-           requested_from = Location m.location
+           requested_from = m.location
          }
          in
          match Module.DependencyMap.get dep dep_map with

@@ -226,7 +226,7 @@ let make
         then
           Lwt.return (Module.EmptyModule, [])
         else
-          if path = "__fastpack_runtime__"
+          if path = "fp$runtime"
           then
             Lwt.return (Module.Runtime, [])
           else
@@ -272,6 +272,7 @@ let make
            | _ ->
              let%lwt resolved = resolve_file package p basedir in
              match resolved with
+             | Module.Main _, _
              | Module.EmptyModule, _
              | Module.Runtime, _
              | Module.File { filename = None; _ }, _ ->
@@ -335,6 +336,8 @@ let make
             Lwt.return (resolved_file, deps, rest)
         in
         match resolved_file with
+        | Module.Main _ ->
+          Lwt.fail (Error "fp$main should never be required")
         | Module.EmptyModule ->
           Lwt.return (Module.EmptyModule, [])
         | Module.Runtime ->

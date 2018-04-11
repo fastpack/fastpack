@@ -33,14 +33,12 @@ type options = {
   watch : bool;
 }
 
+
 (* TODO: this function may not be needed when tests are ported to Jest *)
-let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~project_dir channel =
+let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_point ~project_dir channel =
   let resolver = NodeResolver.make ~cache ~preprocessor in
-  let%lwt entry_package =
-    resolver.find_package project_dir entry_filename
-  in
   let ctx = { Context.
-    entry_location = None;
+    entry_location = Some (Module.Main [entry_point]);
     package = Package.empty;
     project_dir;
     output_dir = "";
@@ -54,17 +52,9 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~project_dir
     graph = DependencyGraph.empty ();
   }
   in
-  let%lwt entry_location, _ =
-    resolve ctx entry_package {
-      Module.Dependency.
-      request = entry_filename;
-      requested_from = EntryPoint;
-    }
-  in
   let ctx = {
     ctx with
-    entry_location = Some entry_location;
-    current_location = Some entry_location
+    current_location = ctx.entry_location
   } in
   pack_f cache ctx channel
 
@@ -146,9 +136,6 @@ let prepare_and_pack options start_time =
   in
   let get_context current_filename =
     let resolver = NodeResolver.make ~cache ~preprocessor in
-    let%lwt entry_package =
-      resolver.find_package project_dir entry_filename
-    in
     let%lwt package = resolver.find_package project_dir current_filename in
     let ctx = {
       Context.
@@ -166,23 +153,16 @@ let prepare_and_pack options start_time =
       graph = DependencyGraph.empty ()
     }
     in
-    let%lwt entry_location, _ =
-      resolve ctx entry_package {
-        Module.Dependency.
-        request = entry_filename;
-        requested_from = EntryPoint;
-      }
-    in
     let%lwt current_location, _ =
       resolve ctx package {
         Module.Dependency.
         request = current_filename;
-        requested_from = EntryPoint;
+        requested_from = Module.Main [];
       }
     in
     Lwt.return {
       ctx with
-      entry_location = Some entry_location;
+      entry_location = Some (Module.Main []);
       current_location = Some current_location;
     }
   in

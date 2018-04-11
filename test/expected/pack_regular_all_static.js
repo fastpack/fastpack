@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
 })
 ({
 "b": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -104,6 +104,13 @@ b
 b in promise
 b
 */
+
+},
+"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+__fastpack_require__(/* "./index.js" */ "index");
+
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 

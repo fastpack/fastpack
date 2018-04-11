@@ -62,7 +62,7 @@ module.exports = (function(modules) {
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
 })
 ({
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -77,6 +77,13 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 const _1__a = __fastpack_require__(/* "./a" */ "a");Object.defineProperty(exports, "a", {get: function() {return _1__a.a;}});Object.defineProperty(exports, "changeA", {get: function() {return _1__a.changeA;}});
 let index = 1;;Object.defineProperty(exports, "index", {get: function() {return index;}});
 exports.default = function() {console.log('Hello, world!')};
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
+},
+"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+__fastpack_require__(/* "./index.js" */ "index");
+
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

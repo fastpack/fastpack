@@ -266,12 +266,12 @@ let relative_name {Context. project_dir; _} filename =
 let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
   let base_dir =
     match request.requested_from with
-    | Module.Dependency.Location (Module.File { filename = Some filename; _ }) ->
+    | Module.File { filename = Some filename; _ } ->
       FilePath.dirname filename
-    | Module.Dependency.Location (Module.File { filename = None; _ })
-    | Module.Dependency.Location (Module.Runtime)
-    | Module.Dependency.Location (Module.EmptyModule)
-    | Module.Dependency.EntryPoint ->
+    | Module.File { filename = None; _ }
+    | Module.Runtime
+    | Module.EmptyModule
+    | Module.Main _ ->
       ctx.project_dir
   in
   Lwt.catch
@@ -287,10 +287,9 @@ let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
 
 
 let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location) =
-  let make_module id location source =
-    {
-      Module.
-      id;
+  let make_module location source =
+    Module.{
+      id = make_id ctx.project_dir location;
       location;
       resolved_dependencies = [];
       module_type = Module.CJS;
@@ -302,24 +301,20 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
     }
   in
 
-  let empty_module = make_module
-      (Module.make_id ctx.project_dir Module.EmptyModule)
-      Module.EmptyModule
-      "module.exports = {};"
-  in
-
-  let runtime_module = make_module
-      (Module.make_id ctx.project_dir Module.Runtime)
-      Module.Runtime
-      FastpackTranspiler.runtime
-  in
-
   match location with
+  | Module.Main entry_points ->
+    let source =
+      entry_points
+      |> List.map (fun req -> Printf.sprintf "import '%s';\n" req)
+      |> String.concat ""
+    in
+    Lwt.return (make_module location source)
+
   | Module.EmptyModule ->
-    Lwt.return empty_module
+    Lwt.return (make_module location "module.exports = {};")
 
   | Module.Runtime ->
-    Lwt.return runtime_module
+    Lwt.return (make_module location FastpackTranspiler.runtime)
 
   | Module.File { filename; _ } ->
     match%lwt cache.get_module location with
@@ -375,9 +370,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
           files
       in
 
-      let m =
-        make_module (Module.make_id ctx.project_dir location) location source
-      in
+      let m = make_module location source in
       let m = {
         m with
         state = Module.Preprocessed;

@@ -156,7 +156,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       let dep = {
         Module.Dependency.
         request;
-        requested_from = Location location;
+        requested_from = location;
       } in
       begin
         dependencies := dep :: !dependencies;
@@ -199,7 +199,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       let dep = {
         Module.Dependency.
         request = from_request;
-        requested_from = Location location
+        requested_from = location
       }
       in
       let m = get_module dep dep_map in
@@ -648,6 +648,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                  match resolved with
                  | Module.File _ ->
                    cache.add_build_dependencies m build_dependencies
+                 | Module.Main _
                  | Module.EmptyModule
                  | Module.Runtime ->
                    Lwt.return_unit

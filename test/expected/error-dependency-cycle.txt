@@ -1,9 +1,9 @@
 
 Project Directory: /.../test/error-dependency-cycle
-Entry Point: index.js
+Entry Point: fp$main
 Mode: production
 Call Stack: (empty)
-Processing Module: index.js
+Processing Module: fp$main
 
 Dependency cycle detected:
 	a.js
@@ -11,3 +11,4 @@ Dependency cycle detected:
 	b.js
 	a.js
 	index.js
+	fp$main

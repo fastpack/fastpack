@@ -450,27 +450,34 @@ let create (init : init) =
   in
 
   let add_build_dependencies (m : Module.t) dependencies =
-    let location_str = Module.location_to_string m.location in
-    let add_build_dependencies existing_dependencies =
-      Lwt_list.fold_left_s
-        (fun acc filename ->
-           let%lwt {digest; _ }, _ = get_file filename in
-           add_build_dependency filename location_str;
-           Lwt.return (M.add filename digest acc)
-        )
-        existing_dependencies
-        dependencies
-    in
-    match M.get location_str !modules with
-    | Some module_entry ->
-        let%lwt build_dependencies =
-          add_build_dependencies module_entry.build_dependencies
-        in
-        modules :=
-          M.add location_str { module_entry with build_dependencies} !modules;
-        Lwt.return_unit
-    | None ->
-      Error.ie ("Adding build_dependencies to a non-module: " ^ location_str)
+    match m.location with
+    | Module.Main _ ->
+      Lwt.return_unit
+    | Module.EmptyModule | Module.Runtime ->
+      Error.ie "Adding build_dependencies to empty / runtime. Should not happen"
+    | Module.File _ ->
+      let location_str = Module.location_to_string m.location in
+      let add_build_dependencies existing_dependencies =
+        Lwt_list.fold_left_s
+          (fun acc filename ->
+             let%lwt {digest; _ }, _ = get_file filename in
+             add_build_dependency filename location_str;
+             Lwt.return (M.add filename digest acc)
+          )
+          existing_dependencies
+          dependencies
+      in
+      match M.get location_str !modules with
+      | Some module_entry ->
+          let%lwt build_dependencies =
+            add_build_dependencies module_entry.build_dependencies
+          in
+          modules :=
+            M.add location_str { module_entry with build_dependencies} !modules;
+          Lwt.return_unit
+      | None ->
+        List.iter print_endline dependencies;
+        Error.ie ("Adding build_dependencies to a non-module: " ^ location_str)
   in
 
   let get_potentially_invalid filename =
@@ -485,7 +492,6 @@ let create (init : init) =
   let remove filename =
     trusted := StringSet.remove filename !trusted;
   in
-
 
   let dump () =
     match init with

@@ -17,11 +17,13 @@ let transpile _ =
     FastpackTranspiler.ObjectSpread.transpile;
   ]
 
-let pack ~mode ~target ~preprocessor pack_f entry_filename _ =
+let pack ~mode ~target ~preprocessor pack_f entry_point _ =
   let pack' () =
     let bytes = Lwt_bytes.create 50000000 in
     let ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
     let%lwt cache = Fastpack.Cache.(create Memory) in
+    let project_dir = Filename.dirname entry_point in
+    let entry_point = "./" ^ (FilePath.basename entry_point) in
     let%lwt _ =
       Fastpack.pack
         ~pack_f
@@ -29,8 +31,8 @@ let pack ~mode ~target ~preprocessor pack_f entry_filename _ =
         ~mode
         ~target
         ~preprocessor
-        ~entry_filename
-        ~project_dir:(Filename.dirname entry_filename)
+        ~entry_point
+        ~project_dir
         ch
     in
   ch

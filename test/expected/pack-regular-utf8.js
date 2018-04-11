@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
 })
 ({
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -82,6 +82,13 @@ exports.default = function() {
   console.log("Русский", "production",
               "релиз!");
 }
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
+},
+"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+__fastpack_require__(/* "./index.js" */ "index");
+
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
