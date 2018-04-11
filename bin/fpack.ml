@@ -8,6 +8,7 @@ let () =
         input
         output
         mode
+        node_modules_paths
         target
         cache
         preprocess
@@ -16,6 +17,7 @@ let () =
         watch
         debug
       =
+      List.iter print_endline node_modules_paths;
       if debug then begin
         Logs.set_level (Some Logs.Debug);
         Logs.set_reporter (Logs_fmt.reporter ());
@@ -26,6 +28,7 @@ let () =
             input;
             output;
             mode;
+            node_modules_paths;
             target;
             cache;
             preprocess = (List.map snd preprocess);
@@ -66,6 +69,15 @@ let () =
       let doc = "Build bundle for development" in
       let development = Development, Arg.info ["development"] ~doc in
       Arg.(value & vflag Production [development])
+    in
+
+    let node_modules_path_t =
+      let doc =
+        "Paths to 'node_modules' directory. Should be inside the project directory."
+        ^ ". Defaults to 'node_modules'"
+      in
+      let docv = "PATH" in
+      Arg.(value & opt_all string ["node_modules"] & info ["node-modules"] ~docv ~doc)
     in
 
     let target_t =
@@ -158,6 +170,7 @@ let () =
         $ input_t
         $ output_t
         $ mode_t
+        $ node_modules_path_t
         $ target_t
         $ cache_t
         $ preprocess_t

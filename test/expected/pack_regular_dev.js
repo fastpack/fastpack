@@ -129,6 +129,9 @@ console.log("development");
 if (true) {} else {}
 if (false) {} else {console.log("dev!")}
 
+// bug
+Image.propTypes = call());
+
 },
 
 });

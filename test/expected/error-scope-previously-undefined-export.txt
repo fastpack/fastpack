@@ -1,5 +1,5 @@
 
-Working Directory: /.../test/error-scope-previously-undefined-export
+Project Directory: /.../test/error-scope-previously-undefined-export
 Entry Point: index.js
 Mode: production
 Call Stack: (empty)

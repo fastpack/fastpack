@@ -29,7 +29,9 @@ let empty =
 let is_empty module_request =
   StringSet.mem module_request empty
 
-let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
+let make
+    ~(cache : Cache.t)
+    ~(preprocessor : Preprocessor.t) =
 
   (** Try to resolve an absolute path *)
   let resolved_path = ref M.empty in
@@ -88,9 +90,22 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
     | None -> []
   in
 
-  let rec resolve_package package path basedir =
+  (* let rec _resolve_package package_name path basedir = *)
+  (*   let node_modules_paths = ["node_modules"] in *)
+  (*   let node_modules_abs_paths = *)
+  (*     List.map (fun nm_path -> *)
+  (*         match String.get nm_path 0 with *)
+  (*         | '/' -> [nm_path] *)
+  (*         | _ -> *)
+
+  (*       ) *)
+  (*   in *)
+  (* in *)
+
+  let rec resolve_package package_name path basedir =
+    (* TODO: check for the project_dir *)
     let node_modules_path = FilePath.concat basedir "node_modules" in
-    let package_path = FilePath.concat node_modules_path package in
+    let package_path = FilePath.concat node_modules_path package_name in
     if%lwt cache.file_exists node_modules_path then
       if%lwt cache.file_exists package_path then
         let package_json_path = FilePath.concat package_path "package.json" in
@@ -129,12 +144,12 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
         let next_basedir = FilePath.dirname basedir in
         if next_basedir == basedir
         then Lwt.return_none
-        else resolve_package package path next_basedir
+        else resolve_package package_name path next_basedir
     else
       let next_basedir = FilePath.dirname basedir in
       if next_basedir == basedir
       then Lwt.return_none
-      else resolve_package package path next_basedir
+      else resolve_package package_name path next_basedir
   in
 
   let resolve_file (package : Package.t) path basedir =
@@ -297,9 +312,7 @@ let make (cache : Cache.t) (preprocessor : Preprocessor.t) =
         Lwt.return resolved
 
       (* TODO: this is sent by webpack loaders, have no idea what to do with it*)
-      | "-" :: rest ->
-        resolve_parts ~preprocess:false rest
-
+      | "-" :: rest 
       | "" :: "" :: rest
       | "" :: rest ->
         resolve_parts ~preprocess:false rest

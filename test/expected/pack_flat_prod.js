@@ -72,5 +72,8 @@ console.log("production");
 if (true) {} else {console.log("prod!")}
 if (false) {} else {}
 
+// bug
+Image.propTypes = {});
+
 try{$n__index.exports.__esModule = $n__index.exports.__esModule || false;}catch(_){}
 })()

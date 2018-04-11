@@ -72,5 +72,8 @@ console.log("development");
 if (true) {} else {}
 if (false) {} else {console.log("dev!")}
 
+// bug
+Image.propTypes = call());
+
 try{$n__index.exports.__esModule = $n__index.exports.__esModule || false;}catch(_){}
 })()

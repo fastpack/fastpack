@@ -24,6 +24,7 @@ type options = {
   input : string;
   output : string;
   mode : Mode.t;
+  node_modules_paths : string list;
   target : Target.t;
   cache : Cache.strategy;
   preprocess : Preprocessor.config list;
@@ -33,15 +34,15 @@ type options = {
 }
 
 (* TODO: this function may not be needed when tests are ported to Jest *)
-let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~package_dir channel =
-  let resolver = NodeResolver.make cache preprocessor in
+let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~project_dir channel =
+  let resolver = NodeResolver.make ~cache ~preprocessor in
   let%lwt entry_package =
-    resolver.find_package package_dir entry_filename
+    resolver.find_package project_dir entry_filename
   in
   let ctx = { Context.
     entry_location = None;
     package = Package.empty;
-    package_dir;
+    project_dir;
     output_dir = "";
     stack = [];
     current_location = None;
@@ -84,7 +85,7 @@ let read_package_json_options _ =
 
 let prepare_and_pack options start_time =
   let%lwt current_dir = Lwt_unix.getcwd () in
-  let%lwt package_dir =
+  let%lwt project_dir =
     match%lwt find_package_root current_dir with
     | Some dir -> Lwt.return dir
     | None -> Lwt.return current_dir
@@ -96,7 +97,7 @@ let prepare_and_pack options start_time =
   let%lwt preprocessor =
     Preprocessor.make
       options.preprocess
-      package_dir
+      project_dir
       output_dir
   in
   let%lwt cache, cache_report, pack_f =
@@ -111,7 +112,7 @@ let prepare_and_pack options start_time =
         | Cache.Use ->
           let short_filename =
             entry_filename
-            |> FS.relative_path package_dir
+            |> FS.relative_path project_dir
             |> String.replace ~sub:"/" ~by:"__"
             |> String.replace ~sub:"." ~by:"___"
           in
@@ -119,18 +120,18 @@ let prepare_and_pack options start_time =
             String.concat "-" [
               short_filename;
               Target.to_string options.target;
-              package_dir |> Digest.string |> Digest.to_hex;
+              project_dir |> Digest.string |> Digest.to_hex;
               Version.github_commit
             ]
           in
-          let node_modules = FilePath.concat package_dir "node_modules" in
+          let node_modules = FilePath.concat project_dir "node_modules" in
           let%lwt dir =
             match%lwt FS.try_dir node_modules with
             | Some dir ->
               FilePath.concat (FilePath.concat dir ".cache") "fpack"
               |> Lwt.return
             | None ->
-              FilePath.concat (FilePath.concat package_dir ".cache") "fpack"
+              FilePath.concat (FilePath.concat project_dir ".cache") "fpack"
               |> Lwt.return
           in
           let%lwt () = FS.makedirs dir in
@@ -144,16 +145,16 @@ let prepare_and_pack options start_time =
       Lwt.return (cache, cache_report, RegularPacker.pack)
   in
   let get_context current_filename =
-    let resolver = NodeResolver.make cache preprocessor in
+    let resolver = NodeResolver.make ~cache ~preprocessor in
     let%lwt entry_package =
-      resolver.find_package package_dir entry_filename
+      resolver.find_package project_dir entry_filename
     in
-    let%lwt package = resolver.find_package package_dir current_filename in
+    let%lwt package = resolver.find_package project_dir current_filename in
     let ctx = {
       Context.
       entry_location = None;
       current_location = None;
-      package_dir;
+      project_dir;
       output_dir;
       package;
       stack = [];
@@ -270,7 +271,7 @@ let prepare_and_pack options start_time =
              ~cache
              ~graph:ctx.graph
              ~modules
-             ~package_dir
+             ~project_dir
              ~entry_filename
              get_context
          | _ ->

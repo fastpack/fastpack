@@ -1,5 +1,5 @@
 
-Working Directory: /.../test/pack-target
+Project Directory: /.../test/pack-target
 Entry Point: index.js
 Mode: production
 Call Stack: (empty)

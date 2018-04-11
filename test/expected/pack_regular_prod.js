@@ -129,6 +129,9 @@ console.log("production");
 if (true) {} else {console.log("prod!")}
 if (false) {} else {}
 
+// bug
+Image.propTypes = {});
+
 },
 
 });

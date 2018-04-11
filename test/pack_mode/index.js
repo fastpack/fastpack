@@ -87,3 +87,6 @@ console.log(process.env.NODE_ENV);
 // bug
 if (true) {} else if (process.env.NODE_ENV == "production") {console.log("prod!")}
 if (false) {} else if (process.env.NODE_ENV == "development") {console.log("dev!")}
+
+// bug
+Image.propTypes = process.env.NODE_ENV !== "production" ? call() : ({});

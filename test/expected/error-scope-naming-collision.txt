@@ -1,5 +1,5 @@
 
-Working Directory: /.../test/error-scope-naming-collision
+Project Directory: /.../test/error-scope-naming-collision
 Entry Point: index.js
 Mode: production
 Call Stack: (empty)

@@ -134,6 +134,12 @@ module Parens = struct
       | Some (_, stmt), Some (_, expr) ->
         stmt, Some expr
     in
+    (* hack! *)
+    let has_comments =
+      match parent_expr with
+      | Some (E.Conditional _) -> false
+      | _ -> has_comments
+    in
     has_comments ||
       match parent_stmt, parent_expr, node with
       | S.Expression _, None, E.Identifier _

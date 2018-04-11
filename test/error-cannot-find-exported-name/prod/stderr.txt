@@ -1,5 +1,5 @@
 fpack: 
-       Working Directory:
+       Project Directory:
        /.../test/error-cannot-find-exported-name
        Entry Point: index.js
        Mode: production

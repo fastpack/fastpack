@@ -1,5 +1,5 @@
 
-Working Directory: /.../test/error-cannot-resolve-modules
+Project Directory: /.../test/error-cannot-resolve-modules
 Entry Point: index.js
 Mode: production
 Call Stack: (empty)

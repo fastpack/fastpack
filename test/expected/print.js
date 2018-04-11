@@ -196,6 +196,11 @@ function e15() {
   
 }
 )(1);
+/* Conditional */
+Image.propTypes = process.env.NODE_ENV !== "production" ? Object.assign({}, _ViewPropTypes2.default, {defaultSource: ImageSourcePropType, draggable: _propTypes.bool, onError: _propTypes.func, onLayout: _propTypes.func, onLoad: _propTypes.func, onLoadEnd: _propTypes.func, onLoadStart: _propTypes.func, resizeMode: (0, _propTypes.oneOf)(Object.keys(_ImageResizeMode2.default)), source: ImageSourcePropType, style: (0, _StyleSheetPropType2.default)(_ImageStylePropTypes2.default), // compatibility with React Native
+/* eslint-disable react/sort-prop-types */
+blurRadius: _propTypes.number, capInsets: (0, _propTypes.shape)({top: _propTypes.number, left: _propTypes.number, bottom: _propTypes.number, right: _propTypes.number}), resizeMethod: (0, _propTypes.oneOf)(['auto', 'resize', 'scale'])}) : /* eslint-enable react/sort-prop-types */
+{};
 /* Export */
 export class CLS {
   

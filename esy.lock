@@ -748,6 +748,6 @@
   peerDependencies:
     ocaml " >= 4.2.3000"
 
-ocaml@~4.6.0:
+ocaml@~4.6.1:
   version "4.6.1"
   resolved "https://registry.yarnpkg.com/ocaml/-/ocaml-4.6.1.tgz#8babea2c41a9f734313b4fc1841ec0963c9d7a07"

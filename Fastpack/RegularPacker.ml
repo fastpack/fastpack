@@ -169,7 +169,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       | ExportFinder.Yes | ExportFinder.Maybe -> ()
       | ExportFinder.No ->
         let location_str =
-          Module.location_to_string ~base_dir:(Some ctx.package_dir) m.location
+          Module.location_to_string ~base_dir:(Some ctx.project_dir) m.location
         in
         raise (PackError (ctx, CannotFindExportedName (name, location_str)))
     in
@@ -675,7 +675,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
                 match resolved with
                 | Module.File { filename = Some filename; _ } ->
                   ctx.resolver.NodeResolver.find_package
-                    ctx.package_dir
+                    ctx.project_dir
                     filename
                 | _ ->
                   Lwt.return Package.empty

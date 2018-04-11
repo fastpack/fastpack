@@ -30,7 +30,7 @@ let pack ~mode ~target ~preprocessor pack_f entry_filename _ =
         ~target
         ~preprocessor
         ~entry_filename
-        ~package_dir:(Filename.dirname entry_filename)
+        ~project_dir:(Filename.dirname entry_filename)
         ch
     in
   ch

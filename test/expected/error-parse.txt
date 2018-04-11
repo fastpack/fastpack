@@ -1,5 +1,5 @@
 
-Working Directory: /.../test/error-parse
+Project Directory: /.../test/error-parse
 Entry Point: index.js
 Mode: production
 Call Stack:

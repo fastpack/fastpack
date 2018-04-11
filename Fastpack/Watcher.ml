@@ -9,7 +9,7 @@ let watch
     ~(cache : Cache.t)
     ~graph
     ~modules
-    ~package_dir
+    ~project_dir
     ~entry_filename
     get_context
   =
@@ -27,7 +27,7 @@ let watch
     )
   in
   let process = ref None in
-  let cmd = "watchman-wait -m 0 " ^ package_dir in
+  let cmd = "watchman-wait -m 0 " ^ project_dir in
   let%lwt (started_process, ch_in, _) = FS.open_process cmd in
   process := Some started_process;
 
@@ -63,7 +63,7 @@ let watch
   let rec read_pack graph modules =
     let report_file_change filename =
       let message =
-        FS.relative_path package_dir filename
+        FS.relative_path project_dir filename
         |> Printf.sprintf "Change detected: %s\n"
       in
       Lwt_io.(write stdout message)
@@ -86,7 +86,7 @@ let watch
       Lwt.return_unit
     | Some filename ->
       let start_time = Unix.gettimeofday () in
-      let filename = FS.abs_path package_dir filename in
+      let filename = FS.abs_path project_dir filename in
       let%lwt graph, modules =
         match cache.get_potentially_invalid filename with
         (* Something is changed in the dir, but we don't care *)

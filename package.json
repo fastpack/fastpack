@@ -52,6 +52,6 @@
     "@opam/fmt": "0.8.5",
     "@opam/re": "1.7.1",
     "@opam/ppx_expect": "*",
-    "ocaml": "~4.6.0"
+    "ocaml": "~4.6.1"
   }
 }

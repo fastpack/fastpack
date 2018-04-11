@@ -44,7 +44,7 @@ let () =
           "\n"
           ^ Fastpack.Context.to_string ctx
           ^ "\n"
-          ^ Fastpack.Error.to_string ctx.package_dir error
+          ^ Fastpack.Error.to_string ctx.project_dir error
         )
     in
 

@@ -1,5 +1,5 @@
 
-Working Directory: /.../test/error-cannot-leave-package-dir
+Project Directory: /.../test/error-cannot-leave-package-dir
 Entry Point: index.js
 Mode: production
 Call Stack:

@@ -154,7 +154,7 @@ module Mode = struct
                 loc.Loc.start.offset
                 (consequent_loc.Loc.start.offset - loc.Loc.start.offset);
               remove
-                consequent_loc.Loc._end.offset
+                (consequent_loc.Loc._end.offset)
                 (alternate_loc.Loc._end.offset - consequent_loc.Loc._end.offset);
               Visit.Continue visit_ctx
 
@@ -199,7 +199,7 @@ end
 
 module Context = struct
   type t = {
-    package_dir : string;
+    project_dir : string;
     output_dir : string;
     entry_location : Module.location option;
     current_location : Module.location option;
@@ -213,21 +213,21 @@ module Context = struct
     graph : DependencyGraph.t;
   }
 
-  let to_string { entry_location; package_dir; stack; mode; current_location; _ } =
+  let to_string { entry_location; project_dir; stack; mode; current_location; _ } =
     let stack =
       stack
-      |> List.map (Module.Dependency.to_string ~dir:(Some package_dir))
+      |> List.map (Module.Dependency.to_string ~dir:(Some project_dir))
       |> String.concat "\t\n"
     in
     let location_of_opt location =
       match location with
       | Some location ->
-        Module.location_to_string ~base_dir:(Some package_dir) location
+        Module.location_to_string ~base_dir:(Some project_dir) location
       | None ->
         "(not yet resolved)"
     in
     Printf.([
-        sprintf "Working Directory: %s" package_dir;
+        sprintf "Project Directory: %s" project_dir;
         sprintf "Entry Point: %s" (location_of_opt entry_location);
         sprintf "Mode: %s" (Mode.to_string mode);
         "Call Stack:" ^ if stack <> ""
@@ -249,9 +249,9 @@ let string_of_error ctx error =
   Printf.sprintf
     "\n%s\n%s"
     (Context.to_string ctx)
-    (Error.to_string ctx.package_dir error)
+    (Error.to_string ctx.project_dir error)
 
-let relative_name {Context. package_dir; _} filename =
+let relative_name {Context. project_dir; _} filename =
   match Str.string_match (Str.regexp "^builtin:") filename 0 with
   | true ->
     filename
@@ -259,8 +259,8 @@ let relative_name {Context. package_dir; _} filename =
     String.(
       sub
         filename
-        (length package_dir + 1)
-        (length filename - length package_dir - 1)
+        (length project_dir + 1)
+        (length filename - length project_dir - 1)
     )
 
 let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
@@ -272,7 +272,7 @@ let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
     | Module.Dependency.Location (Module.Runtime)
     | Module.Dependency.Location (Module.EmptyModule)
     | Module.Dependency.EntryPoint ->
-      ctx.package_dir
+      ctx.project_dir
   in
   Lwt.catch
     (fun () ->
@@ -303,13 +303,13 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
   in
 
   let empty_module = make_module
-      (Module.make_id ctx.package_dir Module.EmptyModule)
+      (Module.make_id ctx.project_dir Module.EmptyModule)
       Module.EmptyModule
       "module.exports = {};"
   in
 
   let runtime_module = make_module
-      (Module.make_id ctx.package_dir Module.Runtime)
+      (Module.make_id ctx.project_dir Module.Runtime)
       Module.Runtime
       FastpackTranspiler.runtime
   in
@@ -331,7 +331,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
         match filename with
         | Some filename ->
           let%lwt _ =
-            if not (FilePath.is_subdir filename ctx.package_dir)
+            if not (FilePath.is_subdir filename ctx.project_dir)
             then Lwt.fail (PackError (ctx, CannotLeavePackageDir filename))
             else Lwt.return_unit
           in
@@ -376,7 +376,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       in
 
       let m =
-        make_module (Module.make_id ctx.package_dir location) location source
+        make_module (Module.make_id ctx.project_dir location) location source
       in
       let m = {
         m with
