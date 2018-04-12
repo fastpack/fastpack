@@ -151,12 +151,19 @@ module DependencyMap = Map.Make(struct
     let compare = Pervasives.compare
   end)
 
+module LocationSet = Set.Make(struct
+    let compare = Pervasives.compare
+    type t = location
+  end)
+
 type t = {
   (** Opaque module id *)
   id : string;
 
   (** Absolute module filename *)
   location : location;
+
+  package : Package.t;
 
   (** List of resolved dependencies, populated for cached modules *)
   resolved_dependencies : (Dependency.t * location) list;

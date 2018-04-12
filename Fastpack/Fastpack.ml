@@ -39,7 +39,7 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_point ~project_dir ch
   let resolver = NodeResolver.make ~cache ~preprocessor in
   let ctx = { Context.
     entry_location = Some (Module.Main [entry_point]);
-    package = Package.empty;
+    project_package = Package.empty;
     project_dir;
     output_dir = "";
     stack = [];
@@ -80,7 +80,7 @@ let prepare_and_pack options start_time =
     | Some dir -> Lwt.return dir
     | None -> Lwt.return current_dir
   in
-  let entry_filename = FS.abs_path current_dir options.input in
+  let entry_point = options.input in
   let output_dir = FS.abs_path current_dir options.output in
   let output_file = FilePath.concat output_dir "index.js" in
   let%lwt () = makedirs output_dir in
@@ -101,8 +101,7 @@ let prepare_and_pack options start_time =
         match options.cache with
         | Cache.Use ->
           let short_filename =
-            entry_filename
-            |> FS.relative_path project_dir
+            entry_point
             |> String.replace ~sub:"/" ~by:"__"
             |> String.replace ~sub:"." ~by:"___"
           in
@@ -134,16 +133,18 @@ let prepare_and_pack options start_time =
       in
       Lwt.return (cache, cache_report, RegularPacker.pack)
   in
-  let get_context current_filename =
+  let get_context ~current_location () =
     let resolver = NodeResolver.make ~cache ~preprocessor in
-    let%lwt package = resolver.find_package project_dir current_filename in
+    let%lwt project_package, _ =
+      cache.find_package_for_filename project_dir (FilePath.concat project_dir "package.json")
+    in
     let ctx = {
       Context.
-      entry_location = None;
-      current_location = None;
+      entry_location = Some (Module.Main [ entry_point ]);
+      current_location;
       project_dir;
+      project_package;
       output_dir;
-      package;
       stack = [];
       mode = options.mode;
       target = options.target;
@@ -153,18 +154,7 @@ let prepare_and_pack options start_time =
       graph = DependencyGraph.empty ()
     }
     in
-    let%lwt current_location, _ =
-      resolve ctx package {
-        Module.Dependency.
-        request = current_filename;
-        requested_from = Module.Main [];
-      }
-    in
-    Lwt.return {
-      ctx with
-      entry_location = Some (Module.Main []);
-      current_location = Some current_location;
-    }
+    Lwt.return ctx
   in
   let pack_postprocess cache ctx ch =
     match options.postprocess with
@@ -226,7 +216,7 @@ let prepare_and_pack options start_time =
          then Lwt_unix.unlink temp_file;
       )
   in
-  let%lwt ctx = get_context entry_filename in
+  let%lwt ctx = get_context ~current_location:None () in
   let init_run () =
     Lwt.catch
       (fun () -> pack_postprocess_report ~report ~cache ~ctx start_time)
@@ -252,7 +242,6 @@ let prepare_and_pack options start_time =
              ~graph:ctx.graph
              ~modules
              ~project_dir
-             ~entry_filename
              get_context
          | _ ->
            (* TODO: noop warning*)

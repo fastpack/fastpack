@@ -1,9 +1,5 @@
 
-module MLSet = Set.Make(struct
-    let compare = Pervasives.compare
-    type t = Module.location
-  end)
-
+module MLSet = Module.LocationSet 
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
 module UTF8 = FastpackUtil.UTF8
@@ -642,7 +638,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
           Lwt_list.map_p
             (fun req ->
                let%lwt resolved, build_dependencies =
-                 resolve ctx ctx.package req
+                 resolve ctx m.package req
                in
                let%lwt () =
                  match resolved with
@@ -671,17 +667,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
             | None ->
               let ctx = { ctx with stack = req :: ctx.stack } in
-              let%lwt m = read_module ctx cache resolved in
-              let%lwt package =
-                match resolved with
-                | Module.File { filename = Some filename; _ } ->
-                  ctx.resolver.NodeResolver.find_package
-                    ctx.project_dir
-                    filename
-                | _ ->
-                  Lwt.return Package.empty
-              in
-              process { ctx with package } graph m
+              let%lwt m = read_module ~ctx ~cache ~from_module:(Some m) resolved in
+              process ctx graph m
             | Some m ->
               Lwt.return m
           in
@@ -834,7 +821,7 @@ process = { env: {} };
 
   match ctx.entry_location, ctx.current_location with
   | Some entry_location, Some current_location ->
-    let%lwt entry = read_module ctx cache current_location in
+    let%lwt entry = read_module ~ctx ~cache current_location in
     let%lwt _ = process ctx ctx.graph entry in
     let entry_location_str = Module.location_to_string entry_location in
     let global_entry =

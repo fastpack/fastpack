@@ -10,6 +10,7 @@ module ModuleEntry = struct
   type t = {
     id : string;
     state : Module.state;
+    package : Package.t; 
     module_type : Module.module_type;
     files : (string * string) list;
     content : string;
@@ -41,10 +42,11 @@ type t = {
   get_file : string -> (entry * bool) Lwt.t;
   get_file_no_raise : string -> (entry * bool) Lwt.t;
   get_package : string -> (Package.t * bool) Lwt.t;
+  find_package_for_filename : string -> string -> (Package.t * bool) Lwt.t;
   get_module : Module.location -> Module.t option Lwt.t;
   modify_content : Module.t -> string -> unit;
   add_build_dependencies: Module.t -> string list -> unit Lwt.t;
-  get_potentially_invalid : string -> string list;
+  get_invalidated_modules : string -> string list;
   setup_build_dependencies : StringSet.t -> unit;
   remove : string -> unit;
   dump : unit -> unit Lwt.t;
@@ -109,7 +111,7 @@ let create (init : init) =
 
   let modules = ref loaded.modules in
 
-  (* filename => set of files it changes *)
+  (* filename => set of module locations it changes *)
   let build_dependency_map = ref M.empty in
   let add_build_dependency filename changes =
     let set =
@@ -376,6 +378,22 @@ let create (init : init) =
       Lwt.return (package, cached)
   in
 
+  let find_package_for_filename root_dir filename =
+    let rec find_package_json_for_filename filename =
+      if not (FilePath.is_subdir filename root_dir)
+      then Lwt.return_none
+      else
+        let dirname = FilePath.dirname filename in
+        let package_json = FilePath.concat dirname "package.json" in
+        if%lwt file_exists package_json
+        then Lwt.return_some package_json
+        else find_package_json_for_filename dirname
+    in
+    match%lwt find_package_json_for_filename filename with
+    | Some package_json -> get_package package_json
+    | None -> Lwt.return (Package.empty, false)
+  in
+
   let get_module location =
     let build_dependencies_changed build_dependencies =
       build_dependencies
@@ -393,6 +411,7 @@ let create (init : init) =
     | Some {
         id;
         state;
+        package;
         module_type;
         files;
         content;
@@ -413,6 +432,7 @@ let create (init : init) =
           id;
           location;
           state;
+          package;
           resolved_dependencies;
           module_type;
           files;
@@ -437,6 +457,7 @@ let create (init : init) =
         ModuleEntry.
         id = m.id;
         state = m.state;
+        package = m.package;
         build_dependencies;
         resolved_dependencies = m.resolved_dependencies;
         module_type = m.module_type;
@@ -480,7 +501,7 @@ let create (init : init) =
         Error.ie ("Adding build_dependencies to a non-module: " ^ location_str)
   in
 
-  let get_potentially_invalid filename =
+  let get_invalidated_modules filename =
     match M.get filename !files with
     | None -> []
     | Some _ ->
@@ -514,11 +535,12 @@ let create (init : init) =
     get_file;
     get_file_no_raise;
     get_package;
+    find_package_for_filename;
     get_module;
     modify_content;
     add_build_dependencies;
     setup_build_dependencies;
-    get_potentially_invalid;
+    get_invalidated_modules;
     remove;
     dump;
     starts_empty = !files = M.empty;

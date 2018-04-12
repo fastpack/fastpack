@@ -200,10 +200,10 @@ end
 module Context = struct
   type t = {
     project_dir : string;
+    project_package : Package.t;
     output_dir : string;
     entry_location : Module.location option;
     current_location : Module.location option;
-    package : Package.t;
     stack : Module.Dependency.t list;
     mode : Mode.t;
     target : Target.t;
@@ -286,11 +286,32 @@ let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
     )
 
 
-let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location) =
+let read_module
+    ?(from_module=None)
+    ~(ctx : Context.t)
+    ~(cache : Cache.t)
+    (location : Module.location) =
   let make_module location source =
+    let%lwt package =
+      match location with
+      | Module.EmptyModule | Module.Runtime ->
+        Lwt.return Package.empty
+      | Module.Main _ ->
+        Lwt.return ctx.project_package
+      | Module.File { filename = Some filename; _ } ->
+        let%lwt package, _ =
+          cache.find_package_for_filename ctx.project_dir filename
+        in
+        Lwt.return package
+      | Module.File { filename = None; _ } ->
+        match from_module with
+        | None -> Lwt.return ctx.project_package
+        | Some (m : Module.t) -> Lwt.return m.package
+    in
     Module.{
       id = make_id ctx.project_dir location;
       location;
+      package;
       resolved_dependencies = [];
       module_type = Module.CJS;
       files = [];
@@ -299,6 +320,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       scope = FastpackUtil.Scope.empty;
       exports = FastpackUtil.Scope.empty_exports;
     }
+    |> Lwt.return
   in
 
   match location with
@@ -308,13 +330,13 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       |> List.map (fun req -> Printf.sprintf "import '%s';\n" req)
       |> String.concat ""
     in
-    Lwt.return (make_module location source)
+    make_module location source
 
   | Module.EmptyModule ->
-    Lwt.return (make_module location "module.exports = {};")
+    make_module location "module.exports = {};"
 
   | Module.Runtime ->
-    Lwt.return (make_module location FastpackTranspiler.runtime)
+    make_module location FastpackTranspiler.runtime
 
   | Module.File { filename; _ } ->
     match%lwt cache.get_module location with
@@ -370,7 +392,7 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
           files
       in
 
-      let m = make_module location source in
+      let%lwt m = make_module location source in
       let m = {
         m with
         state = Module.Preprocessed;

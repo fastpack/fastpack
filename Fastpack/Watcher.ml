@@ -10,7 +10,6 @@ let watch
     ~graph
     ~modules
     ~project_dir
-    ~entry_filename
     get_context
   =
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
@@ -52,11 +51,9 @@ let watch
       handle_error
   in
 
-  let get_context module_ =
+  let get_context current_location =
     Lwt.catch
-      (fun () ->
-         get_context module_ >>= Lwt.return_some
-      )
+      (fun () -> get_context ~current_location () >>= Lwt.return_some)
       handle_error
   in
 
@@ -88,12 +85,12 @@ let watch
       let start_time = Unix.gettimeofday () in
       let filename = FS.abs_path project_dir filename in
       let%lwt graph, modules =
-        match cache.get_potentially_invalid filename with
+        match cache.get_invalidated_modules filename with
         (* Something is changed in the dir, but we don't care *)
         | [] ->
           Lwt.return (graph, modules)
         (* Maybe a build dependency like .babelrc, need to check further *)
-        | files ->
+        | invalid_modules ->
           (* debug (fun x -> x "INVALID:\n%s" @@ String.concat "\n" files); *)
           let%lwt prev_entry, _ = cache.get_file_no_raise filename in
           cache.remove filename;
@@ -107,7 +104,7 @@ let watch
               let%lwt () = report_same_bundle start_time in
               Lwt.return (graph, modules)
             | false ->
-              match List.filter in_bundle files with
+              match List.filter in_bundle invalid_modules with
               (* all files which are invalidated by the change
                * aren't in the current bundle *)
               | [] ->
@@ -125,15 +122,20 @@ let watch
                * disabling the "trusted" cache. This will check all build
                * dependencies as well
                * *)
-              | [module_] ->
+              | [module_location] ->
+                let current_location =
+                  match DependencyGraph.lookup_module graph module_location with
+                  | Some m -> Some (m.Module.location)
+                  | None -> Error.ie "Impossible state"
+                in
                 begin
-                  match%lwt get_context ("!" ^ module_) with
+                  match%lwt get_context current_location with
                   | None ->
                     Lwt.return (graph, modules)
                   | Some (ctx : Context.t) ->
                     match ctx.current_location with
                     | None ->
-                      Error.ie "Impossible state: location is not reolved"
+                      Error.ie "Impossible state: location is not resolved"
                     | Some location ->
                       DependencyGraph.remove_module graph location;
                       let ctx = { ctx with graph } in
@@ -150,7 +152,7 @@ let watch
                * and the main entry point
                * *)
               | _ ->
-                match%lwt get_context entry_filename with
+                match%lwt get_context None with
                 | None ->
                   Lwt.return (graph, modules)
                 | Some (ctx : Context.t) ->

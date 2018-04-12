@@ -52,6 +52,22 @@ let remove_module graph location =
     (fun _ -> Hashtbl.remove graph.dependencies location_str)
     (Hashtbl.find_all graph.dependencies location_str)
 
+let remove_by_file graph filename_to_remove =
+  let remove_locations =
+    Hashtbl.fold
+      (fun _ (m : Module.t) acc ->
+         match m.location with
+         | Module.File { filename = Some filename; _ }
+           when filename = filename_to_remove ->
+           m.location :: acc
+         | _ -> acc
+      )
+      graph.modules
+      []
+  in
+  List.iter (remove_module graph) remove_locations;
+  remove_locations
+
 
 let sort graph entry =
   let modules = ref [] in

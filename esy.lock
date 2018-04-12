@@ -314,7 +314,7 @@
 
 "@opam/ocaml-migrate-parsetree@ >= 1.0.0", "@opam/ocaml-migrate-parsetree@ >= 1.0.7", "@opam/ocaml-migrate-parsetree@ >= 1.0.9", "@opam/ocaml-migrate-parsetree@*":
   version "1.0.9"
-  uid bb0aa50339ab53730b3e84f02c8f29df
+  uid "59247a68e6eed845dcb30b3f9e9ecaa6"
   resolved "@opam/ocaml-migrate-parsetree@1.0.9-bb0aa50339ab53730b3e84f02c8f29df.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -323,7 +323,7 @@
     "@opam/ocamlfind" "*"
     "@opam/result" "*"
   peerDependencies:
-    ocaml " >= 4.2.0"
+    ocaml " >= 4.2.0  < 4.8.0"
 
 "@opam/ocamlbuild@*":
   version "0.12.0"
@@ -337,14 +337,14 @@
 
 "@opam/ocamlfind@ >= 1.5.0", "@opam/ocamlfind@ >= 1.5.2", "@opam/ocamlfind@ >= 1.5.3", "@opam/ocamlfind@ >= 1.6.1", "@opam/ocamlfind@ >= 1.7.2", "@opam/ocamlfind@ >= 1.7.3--1", "@opam/ocamlfind@*":
   version "1.7.3--1"
-  uid "8bdb2749715bb44e0e6d09503deb7fd7"
+  uid "3892b28eaffa574236b3e9564de48b74"
   resolved "@opam/ocamlfind@1.7.3--1-8bdb2749715bb44e0e6d09503deb7fd7.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"
     "@opam/conf-m4" "*"
   peerDependencies:
-    ocaml " >= 3.12.0"
+    ocaml " >= 3.12.0  < 4.7.0"
 
 "@opam/ocp-build@ >= 1.99.6--beta":
   version "1.99.20--beta"
