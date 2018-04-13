@@ -49,7 +49,7 @@ let report_json _start_time { modules; _ } =
     `Assoc [
       ("modulesPaths", `List modulePaths)
     ]
-    |> pretty_to_string
+    |> to_string ~std:true
     |> (fun s -> s ^ "\n")
     |> Lwt_io.write Lwt_io.stdout
 
