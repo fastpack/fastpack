@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
 })
 ({
 "NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -75,6 +75,13 @@ document.body.innerHTML = `
 <h1>test.txt</h1>
 <pre>${_1_raw_loader_test_txt__default}</pre>
 `;
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
+},
+"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+__fastpack_require__(/* "./index.js" */ "index");
+
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

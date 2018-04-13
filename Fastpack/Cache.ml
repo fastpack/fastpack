@@ -497,7 +497,6 @@ let create (init : init) =
             M.add location_str { module_entry with build_dependencies} !modules;
           Lwt.return_unit
       | None ->
-        List.iter print_endline dependencies;
         Error.ie ("Adding build_dependencies to a non-module: " ^ location_str)
   in
 

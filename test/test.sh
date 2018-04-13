@@ -59,9 +59,20 @@ for file in `ls $tests_dir/*/*.sh | grep "$pattern"`; do
             mv $tmp_stdout "$tmp_dir/stdout.txt"
         fi
         if $diff_cmd $output_dir $tmp_dir; then
+            if [ -e $tmp_stdout ]; then
+                cat $tmp_stdout
+            fi
             report $OK $title "[OK]"
         else
             failed=$(( $failed + 1 ))
+            if [ -e $tmp_stdout ]; then
+                echo "STDOUT"
+                cat $tmp_stdout
+            fi
+            if [ -e "$tmp_dir/stderr.txt" ]; then
+                echo "STDERR"
+                cat "$tmp_dir/stderr.txt"
+            fi
             report $ERROR $title "[Fail] See above ^^^"
         fi
     else

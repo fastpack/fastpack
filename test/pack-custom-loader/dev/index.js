@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
 })
 ({
 "custom$$_$$loaderDOT$$js$$B$$": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -92,6 +92,13 @@ __fastpack_require__(/* "./custom-loader!" */ "custom$$_$$loaderDOT$$js$$B$$");
 __fastpack_require__(/* "./custom-loader?bool=true!" */ "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$");
 
 __fastpack_require__(/* "./custom-loader?bool=true!./index.js" */ "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index");
+
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
+},
+"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+__fastpack_require__(/* "./index.js" */ "index");
 
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}

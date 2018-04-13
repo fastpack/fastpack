@@ -21,7 +21,7 @@ exception ExitOK = PackerUtil.ExitOK
 let string_of_error = PackerUtil.string_of_error
 
 type options = {
-  input : string;
+  entry_points : string list;
   output : string;
   mode : Mode.t;
   node_modules_paths : string list;
@@ -74,14 +74,21 @@ let read_package_json_options _ =
   Lwt.return_none
 
 let prepare_and_pack options start_time =
-  let%lwt current_dir = Lwt_unix.getcwd () in
-  let%lwt project_dir =
-    match%lwt find_package_root current_dir with
-    | Some dir -> Lwt.return dir
-    | None -> Lwt.return current_dir
+  let%lwt project_dir = Lwt_unix.getcwd () in
+  let%lwt entry_points =
+    options.entry_points
+    |> Lwt_list.map_p
+      (fun entry_point ->
+        let abs_path = FS.abs_path project_dir entry_point in
+        match%lwt FS.stat_option abs_path with
+        | Some { st_kind = Unix.S_REG; _ } ->
+          Lwt.return ("./" ^ (FS.relative_path project_dir abs_path))
+        | _ ->
+          Lwt.return entry_point
+      )
   in
-  let entry_point = options.input in
-  let output_dir = FS.abs_path current_dir options.output in
+
+  let output_dir = FS.abs_path project_dir options.output in
   let output_file = FilePath.concat output_dir "index.js" in
   let%lwt () = makedirs output_dir in
   let%lwt preprocessor =
@@ -100,15 +107,8 @@ let prepare_and_pack options start_time =
       let%lwt cache, cache_report =
         match options.cache with
         | Cache.Use ->
-          let short_filename =
-            entry_point
-            |> String.replace ~sub:"/" ~by:"__"
-            |> String.replace ~sub:"." ~by:"___"
-          in
           let filename =
             String.concat "-" [
-              short_filename;
-              Target.to_string options.target;
               project_dir |> Digest.string |> Digest.to_hex;
               Version.github_commit
             ]
@@ -138,9 +138,15 @@ let prepare_and_pack options start_time =
     let%lwt project_package, _ =
       cache.find_package_for_filename project_dir (FilePath.concat project_dir "package.json")
     in
+    let entry_location = Some (Module.Main entry_points) in
+    let current_location =
+      if current_location <> None
+      then current_location
+      else entry_location
+    in
     let ctx = {
       Context.
-      entry_location = Some (Module.Main [ entry_point ]);
+      entry_location;
       current_location;
       project_dir;
       project_package;

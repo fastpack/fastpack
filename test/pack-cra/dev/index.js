@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'builtin$$B$$src$index');
+  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
 })
 ({
 "NM$$object$$_$$assign$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -18501,6 +18501,13 @@ const _3__App = __fastpack_require__(/* "./App" */ "builtin$$B$$src$App");
 const _4__registerServiceWorker = __fastpack_require__(/* "./registerServiceWorker" */ "builtin$$B$$src$registerServiceWorker");
 _2_react_dom__default.render(_1_react__default.createElement(_3__App.default, null), document.getElementById('root'));
 _4__registerServiceWorker.default();
+
+try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+
+},
+"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+__fastpack_require__(/* "./src/index.js" */ "builtin$$B$$src$index");
+
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 

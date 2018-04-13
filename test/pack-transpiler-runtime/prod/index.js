@@ -1,16 +1,16 @@
 (function() {
 
-/* builtin$$COLON$$__fastpack_runtime__ */
+/* fp$runtime */
 
-let $n__builtin$$COLON$$__fastpack_runtime__ = { id: "builtin$$COLON$$__fastpack_runtime__", exports: {}};
+let $n__fp$runtime = { id: "fp$runtime", exports: {}};
 
-function $i__builtin$$COLON$$__fastpack_runtime____applyDecorator(decorator, proto, property, descriptor) {
+function $i__fp$runtime__applyDecorator(decorator, proto, property, descriptor) {
   var ret = decorator(proto, property, descriptor);
   // TODO: assert all descriptor properties;
   return ret;
 }
 
-function $i__builtin$$COLON$$__fastpack_runtime____decorateProperty(cls, property, decorators) {
+function $i__fp$runtime__decorateProperty(cls, property, decorators) {
   var proto = cls.prototype;
   var descriptor = Object.assign(
     {},
@@ -20,13 +20,13 @@ function $i__builtin$$COLON$$__fastpack_runtime____decorateProperty(cls, propert
   for(var i = 0, reversed = decorators.reverse(), l = reversed.length;
       i < l;
       i++) {
-    descriptor = $i__builtin$$COLON$$__fastpack_runtime____applyDecorator(reversed[i], proto, property, descriptor);
+    descriptor = $i__fp$runtime__applyDecorator(reversed[i], proto, property, descriptor);
   }
 
   Object.defineProperty(proto, property, descriptor);
 }
 
-$n__builtin$$COLON$$__fastpack_runtime__.exports = {
+$n__fp$runtime.exports = {
   omitProps: function(target, props) {
     var ret = {};
     for(var prop in target) {
@@ -39,7 +39,7 @@ $n__builtin$$COLON$$__fastpack_runtime__.exports = {
 
   defineClass: function(cls, statics, classDecorators, propertyDecorators) {
     for(var i = 0, l = propertyDecorators.length; i < l; i++) {
-      $i__builtin$$COLON$$__fastpack_runtime____decorateProperty(cls,
+      $i__fp$runtime__decorateProperty(cls,
                        propertyDecorators[i].method,
                        propertyDecorators[i].decorators);
     }
@@ -62,12 +62,12 @@ $n__builtin$$COLON$$__fastpack_runtime__.exports = {
   }
 };
 
-try{$n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule = $n__builtin$$COLON$$__fastpack_runtime__.exports.__esModule || false;}catch(_){}
+try{$n__fp$runtime.exports.__esModule = $n__fp$runtime.exports.__esModule || false;}catch(_){}
 
 /* builtin$$B$$index */
 
 let $n__builtin$$B$$index = { id: "builtin$$B$$index", exports: {}};
-const $i__builtin$$B$$index__$__fpack__ = ($n__builtin$$COLON$$__fastpack_runtime__.exports);
+const $i__builtin$$B$$index__$__fpack__ = ($n__fp$runtime.exports);
 function $i__builtin$$B$$index__decorator1(proto, property, descriptor) {
   let oldValue = descriptor.value;
   descriptor.value = function () {
@@ -123,4 +123,11 @@ document.body.innerHTML = `
 `;
 
 try{$n__builtin$$B$$index.exports.__esModule = $n__builtin$$B$$index.exports.__esModule || false;}catch(_){}
+
+/* fp$main */
+
+let $n__fp$main = { id: "fp$main", exports: {}};
+
+
+try{$n__fp$main.exports.__esModule = $n__fp$main.exports.__esModule || true;}catch(_){}
 })()

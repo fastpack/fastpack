@@ -78,33 +78,6 @@ let pack_flat_dev =
     ~preprocessor:Fastpack.Preprocessor.empty
     (Fastpack.FlatPacker.pack)
 
-let pack_regular_cjs =
-  pack
-    ~mode:Fastpack.Mode.Production
-    ~target:Fastpack.Target.CommonJS
-    ~preprocessor:Fastpack.Preprocessor.empty
-    Fastpack.RegularPacker.pack
-
-let pack_regular_esm =
-  pack
-    ~mode:Fastpack.Mode.Production
-    ~target:Fastpack.Target.ESM
-    ~preprocessor:Fastpack.Preprocessor.empty
-    Fastpack.RegularPacker.pack
-
-let pack_flat_esm =
-  pack
-    ~mode:Fastpack.Mode.Production
-    ~target:Fastpack.Target.ESM
-    ~preprocessor:Fastpack.Preprocessor.empty
-    Fastpack.FlatPacker.pack
-
-let pack_flat_cjs =
-  pack
-    ~mode:Fastpack.Mode.Production
-    ~target:Fastpack.Target.CommonJS
-    ~preprocessor:Fastpack.Preprocessor.empty
-    Fastpack.FlatPacker.pack
 
 let pack_transpile_regular_dev =
   pack
@@ -136,10 +109,6 @@ let tests = [
   Test ("pack_all_static/index.js", "pack_regular_all_static.js", pack_regular_prod);
   Test ("pack_mode/index.js", "pack_flat_prod.js", pack_flat_prod);
   Test ("pack_mode/index.js", "pack_flat_dev.js", pack_flat_dev);
-  Test ("pack-target/index.js", "pack-regular-cjs.js", pack_regular_cjs);
-  Test ("pack-target/index.js", "error-pack-regular-esm.txt", pack_regular_esm);
-  Test ("pack-target/index.js", "pack-flat-esm.js", pack_flat_esm);
-  Test ("pack-target/index.js", "pack-flat-cjs.js", pack_flat_cjs);
   Test ("pack-utf8/index.js", "pack-flat-utf8.js", pack_flat_dev);
   Test ("pack-utf8/index.js", "pack-regular-utf8.js", pack_regular_prod);
   Test (

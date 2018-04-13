@@ -5,7 +5,7 @@ let () =
   let run_t =
 
     let run
-        input
+        entry_points
         output
         mode
         node_modules_paths
@@ -17,7 +17,6 @@ let () =
         watch
         debug
       =
-      List.iter print_endline node_modules_paths;
       if debug then begin
         Logs.set_level (Some Logs.Debug);
         Logs.set_reporter (Logs_fmt.reporter ());
@@ -25,7 +24,7 @@ let () =
       try
         let options =
           { Fastpack.
-            input;
+            entry_points;
             output;
             mode;
             node_modules_paths;
@@ -46,19 +45,18 @@ let () =
     in
 
 
-    let input_t =
+    let entry_points_t =
       let doc =
-        "Entry path. Default: '.'"
+        "Entry points. Default: ['.']"
       in
-      let docv = "ENTRY PATH" in
-      Arg.(value & pos 0 string "." & info [] ~docv ~doc)
+      let docv = "ENTRY POINTS" in
+      Arg.(value & pos_all string ["."] & info [] ~docv ~doc)
     in
 
     let output_t =
       let doc =
         "Output Directory. "
         ^ "The target bundle will be $(docv)/index.js."
-        ^ "'bundle' is used by default"
       in
       let docv = "DIR" in
       Arg.(value & opt string "./bundle" & info ["o"; "output"] ~docv ~doc)
@@ -74,10 +72,10 @@ let () =
     let node_modules_path_t =
       let doc =
         "Paths to 'node_modules' directory. Should be inside the project directory."
-        ^ ". Defaults to 'node_modules'"
+        ^ ". Defaults to ['node_modules']"
       in
       let docv = "PATH" in
-      Arg.(value & opt_all string ["node_modules"] & info ["node-modules"] ~docv ~doc)
+      Arg.(value & opt_all string ["node_modules"] & info ["nm"; "node-modules"] ~docv ~doc)
     in
 
     let target_t =
@@ -167,7 +165,7 @@ let () =
 
     Term.(ret (
         const run
-        $ input_t
+        $ entry_points_t
         $ output_t
         $ mode_t
         $ node_modules_path_t
