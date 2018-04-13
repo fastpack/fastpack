@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
 "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -75,7 +75,7 @@ document.body.innerHTML = '<img src="' + _1_file_loader_publicPath_logo_svg__def
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
-"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./index.js" */ "index");
 
 

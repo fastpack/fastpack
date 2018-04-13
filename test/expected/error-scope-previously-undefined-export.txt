@@ -1,9 +1,9 @@
 
 Project Directory: /.../test/error-scope-previously-undefined-export
-Entry Point: fp$main
+Entry Point: $fp$main
 Mode: production
 Call Stack:
-	'./index.js' from module: fp$main
+	'./index.js' from module: $fp$main
 Processing Module: index.js
 
 Cannot export previously undefined name 'a'

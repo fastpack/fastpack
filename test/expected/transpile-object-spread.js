@@ -1,4 +1,4 @@
-const $__fpack__ = require("fp$runtime");
+const $__fpack__ = require("$fp$runtime");
 /*
  * *********************** Object Spread Expressions ***********************
  */

@@ -130,4 +130,4 @@ let require_runtime =
   const_stmt "$__fpack__"
     @@ call
       (Loc.none, E.Identifier (Loc.none, "require"))
-      [Loc.none, E.Literal (literal_str "fp$runtime")]
+      [Loc.none, E.Literal (literal_str "$fp$runtime")]

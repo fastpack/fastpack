@@ -62,10 +62,10 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
-"fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 function applyDecorator(decorator, proto, property, descriptor) {
   var ret = decorator(proto, property, descriptor);
@@ -127,7 +127,7 @@ module.exports = {
 
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $__fpack__ = __fastpack_require__(/* "fp$runtime" */ "fp$runtime");
+const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
 function decorator1(proto, property, descriptor) {
   let oldValue = descriptor.value;
   descriptor.value = function () {
@@ -183,7 +183,7 @@ document.body.innerHTML = `
 `;
 
 },
-"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./index.js" */ "builtin$$B$$index");
 
 

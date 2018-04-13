@@ -1,9 +1,9 @@
 
 Project Directory: /.../test/error-scope-naming-collision
-Entry Point: fp$main
+Entry Point: $fp$main
 Mode: production
 Call Stack:
-	'./index.js' from module: fp$main
+	'./index.js' from module: $fp$main
 Processing Module: index.js
 
 Naming Collision: name 'a' at (3:4) - (3:5) is already defined at (1:4) - (1:5)

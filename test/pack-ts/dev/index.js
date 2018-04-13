@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
 "NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -80,7 +80,7 @@ var render = __fastpack_require__(/* "./render.ts" */ "NM$$ts$$_$$loader$indexDO
 render();
 
 },
-"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./index.ts" */ "NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts");
 
 

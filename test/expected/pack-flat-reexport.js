@@ -25,10 +25,10 @@ console.log($e__b__b);
 
 try{$n__index.exports.__esModule = $n__index.exports.__esModule || true;}catch(_){}
 
-/* fp$main */
+/* $fp$main */
 
-let $n__fp$main = { id: "fp$main", exports: {}};
+let $n__$fp$main = { id: "$fp$main", exports: {}};
 
 
-try{$n__fp$main.exports.__esModule = $n__fp$main.exports.__esModule || true;}catch(_){}
+try{$n__$fp$main.exports.__esModule = $n__$fp$main.exports.__esModule || true;}catch(_){}
 })()

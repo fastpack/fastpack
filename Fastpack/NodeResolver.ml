@@ -226,7 +226,7 @@ let make
         then
           Lwt.return (Module.EmptyModule, [])
         else
-          if path = "fp$runtime"
+          if path = "$fp$runtime"
           then
             Lwt.return (Module.Runtime, [])
           else

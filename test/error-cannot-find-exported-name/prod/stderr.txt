@@ -1,10 +1,10 @@
 fpack: 
        Project Directory:
        /.../test/error-cannot-find-exported-name
-       Entry Point: fp$main
+       Entry Point: $fp$main
        Mode: production
        Call Stack:
-       	'./index.js' from module: fp$main
+       	'./index.js' from module: $fp$main
        Processing Module: index.js
        
        Cannot find exported name 'b' in module 'a.js'

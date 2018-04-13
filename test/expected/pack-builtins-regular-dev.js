@@ -62,10 +62,10 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
-"fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 function applyDecorator(decorator, proto, property, descriptor) {
   var ret = decorator(proto, property, descriptor);
@@ -126,20 +126,20 @@ module.exports = {
 };
 
 },
-"fp$empty": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$empty": function(module, exports, __fastpack_require__, __fastpack_import__) {
 module.exports = {};
 },
 "builtin$$B$$esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const _1_path = __fastpack_require__(/* "path" */ "fp$empty");
+const _1_path = __fastpack_require__(/* "path" */ "$fp$empty");
 exports.default = _1_path.delimiter;
 
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $__fpack__ = __fastpack_require__(/* "fp$runtime" */ "fp$runtime");
-const path = __fastpack_require__(/* "path" */ "fp$empty");
-const module = __fastpack_require__(/* "module" */ "fp$empty");
+const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
+const path = __fastpack_require__(/* "path" */ "$fp$empty");
+const module = __fastpack_require__(/* "module" */ "$fp$empty");
 const esm = __fastpack_require__(/* "./esm" */ "builtin$$B$$esm");
 const {delimiter} = path,
   rest = $__fpack__.omitProps(path, ["delimiter"]);
@@ -152,7 +152,7 @@ const Component = props => React.createElement("div", null, item => {
   );
 
 },
-"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./index.js" */ "builtin$$B$$index");
 
 

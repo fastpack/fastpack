@@ -44,7 +44,7 @@ let location_to_string ?(base_dir=None) location =
   in
   match location with
   | Main _ ->
-    "fp$main"
+    "$fp$main"
   | File { filename; preprocessors } ->
     let preprocessors =
       preprocessors
@@ -62,9 +62,9 @@ let location_to_string ?(base_dir=None) location =
     in
     if preprocessors <> "" then preprocessors ^ "!" ^ filename else filename
   | EmptyModule ->
-    "fp$empty"
+    "$fp$empty"
   | Runtime ->
-    "fp$runtime"
+    "$fp$runtime"
 
 module CM = Map.Make(Char)
 
@@ -82,11 +82,11 @@ let allowed_chars =
 let make_id base_dir location =
   match location with
   | Main _ ->
-    "fp$main"
+    "$fp$main"
   | EmptyModule ->
-    "fp$empty"
+    "$fp$empty"
   | Runtime ->
-    "fp$runtime"
+    "$fp$runtime"
   | File _ ->
     let fix_chars s =
       let fix_char c =

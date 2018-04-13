@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
 "dev": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -133,7 +133,7 @@ if (false) {} else {console.log("dev!")}
 Image.propTypes = call());
 
 },
-"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./index.js" */ "index");
 
 

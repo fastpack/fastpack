@@ -62,10 +62,10 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
-"fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 function applyDecorator(decorator, proto, property, descriptor) {
   var ret = decorator(proto, property, descriptor);
@@ -127,7 +127,7 @@ module.exports = {
 
 },
 "builtin$$B$$ExportDefaultNamedClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $__fpack__ = __fastpack_require__(/* "fp$runtime" */ "fp$runtime");
+const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
 let C = $__fpack__.defineClass(class C {
     
   }, [{"name": "prop", "value": 'ExportDefaultNamedClass'}], [], []);
@@ -137,7 +137,7 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$ExportDefaultClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $__fpack__ = __fastpack_require__(/* "fp$runtime" */ "fp$runtime");
+const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
 exports.default = $__fpack__.defineClass(class  {
   
 }, [{"name": "prop", "value": 'ExportDefaultClass'}], [], []);
@@ -147,7 +147,7 @@ try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$ExportNamedClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $__fpack__ = __fastpack_require__(/* "fp$runtime" */ "fp$runtime");
+const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
 let ExportNamedClass = $__fpack__.defineClass(class ExportNamedClass {
     
   }, [{"name": "prop", "value": "ExportNamedClass"}], [], []);;Object.defineProperty(exports, "ExportNamedClass", {get: function() {return ExportNamedClass;}});
@@ -166,7 +166,7 @@ console.log(_2__ExportDefaultClass.default.prop);
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
-"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./index.js" */ "builtin$$B$$index");
 
 

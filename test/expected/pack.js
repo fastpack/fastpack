@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'fp$main');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
 "z": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -186,7 +186,7 @@ else {
 try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
-"fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
 __fastpack_require__(/* "./index.js" */ "index");
 
 

@@ -1,7 +1,7 @@
 {
   "modulesPaths": [
-    "/.../test/report-json/dep1.js",
+    "$fp$main", "/.../test/report-json/dep1.js",
     "/.../test/report-json/dep2.js",
-    "/.../test/report-json/index.js", "fp$main"
+    "/.../test/report-json/index.js"
   ]
 }
