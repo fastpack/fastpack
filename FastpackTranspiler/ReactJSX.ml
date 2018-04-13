@@ -166,7 +166,10 @@ let transpile _ program =
             ))
           | Text { value; raw } ->
             let raw = trim_text raw in
-            (loc, E.Literal { value = Ast.Literal.String value; raw = ("'" ^ raw ^ "'"); })
+            (loc, E.Literal {
+                value = Ast.Literal.String value;
+                raw = ("'" ^ String.replace ~sub:"'" ~by:"\\'" raw ^ "'");
+              })
           | Fragment fragment ->
             (loc, transpile_fragment fragment)
           | SpreadChild _ ->

@@ -11,18 +11,6 @@ module FS = FastpackUtil.FS
 
 let debug = Logs.debug
 
-let rec makedirs dir =
-  match%lwt FastpackUtil.FS.stat_option dir with
-  | None ->
-    let%lwt () = makedirs (FilePath.dirname dir) in
-    Lwt_unix.mkdir dir 0o777
-  | Some stat ->
-    match stat.st_kind with
-    | Lwt_unix.S_DIR -> Lwt.return_unit
-    | _ ->
-      Error.ie
-      @@ Printf.sprintf "'%s' expected to be a directory" dir
-
 module Mode = struct
   module Visit = FastpackUtil.Visit
 

@@ -58,21 +58,6 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_point ~project_dir ch
   } in
   pack_f cache ctx channel
 
-let find_package_root start_dir =
-  let rec check_dir dir =
-    match dir with
-    | "/" -> Lwt.return_none
-    | _ ->
-      let package_json = FilePath.concat dir "package.json" in
-      if%lwt Lwt_unix.file_exists package_json
-      then Lwt.return_some dir
-      else check_dir (FilePath.dirname dir)
-  in
-  check_dir start_dir
-
-let read_package_json_options _ =
-  Lwt.return_none
-
 let prepare_and_pack options start_time =
   let%lwt project_dir = Lwt_unix.getcwd () in
   let%lwt entry_points =
@@ -90,7 +75,7 @@ let prepare_and_pack options start_time =
 
   let output_dir = FS.abs_path project_dir options.output in
   let output_file = FilePath.concat output_dir "index.js" in
-  let%lwt () = makedirs output_dir in
+  let%lwt () = FS.makedirs output_dir in
   let%lwt preprocessor =
     Preprocessor.make
       options.preprocess
