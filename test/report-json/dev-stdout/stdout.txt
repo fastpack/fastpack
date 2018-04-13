@@ -1,1 +1,1 @@
-{"modulesPaths":["$fp$main","/.../test/report-json/dep1.js","/Users/zindel/ocaml/fastpack/test/report-json/dep2.js","/Users/zindel/ocaml/fastpack/test/report-json/index.js"]}
+{"modulesPaths":["$fp$main","/.../test/report-json/dep1.js","/.../test/report-json/dep2.js","/.../test/report-json/index.js"]}
