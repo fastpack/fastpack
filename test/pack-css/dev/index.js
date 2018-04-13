@@ -685,19 +685,17 @@ if(module.hot) {
 }
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "style-loader!css-loader!./test.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css");
 
 
 document.body.innerHTML = "<p>Hello, world</p>";
 
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
-
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "./index.js" */ "index");
 
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 

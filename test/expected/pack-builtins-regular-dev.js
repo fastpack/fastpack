@@ -130,10 +130,9 @@ module.exports = {
 module.exports = {};
 },
 "builtin$$B$$esm": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 const _1_path = __fastpack_require__(/* "path" */ "$fp$empty");
 exports.default = _1_path.delimiter;
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -153,10 +152,9 @@ const Component = props => React.createElement("div", null, item => {
 
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "./index.js" */ "builtin$$B$$index");
 
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 

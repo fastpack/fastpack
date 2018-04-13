@@ -584,18 +584,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     in
     Visit.visit handler program;
     let module_type = get_module_type stmts in
-    let es_module =
-      module_type = Module.ESM
-    in
     let () =
-      if es_module
-      then
-        patch (UTF8.length source) 0
-          @@ Printf.sprintf
-            "\ntry {module.exports.__esModule = module.exports.__esModule || %s}catch(_){}\n"
-            (if es_module then "true" else "false")
-      else
-        ()
+      if module_type = Module.ESM
+      then patch 0 0 "module.exports.__esModule = true;\n"
+      else ()
     in
 
     (!workspace, !dependencies, program_scope, exports, module_type)

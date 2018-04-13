@@ -184,10 +184,9 @@ document.body.innerHTML = `
 
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "./index.js" */ "builtin$$B$$index");
 
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 

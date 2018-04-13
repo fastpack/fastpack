@@ -81,10 +81,9 @@ render();
 
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "./index.ts" */ "NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts");
 
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 

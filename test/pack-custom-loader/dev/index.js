@@ -87,6 +87,7 @@ module.exports = {};
   
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "./custom-loader!" */ "custom$$_$$loaderDOT$$js$$B$$");
 
 __fastpack_require__(/* "./custom-loader?bool=true!" */ "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$");
@@ -94,14 +95,11 @@ __fastpack_require__(/* "./custom-loader?bool=true!" */ "custom$$_$$loaderDOT$$j
 __fastpack_require__(/* "./custom-loader?bool=true!./index.js" */ "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index");
 
 
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
-
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "./index.js" */ "index");
 
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 

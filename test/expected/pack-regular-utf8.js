@@ -66,16 +66,16 @@ process = { env: {} };
 })
 ({
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 let a1 = "Тест";;Object.defineProperty(exports, "a1", {get: function() {return a1;}});
 let a2 = "Привет, мир";;Object.defineProperty(exports, "a2", {get: function() {return a2;}});
 let a3 = "哈囉世界";;Object.defineProperty(exports, "a3", {get: function() {return a3;}});
 let a4 = "💩";;Object.defineProperty(exports, "a4", {get: function() {return a4;}});
 exports.default = {a1: a1, a2: a2, a3: a3, a4: a4};
 
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
-
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 const _1__a = __fastpack_require__(/* "./a" */ "a");
 console.log(_1__a.a1, _1__a.a2, _1__a.a3);
 exports.default = function() {
@@ -83,14 +83,11 @@ exports.default = function() {
               "релиз!");
 }
 
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
-
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "./index.js" */ "index");
 
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 

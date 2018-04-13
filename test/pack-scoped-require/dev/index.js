@@ -66,9 +66,8 @@ process = { env: {} };
 })
 ({
 "dep": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 exports.default = "dep.js";
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -90,10 +89,9 @@ g();
 
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "./index.js" */ "index");
 
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 
