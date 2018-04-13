@@ -62,13 +62,12 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
 "dep": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 exports.default = "dep.js";
-
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
 
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -87,6 +86,12 @@ function g() {
 }
 
 g();
+
+},
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
+__fastpack_require__(/* "./index.js" */ "index");
+
 
 },
 

@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
 "NM$$css$$_$$loader$lib$url$escape": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -709,6 +709,7 @@ if(module.hot) {
 }
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 __fastpack_require__(/* "style-loader!css-loader!less-loader!./test.less" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$NM$$less$$_$$loader$dist$cjsDOT$$js$$B$$testDOT$$less");
 
 
@@ -716,7 +717,11 @@ document.body.innerHTML = `<div class="less">LESS: this text is green
   <span class="badge badge-secondary">With Bootstrap!</span></div>
   `;
 
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+},
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
+__fastpack_require__(/* "./index.js" */ "index");
+
 
 },
 

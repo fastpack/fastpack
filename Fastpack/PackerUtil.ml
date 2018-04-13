@@ -1,4 +1,5 @@
 module StringSet = Set.Make(String)
+module M = Map.Make(String)
 
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
@@ -10,18 +11,6 @@ module L = Ast.Literal
 module FS = FastpackUtil.FS
 
 let debug = Logs.debug
-
-let rec makedirs dir =
-  match%lwt FastpackUtil.FS.stat_option dir with
-  | None ->
-    let%lwt () = makedirs (FilePath.dirname dir) in
-    Lwt_unix.mkdir dir 0o777
-  | Some stat ->
-    match stat.st_kind with
-    | Lwt_unix.S_DIR -> Lwt.return_unit
-    | _ ->
-      Error.ie
-      @@ Printf.sprintf "'%s' expected to be a directory" dir
 
 module Mode = struct
   module Visit = FastpackUtil.Visit
@@ -200,10 +189,10 @@ end
 module Context = struct
   type t = {
     project_dir : string;
+    project_package : Package.t;
     output_dir : string;
-    entry_location : Module.location option;
-    current_location : Module.location option;
-    package : Package.t;
+    entry_location : Module.location;
+    current_location : Module.location;
     stack : Module.Dependency.t list;
     mode : Mode.t;
     target : Target.t;
@@ -213,27 +202,22 @@ module Context = struct
     graph : DependencyGraph.t;
   }
 
-  let to_string { entry_location; project_dir; stack; mode; current_location; _ } =
+  let to_string { project_dir; stack; mode; current_location; _ } =
     let stack =
       stack
       |> List.map (Module.Dependency.to_string ~dir:(Some project_dir))
       |> String.concat "\t\n"
     in
-    let location_of_opt location =
-      match location with
-      | Some location ->
-        Module.location_to_string ~base_dir:(Some project_dir) location
-      | None ->
-        "(not yet resolved)"
+    let location_str =
+      Module.location_to_string ~base_dir:(Some project_dir) current_location
     in
     Printf.([
         sprintf "Project Directory: %s" project_dir;
-        sprintf "Entry Point: %s" (location_of_opt entry_location);
         sprintf "Mode: %s" (Mode.to_string mode);
         "Call Stack:" ^ if stack <> ""
                         then sprintf "\n\t%s" stack
                         else " (empty)";
-        sprintf "Processing Module: %s" (location_of_opt current_location);
+        sprintf "Processing Module: %s" location_str;
       ])
     |> List.fold_left
       (fun acc part -> if part <> "" then acc ^ part ^ "\n" else acc)
@@ -266,12 +250,12 @@ let relative_name {Context. project_dir; _} filename =
 let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
   let base_dir =
     match request.requested_from with
-    | Module.Dependency.Location (Module.File { filename = Some filename; _ }) ->
+    | Module.File { filename = Some filename; _ } ->
       FilePath.dirname filename
-    | Module.Dependency.Location (Module.File { filename = None; _ })
-    | Module.Dependency.Location (Module.Runtime)
-    | Module.Dependency.Location (Module.EmptyModule)
-    | Module.Dependency.EntryPoint ->
+    | Module.File { filename = None; _ }
+    | Module.Runtime
+    | Module.EmptyModule
+    | Module.Main _ ->
       ctx.project_dir
   in
   Lwt.catch
@@ -286,13 +270,34 @@ let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
     )
 
 
-let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location) =
-  let make_module id location source =
-    {
-      Module.
-      id;
+let read_module
+    ?(from_module=None)
+    ~(ctx : Context.t)
+    ~(cache : Cache.t)
+    (location : Module.location) =
+  let make_module location source =
+    let%lwt package =
+      match location with
+      | Module.EmptyModule | Module.Runtime ->
+        Lwt.return Package.empty
+      | Module.Main _ ->
+        Lwt.return ctx.project_package
+      | Module.File { filename = Some filename; _ } ->
+        let%lwt package, _ =
+          cache.find_package_for_filename ctx.project_dir filename
+        in
+        Lwt.return package
+      | Module.File { filename = None; _ } ->
+        match from_module with
+        | None -> Lwt.return ctx.project_package
+        | Some (m : Module.t) -> Lwt.return m.package
+    in
+    Module.{
+      id = make_id ctx.project_dir location;
       location;
+      package;
       resolved_dependencies = [];
+      build_dependencies = M.empty;
       module_type = Module.CJS;
       files = [];
       state = Initial;
@@ -300,26 +305,23 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
       scope = FastpackUtil.Scope.empty;
       exports = FastpackUtil.Scope.empty_exports;
     }
-  in
-
-  let empty_module = make_module
-      (Module.make_id ctx.project_dir Module.EmptyModule)
-      Module.EmptyModule
-      "module.exports = {};"
-  in
-
-  let runtime_module = make_module
-      (Module.make_id ctx.project_dir Module.Runtime)
-      Module.Runtime
-      FastpackTranspiler.runtime
+    |> Lwt.return
   in
 
   match location with
+  | Module.Main entry_points ->
+    let source =
+      entry_points
+      |> List.map (fun req -> Printf.sprintf "import '%s';\n" req)
+      |> String.concat ""
+    in
+    make_module location source
+
   | Module.EmptyModule ->
-    Lwt.return empty_module
+    make_module location "module.exports = {};"
 
   | Module.Runtime ->
-    Lwt.return runtime_module
+    make_module location FastpackTranspiler.runtime
 
   | Module.File { filename; _ } ->
     match%lwt cache.get_module location with
@@ -375,19 +377,24 @@ let read_module (ctx : Context.t) (cache : Cache.t) (location : Module.location)
           files
       in
 
-      let m =
-        make_module (Module.make_id ctx.project_dir location) location source
+      let%lwt m = make_module location source in
+      let%lwt build_dependencies =
+        Lwt_list.fold_left_s
+          (fun build_dependencies filename ->
+             let%lwt { digest; _ }, _ = cache.get_file filename in
+             Lwt.return (M.add filename digest build_dependencies)
+          )
+          M.empty
+          (self_dependency @ build_dependencies)
       in
       let m = {
         m with
         state = Module.Preprocessed;
-        files
+        files;
+        build_dependencies;
       } in
 
       let () = cache.modify_content m source in
-      let%lwt () =
-        cache.add_build_dependencies m (self_dependency @ build_dependencies)
-      in
       Lwt.return m
 
 

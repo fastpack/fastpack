@@ -62,10 +62,10 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'builtin$$B$$index');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
-"builtin$$COLON$$__fastpack_runtime__": function(module, exports, __fastpack_require__, __fastpack_import__) {
+"$fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
 
 function applyDecorator(decorator, proto, property, descriptor) {
   var ret = decorator(proto, property, descriptor);
@@ -127,7 +127,7 @@ module.exports = {
 
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $__fpack__ = __fastpack_require__(/* "__fastpack_runtime__" */ "builtin$$COLON$$__fastpack_runtime__");
+const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
 function decorator1(proto, property, descriptor) {
   let oldValue = descriptor.value;
   descriptor.value = function () {
@@ -181,6 +181,12 @@ document.body.innerHTML = `
 <div>method: <b>${test.method()}</b></div>
 <div>...rest: <b>${JSON.stringify(rest)}</b></div>
 `;
+
+},
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
+__fastpack_require__(/* "./index.js" */ "builtin$$B$$index");
+
 
 },
 

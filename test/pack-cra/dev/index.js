@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'builtin$$B$$src$index');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
 "NM$$object$$_$$assign$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -18351,6 +18351,7 @@ if(module.hot) {
 }
 },
 "builtin$$B$$src$App": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 const _1_react = __fastpack_require__(/* "react" */ "NM$$react$index");const _1_react__default = _1_react.__esModule ? _1_react.default : _1_react;
 const _2__logo_svg = __fastpack_require__(/* "./logo.svg" */ "NM$$url$$_$$loader$indexDOT$$js$$B$$src$logoDOT$$svg");const _2__logo_svg__default = _2__logo_svg.__esModule ? _2__logo_svg.default : _2__logo_svg;
 __fastpack_require__(/* "./App.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$AppDOT$$css");
@@ -18363,10 +18364,9 @@ class App extends _1_react.Component {
   
 }exports.default = App;
 
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
-
 },
 "builtin$$B$$src$registerServiceWorker": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 // In production, we register a service worker to serve assets from local cache.
 // This lets the app load faster on subsequent visits in production, and gives
 // it offline capabilities. However, it also means that developers (and users)
@@ -18489,10 +18489,9 @@ function unregister() {
 };Object.defineProperty(exports, "unregister", {get: function() {return unregister;}});
 ;
 
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
-
 },
 "builtin$$B$$src$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
 const _1_react = __fastpack_require__(/* "react" */ "NM$$react$index");const _1_react__default = _1_react.__esModule ? _1_react.default : _1_react;
 const _2_react_dom = __fastpack_require__(/* "react-dom" */ "NM$$react$$_$$dom$index");const _2_react_dom__default = _2_react_dom.__esModule ? _2_react_dom.default : _2_react_dom;
 __fastpack_require__(/* "./index.css" */ "NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$indexDOT$$css");
@@ -18502,7 +18501,11 @@ const _4__registerServiceWorker = __fastpack_require__(/* "./registerServiceWork
 _2_react_dom__default.render(_1_react__default.createElement(_3__App.default, null), document.getElementById('root'));
 _4__registerServiceWorker.default();
 
-try {module.exports.__esModule = module.exports.__esModule || true}catch(_){}
+},
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
+__fastpack_require__(/* "./src/index.js" */ "builtin$$B$$src$index");
+
 
 },
 

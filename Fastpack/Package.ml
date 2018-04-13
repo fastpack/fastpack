@@ -9,6 +9,7 @@ let empty = {
   entry_point = "index.js";
 }
 
+
 let of_json filename data =
   let add_suffix m =
       m ^ if Filename.check_suffix m ".js" then "" else ".js"
@@ -50,3 +51,12 @@ let resolve_browser (_package : t) (_path : string) =
    * return None.
    * *)
   None
+
+let of_dir dir =
+  let package_json_file = FilePath.concat dir "package.json" in
+  if%lwt Lwt_unix.file_exists package_json_file then begin
+    let%lwt content = Lwt_io.(with_file ~mode:Input package_json_file read) in
+    Lwt.return (of_json package_json_file content)
+  end
+  else
+    Lwt.return empty

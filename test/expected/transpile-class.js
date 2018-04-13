@@ -1,4 +1,4 @@
-const $__fpack__ = require("__fastpack_runtime__");
+const $__fpack__ = require("$fp$runtime");
 /* nothing to transform */
 class CC {
   method1() {

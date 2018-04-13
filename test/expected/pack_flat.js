@@ -2,19 +2,19 @@
 var __fastpack_cache__ = {};
 
 function __fastpack_import__(f) {
-  if (!window.Promise) {
-    throw 'window.Promise is undefined, consider using a polyfill';
-  }
-  return new Promise(function(resolve, reject) {
-    try {
-      if (__fastpack_cache__[f.name] === undefined) {
-        __fastpack_cache__[f.name] = f();
-      }
-      resolve(__fastpack_cache__[f.name]);
-    } catch (e) {
-      reject(e);
+if (!window.Promise) {
+  throw 'window.Promise is undefined, consider using a polyfill';
+}
+return new Promise(function(resolve, reject) {
+  try {
+    if (__fastpack_cache__[f.name] === undefined) {
+      __fastpack_cache__[f.name] = f();
     }
-  });
+    resolve(__fastpack_cache__[f.name]);
+  } catch (e) {
+    reject(e);
+  }
+});
 }
 
 /* a */
@@ -88,6 +88,13 @@ console.log($e__a__a2, $n__d.exports, $e__default_declaration__default, Expressi
  */
 
 try{$n__index.exports.__esModule = $n__index.exports.__esModule || true;}catch(_){}
+
+/* $fp$main */
+
+let $n__$fp$main = { id: "$fp$main", exports: {}};
+
+
+try{$n__$fp$main.exports.__esModule = $n__$fp$main.exports.__esModule || true;}catch(_){}
 
 function $w__c() {
 

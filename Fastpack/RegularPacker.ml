@@ -1,9 +1,5 @@
 
-module MLSet = Set.Make(struct
-    let compare = Pervasives.compare
-    type t = Module.location
-  end)
-
+module MLSet = Module.LocationSet 
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
 module UTF8 = FastpackUtil.UTF8
@@ -156,7 +152,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       let dep = {
         Module.Dependency.
         request;
-        requested_from = Location location;
+        requested_from = location;
       } in
       begin
         dependencies := dep :: !dependencies;
@@ -199,7 +195,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
       let dep = {
         Module.Dependency.
         request = from_request;
-        requested_from = Location location
+        requested_from = location
       }
       in
       let m = get_module dep dep_map in
@@ -588,18 +584,10 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     in
     Visit.visit handler program;
     let module_type = get_module_type stmts in
-    let es_module =
-      module_type = Module.ESM
-    in
     let () =
-      if es_module
-      then
-        patch (UTF8.length source) 0
-          @@ Printf.sprintf
-            "\ntry {module.exports.__esModule = module.exports.__esModule || %s}catch(_){}\n"
-            (if es_module then "true" else "false")
-      else
-        ()
+      if module_type = Module.ESM
+      then patch 0 0 "module.exports.__esModule = true;\n"
+      else ()
     in
 
     (!workspace, !dependencies, program_scope, exports, module_type)
@@ -607,7 +595,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
   (* Gather dependencies *)
   let rec process (ctx : Context.t) graph (m : Module.t) =
-    let ctx = { ctx with current_location = Some m.location } in
+    let ctx = { ctx with current_location = m.location } in
     let m, dependencies =
       if m.state <> Module.Analyzed
       then begin
@@ -638,25 +626,38 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let%lwt m =
       if m.state <> Module.Analyzed
       then begin
-        let%lwt resolved_dependencies =
+        let%lwt dependencies =
           Lwt_list.map_p
             (fun req ->
                let%lwt resolved, build_dependencies =
-                 resolve ctx ctx.package req
+                 resolve ctx m.package req
                in
-               let%lwt () =
-                 match resolved with
-                 | Module.File _ ->
-                   cache.add_build_dependencies m build_dependencies
-                 | Module.EmptyModule
-                 | Module.Runtime ->
-                   Lwt.return_unit
-               in
-               Lwt.return (req, resolved)
+               Lwt.return ((req, resolved), build_dependencies)
             )
+          dependencies
+        in
+        let%lwt resolved_dependencies, build_dependencies =
+          Lwt_list.fold_left_s
+            (fun (resolved, build) (r, b) ->
+               let%lwt build =
+                 Lwt_list.fold_left_s
+                   (fun build filename ->
+                      let%lwt { digest; _ }, _ = cache.get_file filename in
+                      Lwt.return (M.add filename digest build)
+                   )
+                   build
+                   b
+               in
+               Lwt.return (r :: resolved, build)
+            )
+            ([], m.build_dependencies)
             dependencies
         in
-        Lwt.return { m with resolved_dependencies }
+        Lwt.return {
+          m with
+          resolved_dependencies = List.rev resolved_dependencies;
+          build_dependencies
+        }
       end
       else
         Lwt.return m
@@ -670,17 +671,8 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
             | None ->
               let ctx = { ctx with stack = req :: ctx.stack } in
-              let%lwt m = read_module ctx cache resolved in
-              let%lwt package =
-                match resolved with
-                | Module.File { filename = Some filename; _ } ->
-                  ctx.resolver.NodeResolver.find_package
-                    ctx.project_dir
-                    filename
-                | _ ->
-                  Lwt.return Package.empty
-              in
-              process { ctx with package } graph m
+              let%lwt m = read_module ~ctx ~cache ~from_module:(Some m) resolved in
+              process ctx graph m
             | Some m ->
               Lwt.return m
           in
@@ -807,9 +799,12 @@ process = { env: {} };
             ()
         in
         let () =
-          DependencyGraph.add_module
-            graph
-            { m with workspace = Workspace.of_string content }
+          match m.workspace.Workspace.patches with
+          | [] -> ()
+          | _ ->
+            DependencyGraph.add_module
+              graph
+              { m with workspace = Workspace.of_string content }
         in
         let%lwt () = emit "\n},\n" in
         Lwt.return_unit
@@ -831,29 +826,27 @@ process = { env: {} };
     Lwt.return_unit
   in
 
-  match ctx.entry_location, ctx.current_location with
-  | Some entry_location, Some current_location ->
-    let%lwt entry = read_module ctx cache current_location in
-    let%lwt _ = process ctx ctx.graph entry in
-    let entry_location_str = Module.location_to_string entry_location in
-    let global_entry =
-      match DependencyGraph.lookup_module ctx.graph entry_location_str with
-      | Some m -> m
-      | None -> Error.ie (entry_location_str ^ " not found in the graph")
-    in
-    let%lwt _ = emit ctx.graph global_entry in
+  let {Context. entry_location; current_location; _ } = ctx in
+  let%lwt entry = read_module ~ctx ~cache current_location in
+  let%lwt _ = process ctx ctx.graph entry in
+  let entry_location_str = Module.location_to_string entry_location in
+  let global_entry =
+    match DependencyGraph.lookup_module ctx.graph entry_location_str with
+    | Some m -> m
+    | None -> Error.ie (entry_location_str ^ " not found in the graph")
+  in
+  let%lwt _ = emit ctx.graph global_entry in
+  let emitted_modules =
+    Module.LocationSet.fold
+      (fun location acc ->
+        StringSet.add (Module.location_to_string location) acc
+      )
+      !emitted_modules
+      StringSet.empty
+  in
 
-    Lwt.return {
-      Reporter.
-      modules =
-        MLSet.fold
-          (fun location acc ->
-            StringSet.add (Module.location_to_string location) acc
-          )
-          !emitted_modules
-          StringSet.empty
-      ;
-      size = Lwt_io.position channel |> Int64.to_int
-    }
-  | _ ->
-    Error.ie "Entry and current location are not resolved at this point"
+  Lwt.return {
+    Reporter.
+    graph = DependencyGraph.cleanup ctx.graph emitted_modules;
+    size = Lwt_io.position channel |> Int64.to_int
+  }

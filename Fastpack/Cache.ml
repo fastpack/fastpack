@@ -10,6 +10,7 @@ module ModuleEntry = struct
   type t = {
     id : string;
     state : Module.state;
+    package : Package.t;
     module_type : Module.module_type;
     files : (string * string) list;
     content : string;
@@ -41,11 +42,12 @@ type t = {
   get_file : string -> (entry * bool) Lwt.t;
   get_file_no_raise : string -> (entry * bool) Lwt.t;
   get_package : string -> (Package.t * bool) Lwt.t;
+  find_package_for_filename : string -> string -> (Package.t * bool) Lwt.t;
   get_module : Module.location -> Module.t option Lwt.t;
   modify_content : Module.t -> string -> unit;
-  add_build_dependencies: Module.t -> string list -> unit Lwt.t;
-  get_potentially_invalid : string -> string list;
-  setup_build_dependencies : StringSet.t -> unit;
+  (* add_build_dependencies: Module.t -> string list -> unit Lwt.t; *)
+  (* get_invalidated_modules : string -> string list; *)
+  (* setup_build_dependencies : StringSet.t -> unit; *)
   remove : string -> unit;
   dump : unit -> unit Lwt.t;
   starts_empty : bool;
@@ -58,7 +60,6 @@ type strategy = | Use
 
 type init = | Persistent of string
             | Memory
-
 
 
 let empty = {
@@ -76,7 +77,7 @@ let create (init : init) =
     package = None;
   }
   in
-  
+
   let%lwt loaded =
     match init with
     | Memory ->
@@ -109,43 +110,43 @@ let create (init : init) =
 
   let modules = ref loaded.modules in
 
-  (* filename => set of files it changes *)
-  let build_dependency_map = ref M.empty in
-  let add_build_dependency filename changes =
-    let set =
-      match M.get filename !build_dependency_map with
-      | None -> StringSet.add changes StringSet.empty
-      | Some set -> StringSet.add changes set
-    in
-    build_dependency_map := M.add filename set !build_dependency_map;
-  in
-  let remove_dependency filename changes =
-    let set =
-      match M.get filename !build_dependency_map with
-      | None -> StringSet.empty
-      | Some set -> StringSet.remove changes set
-    in
-    build_dependency_map := M.add filename set !build_dependency_map;
-  in
+  (* filename => set of module locations it changes *)
+  (* let build_dependency_map = ref M.empty in *)
+  (* let add_build_dependency filename changes = *)
+  (*   let set = *)
+  (*     match M.get filename !build_dependency_map with *)
+  (*     | None -> StringSet.add changes StringSet.empty *)
+  (*     | Some set -> StringSet.add changes set *)
+  (*   in *)
+  (*   build_dependency_map := M.add filename set !build_dependency_map; *)
+  (* in *)
+  (* let _remove_dependency filename changes = *)
+  (*   let set = *)
+  (*     match M.get filename !build_dependency_map with *)
+  (*     | None -> StringSet.empty *)
+  (*     | Some set -> StringSet.remove changes set *)
+  (*   in *)
+  (*   build_dependency_map := M.add filename set !build_dependency_map; *)
+  (* in *)
 
   (* this is a special function required by the Watcher
    * in order to setup minimum required dependency map only for modules
    * present in the last bundle. To be called once *)
-  let setup_build_dependencies locations_str =
-    build_dependency_map := M.empty;
-    StringSet.iter
-      (fun location_str ->
-         match M.get location_str !modules with
-         | Some { build_dependencies; _ } ->
-           build_dependencies
-           |> M.bindings
-           |> List.iter
-             (fun (dep, _) -> add_build_dependency dep location_str)
-         | _ ->
-           ()
-      )
-      locations_str
-  in
+  (* let setup_build_dependencies locations_str = *)
+  (*   build_dependency_map := M.empty; *)
+  (*   StringSet.iter *)
+  (*     (fun location_str -> *)
+  (*        match M.get location_str !modules with *)
+  (*        | Some { build_dependencies; _ } -> *)
+  (*          build_dependencies *)
+  (*          |> M.bindings *)
+  (*          |> List.iter *)
+  (*            (fun (dep, _) -> add_build_dependency dep location_str) *)
+  (*        | _ -> *)
+  (*          () *)
+  (*     ) *)
+  (*     locations_str *)
+  (* in *)
 
   let validate filename entry =
     let validate_file () =
@@ -376,7 +377,24 @@ let create (init : init) =
       Lwt.return (package, cached)
   in
 
+  let find_package_for_filename root_dir filename =
+    let rec find_package_json_for_filename filename =
+      if not (FilePath.is_subdir filename root_dir)
+      then Lwt.return_none
+      else
+        let dirname = FilePath.dirname filename in
+        let package_json = FilePath.concat dirname "package.json" in
+        if%lwt file_exists package_json
+        then Lwt.return_some package_json
+        else find_package_json_for_filename dirname
+    in
+    match%lwt find_package_json_for_filename filename with
+    | Some package_json -> get_package package_json
+    | None -> Lwt.return (Package.empty, false)
+  in
+
   let get_module location =
+    let location_str = Module.location_to_string location in
     let build_dependencies_changed build_dependencies =
       build_dependencies
       |> M.bindings
@@ -386,13 +404,13 @@ let create (init : init) =
            Lwt.return (digest <> known_digest)
         )
     in
-    let location_str = Module.location_to_string location in
     match M.get location_str !modules with
     | None ->
       Lwt.return_none
     | Some {
         id;
         state;
+        package;
         module_type;
         files;
         content;
@@ -401,11 +419,8 @@ let create (init : init) =
         scope;
         exports
       } ->
-      match%lwt build_dependencies_changed  build_dependencies with
+      match%lwt build_dependencies_changed build_dependencies with
       | true ->
-        build_dependencies
-        |> M.bindings
-        |> List.iter (fun (dep, _) -> remove_dependency dep location_str);
         modules := M.remove location_str !modules;
         Lwt.return_none
       | false ->
@@ -413,7 +428,9 @@ let create (init : init) =
           id;
           location;
           state;
+          package;
           resolved_dependencies;
+          build_dependencies;
           module_type;
           files;
           workspace = Workspace.of_string content;
@@ -428,16 +445,12 @@ let create (init : init) =
       ()
     | _ ->
       let location_str = Module.location_to_string m.location in
-      let build_dependencies =
-        match M.get location_str !modules with
-        | Some { build_dependencies; _} -> build_dependencies
-        | None -> M.empty
-      in
       let module_entry = {
         ModuleEntry.
         id = m.id;
         state = m.state;
-        build_dependencies;
+        package = m.package;
+        build_dependencies = m.build_dependencies;
         resolved_dependencies = m.resolved_dependencies;
         module_type = m.module_type;
         files = m.files;
@@ -449,43 +462,48 @@ let create (init : init) =
       modules := M.add location_str module_entry !modules
   in
 
-  let add_build_dependencies (m : Module.t) dependencies =
-    let location_str = Module.location_to_string m.location in
-    let add_build_dependencies existing_dependencies =
-      Lwt_list.fold_left_s
-        (fun acc filename ->
-           let%lwt {digest; _ }, _ = get_file filename in
-           add_build_dependency filename location_str;
-           Lwt.return (M.add filename digest acc)
-        )
-        existing_dependencies
-        dependencies
-    in
-    match M.get location_str !modules with
-    | Some module_entry ->
-        let%lwt build_dependencies =
-          add_build_dependencies module_entry.build_dependencies
-        in
-        modules :=
-          M.add location_str { module_entry with build_dependencies} !modules;
-        Lwt.return_unit
-    | None ->
-      Error.ie ("Adding build_dependencies to a non-module: " ^ location_str)
-  in
+  (* let add_build_dependencies (m : Module.t) dependencies = *)
+  (*   match m.location with *)
+  (*   | Module.Main _ -> *)
+  (*     Lwt.return_unit *)
+  (*   | Module.EmptyModule | Module.Runtime -> *)
+  (*     Error.ie "Adding build_dependencies to empty / runtime. Should not happen" *)
+  (*   | Module.File _ -> *)
+  (*     let location_str = Module.location_to_string m.location in *)
+  (*     let add_build_dependencies existing_dependencies = *)
+  (*       Lwt_list.fold_left_s *)
+  (*         (fun acc filename -> *)
+  (*            let%lwt {digest; _ }, _ = get_file filename in *)
+  (*            add_build_dependency filename location_str; *)
+  (*            Lwt.return (M.add filename digest acc) *)
+  (*         ) *)
+  (*         existing_dependencies *)
+  (*         dependencies *)
+  (*     in *)
+  (*     match M.get location_str !modules with *)
+  (*     | Some module_entry -> *)
+  (*         let%lwt build_dependencies = *)
+  (*           add_build_dependencies module_entry.build_dependencies *)
+  (*         in *)
+  (*         modules := *)
+  (*           M.add location_str { module_entry with build_dependencies} !modules; *)
+  (*         Lwt.return_unit *)
+  (*     | None -> *)
+  (*       Error.ie ("Adding build_dependencies to a non-module: " ^ location_str) *)
+  (* in *)
 
-  let get_potentially_invalid filename =
-    match M.get filename !files with
-    | None -> []
-    | Some _ ->
-      match M.get filename !build_dependency_map with
-      | None -> [filename]
-      | Some set -> set |> StringSet.add filename |> StringSet.elements
-  in
+  (* let get_invalidated_modules filename = *)
+  (*   match M.get filename !files with *)
+  (*   | None -> [] *)
+  (*   | Some _ -> *)
+  (*     match M.get filename !build_dependency_map with *)
+  (*     | None -> [filename] *)
+  (*     | Some set -> set |> StringSet.add filename |> StringSet.elements *)
+  (* in *)
 
   let remove filename =
     trusted := StringSet.remove filename !trusted;
   in
-
 
   let dump () =
     match init with
@@ -508,11 +526,12 @@ let create (init : init) =
     get_file;
     get_file_no_raise;
     get_package;
+    find_package_for_filename;
     get_module;
     modify_content;
-    add_build_dependencies;
-    setup_build_dependencies;
-    get_potentially_invalid;
+    (* add_build_dependencies; *)
+    (* setup_build_dependencies; *)
+    (* get_invalidated_modules; *)
     remove;
     dump;
     starts_empty = !files = M.empty;

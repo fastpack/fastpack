@@ -24,6 +24,8 @@ type binding_type = Collision
 
 let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
+  let read_module = read_module ~ctx ~cache in
+
   let bytes = Lwt_bytes.create 50_000_000 in
   let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
   let total_modules = ref (StringSet.empty) in
@@ -126,21 +128,21 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
       (* Keep track of all dynamic dependencies while packing *)
       let dynamic_deps = ref [] in
-      let add_dynamic_dep ctx request location =
+      let add_dynamic_dep ctx m request location =
         let dep = {
           Module.Dependency.
           request;
-          requested_from = Location location
+          requested_from = location
         }
         in
-        let () = dynamic_deps := (ctx, dep) :: !dynamic_deps in
+        let () = dynamic_deps := (ctx, m, dep) :: !dynamic_deps in
         let () = has_dynamic_modules := true in
         dep
       in
 
       let rec process (ctx : Context.t) graph (m : Module.t) =
 
-        let ctx = { ctx with current_location = Some m.location } in
+        let ctx = { ctx with current_location = m.location } in
 
         let analyze module_id location source =
           debug (fun m -> m "Analyzing: %s" (Module.location_to_string location));
@@ -196,7 +198,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             let dep = {
               Module.Dependency.
               request = source;
-              requested_from = Location location
+              requested_from = location
             }
             in
             let m = MDM.get dep dep_map in
@@ -321,7 +323,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             let dep = {
               Module.Dependency.
               request;
-              requested_from = Location location
+              requested_from = location
             }
             in
             begin
@@ -657,7 +659,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                   Visit.Break;
 
               | E.Import (_, E.Literal { value = L.String request; _ }) ->
-                let dep = add_dynamic_dep ctx request location in
+                let dep = add_dynamic_dep ctx m request location in
                 patch_dynamic_dep loc dep "__fastpack_import__";
                 Visit.Break;
 
@@ -704,7 +706,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           let module_type = get_module_type stmts in
           Visit.visit handler program;
           add_exports (module_type = Module.ESM || module_type = Module.CJS_esModule);
-          if (Some location = ctx.entry_location) then add_target_export ();
+          if location = ctx.entry_location then add_target_export ();
 
           !used_imports
           |> M.bindings
@@ -753,7 +755,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         (* check all static dependecies *)
         let%lwt () = Lwt_list.iter_s
           (fun req ->
-            let%lwt resolved, _ = resolve ctx ctx.package req in
+            let%lwt resolved, _ = resolve ctx m.package req in
             if has_module resolved
             then begin
               let () = add_resolved_request req resolved in
@@ -764,18 +766,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
               let%lwt dep_module =
                 match DependencyGraph.lookup_module graph resolved_str with
                 | None ->
-                  let%lwt m = read_module ctx cache resolved in
-                  let%lwt package =
-                    match resolved with
-                    | Module.File { filename = Some filename; _ } ->
-                      ctx.resolver.NodeResolver.find_package
-                        ctx.project_dir
-                        filename
-                    | _ ->
-                      Lwt.return Package.empty
-                  in
+                  let%lwt m = read_module ~from_module:(Some m) resolved in
                   let%lwt m =
-                    process { ctx with package; stack = req :: ctx.stack } graph m
+                    process { ctx with stack = req :: ctx.stack } graph m
                   in
                   begin
                     let () = add_resolved_request req resolved in
@@ -872,22 +865,12 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       in
 
       let graph = DependencyGraph.empty () in
-      let%lwt entry = read_module ctx cache entry_location in
-      let%lwt package =
-        match entry_location with
-        | Module.File { filename = Some filename; _ } ->
-          ctx.resolver.NodeResolver.find_package
-            ctx.project_dir
-            filename
-        | _ ->
-          Lwt.return Package.empty
-      in
-      let ctx = { ctx with package } in
+      let%lwt entry = read_module entry_location in
       let%lwt entry = process ctx graph entry in
       let%lwt dynamic_deps =
         Lwt_list.map_s
-          (fun (ctx, req) ->
-             let%lwt resolved, _ = resolve ctx ctx.package req in
+          (fun (ctx, m, req) ->
+             let%lwt resolved, _ = resolve ctx m.Module.package req in
              add_resolved_request req resolved;
              Lwt.return (ctx, resolved)
           )
@@ -926,54 +909,51 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         total_modules := StringSet.(of_list new_modules |> union !total_modules);
         Lwt.return_unit
   in
-  match ctx.entry_location with
-  | Some entry_location ->
-    let%lwt () = pack ctx entry_location MDM.empty in
+  let {Context. entry_location; _} = ctx in
+  let%lwt () = pack ctx entry_location MDM.empty in
 
-    let bundle = channel
-      |> Lwt_io.position
-      |> Int64.to_int
-      |> Lwt_bytes.extract bytes 0
-      |> Lwt_bytes.to_string
-    in
+  let bundle = channel
+    |> Lwt_io.position
+    |> Int64.to_int
+    |> Lwt_bytes.extract bytes 0
+    |> Lwt_bytes.to_string
+  in
 
-    let header, footer = (
-      match ctx.target with
-      | Target.Application -> "(function() {\n", "})()\n"
-      | Target.CommonJS -> "", ""
-      | Target.ESM -> "", ""
-    )
-    in
-    let dynamic_import_runtime = (if !has_dynamic_modules then
+  let header, footer = (
+    match ctx.target with
+    | Target.Application -> "(function() {\n", "})()\n"
+    | Target.CommonJS -> "", ""
+    | Target.ESM -> "", ""
+  )
+  in
+  let dynamic_import_runtime = (if !has_dynamic_modules then
 "var __fastpack_cache__ = {};
 
 function __fastpack_import__(f) {
-  if (!window.Promise) {
-    throw 'window.Promise is undefined, consider using a polyfill';
-  }
-  return new Promise(function(resolve, reject) {
-    try {
-      if (__fastpack_cache__[f.name] === undefined) {
-        __fastpack_cache__[f.name] = f();
-      }
-      resolve(__fastpack_cache__[f.name]);
-    } catch (e) {
-      reject(e);
+if (!window.Promise) {
+  throw 'window.Promise is undefined, consider using a polyfill';
+}
+return new Promise(function(resolve, reject) {
+  try {
+    if (__fastpack_cache__[f.name] === undefined) {
+      __fastpack_cache__[f.name] = f();
     }
-  });
+    resolve(__fastpack_cache__[f.name]);
+  } catch (e) {
+    reject(e);
+  }
+});
 }
 "
-      else "")
-    in
+    else "")
+  in
 
-    let%lwt () = Lwt_io.write result_channel header in
-    let%lwt () = Lwt_io.write result_channel dynamic_import_runtime in
-    let%lwt () = Lwt_io.write result_channel bundle in
-    let%lwt () = Lwt_io.write result_channel footer in
-    Lwt.return {
-      Reporter.
-      modules = !total_modules;
-      size = Lwt_io.position result_channel |> Int64.to_int
-    }
-  | _ ->
-    Error.ie "Entry location should be resolved at this point"
+  let%lwt () = Lwt_io.write result_channel header in
+  let%lwt () = Lwt_io.write result_channel dynamic_import_runtime in
+  let%lwt () = Lwt_io.write result_channel bundle in
+  let%lwt () = Lwt_io.write result_channel footer in
+  Lwt.return {
+    Reporter.
+    graph = DependencyGraph.empty ();
+    size = Lwt_io.position result_channel |> Int64.to_int
+  }

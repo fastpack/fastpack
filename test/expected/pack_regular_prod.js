@@ -62,7 +62,7 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = 'index');
+  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
 "prod": function(module, exports, __fastpack_require__, __fastpack_import__) {
@@ -131,6 +131,12 @@ if (false) {} else {}
 
 // bug
 Image.propTypes = {});
+
+},
+"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
+module.exports.__esModule = true;
+__fastpack_require__(/* "./index.js" */ "index");
+
 
 },
 

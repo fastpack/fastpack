@@ -28,4 +28,11 @@ const $e__index__default = function() {
 
 try{$n__index.exports.default = $e__index__default;
 $n__index.exports.__esModule = $n__index.exports.__esModule || true;}catch(_){}
+
+/* $fp$main */
+
+let $n__$fp$main = { id: "$fp$main", exports: {}};
+
+
+try{$n__$fp$main.exports.__esModule = $n__$fp$main.exports.__esModule || true;}catch(_){}
 })()

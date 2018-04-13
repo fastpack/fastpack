@@ -21,7 +21,7 @@ exception ExitOK = PackerUtil.ExitOK
 let string_of_error = PackerUtil.string_of_error
 
 type options = {
-  input : string;
+  entry_points : string list;
   output : string;
   mode : Mode.t;
   node_modules_paths : string list;
@@ -33,19 +33,17 @@ type options = {
   watch : bool;
 }
 
+
 (* TODO: this function may not be needed when tests are ported to Jest *)
-let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~project_dir channel =
+let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_point ~project_dir channel =
   let resolver = NodeResolver.make ~cache ~preprocessor in
-  let%lwt entry_package =
-    resolver.find_package project_dir entry_filename
-  in
   let ctx = { Context.
-    entry_location = None;
-    package = Package.empty;
+    entry_location = Module.Main [entry_point];
+    project_package = Package.empty;
     project_dir;
     output_dir = "";
     stack = [];
-    current_location = None;
+    current_location = Module.Main [entry_point];
     mode;
     target;
     resolver;
@@ -54,46 +52,30 @@ let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_filename ~project_dir
     graph = DependencyGraph.empty ();
   }
   in
-  let%lwt entry_location, _ =
-    resolve ctx entry_package {
-      Module.Dependency.
-      request = entry_filename;
-      requested_from = EntryPoint;
-    }
-  in
   let ctx = {
     ctx with
-    entry_location = Some entry_location;
-    current_location = Some entry_location
+    current_location = ctx.entry_location
   } in
   pack_f cache ctx channel
 
-let find_package_root start_dir =
-  let rec check_dir dir =
-    match dir with
-    | "/" -> Lwt.return_none
-    | _ ->
-      let package_json = FilePath.concat dir "package.json" in
-      if%lwt Lwt_unix.file_exists package_json
-      then Lwt.return_some dir
-      else check_dir (FilePath.dirname dir)
-  in
-  check_dir start_dir
-
-let read_package_json_options _ =
-  Lwt.return_none
-
 let prepare_and_pack options start_time =
-  let%lwt current_dir = Lwt_unix.getcwd () in
-  let%lwt project_dir =
-    match%lwt find_package_root current_dir with
-    | Some dir -> Lwt.return dir
-    | None -> Lwt.return current_dir
+  let%lwt project_dir = Lwt_unix.getcwd () in
+  let%lwt entry_points =
+    options.entry_points
+    |> Lwt_list.map_p
+      (fun entry_point ->
+        let abs_path = FS.abs_path project_dir entry_point in
+        match%lwt FS.stat_option abs_path with
+        | Some { st_kind = Unix.S_REG; _ } ->
+          Lwt.return ("./" ^ (FS.relative_path project_dir abs_path))
+        | _ ->
+          Lwt.return entry_point
+      )
   in
-  let entry_filename = FS.abs_path current_dir options.input in
-  let output_dir = FS.abs_path current_dir options.output in
+
+  let output_dir = FS.abs_path project_dir options.output in
   let output_file = FilePath.concat output_dir "index.js" in
-  let%lwt () = makedirs output_dir in
+  let%lwt () = FS.makedirs output_dir in
   let%lwt preprocessor =
     Preprocessor.make
       options.preprocess
@@ -110,16 +92,8 @@ let prepare_and_pack options start_time =
       let%lwt cache, cache_report =
         match options.cache with
         | Cache.Use ->
-          let short_filename =
-            entry_filename
-            |> FS.relative_path project_dir
-            |> String.replace ~sub:"/" ~by:"__"
-            |> String.replace ~sub:"." ~by:"___"
-          in
           let filename =
             String.concat "-" [
-              short_filename;
-              Target.to_string options.target;
               project_dir |> Digest.string |> Digest.to_hex;
               Version.github_commit
             ]
@@ -144,19 +118,24 @@ let prepare_and_pack options start_time =
       in
       Lwt.return (cache, cache_report, RegularPacker.pack)
   in
-  let get_context current_filename =
+  let%lwt project_package, _ =
+    cache.find_package_for_filename project_dir (FilePath.concat project_dir "package.json")
+  in
+  let entry_location = Module.Main entry_points in
+  let get_context current_location =
     let resolver = NodeResolver.make ~cache ~preprocessor in
-    let%lwt entry_package =
-      resolver.find_package project_dir entry_filename
+    let current_location =
+      match current_location with
+      | None -> entry_location
+      | Some current_location -> current_location
     in
-    let%lwt package = resolver.find_package project_dir current_filename in
-    let ctx = {
+    Lwt.return {
       Context.
-      entry_location = None;
-      current_location = None;
+      entry_location;
+      current_location;
       project_dir;
+      project_package;
       output_dir;
-      package;
       stack = [];
       mode = options.mode;
       target = options.target;
@@ -164,26 +143,6 @@ let prepare_and_pack options start_time =
       preprocessor;
       export_finder = ExportFinder.make ();
       graph = DependencyGraph.empty ()
-    }
-    in
-    let%lwt entry_location, _ =
-      resolve ctx entry_package {
-        Module.Dependency.
-        request = entry_filename;
-        requested_from = EntryPoint;
-      }
-    in
-    let%lwt current_location, _ =
-      resolve ctx package {
-        Module.Dependency.
-        request = current_filename;
-        requested_from = EntryPoint;
-      }
-    in
-    Lwt.return {
-      ctx with
-      entry_location = Some entry_location;
-      current_location = Some current_location;
     }
   in
   let pack_postprocess cache ctx ch =
@@ -246,7 +205,7 @@ let prepare_and_pack options start_time =
          then Lwt_unix.unlink temp_file;
       )
   in
-  let%lwt ctx = get_context entry_filename in
+  let%lwt ctx = get_context None in
   let init_run () =
     Lwt.catch
       (fun () -> pack_postprocess_report ~report ~cache ~ctx start_time)
@@ -259,7 +218,7 @@ let prepare_and_pack options start_time =
   in
   Lwt.finalize
     (fun () ->
-       let%lwt {Reporter. modules; _} = init_run () in
+       let%lwt {Reporter. graph; _} = init_run () in
        match options.watch with
        | false ->
          Lwt.return_unit
@@ -269,10 +228,8 @@ let prepare_and_pack options start_time =
            Watcher.watch
              ~pack:pack_postprocess_report
              ~cache
-             ~graph:ctx.graph
-             ~modules
+             ~graph
              ~project_dir
-             ~entry_filename
              get_context
          | _ ->
            (* TODO: noop warning*)

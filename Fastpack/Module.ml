@@ -1,3 +1,5 @@
+module M = Map.Make(String)
+module StringSet = Set.Make(String)
 module FS = FastpackUtil.FS
 
 
@@ -8,9 +10,11 @@ type state = Initial
 type file_location = {
   filename : string option;
   preprocessors: (string * string) list;
+
 }
 
-type location = Runtime
+type location = Main of string list
+              | Runtime
               | EmptyModule
               | File of file_location
 
@@ -42,7 +46,9 @@ let location_to_string ?(base_dir=None) location =
       | _ -> filename
   in
   match location with
-  | File { filename; preprocessors } ->
+  | Main _ ->
+    "$fp$main"
+  | File { filename; preprocessors; _ } ->
     let preprocessors =
       preprocessors
       |> List.map
@@ -59,9 +65,9 @@ let location_to_string ?(base_dir=None) location =
     in
     if preprocessors <> "" then preprocessors ^ "!" ^ filename else filename
   | EmptyModule ->
-    "__empty_module__"
+    "$fp$empty"
   | Runtime ->
-    "__fastpack_runtime__"
+    "$fp$runtime"
 
 module CM = Map.Make(Char)
 
@@ -78,10 +84,12 @@ let allowed_chars =
 
 let make_id base_dir location =
   match location with
+  | Main _ ->
+    "$fp$main"
   | EmptyModule ->
-    "builtin$$COLON$$__empty_module__"
+    "$fp$empty"
   | Runtime ->
-    "builtin$$COLON$$__fastpack_runtime__"
+    "$fp$runtime"
   | File _ ->
     let fix_chars s =
       let fix_char c =
@@ -119,7 +127,10 @@ let make_id base_dir location =
 
 
 let resolved_file filename =
-  File {filename = Some filename; preprocessors = []}
+  File {
+    filename = Some filename;
+    preprocessors = [];
+  }
 
 module Dependency = struct
   type t = {
@@ -127,21 +138,16 @@ module Dependency = struct
     request : string;
 
     (** The filename this dependency was requested from *)
-    requested_from : requested_from;
+    requested_from : location;
   }
-  and requested_from = | EntryPoint
-                       | Location of location
 
   let compare = Pervasives.compare
 
 
   let to_string ?(dir=None) { request; requested_from } =
     let requested_from =
-      match requested_from with
-      | EntryPoint -> ""
-      | Location location ->
-        location_to_string ~base_dir:dir location
-        |> Printf.sprintf " from module: %s"
+      location_to_string ~base_dir:dir requested_from
+      |> Printf.sprintf " from module: %s"
     in
     Printf.sprintf "'%s'%s" request requested_from
 end
@@ -151,6 +157,11 @@ module DependencyMap = Map.Make(struct
     let compare = Pervasives.compare
   end)
 
+module LocationSet = Set.Make(struct
+    let compare = Pervasives.compare
+    type t = location
+  end)
+
 type t = {
   (** Opaque module id *)
   id : string;
@@ -158,8 +169,13 @@ type t = {
   (** Absolute module filename *)
   location : location;
 
+  package : Package.t;
+
   (** List of resolved dependencies, populated for cached modules *)
   resolved_dependencies : (Dependency.t * location) list;
+
+  (** Mapping of filename to digest *)
+  build_dependencies : string M.t;
 
   (** If module is analyzed when packing *)
   state : state;
