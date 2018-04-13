@@ -142,7 +142,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
 
       let rec process (ctx : Context.t) graph (m : Module.t) =
 
-        let ctx = { ctx with current_location = Some m.location } in
+        let ctx = { ctx with current_location = m.location } in
 
         let analyze module_id location source =
           debug (fun m -> m "Analyzing: %s" (Module.location_to_string location));
@@ -706,7 +706,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           let module_type = get_module_type stmts in
           Visit.visit handler program;
           add_exports (module_type = Module.ESM || module_type = Module.CJS_esModule);
-          if (Some location = ctx.entry_location) then add_target_export ();
+          if location = ctx.entry_location then add_target_export ();
 
           !used_imports
           |> M.bindings
@@ -909,54 +909,51 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         total_modules := StringSet.(of_list new_modules |> union !total_modules);
         Lwt.return_unit
   in
-  match ctx.entry_location with
-  | Some entry_location ->
-    let%lwt () = pack ctx entry_location MDM.empty in
+  let {Context. entry_location; _} = ctx in
+  let%lwt () = pack ctx entry_location MDM.empty in
 
-    let bundle = channel
-      |> Lwt_io.position
-      |> Int64.to_int
-      |> Lwt_bytes.extract bytes 0
-      |> Lwt_bytes.to_string
-    in
+  let bundle = channel
+    |> Lwt_io.position
+    |> Int64.to_int
+    |> Lwt_bytes.extract bytes 0
+    |> Lwt_bytes.to_string
+  in
 
-    let header, footer = (
-      match ctx.target with
-      | Target.Application -> "(function() {\n", "})()\n"
-      | Target.CommonJS -> "", ""
-      | Target.ESM -> "", ""
-    )
-    in
-    let dynamic_import_runtime = (if !has_dynamic_modules then
+  let header, footer = (
+    match ctx.target with
+    | Target.Application -> "(function() {\n", "})()\n"
+    | Target.CommonJS -> "", ""
+    | Target.ESM -> "", ""
+  )
+  in
+  let dynamic_import_runtime = (if !has_dynamic_modules then
 "var __fastpack_cache__ = {};
 
 function __fastpack_import__(f) {
-  if (!window.Promise) {
-    throw 'window.Promise is undefined, consider using a polyfill';
-  }
-  return new Promise(function(resolve, reject) {
-    try {
-      if (__fastpack_cache__[f.name] === undefined) {
-        __fastpack_cache__[f.name] = f();
-      }
-      resolve(__fastpack_cache__[f.name]);
-    } catch (e) {
-      reject(e);
+if (!window.Promise) {
+  throw 'window.Promise is undefined, consider using a polyfill';
+}
+return new Promise(function(resolve, reject) {
+  try {
+    if (__fastpack_cache__[f.name] === undefined) {
+      __fastpack_cache__[f.name] = f();
     }
-  });
+    resolve(__fastpack_cache__[f.name]);
+  } catch (e) {
+    reject(e);
+  }
+});
 }
 "
-      else "")
-    in
+    else "")
+  in
 
-    let%lwt () = Lwt_io.write result_channel header in
-    let%lwt () = Lwt_io.write result_channel dynamic_import_runtime in
-    let%lwt () = Lwt_io.write result_channel bundle in
-    let%lwt () = Lwt_io.write result_channel footer in
-    Lwt.return {
-      Reporter.
-      modules = !total_modules;
-      size = Lwt_io.position result_channel |> Int64.to_int
-    }
-  | _ ->
-    Error.ie "Entry location should be resolved at this point"
+  let%lwt () = Lwt_io.write result_channel header in
+  let%lwt () = Lwt_io.write result_channel dynamic_import_runtime in
+  let%lwt () = Lwt_io.write result_channel bundle in
+  let%lwt () = Lwt_io.write result_channel footer in
+  Lwt.return {
+    Reporter.
+    graph = DependencyGraph.empty ();
+    size = Lwt_io.position result_channel |> Int64.to_int
+  }

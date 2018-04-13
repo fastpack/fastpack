@@ -1,6 +1,5 @@
 
 Project Directory: /.../test/error-parse
-Entry Point: $fp$main
 Mode: production
 Call Stack:
 	'./a' from module: index.js	

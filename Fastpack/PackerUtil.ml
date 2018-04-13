@@ -1,4 +1,5 @@
 module StringSet = Set.Make(String)
+module M = Map.Make(String)
 
 module Ast = FlowParser.Ast
 module Loc = FlowParser.Loc
@@ -190,8 +191,8 @@ module Context = struct
     project_dir : string;
     project_package : Package.t;
     output_dir : string;
-    entry_location : Module.location option;
-    current_location : Module.location option;
+    entry_location : Module.location;
+    current_location : Module.location;
     stack : Module.Dependency.t list;
     mode : Mode.t;
     target : Target.t;
@@ -201,27 +202,22 @@ module Context = struct
     graph : DependencyGraph.t;
   }
 
-  let to_string { entry_location; project_dir; stack; mode; current_location; _ } =
+  let to_string { project_dir; stack; mode; current_location; _ } =
     let stack =
       stack
       |> List.map (Module.Dependency.to_string ~dir:(Some project_dir))
       |> String.concat "\t\n"
     in
-    let location_of_opt location =
-      match location with
-      | Some location ->
-        Module.location_to_string ~base_dir:(Some project_dir) location
-      | None ->
-        "(not yet resolved)"
+    let location_str =
+      Module.location_to_string ~base_dir:(Some project_dir) current_location
     in
     Printf.([
         sprintf "Project Directory: %s" project_dir;
-        sprintf "Entry Point: %s" (location_of_opt entry_location);
         sprintf "Mode: %s" (Mode.to_string mode);
         "Call Stack:" ^ if stack <> ""
                         then sprintf "\n\t%s" stack
                         else " (empty)";
-        sprintf "Processing Module: %s" (location_of_opt current_location);
+        sprintf "Processing Module: %s" location_str;
       ])
     |> List.fold_left
       (fun acc part -> if part <> "" then acc ^ part ^ "\n" else acc)
@@ -301,6 +297,7 @@ let read_module
       location;
       package;
       resolved_dependencies = [];
+      build_dependencies = M.empty;
       module_type = Module.CJS;
       files = [];
       state = Initial;
@@ -381,16 +378,23 @@ let read_module
       in
 
       let%lwt m = make_module location source in
+      let%lwt build_dependencies =
+        Lwt_list.fold_left_s
+          (fun build_dependencies filename ->
+             let%lwt { digest; _ }, _ = cache.get_file filename in
+             Lwt.return (M.add filename digest build_dependencies)
+          )
+          M.empty
+          (self_dependency @ build_dependencies)
+      in
       let m = {
         m with
         state = Module.Preprocessed;
-        files
+        files;
+        build_dependencies;
       } in
 
       let () = cache.modify_content m source in
-      let%lwt () =
-        cache.add_build_dependencies m (self_dependency @ build_dependencies)
-      in
       Lwt.return m
 
 

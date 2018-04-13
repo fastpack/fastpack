@@ -1,7 +1,6 @@
 fpack: 
        Project Directory:
        /.../test/error-cannot-find-exported-name
-       Entry Point: $fp$main
        Mode: production
        Call Stack:
        	'./index.js' from module: $fp$main

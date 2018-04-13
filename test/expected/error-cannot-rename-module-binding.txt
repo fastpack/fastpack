@@ -1,6 +1,5 @@
 
 Project Directory: /.../test/error-cannot-rename-module-binding
-Entry Point: $fp$main
 Mode: production
 Call Stack: (empty)
 Processing Module: $fp$main

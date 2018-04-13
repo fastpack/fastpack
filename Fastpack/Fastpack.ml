@@ -38,12 +38,12 @@ type options = {
 let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_point ~project_dir channel =
   let resolver = NodeResolver.make ~cache ~preprocessor in
   let ctx = { Context.
-    entry_location = Some (Module.Main [entry_point]);
+    entry_location = Module.Main [entry_point];
     project_package = Package.empty;
     project_dir;
     output_dir = "";
     stack = [];
-    current_location = None;
+    current_location = Module.Main [entry_point];
     mode;
     target;
     resolver;
@@ -118,18 +118,18 @@ let prepare_and_pack options start_time =
       in
       Lwt.return (cache, cache_report, RegularPacker.pack)
   in
-  let get_context ~current_location () =
+  let%lwt project_package, _ =
+    cache.find_package_for_filename project_dir (FilePath.concat project_dir "package.json")
+  in
+  let entry_location = Module.Main entry_points in
+  let get_context current_location =
     let resolver = NodeResolver.make ~cache ~preprocessor in
-    let%lwt project_package, _ =
-      cache.find_package_for_filename project_dir (FilePath.concat project_dir "package.json")
-    in
-    let entry_location = Some (Module.Main entry_points) in
     let current_location =
-      if current_location <> None
-      then current_location
-      else entry_location
+      match current_location with
+      | None -> entry_location
+      | Some current_location -> current_location
     in
-    let ctx = {
+    Lwt.return {
       Context.
       entry_location;
       current_location;
@@ -144,8 +144,6 @@ let prepare_and_pack options start_time =
       export_finder = ExportFinder.make ();
       graph = DependencyGraph.empty ()
     }
-    in
-    Lwt.return ctx
   in
   let pack_postprocess cache ctx ch =
     match options.postprocess with
@@ -207,7 +205,7 @@ let prepare_and_pack options start_time =
          then Lwt_unix.unlink temp_file;
       )
   in
-  let%lwt ctx = get_context ~current_location:None () in
+  let%lwt ctx = get_context None in
   let init_run () =
     Lwt.catch
       (fun () -> pack_postprocess_report ~report ~cache ~ctx start_time)
@@ -220,7 +218,7 @@ let prepare_and_pack options start_time =
   in
   Lwt.finalize
     (fun () ->
-       let%lwt {Reporter. modules; _} = init_run () in
+       let%lwt {Reporter. graph; _} = init_run () in
        match options.watch with
        | false ->
          Lwt.return_unit
@@ -230,8 +228,7 @@ let prepare_and_pack options start_time =
            Watcher.watch
              ~pack:pack_postprocess_report
              ~cache
-             ~graph:ctx.graph
-             ~modules
+             ~graph
              ~project_dir
              get_context
          | _ ->

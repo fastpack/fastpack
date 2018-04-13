@@ -227,7 +227,7 @@ let make configs base_dir output_dir =
         | Some source ->
           Lwt.return (source, [], [])
       end
-    | Module.File { filename; preprocessors } ->
+    | Module.File { filename; preprocessors; _ } ->
       let rec make_chain preprocessors chain =
         match preprocessors with
         | [] -> chain

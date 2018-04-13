@@ -1,6 +1,5 @@
 
 Project Directory: /.../test/error-cannot-resolve-modules
-Entry Point: $fp$main
 Mode: production
 Call Stack:
 	'./index.js' from module: $fp$main

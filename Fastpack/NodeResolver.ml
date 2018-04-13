@@ -312,8 +312,7 @@ let make
         in
         Lwt.return resolved
 
-      (* TODO: this is sent by webpack loaders, have no idea what to do with it*)
-      | "-" :: rest 
+      | "-" :: rest
       | "" :: "" :: rest
       | "" :: rest ->
         resolve_parts ~preprocess:false rest

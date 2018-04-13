@@ -1,3 +1,5 @@
+module M = Map.Make(String)
+module StringSet = Set.Make(String)
 module FS = FastpackUtil.FS
 
 
@@ -8,6 +10,7 @@ type state = Initial
 type file_location = {
   filename : string option;
   preprocessors: (string * string) list;
+
 }
 
 type location = Main of string list
@@ -45,7 +48,7 @@ let location_to_string ?(base_dir=None) location =
   match location with
   | Main _ ->
     "$fp$main"
-  | File { filename; preprocessors } ->
+  | File { filename; preprocessors; _ } ->
     let preprocessors =
       preprocessors
       |> List.map
@@ -124,7 +127,10 @@ let make_id base_dir location =
 
 
 let resolved_file filename =
-  File {filename = Some filename; preprocessors = []}
+  File {
+    filename = Some filename;
+    preprocessors = [];
+  }
 
 module Dependency = struct
   type t = {
@@ -167,6 +173,9 @@ type t = {
 
   (** List of resolved dependencies, populated for cached modules *)
   resolved_dependencies : (Dependency.t * location) list;
+
+  (** Mapping of filename to digest *)
+  build_dependencies : string M.t;
 
   (** If module is analyzed when packing *)
   state : state;

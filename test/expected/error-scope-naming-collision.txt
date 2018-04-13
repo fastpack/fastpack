@@ -1,6 +1,5 @@
 
 Project Directory: /.../test/error-scope-naming-collision
-Entry Point: $fp$main
 Mode: production
 Call Stack:
 	'./index.js' from module: $fp$main

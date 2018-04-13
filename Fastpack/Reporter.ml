@@ -1,13 +1,13 @@
 module StringSet = Set.Make(String)
 
 type t = {
-  modules : StringSet.t;
+  graph : DependencyGraph.t;
   size : int;
 }
 
 type report = | JSON | Text
 
-let report_string ?(cache=None) ?(mode=None) start_time { modules; size } =
+let report_string ?(cache=None) ?(mode=None) start_time { graph; size } =
   let pretty_size =
     Printf.(
       if size >= 1048576
@@ -34,17 +34,18 @@ let report_string ?(cache=None) ?(mode=None) start_time { modules; size } =
     "Packed in %.3fs. Bundle: %s. Modules: %d. %s%s\n"
     (Unix.gettimeofday () -. start_time)
     pretty_size
-    (modules |> StringSet.elements |> List.length)
+    (DependencyGraph.length graph)
     cache
     mode
   |> Lwt_io.write Lwt_io.stdout
 
-let report_json _start_time { modules; _ } =
+let report_json _start_time { graph; _ } =
   let open Yojson.Basic
   in
-  let modulePaths = modules
-    |> StringSet.elements
-    |> List.map (fun d -> `String d)
+  let modulePaths =
+    graph
+    |> DependencyGraph.map_modules (fun location_str _ -> `String location_str)
+    |> List.sort Pervasives.compare
   in
     `Assoc [
       ("modulesPaths", `List modulePaths)

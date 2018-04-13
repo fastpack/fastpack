@@ -2,19 +2,19 @@
 var __fastpack_cache__ = {};
 
 function __fastpack_import__(f) {
-  if (!window.Promise) {
-    throw 'window.Promise is undefined, consider using a polyfill';
-  }
-  return new Promise(function(resolve, reject) {
-    try {
-      if (__fastpack_cache__[f.name] === undefined) {
-        __fastpack_cache__[f.name] = f();
-      }
-      resolve(__fastpack_cache__[f.name]);
-    } catch (e) {
-      reject(e);
+if (!window.Promise) {
+  throw 'window.Promise is undefined, consider using a polyfill';
+}
+return new Promise(function(resolve, reject) {
+  try {
+    if (__fastpack_cache__[f.name] === undefined) {
+      __fastpack_cache__[f.name] = f();
     }
-  });
+    resolve(__fastpack_cache__[f.name]);
+  } catch (e) {
+    reject(e);
+  }
+});
 }
 
 /* b */

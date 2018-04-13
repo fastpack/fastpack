@@ -595,7 +595,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
 
   (* Gather dependencies *)
   let rec process (ctx : Context.t) graph (m : Module.t) =
-    let ctx = { ctx with current_location = Some m.location } in
+    let ctx = { ctx with current_location = m.location } in
     let m, dependencies =
       if m.state <> Module.Analyzed
       then begin
@@ -626,26 +626,38 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let%lwt m =
       if m.state <> Module.Analyzed
       then begin
-        let%lwt resolved_dependencies =
+        let%lwt dependencies =
           Lwt_list.map_p
             (fun req ->
                let%lwt resolved, build_dependencies =
                  resolve ctx m.package req
                in
-               let%lwt () =
-                 match resolved with
-                 | Module.File _ ->
-                   cache.add_build_dependencies m build_dependencies
-                 | Module.Main _
-                 | Module.EmptyModule
-                 | Module.Runtime ->
-                   Lwt.return_unit
-               in
-               Lwt.return (req, resolved)
+               Lwt.return ((req, resolved), build_dependencies)
             )
+          dependencies
+        in
+        let%lwt resolved_dependencies, build_dependencies =
+          Lwt_list.fold_left_s
+            (fun (resolved, build) (r, b) ->
+               let%lwt build =
+                 Lwt_list.fold_left_s
+                   (fun build filename ->
+                      let%lwt { digest; _ }, _ = cache.get_file filename in
+                      Lwt.return (M.add filename digest build)
+                   )
+                   build
+                   b
+               in
+               Lwt.return (r :: resolved, build)
+            )
+            ([], m.build_dependencies)
             dependencies
         in
-        Lwt.return { m with resolved_dependencies }
+        Lwt.return {
+          m with
+          resolved_dependencies = List.rev resolved_dependencies;
+          build_dependencies
+        }
       end
       else
         Lwt.return m
@@ -787,9 +799,12 @@ process = { env: {} };
             ()
         in
         let () =
-          DependencyGraph.add_module
-            graph
-            { m with workspace = Workspace.of_string content }
+          match m.workspace.Workspace.patches with
+          | [] -> ()
+          | _ ->
+            DependencyGraph.add_module
+              graph
+              { m with workspace = Workspace.of_string content }
         in
         let%lwt () = emit "\n},\n" in
         Lwt.return_unit
@@ -811,29 +826,27 @@ process = { env: {} };
     Lwt.return_unit
   in
 
-  match ctx.entry_location, ctx.current_location with
-  | Some entry_location, Some current_location ->
-    let%lwt entry = read_module ~ctx ~cache current_location in
-    let%lwt _ = process ctx ctx.graph entry in
-    let entry_location_str = Module.location_to_string entry_location in
-    let global_entry =
-      match DependencyGraph.lookup_module ctx.graph entry_location_str with
-      | Some m -> m
-      | None -> Error.ie (entry_location_str ^ " not found in the graph")
-    in
-    let%lwt _ = emit ctx.graph global_entry in
+  let {Context. entry_location; current_location; _ } = ctx in
+  let%lwt entry = read_module ~ctx ~cache current_location in
+  let%lwt _ = process ctx ctx.graph entry in
+  let entry_location_str = Module.location_to_string entry_location in
+  let global_entry =
+    match DependencyGraph.lookup_module ctx.graph entry_location_str with
+    | Some m -> m
+    | None -> Error.ie (entry_location_str ^ " not found in the graph")
+  in
+  let%lwt _ = emit ctx.graph global_entry in
+  let emitted_modules =
+    Module.LocationSet.fold
+      (fun location acc ->
+        StringSet.add (Module.location_to_string location) acc
+      )
+      !emitted_modules
+      StringSet.empty
+  in
 
-    Lwt.return {
-      Reporter.
-      modules =
-        MLSet.fold
-          (fun location acc ->
-            StringSet.add (Module.location_to_string location) acc
-          )
-          !emitted_modules
-          StringSet.empty
-      ;
-      size = Lwt_io.position channel |> Int64.to_int
-    }
-  | _ ->
-    Error.ie "Entry and current location are not resolved at this point"
+  Lwt.return {
+    Reporter.
+    graph = DependencyGraph.cleanup ctx.graph emitted_modules;
+    size = Lwt_io.position channel |> Int64.to_int
+  }
