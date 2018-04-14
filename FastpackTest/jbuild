@@ -1,0 +1,19 @@
+(library
+ ((name FastpackTest)
+  (library_flags (-linkall))
+  (libraries (re re.posix Fastpack FastpackUtil FastpackTranspiler lwt lwt.unix ppx_inline_test.runtime-lib))
+  (flags (:standard "-open" "Containers"))
+  (modules (:standard \ Test_runner))
+  (preprocess (pps (lwt.ppx ppx_expect ppx_inline_test ppxlib.runner)))
+  )
+ )
+
+(executable
+ ((name test_runner)
+  (modules (test_runner))
+  (libraries (FastpackTest ppx_expect.evaluator ppx_inline_test.runner.lib))))
+
+(alias
+ ((name    runtest)
+  (deps    (test_runner.exe))
+  (action  (chdir ${ROOT} (run ${<} inline-test-runner FastpackTest -diff-cmd  "git --no-pager diff --no-index --color")))))
