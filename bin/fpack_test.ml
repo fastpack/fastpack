@@ -94,15 +94,7 @@ let pack_transpile_flat_prod =
     Fastpack.FlatPacker.pack
 
 let tests = [
-  Test ("transpile-object-spread.js", "", transpile);
-  Test ("transpile-class.js", "", transpile);
-  Test ("transpile-react-jsx.js", "", transpile);
-  Test ("transpile-strip-flow.js", "", transpile);
-  Test ("print.js", "", print ~with_scope:false);
-  Test ("print-with-scope.js", "", print ~with_scope:true);
-  Test ("pack/index.js", "pack.js", pack_regular_prod);
-  Test ("pack_flat/index.js", "pack_flat.js", pack_flat_prod);
-  Test ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat_prod);
+  (**)Test ("pack_flat_collisions/index.js", "pack_flat_collisions.js", pack_flat_prod);
   Test ("pack_mode/index.js", "pack_regular_prod.js", pack_regular_prod);
   Test ("pack_mode/index.js", "pack_regular_dev.js", pack_regular_dev);
   Test ("pack_all_static/index.js", "pack_flat_all_static.js", pack_flat_prod);

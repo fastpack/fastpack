@@ -76,10 +76,10 @@ let make
 
   (** Try to resolve an absolute path with different extensions *)
   let resolve_extensionless_path path =
-    match%lwt resolve_path path with
+    match%lwt resolve_path (path ^ ".js") with
     | Some _ as res -> Lwt.return res
     | None ->
-      match%lwt resolve_path (path ^ ".js") with
+      match%lwt resolve_path path with
       | Some _ as res -> Lwt.return res
       | None -> resolve_path (path ^ ".json")
   in
