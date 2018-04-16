@@ -11,3 +11,8 @@ fpack-test
 test/**/build*
 *.corrected
 *.tmp_corrected
+test/tmp_output
+test/tmp_stdout.txt
+test/tmp_stdout.txt.backup
+test/tmp_stderr.txt
+test/tmp_stderr.txt.backup
