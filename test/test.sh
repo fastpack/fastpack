@@ -61,6 +61,9 @@ for file in `ls $tests_dir/*/*.sh | grep "$pattern"`; do
     fi
     if [ -e $output_dir ] && ! [ "$mode" == "update" ]; then
         if [ "$result" -eq "0" ] && [ "$(echo $test_name | grep stdout)" ]; then
+            echo "HELLO"
+            [ -e "$tmp_dir" ] && echo "$tmp_dir exists"
+            [ -e "$tmp_stdout" ] && echo "$tmp_stdout exists"
             mv $tmp_stdout "$tmp_dir/stdout.txt"
         fi
         if $diff_cmd $output_dir $tmp_dir; then
