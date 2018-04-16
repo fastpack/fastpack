@@ -6,7 +6,7 @@ build:
 	@esy build
 
 build-dev:
-	@esy b jbuilder build --dev FastpackTest/test_runner.exe
+	@esy b jbuilder build --dev bin/fpack.exe
 
 install:
 	@esy install
@@ -34,10 +34,6 @@ clean-test:
 	|| echo "Cleanup tests: done"
 
 test-integration: build-dev
-	echo "$$(pwd)"
-	ls -l _build
-	ls -l _build/default
-	ls -l _build/default/bin
 	@test/test.sh $(pattern)
 
 train-integration: build-dev
