@@ -34,6 +34,8 @@ clean-test:
 	|| echo "Cleanup tests: done"
 
 test-integration: build-dev
+	echo "$$(pwd)"
+	[ -e "$$(pwd)/_build/default/bin/fpack.exe" ] && echo "fpack.exe exists"
 	@test/test.sh $(pattern)
 
 train-integration: build-dev
