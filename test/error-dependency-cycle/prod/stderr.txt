@@ -1,0 +1,15 @@
+fpack: 
+       Project Directory:
+       /.../test/error-dependency-cycle
+       Mode: production
+       Call Stack: (empty)
+       Processing Module: $fp$main
+       
+       Dependency cycle detected:
+       	a.js
+       	c.js
+       	b.js
+       	a.js
+       	index.js
+       	$fp$main
+       

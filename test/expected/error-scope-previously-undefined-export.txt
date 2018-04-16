@@ -1,8 +1,0 @@
-
-Project Directory: /.../test/error-scope-previously-undefined-export
-Mode: production
-Call Stack:
-	'./index.js' from module: $fp$main
-Processing Module: index.js
-
-Cannot export previously undefined name 'a'

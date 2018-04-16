@@ -1,0 +1,12 @@
+fpack: 
+       Project Directory: /.../test/error-parse
+       Mode: development
+       Call Stack:
+       	'./a' from module: index.js	
+       './index.js' from module: $fp$main
+       Processing Module: a.js
+       
+       Parse Error
+       File: a.js
+       	(1:15) - (1:16): Unexpected token ;
+       
