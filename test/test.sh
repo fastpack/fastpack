@@ -6,7 +6,8 @@ tests_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 pattern="${1:-}"
 base_dir=`dirname $tests_dir`
 mode=`basename $0 .sh`
-fpack_bin="../../_build/default/bin/fpack.exe"
+fpack_bin="$base_dir/_build/default/bin/fpack.exe"
+
 
 if which colordiff >/dev/null; then
     diff_cmd="colordiff -r"
@@ -30,6 +31,11 @@ NC="\033[0m"
 report() {
     printf "$1$2${NC} $3\n"
 }
+
+if ! [ -e "$fpack_bin" ]; then
+    report $ERROR "fpack binary does not exist: $fpack_bin" ""
+    exit 1
+fi
 
 tmp_dir="$tests_dir/tmp_output"
 tmp_stdout="$tests_dir/tmp_stdout.txt"
@@ -61,9 +67,6 @@ for file in `ls $tests_dir/*/*.sh | grep "$pattern"`; do
     fi
     if [ -e $output_dir ] && ! [ "$mode" == "update" ]; then
         if [ "$result" -eq "0" ] && [ "$(echo $test_name | grep stdout)" ]; then
-            echo "HELLO"
-            [ -e "$tmp_dir" ] && echo "$tmp_dir exists"
-            [ -e "$tmp_stdout" ] && echo "$tmp_stdout exists"
             mv $tmp_stdout "$tmp_dir/stdout.txt"
         fi
         if $diff_cmd $output_dir $tmp_dir; then
