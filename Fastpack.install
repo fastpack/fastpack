@@ -77,8 +77,6 @@ lib: [
 ]
 bin: [
   "_build/install/default/bin/fpack" {"fpack"}
-  "_build/install/default/bin/fpack_test" {"fpack_test"}
-  "_build/install/default/bin/fpack_print" {"fpack_print"}
 ]
 doc: [
   "_build/install/default/doc/Fastpack/README.md"
