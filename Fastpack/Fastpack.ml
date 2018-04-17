@@ -17,9 +17,6 @@ exception PackError = PackerUtil.PackError
 exception ExitError = PackerUtil.ExitError
 exception ExitOK = PackerUtil.ExitOK
 
-(* TODO: this makes fpack_test happy, remove when fpack_test is removed *)
-let string_of_error = PackerUtil.string_of_error
-
 type options = {
   entry_points : string list;
   output : string;
@@ -33,30 +30,6 @@ type options = {
   watch : bool;
 }
 
-
-(* TODO: this function may not be needed when tests are ported to Jest *)
-let pack ~pack_f ~cache ~mode ~target ~preprocessor ~entry_point ~project_dir channel =
-  let resolver = NodeResolver.make ~cache ~preprocessor in
-  let ctx = { Context.
-    entry_location = Module.Main [entry_point];
-    project_package = Package.empty;
-    project_dir;
-    output_dir = "";
-    stack = [];
-    current_location = Module.Main [entry_point];
-    mode;
-    target;
-    resolver;
-    export_finder = ExportFinder.make ();
-    preprocessor;
-    graph = DependencyGraph.empty ();
-  }
-  in
-  let ctx = {
-    ctx with
-    current_location = ctx.entry_location
-  } in
-  pack_f cache ctx channel
 
 let prepare_and_pack options start_time =
   let%lwt project_dir = Lwt_unix.getcwd () in
