@@ -9,6 +9,7 @@ module Preprocessor = Preprocessor
 module Reporter = Reporter
 module RegularPacker = RegularPacker
 module FlatPacker = FlatPacker
+module Watcher = Watcher
 
 
 open PackerUtil

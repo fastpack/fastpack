@@ -71,8 +71,18 @@ let remove_module graph (m : Module.t) =
   Hashtbl.filter_map_inplace remove graph.dependencies;
   Hashtbl.filter_map_inplace remove_files graph.files
 
-let get_modules_by_filename graph filename =
-  Hashtbl.find_all graph.files filename
+let get_modules_by_filenames graph filenames =
+  List.fold_left
+    (fun modules filename ->
+       List.fold_left
+         (fun modules m -> M.add m.Module.id m modules)
+         modules
+         (Hashtbl.find_all graph.files filename)
+    )
+    M.empty
+    filenames
+  |> M.bindings
+  |> List.map snd
 
 let cleanup graph emitted_modules =
   let keep location_str value =

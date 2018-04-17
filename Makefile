@@ -11,7 +11,7 @@ build-dev:
 install:
 	@esy install
 
-test:
+test: build-dev
 	@esy jbuilder runtest --dev
 
 setup-test:
