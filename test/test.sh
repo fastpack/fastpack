@@ -6,7 +6,8 @@ tests_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 pattern="${1:-}"
 base_dir=`dirname $tests_dir`
 mode=`basename $0 .sh`
-fpack_bin="../../_build/default/bin/fpack.exe"
+fpack_bin="$base_dir/_build/default/bin/fpack.exe"
+
 
 if which colordiff >/dev/null; then
     diff_cmd="colordiff -r"
@@ -15,7 +16,7 @@ else
 fi
 
 if [ "$(uname -s)" == "Darwin" ]; then
-    sed_cmd="sed -i ''"
+    sed_cmd="sed -i .backup"
 else
     sed_cmd="sed -i"
 fi
@@ -31,11 +32,21 @@ report() {
     printf "$1$2${NC} $3\n"
 }
 
+if ! [ -e "$fpack_bin" ]; then
+    report $ERROR "fpack binary does not exist: $fpack_bin" ""
+    exit 1
+fi
+
+tmp_dir="$tests_dir/tmp_output"
+tmp_stdout="$tests_dir/tmp_stdout.txt"
+tmp_stderr="$tests_dir/tmp_stdout.txt"
+
+
 for file in `ls $tests_dir/*/*.sh | grep "$pattern"`; do
+    rm -rf $tmp_dir
+    rm -rf $tmp_stdout
+    rm -rf $tmp_stderr
     title="$(dirname $file | xargs basename)/$(basename $file)"
-    tmp_dir=`mktemp -d -t XXXfpack`
-    tmp_stdout=`mktemp -t XXXfpack-stdout`
-    tmp_stderr=`mktemp -t XXXfpack-stderr`
     test_dir=`dirname $file`
     test_name=`basename $file .sh`
     rm -rf "$test_dir/.cache"

@@ -10,13 +10,14 @@ os:
 node_js:
   - "8"
 install:
-  - travis_retry npm install -g esy@next
+  - travis_retry npm install -g esy@0.1.9
   - travis_retry make fetch install
-  - travis_wait make build-dev
+  - travis_wait 40 make build-dev
   - travis_wait make setup-test
 script:
   - make test
   - make test-integration
 cache:
+  timeout: 1000
   directories:
   - $HOME/.esy/

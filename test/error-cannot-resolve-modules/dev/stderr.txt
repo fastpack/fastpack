@@ -1,0 +1,11 @@
+
+Project Directory: /.../test/error-cannot-resolve-modules
+Mode: development
+Call Stack:
+	'./index.js' from module: $fp$main
+Processing Module: index.js
+
+Cannot resolve module:
+	/.../test/error-cannot-resolve-modules/c
+While processing dependency request:
+	'./c' from module: index.js

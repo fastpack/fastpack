@@ -1,4 +1,4 @@
-FPACK_TEST_PATH = "$(shell pwd)/test"
+.PHONY: test
 
 b: build
 
@@ -6,18 +6,13 @@ build:
 	@esy build
 
 build-dev:
-	@esy b jbuilder build --dev bin/fpack.exe bin/fpack_test.exe bin/fpack_print.exe test/test_runner.exe
+	@esy b jbuilder build --dev bin/fpack.exe
 
 install:
 	@esy install
 
-train: build-dev
-	@#@esy x fpack_test --train $(FPACK_TEST_PATH)
-	@_build/default/bin/fpack_test.exe --train $(FPACK_TEST_PATH)
-
-test: build-dev
-	@#@esy x fpack_test $(FPACK_TEST_PATH)
-	@_build/default/bin/fpack_test.exe $(FPACK_TEST_PATH)
+test:
+	@esy jbuilder runtest --dev
 
 setup-test:
 	cd test && for TEST in `ls`; \

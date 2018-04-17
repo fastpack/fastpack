@@ -230,6 +230,17 @@
   peerDependencies:
     ocaml " >= 4.2.3000"
 
+"@opam/jbuilder@1.0.0+beta20":
+  version "1.0.0-beta20"
+  uid "1648206284a54407f6eee01ed950fff7"
+  resolved "@opam/jbuilder@1.0.0-beta20-1648206284a54407f6eee01ed950fff7.tgz"
+  dependencies:
+    "@esy-ocaml/esy-installer" "^0.0.0"
+    "@esy-ocaml/substs" "^0.0.1"
+    "@opam/ocamlfind" "*"
+  peerDependencies:
+    ocaml " >= 4.2.3000"
+
 "@opam/lambda-term@ >= 1.2.0":
   version "1.12.0"
   uid "318456db287041f877e89e7098a12312"

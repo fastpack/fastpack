@@ -39,6 +39,19 @@ let () =
         `Ok (Fastpack.pack_main options time)
       with
       | Fastpack.ExitError message ->
+        Lwt_main.run (Lwt_io.(write stderr message));
+        (* supress the default behaviour of the cmdliner, since it does a lot
+         * of smart stuff *)
+        Format.(
+          pp_set_formatter_out_functions
+            err_formatter
+            { out_string = (fun _ _ _ -> ());
+              out_flush = (fun () -> ());
+              out_newline = (fun () -> ());
+              out_spaces = (fun _ -> ());
+              out_indent = (fun _ -> ());
+            }
+        );
         `Error (false, message)
       | Fastpack.ExitOK ->
         `Ok ()
