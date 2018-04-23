@@ -66,25 +66,13 @@ process = { env: {} };
 })
 ({
 "NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts": function(module, exports, __fastpack_require__, __fastpack_import__) {
-"use strict";
-function render() {
-    document.body.innerHTML = "<h1> Hello World from TypeScript!</h1>";
-}
-module.exports = render;
-
+eval("\"use strict\";\nfunction render() {\n    document.body.innerHTML = \"<h1> Hello World from TypeScript!</h1>\";\n}\nmodule.exports = render;\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!render.ts");
 },
 "NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts": function(module, exports, __fastpack_require__, __fastpack_import__) {
-"use strict";
-exports.__esModule = true;
-var render = __fastpack_require__(/* "./render.ts" */ "NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts");
-render();
-
+eval("\"use strict\";\nexports.__esModule = true;\nvar render = __fastpack_require__(/* \"./render.ts\" */ \"NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts\");\nrender();\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!index.ts");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.ts" */ "NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.ts\" */ \"NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

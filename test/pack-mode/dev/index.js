@@ -66,78 +66,16 @@ process = { env: {} };
 })
 ({
 "dev": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports = {dev: true};
-
+eval("module.exports = {dev: true};\n\n//# sourceURL=fpack:///dev.js");
 },
 "prod": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports = {prod: true};
-
+eval("module.exports = {prod: true};\n\n//# sourceURL=fpack:///prod.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-
-let p;
-
-// if-then-no-else
-{}
-
-{}
-
-{}
-
-{}
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-// if-then-else
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-
-// alternative statement
-p = __fastpack_require__(/* "./dev" */ "dev");
-
-// logical AND expression
-if ("development" == "production" && x && y && z)
-  p = __fastpack_require__(/* "./prod" */ "prod");
-else
-  p = __fastpack_require__(/* "./dev" */ "dev");
-
-// conditional operator
-p = __fastpack_require__(/* "./dev" */ "dev");
-console.log("development");
-
-// bug
-if (true) {} else {}
-if (false) {} else {console.log("dev!")}
-
-// bug
-Image.propTypes = call());
-
+eval("\nlet p;\n\n// if-then-no-else\n{}\n\n{}\n\n{}\n\n{}\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\n// if-then-else\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\n\n// alternative statement\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\n// logical AND expression\nif (\"development\" == \"production\" && x && y && z)\n  p = __fastpack_require__(/* \"./prod\" */ \"prod\");\nelse\n  p = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\n// conditional operator\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\nconsole.log(\"development\");\n\n// bug\nif (true) {} else {}\nif (false) {} else {console.log(\"dev!\")}\n\n// bug\nImage.propTypes = call());\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.js" */ "index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

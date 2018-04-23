@@ -66,107 +66,22 @@ process = { env: {} };
 })
 ({
 "$fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
-
-function applyDecorator(decorator, proto, property, descriptor) {
-  var ret = decorator(proto, property, descriptor);
-  // TODO: assert all descriptor properties;
-  return ret;
-}
-
-function decorateProperty(cls, property, decorators) {
-  var proto = cls.prototype;
-  var descriptor = Object.assign(
-    {},
-    Object.getOwnPropertyDescriptor(proto, property)
-  );
-
-  for(var i = 0, reversed = decorators.reverse(), l = reversed.length;
-      i < l;
-      i++) {
-    descriptor = applyDecorator(reversed[i], proto, property, descriptor);
-  }
-
-  Object.defineProperty(proto, property, descriptor);
-}
-
-module.exports = {
-  omitProps: function(target, props) {
-    var ret = {};
-    for(var prop in target) {
-      if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {
-        ret[prop] = target[prop];
-      }
-    }
-    return ret;
-  },
-
-  defineClass: function(cls, statics, classDecorators, propertyDecorators) {
-    for(var i = 0, l = propertyDecorators.length; i < l; i++) {
-      decorateProperty(cls,
-                       propertyDecorators[i].method,
-                       propertyDecorators[i].decorators);
-    }
-
-    for(var i = 0, l = statics.length; i < l; i++) {
-      Object.defineProperty(cls, statics[i].name, {
-        configurable: true,
-        enumerable: true,
-        writable: true,
-        value: statics[i].value
-      })
-    }
-
-    var _cls = cls;
-    classDecorators = classDecorators.reverse();
-    for(var i = 0; i < classDecorators.length; i++) {
-      _cls = classDecorators[i](_cls);
-    }
-    return _cls;
-  }
-};
-
+eval("\nfunction applyDecorator(decorator, proto, property, descriptor) {\n  var ret = decorator(proto, property, descriptor);\n  // TODO: assert all descriptor properties;\n  return ret;\n}\n\nfunction decorateProperty(cls, property, decorators) {\n  var proto = cls.prototype;\n  var descriptor = Object.assign(\n    {},\n    Object.getOwnPropertyDescriptor(proto, property)\n  );\n\n  for(var i = 0, reversed = decorators.reverse(), l = reversed.length;\n      i < l;\n      i++) {\n    descriptor = applyDecorator(reversed[i], proto, property, descriptor);\n  }\n\n  Object.defineProperty(proto, property, descriptor);\n}\n\nmodule.exports = {\n  omitProps: function(target, props) {\n    var ret = {};\n    for(var prop in target) {\n      if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {\n        ret[prop] = target[prop];\n      }\n    }\n    return ret;\n  },\n\n  defineClass: function(cls, statics, classDecorators, propertyDecorators) {\n    for(var i = 0, l = propertyDecorators.length; i < l; i++) {\n      decorateProperty(cls,\n                       propertyDecorators[i].method,\n                       propertyDecorators[i].decorators);\n    }\n\n    for(var i = 0, l = statics.length; i < l; i++) {\n      Object.defineProperty(cls, statics[i].name, {\n        configurable: true,\n        enumerable: true,\n        writable: true,\n        value: statics[i].value\n      })\n    }\n\n    var _cls = cls;\n    classDecorators = classDecorators.reverse();\n    for(var i = 0; i < classDecorators.length; i++) {\n      _cls = classDecorators[i](_cls);\n    }\n    return _cls;\n  }\n};\n\n//# sourceURL=fpack:///$fp$runtime");
 },
 "builtin$$B$$ExportDefaultNamedClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
-let C = $__fpack__.defineClass(class C {
-    
-  }, [{"name": "prop", "value": 'ExportDefaultNamedClass'}], [], []);
-exports.default = C;
-
+eval("module.exports.__esModule = true;\nconst $__fpack__ = __fastpack_require__(/* \"$fp$runtime\" */ \"$fp$runtime\");\nlet C = $__fpack__.defineClass(class C {\n    \n  }, [{\"name\": \"prop\", \"value\": 'ExportDefaultNamedClass'}], [], []);\nexports.default = C;\n\n//# sourceURL=fpack:///builtin!ExportDefaultNamedClass.js");
 },
 "builtin$$B$$ExportDefaultClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
-exports.default = $__fpack__.defineClass(class  {
-  
-}, [{"name": "prop", "value": 'ExportDefaultClass'}], [], []);
-;
-
+eval("module.exports.__esModule = true;\nconst $__fpack__ = __fastpack_require__(/* \"$fp$runtime\" */ \"$fp$runtime\");\nexports.default = $__fpack__.defineClass(class  {\n  \n}, [{\"name\": \"prop\", \"value\": 'ExportDefaultClass'}], [], []);\n;\n\n//# sourceURL=fpack:///builtin!ExportDefaultClass.js");
 },
 "builtin$$B$$ExportNamedClass": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
-let ExportNamedClass = $__fpack__.defineClass(class ExportNamedClass {
-    
-  }, [{"name": "prop", "value": "ExportNamedClass"}], [], []);;Object.defineProperty(exports, "ExportNamedClass", {get: function() {return ExportNamedClass;}});
-;
-
+eval("module.exports.__esModule = true;\nconst $__fpack__ = __fastpack_require__(/* \"$fp$runtime\" */ \"$fp$runtime\");\nlet ExportNamedClass = $__fpack__.defineClass(class ExportNamedClass {\n    \n  }, [{\"name\": \"prop\", \"value\": \"ExportNamedClass\"}], [], []);;Object.defineProperty(exports, \"ExportNamedClass\", {get: function() {return ExportNamedClass;}});\n;\n\n//# sourceURL=fpack:///builtin!ExportNamedClass.js");
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-const _1__ExportDefaultNamedClass = __fastpack_require__(/* "./ExportDefaultNamedClass" */ "builtin$$B$$ExportDefaultNamedClass");
-const _2__ExportDefaultClass = __fastpack_require__(/* "./ExportDefaultClass" */ "builtin$$B$$ExportDefaultClass");
-const _3__ExportNamedClass = __fastpack_require__(/* "./ExportNamedClass" */ "builtin$$B$$ExportNamedClass");
-console.log(_1__ExportDefaultNamedClass.default.prop);
-console.log(_2__ExportDefaultClass.default.prop);
-
+eval("module.exports.__esModule = true;\nconst _1__ExportDefaultNamedClass = __fastpack_require__(/* \"./ExportDefaultNamedClass\" */ \"builtin$$B$$ExportDefaultNamedClass\");\nconst _2__ExportDefaultClass = __fastpack_require__(/* \"./ExportDefaultClass\" */ \"builtin$$B$$ExportDefaultClass\");\nconst _3__ExportNamedClass = __fastpack_require__(/* \"./ExportNamedClass\" */ \"builtin$$B$$ExportNamedClass\");\nconsole.log(_1__ExportDefaultNamedClass.default.prop);\nconsole.log(_2__ExportDefaultClass.default.prop);\n\n//# sourceURL=fpack:///builtin!index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.js" */ "builtin$$B$$index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"builtin$$B$$index\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

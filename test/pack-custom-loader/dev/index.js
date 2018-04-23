@@ -66,41 +66,19 @@ process = { env: {} };
 })
 ({
 "custom$$_$$loaderDOT$$js$$B$$": function(module, exports, __fastpack_require__, __fastpack_import__) {
-
-document.body.innerHTML = document.body.innerHTML
-+ "<div>Source: " + "empty" + ". Query: .</div>";
-module.exports = {};
-  
+eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" + \"empty\" + \". Query: .</div>\";\nmodule.exports = {};\n  \n//# sourceURL=fpack:///custom-loader.js!");
 },
 "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$": function(module, exports, __fastpack_require__, __fastpack_import__) {
-
-document.body.innerHTML = document.body.innerHTML
-+ "<div>Source: " + "empty" + ". Query: ?bool=true.</div>";
-module.exports = {};
-  
+eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" + \"empty\" + \". Query: ?bool=true.</div>\";\nmodule.exports = {};\n  \n//# sourceURL=fpack:///custom-loader.js?bool=true!");
 },
 "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-
-document.body.innerHTML = document.body.innerHTML
-+ "<div>Source: " + "not empty" + ". Query: ?bool=true.</div>";
-module.exports = {};
-  
+eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" + \"not empty\" + \". Query: ?bool=true.</div>\";\nmodule.exports = {};\n  \n//# sourceURL=fpack:///custom-loader.js?bool=true!index.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./custom-loader!" */ "custom$$_$$loaderDOT$$js$$B$$");
-
-__fastpack_require__(/* "./custom-loader?bool=true!" */ "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$");
-
-__fastpack_require__(/* "./custom-loader?bool=true!./index.js" */ "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./custom-loader!\" */ \"custom$$_$$loaderDOT$$js$$B$$\");\n\n__fastpack_require__(/* \"./custom-loader?bool=true!\" */ \"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$\");\n\n__fastpack_require__(/* \"./custom-loader?bool=true!./index.js\" */ \"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index\");\n\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.js" */ "index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

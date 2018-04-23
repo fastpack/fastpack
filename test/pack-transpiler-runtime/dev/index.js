@@ -66,128 +66,13 @@ process = { env: {} };
 })
 ({
 "$fp$runtime": function(module, exports, __fastpack_require__, __fastpack_import__) {
-
-function applyDecorator(decorator, proto, property, descriptor) {
-  var ret = decorator(proto, property, descriptor);
-  // TODO: assert all descriptor properties;
-  return ret;
-}
-
-function decorateProperty(cls, property, decorators) {
-  var proto = cls.prototype;
-  var descriptor = Object.assign(
-    {},
-    Object.getOwnPropertyDescriptor(proto, property)
-  );
-
-  for(var i = 0, reversed = decorators.reverse(), l = reversed.length;
-      i < l;
-      i++) {
-    descriptor = applyDecorator(reversed[i], proto, property, descriptor);
-  }
-
-  Object.defineProperty(proto, property, descriptor);
-}
-
-module.exports = {
-  omitProps: function(target, props) {
-    var ret = {};
-    for(var prop in target) {
-      if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {
-        ret[prop] = target[prop];
-      }
-    }
-    return ret;
-  },
-
-  defineClass: function(cls, statics, classDecorators, propertyDecorators) {
-    for(var i = 0, l = propertyDecorators.length; i < l; i++) {
-      decorateProperty(cls,
-                       propertyDecorators[i].method,
-                       propertyDecorators[i].decorators);
-    }
-
-    for(var i = 0, l = statics.length; i < l; i++) {
-      Object.defineProperty(cls, statics[i].name, {
-        configurable: true,
-        enumerable: true,
-        writable: true,
-        value: statics[i].value
-      })
-    }
-
-    var _cls = cls;
-    classDecorators = classDecorators.reverse();
-    for(var i = 0; i < classDecorators.length; i++) {
-      _cls = classDecorators[i](_cls);
-    }
-    return _cls;
-  }
-};
-
+eval("\nfunction applyDecorator(decorator, proto, property, descriptor) {\n  var ret = decorator(proto, property, descriptor);\n  // TODO: assert all descriptor properties;\n  return ret;\n}\n\nfunction decorateProperty(cls, property, decorators) {\n  var proto = cls.prototype;\n  var descriptor = Object.assign(\n    {},\n    Object.getOwnPropertyDescriptor(proto, property)\n  );\n\n  for(var i = 0, reversed = decorators.reverse(), l = reversed.length;\n      i < l;\n      i++) {\n    descriptor = applyDecorator(reversed[i], proto, property, descriptor);\n  }\n\n  Object.defineProperty(proto, property, descriptor);\n}\n\nmodule.exports = {\n  omitProps: function(target, props) {\n    var ret = {};\n    for(var prop in target) {\n      if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {\n        ret[prop] = target[prop];\n      }\n    }\n    return ret;\n  },\n\n  defineClass: function(cls, statics, classDecorators, propertyDecorators) {\n    for(var i = 0, l = propertyDecorators.length; i < l; i++) {\n      decorateProperty(cls,\n                       propertyDecorators[i].method,\n                       propertyDecorators[i].decorators);\n    }\n\n    for(var i = 0, l = statics.length; i < l; i++) {\n      Object.defineProperty(cls, statics[i].name, {\n        configurable: true,\n        enumerable: true,\n        writable: true,\n        value: statics[i].value\n      })\n    }\n\n    var _cls = cls;\n    classDecorators = classDecorators.reverse();\n    for(var i = 0; i < classDecorators.length; i++) {\n      _cls = classDecorators[i](_cls);\n    }\n    return _cls;\n  }\n};\n\n//# sourceURL=fpack:///$fp$runtime");
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const $__fpack__ = __fastpack_require__(/* "$fp$runtime" */ "$fp$runtime");
-function decorator1(proto, property, descriptor) {
-  let oldValue = descriptor.value;
-  descriptor.value = function () {
-    let ret = oldValue.call(this);
-    return `@decorator1 ${ret}`;
-    
-  }
-  ;
-  return descriptor;
-  
-}
-function decorator2(proto, property, descriptor) {
-  let oldValue = descriptor.value;
-  descriptor.value = function () {
-    let ret = oldValue.call(this);
-    return `@decorator2 ${ret}`;
-    
-  }
-  ;
-  return descriptor;
-  
-}
-function classDecorator1(cls) {
-  cls.staticProp = `@classDecorator1 ${cls.staticProp}`;
-  return cls;
-  
-}
-function classDecorator2(cls) {
-  cls.staticProp = `@classDecorator2 ${cls.staticProp}`;
-  return cls;
-  
-}
-let Test = $__fpack__.defineClass(class Test {
-    constructor( ...args) {
-      Object.defineProperty(this, "prop", {"configurable": true, "enumerable": true, "writable": true, "value": "instance property"});
-      
-    }
-    
-    method() {
-      return "method";
-      
-    }
-    
-  }, [{"name": "staticProp", "value": "class property"}], [classDecorator2, classDecorator1], [{"method": "method", "decorators": [decorator2, decorator1]}]);
-let __fpack__1 = {test: new Test(), a: 1, b: 2, c: 3},
-  {test} = __fpack__1,
-  rest = $__fpack__.omitProps(__fpack__1, ["test"]);
-document.body.innerHTML = `
-<div>Static property: <b>${Test.staticProp}</b></div>
-<div>Property: <b>${test.prop}</b></div>
-<div>method: <b>${test.method()}</b></div>
-<div>...rest: <b>${JSON.stringify(rest)}</b></div>
-`;
-
+eval("const $__fpack__ = __fastpack_require__(/* \"$fp$runtime\" */ \"$fp$runtime\");\nfunction decorator1(proto, property, descriptor) {\n  let oldValue = descriptor.value;\n  descriptor.value = function () {\n    let ret = oldValue.call(this);\n    return `@decorator1 ${ret}`;\n    \n  }\n  ;\n  return descriptor;\n  \n}\nfunction decorator2(proto, property, descriptor) {\n  let oldValue = descriptor.value;\n  descriptor.value = function () {\n    let ret = oldValue.call(this);\n    return `@decorator2 ${ret}`;\n    \n  }\n  ;\n  return descriptor;\n  \n}\nfunction classDecorator1(cls) {\n  cls.staticProp = `@classDecorator1 ${cls.staticProp}`;\n  return cls;\n  \n}\nfunction classDecorator2(cls) {\n  cls.staticProp = `@classDecorator2 ${cls.staticProp}`;\n  return cls;\n  \n}\nlet Test = $__fpack__.defineClass(class Test {\n    constructor( ...args) {\n      Object.defineProperty(this, \"prop\", {\"configurable\": true, \"enumerable\": true, \"writable\": true, \"value\": \"instance property\"});\n      \n    }\n    \n    method() {\n      return \"method\";\n      \n    }\n    \n  }, [{\"name\": \"staticProp\", \"value\": \"class property\"}], [classDecorator2, classDecorator1], [{\"method\": \"method\", \"decorators\": [decorator2, decorator1]}]);\nlet __fpack__1 = {test: new Test(), a: 1, b: 2, c: 3},\n  {test} = __fpack__1,\n  rest = $__fpack__.omitProps(__fpack__1, [\"test\"]);\ndocument.body.innerHTML = `\n<div>Static property: <b>${Test.staticProp}</b></div>\n<div>Property: <b>${test.prop}</b></div>\n<div>method: <b>${test.method()}</b></div>\n<div>...rest: <b>${JSON.stringify(rest)}</b></div>\n`;\n\n//# sourceURL=fpack:///builtin!index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.js" */ "builtin$$B$$index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"builtin$$B$$index\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

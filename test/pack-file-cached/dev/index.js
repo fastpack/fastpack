@@ -66,19 +66,13 @@ process = { env: {} };
 })
 ({
 "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports = "./5d5d9eefa31e5e13a6610d9fa7a283bb.svg";
+eval("module.exports = \"./5d5d9eefa31e5e13a6610d9fa7a283bb.svg\";\n//# sourceURL=fpack:///node_modules/file-loader/dist/cjs.js?publicPath=./!logo.svg");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-const _1_file_loader_publicPath_logo_svg = __fastpack_require__(/* "file-loader?publicPath=./!./logo.svg" */ "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg");const _1_file_loader_publicPath_logo_svg__default = _1_file_loader_publicPath_logo_svg.__esModule ? _1_file_loader_publicPath_logo_svg.default : _1_file_loader_publicPath_logo_svg;
-document.body.innerHTML = '<img src="' + _1_file_loader_publicPath_logo_svg__default + '"/>';
-
+eval("module.exports.__esModule = true;\nconst _1_file_loader_publicPath_logo_svg = __fastpack_require__(/* \"file-loader?publicPath=./!./logo.svg\" */ \"NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg\");const _1_file_loader_publicPath_logo_svg__default = _1_file_loader_publicPath_logo_svg.__esModule ? _1_file_loader_publicPath_logo_svg.default : _1_file_loader_publicPath_logo_svg;\ndocument.body.innerHTML = '<img src=\"' + _1_file_loader_publicPath_logo_svg__default + '\"/>';\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.js" */ "index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

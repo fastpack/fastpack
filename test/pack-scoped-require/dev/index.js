@@ -66,33 +66,13 @@ process = { env: {} };
 })
 ({
 "dep": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-exports.default = "dep.js";
-
+eval("module.exports.__esModule = true;\nexports.default = \"dep.js\";\n\n//# sourceURL=fpack:///dep.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-var dep = __fastpack_require__(/* "./dep" */ "dep");
-
-function f(require) {
-  return require("./dep");
-}
-
-function g() {
-  var s = f(x => x);
-  var dep2 = __fastpack_require__(/* "./dep" */ "dep");
-  document.body.innerHTML = `Imported: ${dep.default} Imported: ${
-    dep2.default
-  } Untouched: ${s}`;
-}
-
-g();
-
+eval("var dep = __fastpack_require__(/* \"./dep\" */ \"dep\");\n\nfunction f(require) {\n  return require(\"./dep\");\n}\n\nfunction g() {\n  var s = f(x => x);\n  var dep2 = __fastpack_require__(/* \"./dep\" */ \"dep\");\n  document.body.innerHTML = `Imported: ${dep.default} Imported: ${\n    dep2.default\n  } Untouched: ${s}`;\n}\n\ng();\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.js" */ "index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

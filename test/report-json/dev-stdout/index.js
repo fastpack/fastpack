@@ -66,25 +66,16 @@ process = { env: {} };
 })
 ({
 "dep2": function(module, exports, __fastpack_require__, __fastpack_import__) {
-
+eval("\n//# sourceURL=fpack:///dep2.js");
 },
 "dep1": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./dep2.js" */ "dep2");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./dep2.js\" */ \"dep2\");\n\n\n//# sourceURL=fpack:///dep1.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./dep1.js" */ "dep1");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./dep1.js\" */ \"dep1\");\n\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.js" */ "index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

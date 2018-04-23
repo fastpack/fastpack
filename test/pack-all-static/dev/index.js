@@ -66,51 +66,16 @@ process = { env: {} };
 })
 ({
 "b": function(module, exports, __fastpack_require__, __fastpack_import__) {
-console.log('side effect of b');
-module.exports = function() {console.log('b')};
-
+eval("console.log('side effect of b');\nmodule.exports = function() {console.log('b')};\n\n//# sourceURL=fpack:///b.js");
 },
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const b = __fastpack_require__(/* "./b" */ "b");
-
-module.exports = function() {
-  console.log('b in a');
-  b();
-};
-
+eval("const b = __fastpack_require__(/* \"./b\" */ \"b\");\n\nmodule.exports = function() {\n  console.log('b in a');\n  b();\n};\n\n//# sourceURL=fpack:///a.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-const a = __fastpack_require__(/* "./a" */ "a");
-
-(function() {
-  __fastpack_import__(/* "./b" */ "b").then(b => {
-    console.log('b in promise');
-    b();
-  })
-
-  let b = __fastpack_require__(/* "./b" */ "b");
-  a();
-  console.log('b in index');
-  b();
-})();
-
-/*
-$ node <bundle.js>
-side effect of b
-b in a
-b
-b in index
-b
-b in promise
-b
-*/
-
+eval("const a = __fastpack_require__(/* \"./a\" */ \"a\");\n\n(function() {\n  __fastpack_import__(/* \"./b\" */ \"b\").then(b => {\n    console.log('b in promise');\n    b();\n  })\n\n  let b = __fastpack_require__(/* \"./b\" */ \"b\");\n  a();\n  console.log('b in index');\n  b();\n})();\n\n/*\n$ node <bundle.js>\nside effect of b\nb in a\nb\nb in index\nb\nb in promise\nb\n*/\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-module.exports.__esModule = true;
-__fastpack_require__(/* "./index.js" */ "index");
-
-
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });
