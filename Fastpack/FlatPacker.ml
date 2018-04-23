@@ -27,7 +27,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
   let read_module = read_module ~ctx ~cache in
 
   let bytes = Lwt_bytes.create 50_000_000 in
-  let channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
+  let output_channel = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
   let total_modules = ref (StringSet.empty) in
   let has_dynamic_modules = ref false in
 
@@ -82,7 +82,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           (gen_wrapper_binding entry_location)
           (gen_ext_namespace_binding m.Module.id)
       in
-      Lwt_io.write channel wrapper
+      Lwt_io.write output_channel wrapper
 
     | _ ->
       let resolved_requests = ref DM.empty in
@@ -790,12 +790,17 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       in
 
       let emit graph entry =
-        let emit bytes = Lwt_io.write channel bytes in
+        let emit bytes = Lwt_io.write output_channel bytes in
         let emit_module dep_map (m : Module.t) =
           debug (fun m_ -> m_ "Emitting: %s" (Module.location_to_string m.location));
           let%lwt () = emit_module_files ctx m in
           let%lwt () = emit (Printf.sprintf "\n/* %s */\n\n" m.id) in
-          let%lwt _ = Workspace.write channel m.Module.workspace (m, dep_map) in
+          let%lwt _ =
+            Workspace.write
+              ~output_channel
+              ~workspace:m.Module.workspace
+              ~ctx:(m, dep_map)
+          in
           Lwt.return_unit
         in
 
@@ -912,7 +917,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
   let {Context. entry_location; _} = ctx in
   let%lwt () = pack ctx entry_location MDM.empty in
 
-  let bundle = channel
+  let bundle = output_channel
     |> Lwt_io.position
     |> Int64.to_int
     |> Lwt_bytes.extract bytes 0

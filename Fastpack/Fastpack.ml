@@ -97,7 +97,13 @@ let prepare_and_pack options start_time =
   in
   let entry_location = Module.Main entry_points in
   let get_context current_location =
-    let resolver = NodeResolver.make ~cache ~preprocessor in
+    let resolver =
+      NodeResolver.make
+        ~project_dir
+        ~node_modules_paths:(options.node_modules_paths)
+        ~cache
+        ~preprocessor
+    in
     let current_location =
       match current_location with
       | None -> entry_location

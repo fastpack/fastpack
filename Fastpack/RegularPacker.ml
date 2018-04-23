@@ -14,7 +14,7 @@ let debug = Logs.debug
 
 let re_name = Re.Posix.compile_pat "[^A-Za-z0-9_]+"
 
-let pack (cache : Cache.t) (ctx : Context.t) channel =
+let pack (cache : Cache.t) (ctx : Context.t) output_channel =
 
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
   let%lwt () =
@@ -24,6 +24,11 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
               ^ "for the regular packer - use flat\n"
       )))
     else Lwt.return_unit
+  in
+
+  let modifier s =
+    let json = Yojson.to_string (`String s) in
+    String.(sub json 1 (length json - 2))
   in
 
   let analyze _id location source =
@@ -37,7 +42,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
     let module L = Ast.Literal in
 
     let dependencies = ref [] in
-    let workspace = ref (Workspace.of_string source) in
+    let workspace = ref (Workspace.of_string ~modifier:(Some modifier) source) in
     let ({Workspace.
           patch;
           patch_with;
@@ -605,7 +610,7 @@ let pack (cache : Cache.t) (ctx : Context.t) channel =
           | true ->
             let workspace =
               Printf.sprintf "module.exports = %s;" source
-              |> Workspace.of_string
+              |> Workspace.of_string ~modifier:(Some modifier)
             in
             (workspace, [], Scope.empty, Scope.empty_exports, Module.CJS)
           | false ->
@@ -759,7 +764,7 @@ process = { env: {} };
 
   let emitted_modules = ref (MLSet.empty) in
   let emit graph entry =
-    let emit bytes = Lwt_io.write channel bytes in
+    let emit bytes = Lwt_io.write output_channel bytes in
     let rec emit_module (m : Module.t) =
       if MLSet.mem m.location !emitted_modules
       then Lwt.return_unit
@@ -784,12 +789,21 @@ process = { env: {} };
             dependencies
         in
         let%lwt () =
-          emit
-          @@ Printf.sprintf
-            "\"%s\": function(module, exports, __fastpack_require__, __fastpack_import__) {\n"
-            m.id
+          m.id
+          |> Printf.sprintf "\"%s\": function(module, exports, __fastpack_require__, __fastpack_import__) {\n"
+          |> emit
         in
-        let%lwt content = Workspace.write channel workspace (m, dep_map) in
+        let%lwt () = emit "eval(\"" in
+        let%lwt content =
+          Workspace.write
+            ~output_channel
+            ~workspace
+            ~ctx:(m, dep_map) in
+        let%lwt () =
+          Module.location_to_string ~base_dir:(Some ctx.project_dir) m.location
+          |> Printf.sprintf "\\n//# sourceURL=fpack:///%s\");"
+          |> emit
+        in
         let m = { m with state = Module.Analyzed } in
         let () =
           match m.location with
@@ -799,9 +813,9 @@ process = { env: {} };
             ()
         in
         let () =
-          match m.workspace.Workspace.patches with
-          | [] -> ()
-          | _ ->
+          match m.workspace.Workspace.modifier with
+          | None -> ()
+          | Some _ ->
             DependencyGraph.add_module
               graph
               { m with workspace = Workspace.of_string content }
@@ -819,7 +833,7 @@ process = { env: {} };
         ""
     in
 
-    let%lwt () = emit_runtime channel export entry.Module.id in
+    let%lwt () = emit_runtime output_channel export entry.Module.id in
     let%lwt () = emit "({\n" in
     let%lwt _ = emit_module entry in
     let%lwt () = emit "\n});\n" in
@@ -848,5 +862,5 @@ process = { env: {} };
   Lwt.return {
     Reporter.
     graph = DependencyGraph.cleanup ctx.graph emitted_modules;
-    size = Lwt_io.position channel |> Int64.to_int
+    size = Lwt_io.position output_channel |> Int64.to_int
   }

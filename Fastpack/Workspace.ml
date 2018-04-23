@@ -15,6 +15,9 @@ type 'ctx t = {
 
   (* List of patches sorted in desceding order *)
   patches: 'ctx patch list;
+
+  (* Function to be applied to the module text or patch results *)
+  modifier : (string -> string) option;
 }
 
 and 'ctx patch = {
@@ -43,8 +46,8 @@ type 'ctx patcher = {
   sub_loc : Loc.t -> string;
 }
 
-let of_string s =
-  { value = s; patches = []; }
+let of_string ?(modifier=None) s =
+  { value = s; patches = []; modifier }
 
 let patch w p =
   { w with patches = p::w.patches }
@@ -58,11 +61,20 @@ let print_patches patches =
   print_endline "---";
   patches
 
-let write out w ctx =
-  match w.patches with
+let write
+    ~(output_channel : Lwt_io.output_channel)
+    ~(workspace : 'a t)
+    ~(ctx : 'a) =
+  let modify =
+    match workspace.modifier with
+    | None -> fun s -> s
+    | Some modifier -> modifier
+  in
+  match workspace.patches with
   | [] ->
-    let%lwt () = Lwt_io.write out w.value in
-    Lwt.return w.value
+    let value = modify workspace.value in
+    let%lwt () = Lwt_io.write output_channel value in
+    Lwt.return value
   | _ ->
     let fold_patches patches =
       (* The idea behind this key function is:
@@ -98,7 +110,7 @@ let write out w ctx =
       List.rev folded
     in
 
-    let patches = fold_patches w.patches in
+    let patches = fold_patches workspace.patches in
     (* let () = print_endline w.value in *)
     (* let () = print_endline "----" in *)
     (* let _ = print_patches patches in *)
@@ -108,24 +120,37 @@ let write out w ctx =
       | [] ->
         let u_length = UTF8.length value - u_offset in
         let chunk = UTF8.sub value u_offset u_length in
-        let%lwt () = Lwt_io.write_from_string_exactly out value b_offset (String.length chunk) in
-        Lwt.return (content ^ chunk)
+        let modified = modify chunk in
+        let%lwt () =
+          Lwt_io.write output_channel modified
+        in
+        Lwt.return (content ^ modified)
+        (* let%lwt () = *)
+        (*   Lwt_io.write_from_string_exactly *)
+        (*     output_channel *)
+        (*     value *)
+        (*     b_offset *)
+        (*     (String.length chunk) *)
+        (* in *)
+        (* Lwt.return (content ^ chunk) *)
       | patch :: patches ->
         let u_length = patch.offset_start - u_offset in
         let chunk = UTF8.sub value u_offset u_length in
+        let modified_chunk = modify chunk in
         let b_length = String.length chunk in
-        let%lwt () = Lwt_io.write_from_string_exactly out value b_offset b_length in
-        let patch_content = patch.patch ctx in
-        let%lwt () = Lwt_io.write out patch_content in
+        let%lwt () = Lwt_io.write output_channel modified_chunk in
+        (* let%lwt () = Lwt_io.write_from_string_exactly output_channel value b_offset b_length in *)
+        let patch_content = patch.patch ctx |> modify in
+        let%lwt () = Lwt_io.write output_channel patch_content in
         let patched_chunk = UTF8.sub value patch.offset_start (patch.offset_end - patch.offset_start) in
         write_patch
           (b_offset + b_length + String.length patched_chunk)
           patch.offset_end
           value
           patches
-          (content ^ chunk ^ patch_content)
+          (content ^ modified_chunk ^ patch_content)
     in
-    write_patch 0 0 w.value patches ""
+    write_patch 0 0 workspace.value patches ""
 
 let to_string w ctx =
   let patches = List.rev w.patches in
