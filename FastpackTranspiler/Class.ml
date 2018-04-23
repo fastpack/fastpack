@@ -169,7 +169,8 @@ module Transform = struct
                           E.Spread (Loc.none, {
                               argument =  AstHelper.e_identifier "args"
                             })
-                        ]
+                        ];
+                        optional = false;
                       };
                     directive = None
                   }

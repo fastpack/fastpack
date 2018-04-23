@@ -346,10 +346,10 @@ and map_expression ctx (loc, expression) =
       let arguments = map_list ctx map_expression_or_spread arguments in
       Expression.New { callee; arguments }
 
-    | Expression.Call { callee; arguments } ->
+    | Expression.Call { callee; arguments; optional } ->
       let callee = map_expression ctx callee in
       let arguments = map_list ctx map_expression_or_spread arguments in
-      Expression.Call { callee; arguments }
+      Expression.Call { callee; arguments; optional }
 
     | Expression.Member ({ _object; property; _ } as n) ->
       let _object = map_expression ctx _object in

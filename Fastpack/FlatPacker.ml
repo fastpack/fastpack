@@ -642,7 +642,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
               (* static imports *)
               | E.Call {
                   callee = (_, E.Identifier (_, "require"));
-                  arguments = [E.Expression (_, E.Literal { value = L.String request; _ })]
+                  arguments = [E.Expression (_, E.Literal { value = L.String request; _ })];
+                  _
                 } ->
                   if (not @@ Scope.has_binding "require" (top_scope ()))
                   then begin

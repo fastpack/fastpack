@@ -60,8 +60,10 @@ module Helper = struct
           computed = false;
           _object = Loc.none, E.Identifier (Loc.none, "Object");
           property = E.Member.PropertyIdentifier (Loc.none, "assign");
+          optional = false;
         };
-      arguments = (E.Expression empty_object_literal)::(List.rev arguments)
+      arguments = (E.Expression empty_object_literal)::(List.rev arguments);
+      optional = false;
     }
 
   let object_omit expr keys =
@@ -72,8 +74,10 @@ module Helper = struct
           computed = false;
           _object = Loc.none, E.Identifier (Loc.none, "$fpack");
           property = E.Member.PropertyIdentifier (Loc.none, "objectOmit");
+          optional = false;
         };
       arguments = [E.Expression expr; E.Expression keys];
+      optional = false;
     }
 
   let object_pattern_key_to_expr = function
