@@ -35,9 +35,11 @@ module Mode = struct
             _object = (_, E.Identifier (_, "process"));
             property = E.Member.PropertyIdentifier (_, "env");
             computed = false;
+            _
           });
           property = E.Member.PropertyIdentifier (_, "NODE_ENV");
           computed = false;
+          _
         });
         operator;
       })
@@ -47,9 +49,11 @@ module Mode = struct
             _object = (_, E.Identifier (_, "process"));
             property = E.Member.PropertyIdentifier (_, "env");
             computed = false;
+            _
           });
           property = E.Member.PropertyIdentifier (_, "NODE_ENV");
           computed = false;
+          _
         });
         right = (_, E.Literal { value = L.String value; _});
         operator;
@@ -166,9 +170,11 @@ module Mode = struct
             _object = (_, E.Identifier (_, "process"));
             property = E.Member.PropertyIdentifier (_, "env");
             computed = false;
+            _
           });
           property = E.Member.PropertyIdentifier (_, "NODE_ENV");
           computed = false;
+          _
         } ->
         patch_loc expr_loc @@ "\"" ^ to_string mode ^ "\"";
         Visit.Break;
@@ -434,7 +440,8 @@ let get_module_type stmts =
               left = (_, P.Expression (_, E.Member {
                   _object = (_, E.Identifier (_, "exports"));
                   property = E.Member.PropertyIdentifier (_, "__esModule");
-                  computed = false
+                  computed = false;
+                  _
                 }));
               right = (_, E.Literal { value = L.Boolean true; _});
           });

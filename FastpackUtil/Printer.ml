@@ -816,13 +816,13 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> emit "("
         |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
         |> emit ")"
-      | E.Call { callee; arguments } ->
+      | E.Call { callee; arguments; _ } ->
         ctx
         |> emit_expression callee
         |> emit "("
         |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
         |> emit ")"
-      | E.Member { _object; property; computed } ->
+      | E.Member { _object; property; computed; _ } ->
         let emit_property property =
           match property with
           | E.Member.PropertyPrivateName name ->

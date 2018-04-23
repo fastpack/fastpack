@@ -286,11 +286,11 @@ and visit_expression ctx ((loc, expression) as expr) =
       visit_expression ctx callee;
       visit_list ctx visit_expression_or_spread arguments
 
-    | E.Call { callee; arguments } ->
+    | E.Call { callee; arguments; _ } ->
       visit_expression ctx callee;
       visit_list ctx visit_expression_or_spread arguments
 
-    | E.Member { _object; property; computed = _computed } ->
+    | E.Member { _object; property; _ } ->
       visit_expression ctx _object;
       begin
       match property with

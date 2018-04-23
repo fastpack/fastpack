@@ -44,6 +44,7 @@ let member _object property =
     _object = _object;
     property = E.Member.PropertyIdentifier (Loc.none, property);
     computed = false;
+    optional = false;
   }
 
 let member_expr _object expr =
@@ -51,12 +52,14 @@ let member_expr _object expr =
     _object = _object;
     property = E.Member.PropertyExpression expr;
     computed = true;
+    optional = false;
   }
 
 let call callee arguments =
   Loc.none, E.Call {
     callee;
     arguments = List.map (fun arg -> E.Expression arg) arguments;
+    optional = false;
   }
 
 let object_ properties =

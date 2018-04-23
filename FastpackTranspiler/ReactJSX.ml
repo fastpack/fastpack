@@ -33,6 +33,7 @@ let transpile _ program =
             _object = loc, aux_object _object;
             property = E.Member.PropertyIdentifier (aux_property property);
             computed = false;
+            optional = false;
           }
       in
 
@@ -46,6 +47,7 @@ let transpile _ program =
             _object = Loc.none, aux_object _object;
             property = E.Member.PropertyIdentifier (aux_property property);
             computed = false;
+            optional = false;
           })
       | NamespacedName (loc, _) ->
         raise (Error.TranspilerError (
@@ -65,8 +67,10 @@ let transpile _ program =
               computed = false;
               _object = Loc.none, E.Identifier (Loc.none, "Object");
               property = E.Member.PropertyIdentifier (Loc.none, "assign");
+              optional = false;
             };
-          arguments = (E.Expression empty_object_literal)::(List.rev arguments)
+          arguments = (E.Expression empty_object_literal)::(List.rev arguments);
+          optional = false;
         }
       in
 
@@ -196,8 +200,10 @@ let transpile _ program =
             computed = false;
             _object = Loc.none, E.Identifier (Loc.none, "React");
             property = E.Member.PropertyIdentifier (Loc.none, "createElement");
+            optional = false;
           };
-        arguments = (transpile_name name)::(transpile_attributes attributes)::(transpile_children children)
+        arguments = (transpile_name name)::(transpile_attributes attributes)::(transpile_children children);
+        optional = false;
       }
 
     and transpile_fragment { frag_openingElement = _; frag_closingElement = _; frag_children } =
@@ -210,6 +216,7 @@ let transpile _ program =
           _object = Loc.none, E.Identifier (Loc.none, "React");
           property = E.Member.PropertyIdentifier (Loc.none, "Fragment");
           computed = false;
+          optional = false;
         })
       in
 
@@ -218,8 +225,10 @@ let transpile _ program =
             computed = false;
             _object = Loc.none, E.Identifier (Loc.none, "React");
             property = E.Member.PropertyIdentifier (Loc.none, "createElement");
+            optional = false;
           };
-        arguments = name::(E.Expression null_expression)::elements
+        arguments = name::(E.Expression null_expression)::elements;
+        optional = false;
       }
     in
 
