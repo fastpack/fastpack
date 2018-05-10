@@ -281,6 +281,7 @@ let read_module
     ~(ctx : Context.t)
     ~(cache : Cache.t)
     (location : Module.location) =
+  debug (fun x -> x "READING: %s" (Module.location_to_string location));
   let make_module location source =
     let%lwt package =
       match location with

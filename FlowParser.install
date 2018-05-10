@@ -95,6 +95,14 @@ lib: [
   "_build/install/default/lib/FlowParser/FlowParser__Token.cmx" {"FlowParser__Token.cmx"}
   "_build/install/default/lib/FlowParser/FlowParser__Token.cmt" {"FlowParser__Token.cmt"}
   "_build/install/default/lib/FlowParser/token.ml" {"token.ml"}
+  "_build/install/default/lib/FlowParser/FlowParser__Token_translator.cmi" {"FlowParser__Token_translator.cmi"}
+  "_build/install/default/lib/FlowParser/FlowParser__Token_translator.cmx" {"FlowParser__Token_translator.cmx"}
+  "_build/install/default/lib/FlowParser/FlowParser__Token_translator.cmt" {"FlowParser__Token_translator.cmt"}
+  "_build/install/default/lib/FlowParser/token_translator.ml" {"token_translator.ml"}
+  "_build/install/default/lib/FlowParser/FlowParser__Translator_intf.cmi" {"FlowParser__Translator_intf.cmi"}
+  "_build/install/default/lib/FlowParser/FlowParser__Translator_intf.cmx" {"FlowParser__Translator_intf.cmx"}
+  "_build/install/default/lib/FlowParser/FlowParser__Translator_intf.cmt" {"FlowParser__Translator_intf.cmt"}
+  "_build/install/default/lib/FlowParser/translator_intf.ml" {"translator_intf.ml"}
   "_build/install/default/lib/FlowParser/FlowParser__Type_parser.cmi" {"FlowParser__Type_parser.cmi"}
   "_build/install/default/lib/FlowParser/FlowParser__Type_parser.cmx" {"FlowParser__Type_parser.cmx"}
   "_build/install/default/lib/FlowParser/FlowParser__Type_parser.cmt" {"FlowParser__Type_parser.cmt"}
