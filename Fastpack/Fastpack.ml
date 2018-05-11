@@ -20,7 +20,8 @@ exception ExitOK = PackerUtil.ExitOK
 
 type options = {
   entry_points : string list;
-  output : string;
+  output_directory : string;
+  output_filename : string;
   mode : Mode.t;
   node_modules_paths : string list;
   target : Target.t;
@@ -47,8 +48,8 @@ let prepare_and_pack options start_time =
       )
   in
 
-  let output_dir = FS.abs_path project_dir options.output in
-  let output_file = FilePath.concat output_dir "index.js" in
+  let output_dir = FS.abs_path project_dir options.output_directory in
+  let output_file = FilePath.concat output_dir options.output_filename in
   let%lwt () = FS.makedirs output_dir in
   let%lwt preprocessor =
     Preprocessor.make
