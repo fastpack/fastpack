@@ -1,0 +1,16 @@
+{
+  "name": "browser-shim-modules",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "browser": {
+    "non-existent-module": false,
+    "tty": "./my-tty-shim.js",
+    "./lib/server.js": "./lib/browser.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,1 @@
+$FPACK --nm ./nm

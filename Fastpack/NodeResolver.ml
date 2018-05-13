@@ -18,16 +18,67 @@ let empty =
   |> StringSet.add "module"
   |> StringSet.add "path"
   |> StringSet.add "fs"
-  |> StringSet.add "tty"
+  |> StringSet.add "domain"
+  |> StringSet.add "console"
+  |> StringSet.add "dns"
+  |> StringSet.add "dgram"
+  |> StringSet.add "timers"
+  |> StringSet.add "crypto"
   |> StringSet.add "net"
   |> StringSet.add "events"
   |> StringSet.add "assert"
   |> StringSet.add "stream"
   |> StringSet.add "constants"
   |> StringSet.add "readable-stream"
+  |> StringSet.add "assert"
+  |> StringSet.add "buffer"
+  |> StringSet.add "child_process"
+  |> StringSet.add "cluster"
+  |> StringSet.add "console"
+  |> StringSet.add "constants"
+  |> StringSet.add "crypto"
+  |> StringSet.add "dgram"
+  |> StringSet.add "dns"
+  |> StringSet.add "domain"
+  |> StringSet.add "events"
+  |> StringSet.add "fs"
+  |> StringSet.add "http"
+  |> StringSet.add "https"
+  |> StringSet.add "module"
+  |> StringSet.add "net"
+  |> StringSet.add "os"
+  |> StringSet.add "path"
+  |> StringSet.add "process"
+  |> StringSet.add "punycode"
+  |> StringSet.add "querystring"
+  |> StringSet.add "readline"
+  |> StringSet.add "repl"
+  |> StringSet.add "stream"
+  |> StringSet.add "string_decoder"
+  |> StringSet.add "sys"
+  |> StringSet.add "timers"
+  |> StringSet.add "tls"
+  |> StringSet.add "url"
+  |> StringSet.add "util"
+  |> StringSet.add "vm"
+  |> StringSet.add "zlib"
 
 let is_empty module_request =
   StringSet.mem module_request empty
+
+let resolve_browser (package : Package.t) (path : string) =
+  match package with
+  | { filename = None; _ } ->
+      None
+  | { filename = Some filename; browser_shim; _ } ->
+    let path = Package.normalize ~package_json_filename:(FilePath.dirname filename) path in
+    match M.get path browser_shim with
+    | None ->
+      None
+    | Some (Shim newPath) ->
+      Some (Module.File { filename = Some newPath; preprocessors = [] })
+    | Some Ignore ->
+      Some Module.EmptyModule
 
 let make
     ~(project_dir : string)
@@ -81,9 +132,12 @@ let make
     match%lwt resolve_path (path ^ ".js") with
     | Some _ as res -> Lwt.return res
     | None ->
-      match%lwt resolve_path path with
+      match%lwt resolve_path (path ^ ".jsx") with
       | Some _ as res -> Lwt.return res
-      | None -> resolve_path (path ^ ".json")
+      | None ->
+        match%lwt resolve_path path with
+        | Some _ as res -> Lwt.return res
+        | None -> resolve_path (path ^ ".json")
   in
 
   let get_package_dependency {Package. filename; _} =
@@ -142,7 +196,7 @@ let make
               end
             | Some path ->
               let path = FS.abs_path package_path path in
-              match Package.resolve_browser package path with
+              match resolve_browser package path with
               | Some resolved ->
                 Lwt.return_some (resolved, dep)
               | None ->
@@ -170,9 +224,21 @@ let make
 
       (* relative module path *)
       | '.' ->
+        (* TODO: make extensions be command-line parameter *)
+        let try_extensions = [".js"; ".json"; ""] in
         let path = FS.abs_path basedir path in
+        let resolved =
+          List.fold_left
+            (fun resolved ext ->
+              match resolved with
+              | Some _ -> resolved
+              | None -> resolve_browser package (path ^ ext)
+            )
+            None
+            try_extensions
+        in
         begin
-          match Package.resolve_browser package path with
+          match resolved with
           | Some resolved ->
             Lwt.return (resolved, get_package_dependency package)
           | None ->
@@ -187,6 +253,7 @@ let make
         end
 
       (* absolute module path *)
+      (* should we be considering "browser" here *)
       | '/' ->
         begin
           match%lwt resolve_extensionless_path path with
@@ -199,7 +266,7 @@ let make
       (* scoped package *)
       | '@' ->
         begin
-          match Package.resolve_browser package path with
+          match resolve_browser package path with
           | Some resolved ->
             Lwt.return (resolved, get_package_dependency package)
           | None ->
@@ -237,7 +304,7 @@ let make
           then
             Lwt.return (Module.Runtime, [])
           else
-            match Package.resolve_browser package path with
+            match resolve_browser package path with
             | Some resolved ->
               Lwt.return (resolved, get_package_dependency package)
             | None ->

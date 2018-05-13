@@ -1,0 +1,12 @@
+{
+  "name": "pack-browser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "entry-point-bad.js",
+  "browser": "entry-point-good.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
