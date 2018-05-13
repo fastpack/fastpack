@@ -115,6 +115,7 @@ let watch
     |> List.rev
   in
   let common_root = common_root (project_dir :: link_paths) in
+  let common_root = if common_root <> "" then common_root else project_dir in
   let%lwt (started_process, ch_in) = start_watchman common_root in
   process := Some started_process;
   let%lwt () = Lwt_io.(
