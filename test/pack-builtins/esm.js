@@ -1,2 +1,1 @@
-import {delimiter} from "path";
-export default delimiter;
+export default "hello, world!";

@@ -11,25 +11,9 @@ type t = {
 
 exception Error of string
 
-let empty =
+let node_libs =
   StringSet.empty
   |> StringSet.add "__empty_module__"
-  |> StringSet.add "os"
-  |> StringSet.add "module"
-  |> StringSet.add "path"
-  |> StringSet.add "fs"
-  |> StringSet.add "domain"
-  |> StringSet.add "console"
-  |> StringSet.add "dns"
-  |> StringSet.add "dgram"
-  |> StringSet.add "timers"
-  |> StringSet.add "crypto"
-  |> StringSet.add "net"
-  |> StringSet.add "events"
-  |> StringSet.add "assert"
-  |> StringSet.add "stream"
-  |> StringSet.add "constants"
-  |> StringSet.add "readable-stream"
   |> StringSet.add "assert"
   |> StringSet.add "buffer"
   |> StringSet.add "child_process"
@@ -51,6 +35,7 @@ let empty =
   |> StringSet.add "process"
   |> StringSet.add "punycode"
   |> StringSet.add "querystring"
+  |> StringSet.add "readable-stream"
   |> StringSet.add "readline"
   |> StringSet.add "repl"
   |> StringSet.add "stream"
@@ -62,9 +47,6 @@ let empty =
   |> StringSet.add "util"
   |> StringSet.add "vm"
   |> StringSet.add "zlib"
-
-let is_empty module_request =
-  StringSet.mem module_request empty
 
 let resolve_browser (package : Package.t) (path : string) =
   match package with
@@ -296,33 +278,29 @@ let make
 
       (* package *)
       | _ ->
-        if is_empty path
+        if path = "$fp$runtime"
         then
-          Lwt.return (Module.EmptyModule, [])
+          Lwt.return (Module.Runtime, [])
         else
-          if path = "$fp$runtime"
-          then
-            Lwt.return (Module.Runtime, [])
-          else
-            match resolve_browser package path with
-            | Some resolved ->
-              Lwt.return (resolved, get_package_dependency package)
+          match resolve_browser package path with
+          | Some resolved ->
+            Lwt.return (resolved, get_package_dependency package)
+          | None ->
+            let package_name, path_in_package =
+              match String.split_on_char '/' path with
+              | [] -> (None, None)
+              | package::[] -> (Some package, None)
+              | package::rest -> (Some package, Some (String.concat "/" rest))
+            in
+            match package_name with
             | None ->
-              let package_name, path_in_package =
-                match String.split_on_char '/' path with
-                | [] -> (None, None)
-                | package::[] -> (Some package, None)
-                | package::rest -> (Some package, Some (String.concat "/" rest))
-              in
-              match package_name with
+              Lwt.fail (Error path)
+            | Some package_name ->
+              match%lwt resolve_package package_name path_in_package basedir with
               | None ->
                 Lwt.fail (Error path)
-              | Some package_name ->
-                match%lwt resolve_package package_name path_in_package basedir with
-                | None ->
-                  Lwt.fail (Error path)
-                | Some resolved ->
-                  Lwt.return resolved
+              | Some resolved ->
+                Lwt.return resolved
 
   in
 

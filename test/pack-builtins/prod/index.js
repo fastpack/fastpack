@@ -64,17 +64,10 @@ $n__$fp$runtime.exports = {
 
 try{$n__$fp$runtime.exports.__esModule = $n__$fp$runtime.exports.__esModule || false;}catch(_){}
 
-/* $fp$empty */
-
-let $n__$fp$empty = { id: "$fp$empty", exports: {}};
-$n__$fp$empty.exports = {};
-try{$n__$fp$empty.exports.__esModule = $n__$fp$empty.exports.__esModule || false;}catch(_){}
-
 /* builtin$$B$$esm */
 
 let $n__builtin$$B$$esm = { id: "builtin$$B$$esm", exports: {}};
-
-const $e__builtin$$B$$esm__default = $n__$fp$empty.exports.delimiter;
+const $e__builtin$$B$$esm__default = "hello, world!";
 
 try{$n__builtin$$B$$esm.exports.default = $e__builtin$$B$$esm__default;
 $n__builtin$$B$$esm.exports.__esModule = $n__builtin$$B$$esm.exports.__esModule || true;}catch(_){}
@@ -83,12 +76,10 @@ $n__builtin$$B$$esm.exports.__esModule = $n__builtin$$B$$esm.exports.__esModule 
 
 let $n__builtin$$B$$index = { id: "builtin$$B$$index", exports: {}};
 const $i__builtin$$B$$index__$__fpack__ = ($n__$fp$runtime.exports);
-const $i__builtin$$B$$index__path = ($n__$fp$empty.exports);
-const $i__builtin$$B$$index__module = ($n__$fp$empty.exports);
 const $i__builtin$$B$$index__esm = ($n__builtin$$B$$esm.exports);
-const {delimiter: $i__builtin$$B$$index__delimiter} = $i__builtin$$B$$index__path,
-  $i__builtin$$B$$index__rest = $i__builtin$$B$$index__$__fpack__.omitProps($i__builtin$$B$$index__path, ["delimiter"]);
-console.log($i__builtin$$B$$index__path, $i__builtin$$B$$index__module, $i__builtin$$B$$index__delimiter, $i__builtin$$B$$index__rest, $i__builtin$$B$$index__esm);
+const {delimiter: $i__builtin$$B$$index__delimiter} = path,
+  $i__builtin$$B$$index__rest = $i__builtin$$B$$index__$__fpack__.omitProps(path, ["delimiter"]);
+console.log(path, $n__builtin$$B$$index, $i__builtin$$B$$index__delimiter, $i__builtin$$B$$index__rest, $i__builtin$$B$$index__esm);
 // The following test makes sure that builtin transpiler strips type annotations
 // from inside JSX
 const $i__builtin$$B$$index__Component = props => React.createElement("div", null, item => {
