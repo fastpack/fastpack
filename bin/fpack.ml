@@ -6,7 +6,8 @@ let () =
 
     let run
         entry_points
-        output
+        output_directory
+        output_filename
         mode
         node_modules_paths
         target
@@ -25,7 +26,8 @@ let () =
         let options =
           { Fastpack.
             entry_points;
-            output;
+            output_directory;
+            output_filename;
             mode;
             node_modules_paths;
             target;
@@ -66,13 +68,22 @@ let () =
       Arg.(value & pos_all string ["."] & info [] ~docv ~doc)
     in
 
-    let output_t =
+    let output_directory_t =
       let doc =
         "Output Directory. "
         ^ "The target bundle will be $(docv)/index.js."
       in
       let docv = "DIR" in
       Arg.(value & opt string "./bundle" & info ["o"; "output"] ~docv ~doc)
+    in
+
+    let output_filename_t =
+      let doc =
+        "Output File Name. "
+        ^ "The target bundle filename will be $(docv)"
+      in
+      let docv = "NAME" in
+      Arg.(value & opt string "index.js" & info ["n"; "name"] ~docv ~doc)
     in
 
     let mode_t =
@@ -179,7 +190,8 @@ let () =
     Term.(ret (
         const run
         $ entry_points_t
-        $ output_t
+        $ output_directory_t
+        $ output_filename_t
         $ mode_t
         $ node_modules_path_t
         $ target_t
