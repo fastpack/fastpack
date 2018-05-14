@@ -49,7 +49,7 @@ let prepare_and_pack options start_time =
   in
 
   let output_dir = FS.abs_path project_dir options.output_directory in
-  let output_file = FilePath.concat output_dir options.output_filename in
+  let output_file = FS.abs_path output_dir options.output_filename in
   let%lwt () = FS.makedirs output_dir in
   let%lwt preprocessor =
     Preprocessor.make
@@ -187,6 +187,19 @@ let prepare_and_pack options start_time =
       )
   in
   let%lwt ctx = get_context None in
+  let () =
+    let output_dir2 = FilePath.dirname output_file in
+    if output_dir = output_dir2
+    || FilePath.is_updir output_dir output_dir2
+    then ()
+    else
+      let error = Error.CliArgumentError
+        ("Output filename must be a subpath of output directory.\n" ^
+        "Output directory:\n  " ^ output_dir ^ "\n" ^
+        "Output filename:\n  " ^ output_file ^ "\n")
+      in
+      raise (ExitError (string_of_error ctx error))
+  in
   let init_run () =
     Lwt.catch
       (fun () -> pack_postprocess_report ~report ~cache ~ctx start_time)
