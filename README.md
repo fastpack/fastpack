@@ -74,8 +74,13 @@ OPTIONS
            Paths to 'node_modules' directory. Should be inside the project
            directory.. Defaults to ['node_modules']
 
-       -o DIR, --output=DIR (absent=./bundle)
-           Output Directory. The target bundle will be DIR/index.js.
+       -n NAME, --name=NAME
+           Output file name. The target bundle will be DIR/NAME.
+           Default: index.js
+
+       -o DIR, --output=DIR
+           Output Directory. The target bundle will be DIR/NAME
+           Default: ./bundle/
 
        --postprocess=COMMAND
            Apply shell command on a bundle file. The content of the bundle
