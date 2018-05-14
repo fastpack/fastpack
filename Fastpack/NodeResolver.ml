@@ -68,9 +68,12 @@ let make
     ~(cache : Cache.t)
     ~(preprocessor : Preprocessor.t) =
 
+  (* TODO: make extensions be command-line parameter *)
+  let try_extensions = [".js"; ".json"; ""] in
+
   (** Try to resolve an absolute path *)
   let resolved_path = ref M.empty in
-  let resolve_path path =
+  let rec resolve_path path =
     match M.get path !resolved_path with
     | Some path ->
       Lwt.return path
@@ -89,7 +92,16 @@ let make
               let%lwt { Package. entry_point; _ }, _ =
                 cache.get_package package_json_path
               in
-              Lwt.return_some (FS.abs_path path entry_point)
+              let entry_point = FS.abs_path path entry_point in
+              begin
+                match%lwt cache.file_stat_opt entry_point with
+                | None ->
+                  resolve_extensionless_path entry_point
+                | Some ({ st_kind = Lwt_unix.S_DIR; _ }, _) ->
+                  resolve_extensionless_path (FilePath.concat entry_point "index")
+                | Some _ ->
+                  Lwt.return_some entry_point
+              end
             else
               (** Check if directory contains index.js and return it if found *)
               let index_js_path = FilePath.concat path "index.js" in
@@ -107,10 +119,9 @@ let make
         in
         resolved_path := M.add path resolved !resolved_path;
         Lwt.return resolved
-  in
 
   (** Try to resolve an absolute path with different extensions *)
-  let resolve_extensionless_path path =
+  and resolve_extensionless_path path =
     match%lwt resolve_path (path ^ ".js") with
     | Some _ as res -> Lwt.return res
     | None ->
@@ -206,8 +217,6 @@ let make
 
       (* relative module path *)
       | '.' ->
-        (* TODO: make extensions be command-line parameter *)
-        let try_extensions = [".js"; ".json"; ""] in
         let path = FS.abs_path basedir path in
         let resolved =
           List.fold_left
@@ -235,7 +244,7 @@ let make
         end
 
       (* absolute module path *)
-      (* should we be considering "browser" here *)
+      (* TODO: decide, should we be considering "browser" here? *)
       | '/' ->
         begin
           match%lwt resolve_extensionless_path path with

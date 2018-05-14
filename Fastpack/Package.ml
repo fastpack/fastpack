@@ -24,9 +24,9 @@ let normalize ~package_json_filename path =
 
 
 let of_json filename data =
-  let add_suffix m =
-      m ^ if Filename.check_suffix m ".js" then "" else ".js"
-  in
+  (* let add_suffix m = *)
+  (*     m ^ if Filename.check_suffix m ".js" then "" else ".js" *)
+  (* in *)
   let data = Yojson.Safe.from_string (String.trim data) in
   let open Yojson.Safe.Util in
   try
@@ -63,7 +63,7 @@ let of_json filename data =
     in
     {
       filename = Some filename;
-      entry_point = add_suffix entry_point;
+      entry_point;
       browser_shim
     }
   with Type_error _ ->
