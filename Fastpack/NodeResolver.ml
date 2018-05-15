@@ -48,28 +48,66 @@ let node_libs =
   |> StringSet.add "vm"
   |> StringSet.add "zlib"
 
+module Mock = struct
+  type t = Empty
+         | Mock of string
+
+  let parse s =
+    match String.(s |> trim |> split_on_char ':') with
+    | [] | [""] ->
+      Result.Error (`Msg "Empty config")
+    | request :: [] | request :: "" :: [] ->
+      Result.Ok (false, (request, Empty))
+    | request :: rest ->
+      let mock = String.concat ":" rest in
+      Result.Ok (false, (request, Mock mock))
+
+  let print ppf (_, mock) =
+    let value =
+      match mock with
+      | request, Empty -> request
+      | request, Mock mock -> request ^ ":" ^ mock
+    in
+    Format.fprintf ppf "%s" value
+
+end
+
 let resolve_browser (package : Package.t) (path : string) =
   match package with
   | { filename = None; _ } ->
       None
   | { filename = Some filename; browser_shim; _ } ->
     let path = Package.normalize ~package_json_filename:(FilePath.dirname filename) path in
-    match M.get path browser_shim with
-    | None ->
-      None
-    | Some (Shim newPath) ->
-      Some (Module.File { filename = Some newPath; preprocessors = [] })
-    | Some Ignore ->
-      Some Module.EmptyModule
+    M.get path browser_shim
 
 let make
     ~(project_dir : string)
+    ~(mock : (string * Mock.t) list)
     ~(node_modules_paths : string list)
     ~(cache : Cache.t)
     ~(preprocessor : Preprocessor.t) =
 
   (* TODO: make extensions be command-line parameter *)
-  let try_extensions = [".js"; ".json"; ""] in
+  let _try_extensions = [".js"; ".json"; ""] in
+
+  (* TODO: verify mock cycles *)
+  let mock_map =
+    List.fold_left
+      (fun map (package, substitute) ->
+        let substitute =
+          match substitute with
+          | Mock.Empty -> "$fp$empty"
+          | Mock.Mock substitute -> substitute
+        in
+        M.add package substitute map
+      )
+      M.empty
+      mock
+  in
+
+  let resolve_mock package_name =
+    M.get package_name mock_map
+  in
 
   (** Try to resolve an absolute path *)
   let resolved_path = ref M.empty in
@@ -139,74 +177,106 @@ let make
     | None -> []
   in
 
-  let resolve_package package_name path basedir =
-    let try_paths =
-      node_modules_paths
-      |> List.map
-        (fun node_modules_path ->
-           match String.get node_modules_path 0 with
-           | '/' -> [FilePath.concat node_modules_path package_name]
-           | _ ->
-             let rec gen_paths current_dir =
-               let package_path =
-                 FilePath.concat
-                   (FilePath.concat current_dir node_modules_path)
-                   package_name
-               in
-               if current_dir = project_dir
-               then [package_path]
-               else package_path :: (FilePath.dirname current_dir |> gen_paths)
-             in
-             gen_paths basedir
-        )
-      |> List.concat
-    in
-    Lwt_list.fold_left_s
-      (fun resolved package_path ->
-         match resolved with
-         | Some _ -> Lwt.return resolved
-         | None ->
-           if%lwt cache.file_exists package_path then
-            let package_json_path = FilePath.concat package_path "package.json" in
-            let%lwt package =
-              match%lwt cache.file_exists package_json_path with
-              | false ->
-                Lwt.return Package.empty
-              | true ->
-                let%lwt package, _ = cache.get_package package_json_path in
-                Lwt.return package
-            in
-            let dep = get_package_dependency package in
-            match path with
-            | None ->
-              let%lwt resolved = resolve_extensionless_path package_path in
-              begin
-                match resolved with
-                | None ->
-                  Lwt.return_none
-                | Some resolved ->
-                  Lwt.return_some (Module.resolved_file resolved, dep)
-              end
-            | Some path ->
-              let path = FS.abs_path package_path path in
-              match resolve_browser package path with
-              | Some resolved ->
-                Lwt.return_some (resolved, dep)
-              | None ->
-                let%lwt resolved = resolve_extensionless_path path in
-                match resolved with
-                | None ->
-                  Lwt.return_none
-                | Some resolved ->
-                  Lwt.return_some (Module.resolved_file resolved, dep)
-           else
-             Lwt.return_none
-      )
-      None
-      try_paths
-  in
+  let rec resolve_package (package : Package.t) package_name path basedir =
+    match resolve_mock package_name with
+    | Some request ->
+      resolve_file package request basedir
+    | None ->
+      match resolve_browser package package_name with
+      | Some (Package.Shim shim) ->
+        begin
+          match%lwt resolve_extensionless_path shim with
+          | None -> Lwt.fail (Error shim)
+          | Some resolved ->
+            Lwt.return (Module.resolved_file resolved,
+                        get_package_dependency package)
+        end
+      | Some (Package.Ignore) ->
+        (* TODO: path_in_package should be None *)
+        Lwt.return (Module.EmptyModule, [])
+      | None ->
+        let try_paths =
+          node_modules_paths
+          |> List.map
+            (fun node_modules_path ->
+               match String.get node_modules_path 0 with
+               | '/' -> [FilePath.concat node_modules_path package_name]
+               | _ ->
+                 let rec gen_paths current_dir =
+                   let package_path =
+                     FilePath.concat
+                       (FilePath.concat current_dir node_modules_path)
+                       package_name
+                   in
+                   if current_dir = project_dir
+                   then [package_path]
+                   else package_path :: (FilePath.dirname current_dir |> gen_paths)
+                 in
+                 gen_paths basedir
+            )
+          |> List.concat
+        in
+        let%lwt resolved =
+          Lwt_list.fold_left_s
+            (fun resolved package_path ->
+               match resolved with
+               | Some _ -> Lwt.return resolved
+               | None ->
+                 if%lwt cache.file_exists package_path then
+                  let package_json_path = FilePath.concat package_path "package.json" in
+                  let%lwt package =
+                    match%lwt cache.file_exists package_json_path with
+                    | false ->
+                      Lwt.return Package.empty
+                    | true ->
+                      let%lwt package, _ = cache.get_package package_json_path in
+                      Lwt.return package
+                  in
+                  let dep = get_package_dependency package in
+                  match path with
+                  | None ->
+                    let%lwt resolved = resolve_extensionless_path package_path in
+                    begin
+                      match resolved with
+                      | None ->
+                        Lwt.return_none
+                      | Some resolved ->
+                        Lwt.return_some (Module.resolved_file resolved, dep)
+                    end
+                  | Some path ->
+                    let path = FS.abs_path package_path path in
+                    match resolve_browser package path with
+                    | Some (Package.Shim shim) ->
+                        let%lwt resolved = resolve_extensionless_path shim in
+                      begin
+                        match resolved with
+                        | None ->
+                          Lwt.return_none
+                        | Some resolved ->
+                          Lwt.return_some (Module.resolved_file resolved, dep)
+                      end
+                    | Some (Package.Ignore) ->
+                      (* TODO: path_in_package should be None *)
+                      Lwt.return_some (Module.EmptyModule, dep)
+                    | None ->
+                      let%lwt resolved = resolve_extensionless_path path in
+                      match resolved with
+                      | None ->
+                        Lwt.return_none
+                      | Some resolved ->
+                        Lwt.return_some (Module.resolved_file resolved, dep)
+                 else
+                   Lwt.return_none
+            )
+            None
+            try_paths
+        in
+        match resolved with
+        | Some resolved -> Lwt.return resolved
+        | None -> Lwt.fail (Error package_name)
 
-  let resolve_file (package : Package.t) path basedir =
+  and resolve_file (package : Package.t) path basedir =
+
     match path with
 
     | "" ->
@@ -218,29 +288,24 @@ let make
       (* relative module path *)
       | '.' ->
         let path = FS.abs_path basedir path in
-        let resolved =
-          List.fold_left
-            (fun resolved ext ->
-              match resolved with
-              | Some _ -> resolved
-              | None -> resolve_browser package (path ^ ext)
-            )
-            None
-            try_extensions
-        in
         begin
-          match resolved with
-          | Some resolved ->
-            Lwt.return (resolved, get_package_dependency package)
+          match%lwt resolve_extensionless_path path with
           | None ->
-            begin
-              match%lwt resolve_extensionless_path path with
+            Lwt.fail (Error path)
+          | Some resolved ->
+            match resolve_browser package resolved with
+            | None ->
+              Lwt.return (Module.resolved_file resolved,
+                          get_package_dependency package)
+            | Some Package.Ignore ->
+              Lwt.return (Module.EmptyModule, get_package_dependency package)
+            | Some (Package.Shim browser_path) ->
+              match%lwt resolve_extensionless_path browser_path with
               | None ->
-                Lwt.fail (Error path)
+                Lwt.fail (Error browser_path)
               | Some resolved ->
                 Lwt.return (Module.resolved_file resolved,
                             get_package_dependency package)
-            end
         end
 
       (* absolute module path *)
@@ -256,61 +321,30 @@ let make
 
       (* scoped package *)
       | '@' ->
-        begin
-          match resolve_browser package path with
-          | Some resolved ->
-            Lwt.return (resolved, get_package_dependency package)
-          | None ->
-            let package_name, path_in_package =
-              match String.split_on_char '/' path with
-              | [] ->
-                (None, None)
-              | _scope::[] ->
-                (None, None)
-              | scope::package::[] ->
-                (Some (scope ^ "/" ^ package), None)
-              | scope::package::rest ->
-                (Some (scope ^ "/" ^ package), Some (String.concat "/" rest))
-            in
-            begin
-              match package_name with
-              | None ->
-                Lwt.fail (Error path)
-              | Some package_name ->
-                match%lwt resolve_package package_name path_in_package basedir with
-                | None ->
-                  Lwt.fail (Error path)
-                | Some resolved ->
-                  Lwt.return resolved
-            end
-        end
+        let%lwt package_name, path_in_package =
+        match String.split_on_char '/' path with
+        | [] | _::[] ->
+          Lwt.fail (Error path)
+        | scope::package::[] ->
+          Lwt.return (scope ^ "/" ^ package, None)
+        | scope::package::rest ->
+          Lwt.return (scope ^ "/" ^ package, Some (String.concat "/" rest))
+        in
+        resolve_package package package_name path_in_package basedir
 
       (* package *)
       | _ ->
-        if path = "$fp$runtime"
-        then
-          Lwt.return (Module.Runtime, [])
-        else
-          match resolve_browser package path with
-          | Some resolved ->
-            Lwt.return (resolved, get_package_dependency package)
-          | None ->
-            let package_name, path_in_package =
-              match String.split_on_char '/' path with
-              | [] -> (None, None)
-              | package::[] -> (Some package, None)
-              | package::rest -> (Some package, Some (String.concat "/" rest))
-            in
-            match package_name with
-            | None ->
-              Lwt.fail (Error path)
-            | Some package_name ->
-              match%lwt resolve_package package_name path_in_package basedir with
-              | None ->
-                Lwt.fail (Error path)
-              | Some resolved ->
-                Lwt.return resolved
-
+        match path with
+        | "$fp$empty" -> Lwt.return (Module.EmptyModule, [])
+        | "$fp$runtime" -> Lwt.return (Module.Runtime, [])
+        | _ ->
+          let%lwt package_name, path_in_package =
+            match String.split_on_char '/' path with
+            | [] -> Lwt.fail (Error path)
+            | package::[] -> Lwt.return (package, None)
+            | package::rest -> Lwt.return (package, Some (String.concat "/" rest))
+          in
+          resolve_package package package_name path_in_package basedir
   in
 
   let resolve (package : Package.t) request basedir =

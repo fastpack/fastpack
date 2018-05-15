@@ -354,6 +354,20 @@ let read_module
                   raise exn
               )
           in
+          (* strip #! from the very beginning *)
+          let content_length = String.length content in
+          let content =
+            if  content_length > 2
+            then
+              if String.get content 0 = '#' && String.get content 1 = '!'
+              then
+                let nl_index = String.find ~sub:"\n" content in
+                String.sub content nl_index (content_length - nl_index)
+              else
+                content
+            else
+              content
+          in
           Lwt.return (Some content, [filename])
         | None ->
           Lwt.return (None, [])
