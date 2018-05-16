@@ -72,13 +72,7 @@ module Mock = struct
 
 end
 
-let resolve_browser (package : Package.t) (path : string) =
-  match package with
-  | { filename = None; _ } ->
-      None
-  | { filename = Some filename; browser_shim; _ } ->
-    let path = Package.normalize ~package_json_filename:(FilePath.dirname filename) path in
-    M.get path browser_shim
+
 
 let make
     ~(project_dir : string)
@@ -90,23 +84,39 @@ let make
   (* TODO: make extensions be command-line parameter *)
   let _try_extensions = [".js"; ".json"; ""] in
 
+  let normalize path =
+    if String.get path 0 == '.'
+    then FastpackUtil.FS.abs_path project_dir path
+    else path
+  in
+
   (* TODO: verify mock cycles *)
-  let mock_map =
+  let mock_package_map, mock_file_map =
     List.fold_left
-      (fun map (package, substitute) ->
+      (fun (package_map, file_map) (key, substitute) ->
         let substitute =
           match substitute with
           | Mock.Empty -> "$fp$empty"
           | Mock.Mock substitute -> substitute
         in
-        M.add package substitute map
+        if String.get key 0 = '.' || String.get key 0 = '/'
+        then
+          let key = normalize key in
+          let substitute = normalize substitute in
+          (package_map, M.add key substitute file_map)
+        else
+          (M.add key substitute package_map, file_map)
       )
-      M.empty
+      (M.empty, M.empty)
       mock
   in
 
-  let resolve_mock package_name =
-    M.get package_name mock_map
+  let resolve_mock_package package_name =
+    M.get package_name mock_package_map
+  in
+
+  let resolve_mock_file filename =
+    M.get filename mock_file_map
   in
 
   (** Try to resolve an absolute path *)
@@ -155,7 +165,7 @@ let make
           | _ ->
             Lwt.return_none
         in
-        resolved_path := M.add path resolved !resolved_path;
+        (* resolved_path := M.add path resolved !resolved_path; *)
         Lwt.return resolved
 
   (** Try to resolve an absolute path with different extensions *)
@@ -178,19 +188,13 @@ let make
   in
 
   let rec resolve_package (package : Package.t) package_name path basedir =
-    match resolve_mock package_name with
+    match resolve_mock_package package_name with
     | Some request ->
       resolve_file package request basedir
     | None ->
-      match resolve_browser package package_name with
+        match Package.resolve_browser package package_name with
       | Some (Package.Shim shim) ->
-        begin
-          match%lwt resolve_extensionless_path shim with
-          | None -> Lwt.fail (Error shim)
-          | Some resolved ->
-            Lwt.return (Module.resolved_file resolved,
-                        get_package_dependency package)
-        end
+        resolve_file package shim basedir
       | Some (Package.Ignore) ->
         (* TODO: path_in_package should be None *)
         Lwt.return (Module.EmptyModule, [])
@@ -241,19 +245,29 @@ let make
                       | None ->
                         Lwt.return_none
                       | Some resolved ->
-                        Lwt.return_some (Module.resolved_file resolved, dep)
+                        match resolve_mock_file resolved with
+                        | Some mocked ->
+                          let%lwt resolved = resolve_file package mocked basedir in
+                          Lwt.return_some resolved
+                        | None ->
+                          Lwt.return_some (Module.resolved_file resolved, dep)
                     end
                   | Some path ->
                     let path = FS.abs_path package_path path in
-                    match resolve_browser package path with
+                    match Package.resolve_browser package path with
                     | Some (Package.Shim shim) ->
-                        let%lwt resolved = resolve_extensionless_path shim in
+                      let%lwt resolved = resolve_extensionless_path shim in
                       begin
                         match resolved with
                         | None ->
                           Lwt.return_none
                         | Some resolved ->
-                          Lwt.return_some (Module.resolved_file resolved, dep)
+                          match resolve_mock_file resolved with
+                          | Some mocked ->
+                            let%lwt resolved = resolve_file package mocked basedir in
+                            Lwt.return_some resolved
+                          | None ->
+                            Lwt.return_some (Module.resolved_file resolved, dep)
                       end
                     | Some (Package.Ignore) ->
                       (* TODO: path_in_package should be None *)
@@ -264,7 +278,12 @@ let make
                       | None ->
                         Lwt.return_none
                       | Some resolved ->
-                        Lwt.return_some (Module.resolved_file resolved, dep)
+                        match resolve_mock_file resolved with
+                        | Some mocked ->
+                          let%lwt resolved = resolve_file package mocked basedir in
+                          Lwt.return_some resolved
+                        | None ->
+                          Lwt.return_some (Module.resolved_file resolved, dep)
                  else
                    Lwt.return_none
             )
@@ -275,8 +294,8 @@ let make
         | Some resolved -> Lwt.return resolved
         | None -> Lwt.fail (Error package_name)
 
-  and resolve_file (package : Package.t) path basedir =
 
+  and resolve_file (package : Package.t) path basedir =
     match path with
 
     | "" ->
@@ -293,19 +312,18 @@ let make
           | None ->
             Lwt.fail (Error path)
           | Some resolved ->
-            match resolve_browser package resolved with
+            match resolve_mock_file resolved with
+            | Some mocked ->
+              resolve_file package mocked basedir
             | None ->
-              Lwt.return (Module.resolved_file resolved,
-                          get_package_dependency package)
-            | Some Package.Ignore ->
-              Lwt.return (Module.EmptyModule, get_package_dependency package)
-            | Some (Package.Shim browser_path) ->
-              match%lwt resolve_extensionless_path browser_path with
+              match Package.resolve_browser package resolved with
               | None ->
-                Lwt.fail (Error browser_path)
-              | Some resolved ->
                 Lwt.return (Module.resolved_file resolved,
                             get_package_dependency package)
+              | Some Package.Ignore ->
+                Lwt.return (Module.EmptyModule, get_package_dependency package)
+              | Some (Package.Shim browser_path) ->
+                resolve_file package browser_path basedir
         end
 
       (* absolute module path *)
@@ -316,7 +334,11 @@ let make
           | None ->
             Lwt.fail (Error path)
           | Some resolved ->
-            Lwt.return (Module.resolved_file resolved, [])
+            match resolve_mock_file resolved with
+            | Some mocked ->
+              resolve_file package mocked basedir
+            | None ->
+              Lwt.return (Module.resolved_file resolved, [])
         end
 
       (* scoped package *)
@@ -348,6 +370,7 @@ let make
   in
 
   let resolve (package : Package.t) request basedir =
+
     let resolve_preprocessors preprocessors =
       Lwt_list.fold_left_s
         (fun (preprocessors, all_deps) p ->
@@ -380,6 +403,7 @@ let make
         ([], [])
         preprocessors
     in
+
     let rec resolve_parts ?(preprocess=true) parts =
       match parts with
       | [] ->

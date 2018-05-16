@@ -61,6 +61,13 @@ let of_json filename data =
       | None, None, Some main -> main
       | None, None, None -> "index.js"
     in
+    (* TODO: shouldn't it be in NodeResolver? *)
+    let entry_point =
+      match M.get (normalize ~package_json_filename:filename entry_point) browser_shim with
+      | Some (Shim shim) -> shim
+      | Some Ignore -> "$fp$empty"
+      | None -> entry_point
+    in
     {
       filename = Some filename;
       entry_point;
@@ -84,3 +91,11 @@ let of_dir dir =
   end
   else
     Lwt.return empty
+
+let resolve_browser (package : t) (path : string) =
+  match package with
+  | { filename = None; _ } ->
+      None
+  | { filename = Some filename; browser_shim; _ } ->
+    let path = normalize ~package_json_filename:filename path in
+    M.get path browser_shim
