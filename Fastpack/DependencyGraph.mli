@@ -26,6 +26,7 @@ val add_dependency :
 (** Number of modules in the depgraph. *)
 val length : t -> int
 
+(** Return a sequence of all modules in the depgraph *)
 val modules : t -> (string * Module.t) Sequence.t
 
 (** Lookup module in the depgraph by id. *)
