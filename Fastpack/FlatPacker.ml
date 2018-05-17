@@ -912,8 +912,9 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
           graph
           |> DependencyGraph.modules
           |> Sequence.map (fun (loc, _) -> loc)
+          |> StringSet.of_seq
         in
-        total_modules := StringSet.(of_seq new_modules |> union !total_modules);
+        total_modules := StringSet.union !total_modules new_modules;
         Lwt.return_unit
   in
   let {Context. entry_location; _} = ctx in
