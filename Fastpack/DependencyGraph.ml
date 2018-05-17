@@ -1,16 +1,12 @@
 module M = Map.Make(String)
 module StringSet = Set.Make(String)
 exception Cycle of string list
-let debug = Logs.debug
 
 type t = {
   modules : (string, Module.t) Hashtbl.t;
   dependencies : (string, (Module.Dependency.t * Module.location option)) Hashtbl.t;
   files : (string, Module.t) Hashtbl.t;
 }
-
-let iter_modules iter graph =
-  Hashtbl.iter iter graph.modules
 
 let get_modules graph =
   Hashtbl.keys_list graph.modules
@@ -101,15 +97,6 @@ let length graph =
 let map_modules f graph =
   Hashtbl.fold (fun k v acc -> (f k v) :: acc) graph.modules []
   |> List.rev
-
-let filter_map_modules f graph =
-  Hashtbl.fold
-    (fun k v acc ->
-       match f k v with
-       | Some value -> value :: acc
-       | None -> acc
-    )
-    graph.modules []
 
 let sort graph entry =
   let modules = ref [] in
