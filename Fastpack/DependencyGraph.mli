@@ -22,7 +22,7 @@ val add_dependency :
 (** Number of modules in the depgraph. *)
 val length : t -> int
 
-val map_modules : (string -> Module.t -> 'a) -> t -> 'a list
+val modules : t -> (string * Module.t) list
 
 (** Lookup module in the depgraph by id. *)
 val lookup_module : t -> string -> Module.t option

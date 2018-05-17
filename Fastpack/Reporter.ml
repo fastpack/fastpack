@@ -44,7 +44,8 @@ let report_json _start_time { graph; _ } =
   in
   let modulePaths =
     graph
-    |> DependencyGraph.map_modules (fun location_str _ -> `String location_str)
+    |> DependencyGraph.modules
+    |> List.map (fun (location_str, _) -> `String location_str)
     |> List.sort Pervasives.compare
   in
     `Assoc [

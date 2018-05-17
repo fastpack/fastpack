@@ -94,9 +94,8 @@ let cleanup graph emitted_modules =
 let length graph =
   Hashtbl.length graph.modules
 
-let map_modules f graph =
-  Hashtbl.fold (fun k v acc -> (f k v) :: acc) graph.modules []
-  |> List.rev
+let modules graph =
+  Hashtbl.to_list graph.modules
 
 let sort graph entry =
   let modules = ref [] in
