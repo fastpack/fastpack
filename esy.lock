@@ -348,7 +348,7 @@
 
 "@opam/ocamlfind@ >= 1.5.0", "@opam/ocamlfind@ >= 1.5.2", "@opam/ocamlfind@ >= 1.5.3", "@opam/ocamlfind@ >= 1.6.1", "@opam/ocamlfind@ >= 1.7.2", "@opam/ocamlfind@ >= 1.7.3--1", "@opam/ocamlfind@*":
   version "1.7.3--1"
-  uid "3892b28eaffa574236b3e9564de48b74"
+  uid "29d16a694729764d7dc79f43020d8009"
   resolved "@opam/ocamlfind@1.7.3--1-8bdb2749715bb44e0e6d09503deb7fd7.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -624,6 +624,19 @@
     "@opam/ppx_tools_versioned" "*"
   peerDependencies:
     ocaml " >= 4.2.3000"
+
+"@opam/sequence@*":
+  version "1.0.0"
+  uid c7ee13c8a8625f72cde85a522db6e3cb
+  resolved "@opam/sequence@1.0.0-c7ee13c8a8625f72cde85a522db6e3cb.tgz"
+  dependencies:
+    "@esy-ocaml/esy-installer" "^0.0.0"
+    "@esy-ocaml/substs" "^0.0.1"
+    "@opam/base-bytes" "*"
+    "@opam/jbuilder" " >= 1.0.0-beta12"
+    "@opam/result" "*"
+  peerDependencies:
+    ocaml "*"
 
 "@opam/sexplib0@ >= 100000000.11.0  < 100000000.12.0":
   version "100000000.11.0"

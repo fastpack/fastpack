@@ -43,6 +43,7 @@
     "@opam/jbuilder": "1.0.0+beta20",
     "@opam/lwt": "3.3.0",
     "@opam/merlin": "*",
+    "@opam/sequence": "*",
     "@opam/ocp-indent": "*",
     "@opam/sedlex": "^1.99.4",
     "@opam/utop": "^2.0.2",
