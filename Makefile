@@ -80,6 +80,7 @@ release-dist:
 	@echo "[INFO]  [RELEASE] Composing release package..."
 	@cp linux-build/fpack.exe dist/vendor-linux/fpack.exe
 	@cp _build/default/bin/fpack.exe dist/vendor-darwin/fpack.exe
+	@cp -R node-service dist/node-service
 	@echo "[INFO]  [RELEASE] DONE, now you can do the following:"
 	@echo "[INFO]"
 	@echo "[INFO]            - Go to the release directory: cd dist"
