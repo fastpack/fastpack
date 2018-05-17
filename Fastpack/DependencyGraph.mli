@@ -6,7 +6,11 @@ type t
 
 exception Cycle of string list
 
-(** Construct an empty depgraph, the ?size is used as an estimate. *)
+(**
+ * Construct an empty depgraph
+ *
+ * The optional ?size is used as an estimate.
+ *)
 val empty : ?size:int -> unit -> t
 
 (** Add module to the depgraph. *)
@@ -22,7 +26,7 @@ val add_dependency :
 (** Number of modules in the depgraph. *)
 val length : t -> int
 
-val modules : t -> (string * Module.t) list
+val modules : t -> (string * Module.t) Sequence.t
 
 (** Lookup module in the depgraph by id. *)
 val lookup_module : t -> string -> Module.t option
@@ -33,9 +37,6 @@ val lookup_dependencies :
 
 (** Return a list of modules in the depgraph sorted in a topological order. *)
 val sort : t -> Module.t -> Module.t list
-
-(** Get a list of module ids *)
-val get_modules : t -> string list
 
 val get_modules_by_filenames: t -> string list -> Module.t list
 

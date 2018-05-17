@@ -8,9 +8,6 @@ type t = {
   files : (string, Module.t) Hashtbl.t;
 }
 
-let get_modules graph =
-  Hashtbl.keys_list graph.modules
-
 let empty ?(size=5000) () = {
   modules = Hashtbl.create size;
   dependencies = Hashtbl.create (size * 20);
@@ -95,7 +92,7 @@ let length graph =
   Hashtbl.length graph.modules
 
 let modules graph =
-  Hashtbl.to_list graph.modules
+  Hashtbl.to_seq graph.modules
 
 let sort graph entry =
   let modules = ref [] in
