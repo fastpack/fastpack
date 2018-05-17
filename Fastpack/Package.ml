@@ -56,9 +56,9 @@ let of_json filename data =
     in
     let entry_point =
       match browser, module_, main with
-      | Some browser, _, _ -> browser
-      | None, Some module_, _ -> module_
-      | None, None, Some main -> main
+      | Some browser, _, _ -> "./" ^ browser
+      | None, Some module_, _ -> "./" ^ module_
+      | None, None, Some main -> "./" ^ main
       | None, None, None -> "index.js"
     in
     (* TODO: shouldn't it be in NodeResolver? *)
