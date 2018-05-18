@@ -506,6 +506,20 @@
   peerDependencies:
     ocaml " >= 4.4.1000"
 
+"@opam/ppx_let@*":
+  version "100000000.11.0"
+  uid "0ae2159a63f1dc79956e07e4cd303981"
+  resolved "@opam/ppx_let@100000000.11.0-0ae2159a63f1dc79956e07e4cd303981.tgz"
+  dependencies:
+    "@esy-ocaml/esy-installer" "^0.0.0"
+    "@esy-ocaml/substs" "^0.0.1"
+    "@opam/base" " >= 100000000.11.0  < 100000000.12.0"
+    "@opam/jbuilder" " >= 1.0.0-beta181"
+    "@opam/ocaml-migrate-parsetree" " >= 1.0.0"
+    "@opam/ppxlib" " >= 0.1.0"
+  peerDependencies:
+    ocaml " >= 4.4.1000"
+
 "@opam/ppx_sexp_conv@ >= 100000000.11.0  < 100000000.12.0":
   version "100000000.11.0"
   uid b1dfc78c4705a1a75a29cb1c17f3e948

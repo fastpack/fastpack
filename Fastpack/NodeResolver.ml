@@ -344,13 +344,13 @@ let make
       (* scoped package *)
       | '@' ->
         let%lwt package_name, path_in_package =
-        match String.split_on_char '/' path with
-        | [] | _::[] ->
-          Lwt.fail (Error path)
-        | scope::package::[] ->
-          Lwt.return (scope ^ "/" ^ package, None)
-        | scope::package::rest ->
-          Lwt.return (scope ^ "/" ^ package, Some (String.concat "/" rest))
+          match String.split_on_char '/' path with
+          | [] | _::[] ->
+            Lwt.fail (Error path)
+          | scope::package::[] ->
+            Lwt.return (scope ^ "/" ^ package, None)
+          | scope::package::rest ->
+            Lwt.return (scope ^ "/" ^ package, Some (String.concat "/" rest))
         in
         resolve_package package package_name path_in_package basedir
 

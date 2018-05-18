@@ -6,6 +6,7 @@ module Mode = PackerUtil.Mode
 module Target = PackerUtil.Target
 module Context = PackerUtil.Context
 module NodeResolver = NodeResolver
+module Resolver = Resolver
 module Preprocessor = Preprocessor
 module Reporter = Reporter
 module RegularPacker = RegularPacker
