@@ -1,7 +1,11 @@
-
+(*
+ *
+(cd _build/default/FastpackTest && ./.FastpackTest.inline-tests/run.exe inline-test-runner FastpackTest -source-tree-root .. -diff-cmd -)
+ * *)
 
 let test f filename =
-  let filename = "../../test/" ^ filename in
+  let filename = "../../../test/" ^ filename in
+
   let result = Lwt_main.run (
     let%lwt source = Lwt_io.(with_file ~mode:Input filename read) in
     Lwt.return (f source)

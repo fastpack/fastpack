@@ -5,6 +5,7 @@ module Cache = Cache
 module Mode = PackerUtil.Mode
 module Target = PackerUtil.Target
 module Context = PackerUtil.Context
+module Module = Module
 module NodeResolver = NodeResolver
 module Resolver = Resolver
 module Preprocessor = Preprocessor

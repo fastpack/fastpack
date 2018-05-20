@@ -1,11 +1,13 @@
 module FS = FastpackUtil.FS
 module M = Map.Make(String)
 
+exception Error of string
+
 type request = PathRequest of string
              | PackageRequest of (string * string option)
 
 type t = {
-  resolve : basedir:string -> string -> (string option * string list * string list) Lwt.t;
+  resolve : basedir:string -> string -> (Module.location * string list) Lwt.t;
 }
 
 let request_to_string req =
@@ -138,6 +140,11 @@ let make
             return (resolved, [])
         )
       | PackageRequest _ ->
+        (*
+         * 1. check mocks
+         * 2. check browser
+         * 3. find directory in node_modules_path
+         * 4. *)
         error "Package request is not implemented"
     ))
   in
@@ -214,9 +221,11 @@ let make
       Printf.sprintf "Resolving '%s' with base directory '%s'" request basedir
     in
     match%lwt RunAsync.(withContext context (resolve' ())) with
-    | Ok resolved -> Lwt.return resolved
+    | Ok (filename, dependencies, _preprocessors) ->
+      let location = Module.resolved_file2 filename in
+      Lwt.return (location, dependencies)
     (* | Error error -> raise (NodeResolver.Error (Run.formatError error)) *)
-    | Error error -> print_endline (Run.formatError error); Lwt.return (None, [], [])
+    | Error error -> Lwt.fail (Error (Run.formatError error))
   in
 
   { resolve }
