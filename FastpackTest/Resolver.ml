@@ -2,11 +2,7 @@ module FS = FastpackUtil.FS
 
 type result = (Fastpack.Module.location * string list) [@@deriving show]
 
-let project_root =
-  FS.abs_path (Unix.getcwd ()) "../../../"
-
-let test_root =
-  FS.abs_path project_root "./test/resolve"
+let test_path = Test.get_test_path "resolve"
 
 let show result =
   Format.(pp_set_margin str_formatter 10000);
@@ -18,16 +14,12 @@ let show result =
   |> String.replace ~sub:"[\"" ~by:"[\n  \""
   |> String.replace ~sub:"\"]" ~by:"\"\n]"
 
-
-let replace_project_root =
-  String.replace ~which:`All ~sub:project_root ~by:"/..."
-
-let resolve ?(basedir=test_root) request =
+let resolve ?(basedir=test_path) request =
   let resolve' () =
     let%lwt cache = Fastpack.Cache.(create Memory) in
     let {Fastpack.Resolver. resolve } =
       Fastpack.Resolver.make
-        ~project_dir:test_root ~extensions:[".js"; ".json"] ~cache
+        ~project_dir:test_path ~extensions:[".js"; ".json"] ~cache
     in
     let%lwt resolved = resolve ~basedir request in
     Lwt.return (show resolved)
@@ -40,7 +32,7 @@ let resolve ?(basedir=test_root) request =
         | exn -> raise exn
       )
   ) in
-  print_endline (replace_project_root ("\n" ^ msg))
+  print_endline (Test.cleanup_project_path ("\n" ^ msg))
 
 let%expect_test "./index" =
   resolve "./index";
@@ -63,7 +55,7 @@ let%expect_test "./index.js" =
 |}]
 
 let%expect_test "/.../index.js (abs path)" =
-  resolve (FS.abs_path test_root "./index.js");
+  resolve (FS.abs_path test_path "./index.js");
   [%expect_exact {|
 ((File {
   filename = (Some "/.../test/resolve/index.js");
