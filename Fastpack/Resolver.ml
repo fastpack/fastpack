@@ -1,75 +1,158 @@
 module FS = FastpackUtil.FS
 module M = Map.Make(String)
 
+module Mock = struct
+  type t = Empty
+         | Mock of string
+
+  let to_string mock =
+    match mock with
+    | Empty -> ""
+    | Mock mock -> mock
+
+  let parse s =
+    match String.(s |> trim |> split_on_char ':') with
+    | [] | [""] ->
+      Result.Error (`Msg "Empty config")
+    | request :: [] | request :: "" :: [] ->
+      Result.Ok (false, (request, Empty))
+    | request :: rest ->
+      let mock = String.concat ":" rest in
+      Result.Ok (false, (request, Mock mock))
+
+  let print ppf (_, mock) =
+    let value =
+      match mock with
+      | request, Empty -> request
+      | request, Mock mock -> request ^ ":" ^ mock
+    in
+    Format.fprintf ppf "%s" value
+
+end
+
+type t = {
+  resolve : basedir:string -> string -> (Module.location * string  list) Lwt.t;
+}
+
 exception Error of string
 
 type request = PathRequest of string
              | PackageRequest of (string * string option)
+             | InternalRequest of string
+             [@@deriving show {with_path = false},eq,ord]
 
-type t = {
-  resolve : basedir:string -> string -> (Module.location * string list) Lwt.t;
-}
+module RequestMap = Map.Make(struct
+  type t = request
+  let compare = compare_request
+end)
+
 
 let request_to_string req =
   match req with
-  | PathRequest s -> "Path:" ^ s
+  | InternalRequest s -> s
+  | PathRequest s -> s
   | PackageRequest (pkg, path) ->
-    Printf.sprintf "Package: %s. Path: %s" pkg (CCOpt.get_or ~default:"None" path)
+    pkg ^ (match path with | None -> "" | Some path -> "/" ^ path)
 
 let make
   ~(project_dir : string)
+  ~(mock : (string * Mock.t) list)
+  ~(node_modules_paths : string list)
   ~(extensions : string list)
   ~(cache : Cache.t) =
 
-  let package_json_cache = ref M.empty in
-  let find_package root_dir filename =
-    let rec find_package_json dir =
-      match M.get dir !package_json_cache with
-      | Some package ->
-        Lwt.return package
-      | None ->
-        let filename = FilePath.concat dir "package.json" in
-        match%lwt cache.file_exists filename with
-        | true ->
-          let%lwt package, _ = cache.get_package filename in
-          package_json_cache := M.add dir package !package_json_cache;
-          Lwt.return package
-        | false ->
-          if dir = root_dir
-          then
-            Lwt.return (Package.empty)
-          else begin
-            let%lwt package = find_package_json (FilePath.dirname dir) in
-            package_json_cache := M.add dir package !package_json_cache;
-            Lwt.return package
-          end
-    in
-    find_package_json (FilePath.dirname filename)
-  in
-
   let normalize_request ~(basedir : string) request =
     let open Run.Syntax in
-    match request with
-    | "" -> error ("Empty request")
-    | _ ->
-      match String.get request 0 with
-      | '.' -> return (PathRequest (FS.abs_path basedir request))
-      | '/' -> return (PathRequest request)
-      | '@' ->
-        begin
-          match String.split_on_char '/' request with
-          | [] | _::[] ->
-            error (Printf.sprintf "Bad scoped package name: %s" request)
-          | scope :: package :: [] ->
-            return (PackageRequest (scope ^ "/" ^ package, None))
-          | scope::package::rest ->
-            return (PackageRequest (scope ^ "/" ^ package, Some (String.concat "/" rest)))
-        end
+    if Module.is_internal request
+    then return (InternalRequest request)
+    else
+      match request with
+      | "" -> error ("Empty request")
       | _ ->
-        match String.split_on_char '/' request with
-        | [] -> error "Bad package request"
-        | package::[] -> return (PackageRequest (package, None))
-        | package::rest -> return (PackageRequest (package, Some (String.concat "/" rest)))
+        match String.get request 0 with
+        | '.' -> return (PathRequest (FS.abs_path basedir request))
+        | '/' -> return (PathRequest request)
+        | '@' ->
+          begin
+            match String.split_on_char '/' request with
+            | [] | _::[] ->
+              error (Printf.sprintf "Bad scoped package name: %s" request)
+            | scope :: package :: [] ->
+              return (PackageRequest (scope ^ "/" ^ package, None))
+            | scope::package::rest ->
+              return (PackageRequest (scope ^ "/" ^ package, Some (String.concat "/" rest)))
+          end
+        | _ ->
+          match String.split_on_char '/' request with
+          | [] -> error "Bad package request"
+          | package::[] -> return (PackageRequest (package, None))
+          | package::rest -> return (PackageRequest (package, Some (String.concat "/" rest)))
+  in
+
+  (* let%lwt mock_map = *)
+  (*   let open Run.Syntax in *)
+  (*   let build_mock_map () = *)
+  (*   in *)
+  (*   match%bind build_mock_map () with *)
+  (*   | Ok mock_map *)
+  (* in *)
+
+  let mock_map =
+    let build_mock_map () =
+      let open Run.Syntax in
+      Run.foldLeft
+        ~f:(fun acc (k, v) ->
+          let%bind normalized_key = normalize_request ~basedir:project_dir k in
+          let%bind normalized_value =
+            match v with
+            | Mock.Empty -> return (InternalRequest "$fp$empty")
+            | Mock.Mock v -> normalize_request ~basedir:project_dir v
+          in
+          match normalized_key, normalized_value with
+          | InternalRequest _, _ ->
+            error ("Cannot mock internal package: " ^ k)
+          | PackageRequest (_, Some _), _ ->
+            error ("Cannot mock path inside the package: " ^ k)
+          | PathRequest _, PackageRequest _ ->
+            error ("File could be only mocked with another file, not package: "
+                   ^ k ^ ":" ^ Mock.to_string v)
+          | _ ->
+            return (RequestMap.add normalized_key normalized_value acc)
+        )
+        ~init:RequestMap.empty
+        mock
+
+    in
+    match build_mock_map () with
+    | Ok mock_map -> mock_map
+    | Error error -> raise (Error (Run.formatError error))
+  in
+
+  let resolve_mock normalized_request =
+    RequestMap.get normalized_request mock_map
+  in
+
+  let package_json_cache = ref M.empty in
+  let rec find_package dir =
+    match M.get dir !package_json_cache with
+    | Some package ->
+      Lwt.return package
+    | None ->
+      let filename = FilePath.concat dir "package.json" in
+      match%lwt cache.file_exists filename with
+      | true ->
+        let%lwt package, _ = cache.get_package filename in
+        package_json_cache := M.add dir package !package_json_cache;
+        Lwt.return package
+      | false ->
+        if dir = project_dir
+        then
+          Lwt.return (Package.empty)
+        else begin
+          let%lwt package = find_package (FilePath.dirname dir) in
+          package_json_cache := M.add dir package !package_json_cache;
+          Lwt.return package
+        end
   in
 
   let rec resolve_file ?(try_directory=true) path =
@@ -106,7 +189,7 @@ let make
           match%lwt cache.file_stat_opt package_json with
           | Some ({st_kind = Lwt_unix.S_REG; _}, _) ->
             let%lwt {Package. entry_point; _ }, _ = cache.get_package package_json in
-            resolve_file entry_point
+            resolve_file (FS.abs_path path entry_point)
           | _ ->
             resolve_file ~try_directory:false (path ^ "/index")
         )
@@ -115,22 +198,63 @@ let make
     ))
   in
 
+  let find_package_path_in_node_modules ~basedir package_name =
+    let try_paths =
+      node_modules_paths
+      |> List.map
+        (fun node_modules_path ->
+           match String.get node_modules_path 0 with
+           | '/' -> [FilePath.concat node_modules_path package_name]
+           | _ ->
+             let rec gen_paths current_dir =
+               let package_path =
+                 FilePath.concat
+                   (FilePath.concat current_dir node_modules_path)
+                   package_name
+               in
+               if current_dir = project_dir
+               then [package_path]
+               else package_path :: (FilePath.dirname current_dir |> gen_paths)
+             in
+             gen_paths basedir
+        )
+      |> List.concat
+    in
+    let open RunAsync.Syntax in
+    let rec exists' paths =
+      match paths with
+      | [] -> error "Cannot find package path"
+      | path :: rest ->
+        let context = Printf.sprintf "Path exists? '%s'" path in
+        RunAsync.(withContext context (
+          match%lwt cache.file_stat_opt path with
+          | Some ({ st_kind = Lwt_unix.S_DIR; _ }, _) ->
+            return path
+          | _ ->
+            withContext "...no." (exists' rest)
+        ))
+    in
+    exists' try_paths
+  in
+
   let rec resolve_simple_request ~basedir request =
     let context =
-      Printf.sprintf "Resolving '%s', base directory '%s'" request basedir
+      Printf.sprintf "Resolving '%s'. Base directory: '%s'" request basedir
     in
     RunAsync.(withContext context (
       let open RunAsync.Syntax in
       match%bind RunAsync.liftOfRun (normalize_request ~basedir request) with
+      | InternalRequest request ->
+        return (request, [])
       | PathRequest request ->
         let%bind resolved = resolve_file request in
-        let%lwt package = find_package project_dir resolved in
+        let%lwt package = find_package (FilePath.dirname resolved) in
         let context =
           Printf.sprintf "Resolving '%s' through \"browser\"" resolved
         in
         withContext context (
           match Package.resolve_browser package resolved with
-          | Some (Package.Ignore) -> return ("", [])
+          | Some (Package.Ignore) -> return ("$fp$empty", [])
           | Some (Package.Shim shim) ->
             withContext
               "...found."
@@ -139,13 +263,39 @@ let make
             (* TODO: file mock *)
             return (resolved, [])
         )
-      | PackageRequest _ ->
-        (*
-         * 1. check mocks
-         * 2. check browser
-         * 3. find directory in node_modules_path
-         * 4. *)
-        error "Package request is not implemented"
+      | PackageRequest (package_name, path) ->
+        withContext "Mocked package?" (
+          match resolve_mock (PackageRequest (package_name, None)) with
+          | Some (InternalRequest resolved) ->
+            return (resolved, [])
+          | Some ((PathRequest request) as r) ->
+            withContext
+              (Printf.sprintf "...yes '%s'." (request_to_string r))
+              (resolve_simple_request ~basedir request)
+          | Some ((PackageRequest (package_name, mocked_path)) as r) ->
+            let request =
+              package_name
+              ^ (match mocked_path with | None -> "" | Some path -> "/" ^ path)
+              ^ (match path with | None -> "" | Some path -> "/" ^ path)
+            in
+            withContext
+              (Printf.sprintf "...yes '%s'." (request_to_string r))
+              (resolve_simple_request ~basedir request)
+          | None ->
+            withContext "...no." (
+              let%bind package_path =
+                withContext
+                  "Resolving package path"
+                  (find_package_path_in_node_modules ~basedir package_name)
+              in
+              match path with
+              | None ->
+                let%bind resolved = resolve_directory package_path in
+                return (resolved, [])
+              | Some path ->
+                resolve_simple_request ~basedir (package_path ^ "/" ^ path)
+            )
+        )
     ))
   in
 
@@ -164,7 +314,7 @@ let make
       let%bind resolved, dependencies =
         resolve_simple_request ~basedir request
       in
-      return (resolved ^ (if options <> "" then "?" ^ options else ""), dependencies)
+      return ((resolved, options), dependencies)
     )
   in
 
@@ -185,7 +335,7 @@ let make
       match List.rev parts with
       | [] -> error "Empty request"
       | filename :: preprocessors ->
-        let%bind filename, configured_preprocessors, dependencies =
+        let%bind filename, dependencies, configured_preprocessors =
           match filename with
           | "" ->
             return (None, [], [])
@@ -195,6 +345,7 @@ let make
                 ~basedir
                 filename
             in
+            (* TODO: configured preprocessors *)
             (* let preprocessors = preprocessor.get_processors resolved in *)
             let preprocessors =
               match preprocess with
@@ -202,7 +353,7 @@ let make
               (* | true -> ["style-loader"; "css-loader?modules=true"] *)
               | false -> []
             in
-            return (Some resolved, preprocessors, dependencies)
+            return (Some resolved, dependencies, preprocessors)
         in
         let%bind preprocessors, preprocessor_dependencies =
           RunAsync.foldLeft
@@ -215,26 +366,16 @@ let make
             )
             (configured_preprocessors @ preprocessors)
         in
-        return (filename, List.rev preprocessors, dependencies @ preprocessor_dependencies)
+        return (filename, dependencies @ preprocessor_dependencies, List.rev preprocessors)
     in
     let context =
-      Printf.sprintf "Resolving '%s' with base directory '%s'" request basedir
+      Printf.sprintf "Resolving '%s'. Base directory: '%s'" request basedir
     in
     match%lwt RunAsync.(withContext context (resolve' ())) with
-    | Ok (filename, dependencies, _preprocessors) ->
-      let location = Module.resolved_file2 filename in
+    | Ok (filename, dependencies, preprocessors) ->
+      let location = Module.resolved_file2 ~preprocessors filename in
       Lwt.return (location, dependencies)
-    (* | Error error -> raise (NodeResolver.Error (Run.formatError error)) *)
     | Error error -> Lwt.fail (Error (Run.formatError error))
   in
 
   { resolve }
-
-let test request =
-  let project_dir = "/Users/zindel/ocaml/style-components" in
-  Unix.chdir project_dir;
-  Lwt_main.run (
-    let%lwt cache = Cache.(create Memory) in
-    let {resolve} = make ~project_dir ~extensions:[".js"; ".json"] ~cache in
-    resolve ~basedir:project_dir request
-  )

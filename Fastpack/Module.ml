@@ -125,6 +125,8 @@ let make_id base_dir location =
     in
     location_to_string ~base_dir:(Some base_dir) location |> to_var_name
 
+let is_internal request =
+  request = "$fp$empty" || request = "$fp$runtime" || request = "$fp$main"
 
 let resolved_file2 ?(preprocessors=[]) filename =
   match filename with
