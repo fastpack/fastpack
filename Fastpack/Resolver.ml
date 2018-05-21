@@ -183,7 +183,6 @@ let make
     RunAsync.(withContext context (
       match%lwt cache.file_stat_opt path with
       | Some ({st_kind = Lwt_unix.S_DIR; _}, _) ->
-        (* TODO: account for package.json *)
         withContext "...yes." (
           let package_json = FilePath.concat path "package.json" in
           match%lwt cache.file_stat_opt package_json with
@@ -238,11 +237,12 @@ let make
   in
 
   let rec resolve_simple_request ~basedir request =
+    (* TODO: track seen requests *)
+    let open RunAsync.Syntax in
     let context =
       Printf.sprintf "Resolving '%s'. Base directory: '%s'" request basedir
     in
     RunAsync.(withContext context (
-      let open RunAsync.Syntax in
       match%bind RunAsync.liftOfRun (normalize_request ~basedir request) with
       | InternalRequest request ->
         return (request, [])
@@ -257,11 +257,28 @@ let make
           | Some (Package.Ignore) -> return ("$fp$empty", [])
           | Some (Package.Shim shim) ->
             withContext
-              "...found."
+              (Printf.sprintf "...found '%s'." shim)
               (resolve_simple_request ~basedir:(FilePath.dirname resolved) shim)
           | None ->
-            (* TODO: file mock *)
-            return (resolved, [])
+            withContext "...not found." (
+              withContext "Mocked file?" (
+                match resolve_mock (PathRequest resolved) with
+                | Some (PathRequest path) ->
+                  withContext (Printf.sprintf "...yes. '%s'" path) (
+                    match%lwt cache.file_stat_opt path with
+                    | Some ({ st_kind = Lwt_unix.S_REG; _ }, _) ->
+                      return (path, [])
+                    | _ ->
+                      error ("File not found: " ^ path)
+                  )
+                | Some (InternalRequest request) ->
+                  return (request, [])
+                | Some _ ->
+                  error "Incorrect mock configuration"
+                | None ->
+                  return (resolved, [])
+              )
+            )
         )
       | PackageRequest (package_name, path) ->
         withContext "Mocked package?" (
@@ -283,17 +300,33 @@ let make
               (resolve_simple_request ~basedir request)
           | None ->
             withContext "...no." (
-              let%bind package_path =
-                withContext
-                  "Resolving package path"
-                  (find_package_path_in_node_modules ~basedir package_name)
+              let%lwt package = find_package basedir in
+              let context =
+                Printf.sprintf "Resolving '%s' through \"browser\"" package_name
               in
-              match path with
-              | None ->
-                let%bind resolved = resolve_directory package_path in
-                return (resolved, [])
-              | Some path ->
-                resolve_simple_request ~basedir (package_path ^ "/" ^ path)
+              withContext context (
+                match Package.resolve_browser package package_name with
+                | Some (Package.Ignore) -> return ("$fp$empty", [])
+                | Some (Package.Shim shim) ->
+                  (* TODO: what if path is not None?*)
+                  withContext
+                    (Printf.sprintf "...found '%s'." shim)
+                    (resolve_simple_request ~basedir shim)
+                | None ->
+                  withContext "...not found." (
+                    let%bind package_path =
+                      withContext
+                        "Resolving package path"
+                        (find_package_path_in_node_modules ~basedir package_name)
+                    in
+                    match path with
+                    | None ->
+                      let%bind resolved = resolve_directory package_path in
+                      return (resolved, [])
+                    | Some path ->
+                      resolve_simple_request ~basedir (package_path ^ "/" ^ path)
+                  )
+              )
             )
         )
     ))

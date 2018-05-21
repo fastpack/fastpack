@@ -143,6 +143,8 @@ Cannot find package path
   Resolving 'not-found'. Base directory: '/.../test/resolve/subdir'
   Mocked package?
   ...no.
+  Resolving 'not-found' through "browser"
+  ...not found.
   Resolving package path
   Path exists? '/.../test/resolve/nm/not-found'
   ...no.
@@ -226,6 +228,8 @@ Cannot resolve module
   Resolving 'dependency/module/some-path'. Base directory: '/.../test/resolve'
   Mocked package?
   ...no.
+  Resolving 'dependency' through "browser"
+  ...not found.
   Resolving '/.../test/resolve/node_modules/dependency/module/some-path'. Base directory: '/.../test/resolve'
   File exists? '/.../test/resolve/node_modules/dependency/module/some-path'
   ...no.
@@ -235,4 +239,36 @@ Cannot resolve module
   ...no.
   Is directory? '/.../test/resolve/node_modules/dependency/module/some-path'
   ...no.
+|}]
+
+
+let%expect_test "mocked file" =
+  resolve
+    ~mock:[("./node_modules/dependency/module.js", Mock "./index.js")]
+    "dependency/module";
+  [%expect_exact {|
+((File {
+  filename = (Some "/.../test/resolve/index.js");
+  preprocessors = []
+}),
+[])
+|}]
+
+let%expect_test "mocked file (fails)" =
+  resolve
+    ~mock:[("./node_modules/dependency/module.js", Mock "./not-found.js")]
+    "dependency/module";
+  [%expect_exact {|
+File not found: /.../test/resolve/not-found.js
+  Resolving 'dependency/module'. Base directory: '/.../test/resolve'
+  Resolving 'dependency/module'. Base directory: '/.../test/resolve'
+  Mocked package?
+  ...no.
+  Resolving 'dependency' through "browser"
+  ...not found.
+  Resolving '/.../test/resolve/node_modules/dependency/module'. Base directory: '/.../test/resolve'
+  Resolving '/.../test/resolve/node_modules/dependency/module.js' through "browser"
+  ...not found.
+  Mocked file?
+  ...yes. '/.../test/resolve/not-found.js'
 |}]
