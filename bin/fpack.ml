@@ -106,7 +106,7 @@ let () =
 
     let mock_t =
       let mock =
-        Arg.conv Fastpack.NodeResolver.Mock.(parse, print)
+        Arg.conv Fastpack.Resolver.Mock.(parse, print)
       in
       let doc =
         "Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is omitted"

@@ -6,7 +6,6 @@ module Mode = PackerUtil.Mode
 module Target = PackerUtil.Target
 module Context = PackerUtil.Context
 module Module = Module
-module NodeResolver = NodeResolver
 module Resolver = Resolver
 module Preprocessor = Preprocessor
 module Reporter = Reporter
@@ -26,7 +25,7 @@ type options = {
   output_directory : string;
   output_filename : string;
   mode : Mode.t;
-  mock : (string * NodeResolver.Mock.t) list;
+  mock : (string * Resolver.Mock.t) list;
   node_modules_paths : string list;
   target : Target.t;
   cache : Cache.strategy;
@@ -103,12 +102,13 @@ let prepare_and_pack options start_time =
   let entry_location = Module.Main entry_points in
   let get_context current_location =
     let resolver =
-      NodeResolver.make
+      Resolver.make
         ~project_dir
         ~mock:(options.mock)
         ~node_modules_paths:(options.node_modules_paths)
-        ~cache
+        ~extensions:[".js"; ".json"] (* TODO: expose as fpack parameters *)
         ~preprocessor
+        ~cache
     in
     let current_location =
       match current_location with

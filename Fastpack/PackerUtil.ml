@@ -202,7 +202,7 @@ module Context = struct
     stack : Module.Dependency.t list;
     mode : Mode.t;
     target : Target.t;
-    resolver : NodeResolver.t;
+    resolver : Resolver.t;
     preprocessor : Preprocessor.t;
     export_finder : ExportFinder.t;
     graph : DependencyGraph.t;
@@ -253,8 +253,8 @@ let relative_name {Context. project_dir; _} filename =
         (length filename - length project_dir - 1)
     )
 
-let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
-  let base_dir =
+let resolve (ctx : Context.t) (request : Module.Dependency.t) =
+  let basedir =
     match request.requested_from with
     | Module.File { filename = Some filename; _ } ->
       FilePath.dirname filename
@@ -266,10 +266,11 @@ let resolve (ctx : Context.t) package (request : Module.Dependency.t) =
   in
   Lwt.catch
     (fun () ->
-       ctx.resolver.resolve package request.request base_dir
+       ctx.resolver.resolve ~basedir request.request
+       (* ctx.resolver.resolve request.request basedir *)
     )
     (function
-      | NodeResolver.Error path ->
+      | Resolver.Error path ->
         Lwt.fail (PackError (ctx, CannotResolveModule (path, request)))
       | exn ->
         raise exn

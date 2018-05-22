@@ -636,7 +636,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
           Lwt_list.map_p
             (fun req ->
                let%lwt resolved, build_dependencies =
-                 resolve ctx m.package req
+                 resolve ctx req
                in
                Lwt.return ((req, resolved), build_dependencies)
             )
