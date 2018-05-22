@@ -39,7 +39,7 @@ exception Error of string
 type request = PathRequest of string
              | PackageRequest of (string * string option)
              | InternalRequest of string
-             [@@deriving show {with_path = false},eq,ord]
+             [@@deriving ord]
 
 module RequestMap = Map.Make(struct
   type t = request
