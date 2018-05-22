@@ -8,6 +8,8 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__DependencyGraph.cmi" {"Fastpack__DependencyGraph.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__DependencyGraph.cmx" {"Fastpack__DependencyGraph.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__DependencyGraph.cmt" {"Fastpack__DependencyGraph.cmt"}
+  "_build/install/default/lib/Fastpack/Fastpack__DependencyGraph.cmti" {"Fastpack__DependencyGraph.cmti"}
+  "_build/install/default/lib/Fastpack/DependencyGraph.mli" {"DependencyGraph.mli"}
   "_build/install/default/lib/Fastpack/DependencyGraph.ml" {"DependencyGraph.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__Error.cmi" {"Fastpack__Error.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Error.cmx" {"Fastpack__Error.cmx"}
