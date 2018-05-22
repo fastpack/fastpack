@@ -39,6 +39,8 @@ val lookup_dependencies :
 (** Return a list of modules in the depgraph sorted in a topological order. *)
 val sort : t -> Module.t -> Module.t list
 
+(** Return a list of modules which depend on any of filename supplied *)
 val get_modules_by_filenames: t -> string list -> Module.t list
 
+(** Remove all modules except those which locations are specified *)
 val cleanup : t -> Set.Make(String).t -> t
