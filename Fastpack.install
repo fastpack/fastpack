@@ -33,13 +33,11 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__Module.cmx" {"Fastpack__Module.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Module.cmt" {"Fastpack__Module.cmt"}
   "_build/install/default/lib/Fastpack/Module.ml" {"Module.ml"}
-  "_build/install/default/lib/Fastpack/Fastpack__NodeResolver.cmi" {"Fastpack__NodeResolver.cmi"}
-  "_build/install/default/lib/Fastpack/Fastpack__NodeResolver.cmx" {"Fastpack__NodeResolver.cmx"}
-  "_build/install/default/lib/Fastpack/Fastpack__NodeResolver.cmt" {"Fastpack__NodeResolver.cmt"}
-  "_build/install/default/lib/Fastpack/NodeResolver.ml" {"NodeResolver.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__Package.cmi" {"Fastpack__Package.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Package.cmx" {"Fastpack__Package.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Package.cmt" {"Fastpack__Package.cmt"}
+  "_build/install/default/lib/Fastpack/Fastpack__Package.cmti" {"Fastpack__Package.cmti"}
+  "_build/install/default/lib/Fastpack/Package.mli" {"Package.mli"}
   "_build/install/default/lib/Fastpack/Package.ml" {"Package.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__PackerUtil.cmi" {"Fastpack__PackerUtil.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__PackerUtil.cmx" {"Fastpack__PackerUtil.cmx"}
@@ -60,6 +58,8 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__Resolver.cmi" {"Fastpack__Resolver.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Resolver.cmx" {"Fastpack__Resolver.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Resolver.cmt" {"Fastpack__Resolver.cmt"}
+  "_build/install/default/lib/Fastpack/Fastpack__Resolver.cmti" {"Fastpack__Resolver.cmti"}
+  "_build/install/default/lib/Fastpack/Resolver.mli" {"Resolver.mli"}
   "_build/install/default/lib/Fastpack/Resolver.ml" {"Resolver.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__Run.cmi" {"Fastpack__Run.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Run.cmx" {"Fastpack__Run.cmx"}
