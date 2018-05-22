@@ -24,6 +24,7 @@ type options = {
   mode : Mode.t;
   mock : (string * Resolver.Mock.t) list;
   node_modules_paths : string list;
+  project_root_path : string;
   resolve_extension : string list;
   target : Target.t;
   cache : Cache.strategy;
@@ -129,8 +130,13 @@ let prepare_and_pack options start_time =
       then Printf.sprintf " Cache: %s. Mode: %s." cache_report (Mode.to_string options.mode)
       else ""
     in
+    let project_root = FastpackUtil.FS.abs_path
+      current_dir
+      options.project_root_path
+    in
     let resolver =
       Resolver.make
+        ~project_root
         ~current_dir
         ~mock:(options.mock)
         ~node_modules_paths:(options.node_modules_paths)
@@ -141,6 +147,7 @@ let prepare_and_pack options start_time =
     let ctx = {
       Context.
       current_dir;
+      project_root;
       project_package;
       output_dir;
       output_file;

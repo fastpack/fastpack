@@ -60,6 +60,7 @@ let request_to_string req =
     pkg ^ (match path with | None -> "" | Some path -> "/" ^ path)
 
 let make
+  ~(project_root : string)
   ~(current_dir : string)
   ~(mock : (string * Mock.t) list)
   ~(node_modules_paths : string list)
@@ -208,7 +209,7 @@ let make
                    (FilePath.concat dir node_modules_path)
                    package_name
                in
-               if dir = current_dir
+               if dir = project_root
                then [package_path]
                else package_path :: (FilePath.dirname dir |> gen_paths)
              in
