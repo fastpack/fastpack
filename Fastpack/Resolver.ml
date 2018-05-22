@@ -46,6 +46,11 @@ module RequestMap = Map.Make(struct
   let compare = compare_request
 end)
 
+module RequestSet = Set.Make(struct
+  type t = request
+  let compare = compare_request
+end)
+
 
 let request_to_string req =
   match req with
@@ -59,6 +64,7 @@ let make
   ~(mock : (string * Mock.t) list)
   ~(node_modules_paths : string list)
   ~(extensions : string list)
+  ~(preprocessor : Preprocessor.t)
   ~(cache : Cache.t) =
 
   let normalize_request ~(basedir : string) request =
@@ -89,14 +95,6 @@ let make
           | package::rest -> return (PackageRequest (package, Some (String.concat "/" rest)))
   in
 
-  (* let%lwt mock_map = *)
-  (*   let open Run.Syntax in *)
-  (*   let build_mock_map () = *)
-  (*   in *)
-  (*   match%bind build_mock_map () with *)
-  (*   | Ok mock_map *)
-  (* in *)
-
   let mock_map =
     let build_mock_map () =
       let open Run.Syntax in
@@ -121,7 +119,6 @@ let make
         )
         ~init:RequestMap.empty
         mock
-
     in
     match build_mock_map () with
     | Ok mock_map -> mock_map
@@ -236,119 +233,146 @@ let make
     exists' try_paths
   in
 
-  let rec resolve_simple_request ~basedir request =
-    (* TODO: track seen requests *)
+  let withDependencies dependencies resolved =
+    match%lwt resolved with
+    | Ok (resolved, resolved_dependencies) ->
+      Lwt.return_ok (resolved, dependencies @ resolved_dependencies)
+    | Error err ->
+      Lwt.return_error err
+  in
+
+  let withPackageDependency package resolved =
+    match package.Package.filename with
+    | None -> resolved
+    | Some filename -> withDependencies [filename] resolved
+  in
+
+  let rec resolve_simple_request ?(seen=RequestSet.empty) ~basedir request =
     let open RunAsync.Syntax in
-    let context =
-      Printf.sprintf "Resolving '%s'. Base directory: '%s'" request basedir
+    let%bind normalized_request =
+      RunAsync.liftOfRun (normalize_request ~basedir request)
     in
-    RunAsync.(withContext context (
-      match%bind RunAsync.liftOfRun (normalize_request ~basedir request) with
-      | InternalRequest request ->
-        return (request, [])
-      | PathRequest request ->
-        let%bind resolved = resolve_file request in
-        let%lwt package = find_package (FilePath.dirname resolved) in
-        let context =
-          Printf.sprintf "Resolving '%s' through \"browser\"" resolved
-        in
-        withContext context (
-          match Package.resolve_browser package resolved with
-          | Some (Package.Ignore) -> return ("$fp$empty", [])
-          | Some (Package.Shim shim) ->
-            withContext
-              (Printf.sprintf "...found '%s'." shim)
-              (resolve_simple_request ~basedir:(FilePath.dirname resolved) shim)
-          | None ->
-            withContext "...not found." (
-              withContext "Mocked file?" (
-                match resolve_mock (PathRequest resolved) with
-                | Some (PathRequest path) ->
-                  withContext (Printf.sprintf "...yes. '%s'" path) (
-                    match%lwt cache.file_stat_opt path with
-                    | Some ({ st_kind = Lwt_unix.S_REG; _ }, _) ->
-                      return (path, [])
-                    | _ ->
-                      error ("File not found: " ^ path)
-                  )
-                | Some (InternalRequest request) ->
-                  return (request, [])
-                | Some _ ->
-                  error "Incorrect mock configuration"
-                | None ->
-                  return (resolved, [])
-              )
-            )
-        )
-      | PackageRequest (package_name, path) ->
-        withContext "Mocked package?" (
-          match resolve_mock (PackageRequest (package_name, None)) with
-          | Some (InternalRequest resolved) ->
-            return (resolved, [])
-          | Some ((PathRequest request) as r) ->
-            withContext
-              (Printf.sprintf "...yes '%s'." (request_to_string r))
-              (resolve_simple_request ~basedir request)
-          | Some ((PackageRequest (package_name, mocked_path)) as r) ->
-            let request =
-              package_name
-              ^ (match mocked_path with | None -> "" | Some path -> "/" ^ path)
-              ^ (match path with | None -> "" | Some path -> "/" ^ path)
-            in
-            withContext
-              (Printf.sprintf "...yes '%s'." (request_to_string r))
-              (resolve_simple_request ~basedir request)
-          | None ->
-            withContext "...no." (
-              let%lwt package = find_package basedir in
-              let context =
-                Printf.sprintf "Resolving '%s' through \"browser\"" package_name
-              in
-              withContext context (
-                match Package.resolve_browser package package_name with
-                | Some (Package.Ignore) -> return ("$fp$empty", [])
-                | Some (Package.Shim shim) ->
-                  (* TODO: what if path is not None?*)
-                  withContext
-                    (Printf.sprintf "...found '%s'." shim)
-                    (resolve_simple_request ~basedir shim)
-                | None ->
-                  withContext "...not found." (
-                    let%bind package_path =
-                      withContext
-                        "Resolving package path"
-                        (find_package_path_in_node_modules ~basedir package_name)
-                    in
-                    match path with
+    match RequestSet.mem normalized_request seen with
+    | true -> error "Resolver went into cycle"
+    | false ->
+      let seen = RequestSet.add normalized_request seen in
+      let context =
+        Printf.sprintf "Resolving '%s'." (request_to_string normalized_request)
+      in
+      RunAsync.(withContext context (
+        match normalized_request with
+        | InternalRequest request ->
+          return (request, [])
+        | PathRequest request ->
+          let%bind resolved = resolve_file request in
+          let%lwt package = find_package (FilePath.dirname resolved) in
+          let context =
+            Printf.sprintf "Resolving '%s' through \"browser\"" resolved
+          in
+          withPackageDependency package (
+            withContext context (
+              match Package.resolve_browser package resolved with
+              | Some (Package.Ignore) -> return ("$fp$empty", [])
+              | Some (Package.Shim shim) ->
+                withContext
+                  (Printf.sprintf "...found '%s'." shim)
+                  (resolve_simple_request ~seen ~basedir:(FilePath.dirname resolved) shim)
+              | None ->
+                withContext "...not found." (
+                  withContext "Mocked file?" (
+                    match resolve_mock (PathRequest resolved) with
+                    | Some (PathRequest path) ->
+                      withContext (Printf.sprintf "...yes. '%s'" path) (
+                        match%lwt cache.file_stat_opt path with
+                        | Some ({ st_kind = Lwt_unix.S_REG; _ }, _) ->
+                          return (path, [])
+                        | _ ->
+                          error ("File not found: " ^ path)
+                      )
+                    | Some (InternalRequest request) ->
+                      return (request, [])
+                    | Some _ ->
+                      error "Incorrect mock configuration"
                     | None ->
-                      let%bind resolved = resolve_directory package_path in
                       return (resolved, [])
-                    | Some path ->
-                      resolve_simple_request ~basedir (package_path ^ "/" ^ path)
                   )
-              )
+                )
             )
-        )
-    ))
+          )
+        | PackageRequest (package_name, path) ->
+          withContext "Mocked package?" (
+            match resolve_mock (PackageRequest (package_name, None)) with
+            | Some (InternalRequest resolved) ->
+              return (resolved, [])
+            | Some ((PathRequest request) as r) ->
+              withContext
+                (Printf.sprintf "...yes '%s'." (request_to_string r))
+                (resolve_simple_request ~seen ~basedir request)
+            | Some ((PackageRequest (package_name, mocked_path)) as r) ->
+              let request =
+                package_name
+                ^ (match mocked_path with | None -> "" | Some path -> "/" ^ path)
+                ^ (match path with | None -> "" | Some path -> "/" ^ path)
+              in
+              withContext
+                (Printf.sprintf "...yes '%s'." (request_to_string r))
+                (resolve_simple_request ~seen ~basedir request)
+            | None ->
+              withContext "...no." (
+                let%lwt package = find_package basedir in
+                withPackageDependency package (
+                  let context =
+                    Printf.sprintf "Resolving '%s' through \"browser\"" package_name
+                  in
+                  withContext context (
+                    match Package.resolve_browser package package_name with
+                    | Some (Package.Ignore) -> return ("$fp$empty", [])
+                    | Some (Package.Shim shim) ->
+                      (* TODO: what if path is not None?*)
+                      withContext
+                        (Printf.sprintf "...found '%s'." shim)
+                        (resolve_simple_request ~seen ~basedir shim)
+                    | None ->
+                      withContext "...not found." (
+                        let%bind package_path =
+                          withContext
+                            "Resolving package path"
+                            (find_package_path_in_node_modules ~basedir package_name)
+                        in
+                        let request =
+                          package_path
+                          ^ (match path with | None -> "" | Some path -> "/" ^ path)
+                        in
+                        resolve_simple_request ~seen ~basedir request
+                      )
+                  )
+                )
+              )
+          )
+      ))
   in
 
   let resolve_preprocessor ~basedir preprocessor =
-    let context =
-      Printf.sprintf "Resolving preprocessor '%s', base directory '%s'" preprocessor basedir
-    in
-    RunAsync.withContext context (
-      let open RunAsync.Syntax in
-      let%bind request, options =
-        match String.split_on_char '?' preprocessor with
-        | request :: [] -> return (request, "")
-        | request :: options :: [] -> return (request, options)
-        | _ -> error (Printf.sprintf "Bad preprocessor format: '%s'" preprocessor)
+    let open RunAsync.Syntax in
+    match preprocessor with
+    | "builtin" ->
+        return (("builtin", ""), [])
+    | _ ->
+      let context =
+        Printf.sprintf "Resolving preprocessor '%s', base directory '%s'" preprocessor basedir
       in
-      let%bind resolved, dependencies =
-        resolve_simple_request ~basedir request
-      in
-      return ((resolved, options), dependencies)
-    )
+      RunAsync.withContext context (
+        let%bind request, options =
+          match String.split_on_char '?' preprocessor with
+          | [] -> error "Empty request"
+          | request :: [] -> return (request, "")
+          | request :: options -> return (request, String.concat "?" options)
+        in
+        let%bind resolved, dependencies =
+          resolve_simple_request ~basedir request
+        in
+        return ((resolved, options), dependencies)
+      )
   in
 
   let resolve ~basedir request =
@@ -368,38 +392,44 @@ let make
       match List.rev parts with
       | [] -> error "Empty request"
       | filename :: preprocessors ->
-        let%bind filename, dependencies, configured_preprocessors =
-          match filename with
-          | "" ->
-            return (None, [], [])
-          | _ ->
-            let%bind resolved, dependencies =
-              resolve_simple_request
-                ~basedir
-                filename
-            in
-            (* TODO: configured preprocessors *)
-            (* let preprocessors = preprocessor.get_processors resolved in *)
-            let preprocessors =
-              match preprocess with
-              | true -> []
-              (* | true -> ["style-loader"; "css-loader?modules=true"] *)
-              | false -> []
-            in
-            return (Some resolved, dependencies, preprocessors)
-        in
-        let%bind preprocessors, preprocessor_dependencies =
-          RunAsync.foldLeft
-            ~init:([], [])
-            ~f:(fun (all_resolved, all_dependencies) request ->
+        let resolve_preprocessors preprocessors =
+          let rec resolve_preprocessors' = function
+            | [] -> return ([], [])
+            | request :: rest ->
               let%bind resolved, dependencies =
                 resolve_preprocessor ~basedir request
               in
-              return (resolved :: all_resolved, dependencies @ all_dependencies)
-            )
-            (configured_preprocessors @ preprocessors)
+              let%bind all_resolved, dependencies =
+                withDependencies dependencies (resolve_preprocessors' rest)
+              in
+              return (resolved :: all_resolved, dependencies)
+          in
+          let context =
+            Printf.sprintf
+              "Resolving preprocessors '%s'"
+              (String.concat "!" preprocessors)
+          in
+          RunAsync.withContext context (resolve_preprocessors' preprocessors)
         in
-        return (filename, dependencies @ preprocessor_dependencies, List.rev preprocessors)
+        match filename with
+        | "" ->
+          let%bind (preprocessors, dependencies) = resolve_preprocessors preprocessors in
+          return (None, dependencies, List.rev preprocessors)
+        | _ ->
+          let%bind resolved, dependencies =
+            resolve_simple_request ~basedir filename
+          in
+          let configured_preprocessors =
+            match preprocess with
+            | true -> preprocessor.get_processors resolved
+            | false -> []
+          in
+          let%bind preprocessors, dependencies =
+            withDependencies
+              dependencies
+              (resolve_preprocessors (List.rev configured_preprocessors @ List.rev preprocessors))
+          in
+          return (Some resolved, dependencies, preprocessors)
     in
     let context =
       Printf.sprintf "Resolving '%s'. Base directory: '%s'" request basedir
