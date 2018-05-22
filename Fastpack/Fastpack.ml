@@ -27,6 +27,7 @@ type options = {
   mode : Mode.t;
   mock : (string * Resolver.Mock.t) list;
   node_modules_paths : string list;
+  resolve_extension : string list;
   target : Target.t;
   cache : Cache.strategy;
   preprocess : Preprocessor.config list;
@@ -100,13 +101,18 @@ let prepare_and_pack options start_time =
     cache.find_package_for_filename project_dir (FilePath.concat project_dir "package.json")
   in
   let entry_location = Module.Main entry_points in
+  let extensions =
+    options.resolve_extension
+    |> List.filter (fun ext -> String.trim ext <> "")
+    |> List.map (fun ext -> match String.get ext 0 with | '.' -> ext | _ -> "." ^ ext)
+  in
   let get_context current_location =
     let resolver =
       Resolver.make
         ~project_dir
         ~mock:(options.mock)
         ~node_modules_paths:(options.node_modules_paths)
-        ~extensions:[".js"; ".json"] (* TODO: expose as fpack parameters *)
+        ~extensions
         ~preprocessor
         ~cache
     in
