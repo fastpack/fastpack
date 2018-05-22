@@ -756,7 +756,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
         (* check all static dependecies *)
         let%lwt () = Lwt_list.iter_s
           (fun req ->
-            let%lwt resolved, _ = resolve ctx m.package req in
+            let%lwt resolved, _ = resolve ctx req in
             if has_module resolved
             then begin
               let () = add_resolved_request req resolved in
@@ -875,8 +875,8 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
       let%lwt entry = process ctx graph entry in
       let%lwt dynamic_deps =
         Lwt_list.map_s
-          (fun (ctx, m, req) ->
-             let%lwt resolved, _ = resolve ctx m.Module.package req in
+          (fun (ctx, _, req) ->
+             let%lwt resolved, _ = resolve ctx req in
              add_resolved_request req resolved;
              Lwt.return (ctx, resolved)
           )

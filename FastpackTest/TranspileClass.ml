@@ -1,4 +1,4 @@
-open Util
+open Test
 
 let%expect_test "transpile-class.js" =
   test transpile "transpile-class.js";

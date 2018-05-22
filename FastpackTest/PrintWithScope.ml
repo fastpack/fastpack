@@ -1,4 +1,4 @@
-open Util
+open Test
 
 let%expect_test "print-with-scope.js" =
   test (print ~with_scope:true) "print-with-scope.js";

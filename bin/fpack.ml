@@ -9,7 +9,9 @@ let () =
         output_directory
         output_filename
         mode
+        mock
         node_modules_paths
+        resolve_extension
         target
         cache
         preprocess
@@ -29,7 +31,9 @@ let () =
             output_directory;
             output_filename;
             mode;
+            mock = (List.map snd mock);
             node_modules_paths;
+            resolve_extension;
             target;
             cache;
             preprocess = (List.map snd preprocess);
@@ -102,6 +106,29 @@ let () =
       Arg.(value & opt_all string ["node_modules"] & info ["nm"; "node-modules"] ~docv ~doc)
     in
 
+    let mock_t =
+      let mock =
+        Arg.conv Fastpack.Resolver.Mock.(parse, print)
+      in
+      let doc =
+        "Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is omitted"
+        ^ " empty module is used."
+      in
+      let docv = "PACKAGE[:SUBSTITUTE]" in
+      Arg.(value & opt_all mock [] & info ["mock"] ~docv ~doc)
+    in
+
+    let resolve_extension_t =
+      let doc =
+        "Provide extensions to be considered by the resolver for the "
+        ^ "extension-less path. Extensions will be tried in the specified order."
+        ^ " If no extension should be tried, provide '' as an argument. Defaults "
+        ^ "to [.js, .json]"
+      in
+      let docv = "EXTENSION" in
+      Arg.(value & opt_all string [".js"; ".json"] & info ["resolve-extension"] ~docv ~doc)
+    in
+
     let target_t =
       let doc = "Deployment target." in
       let docv = "[ app | esm | cjs ]" in
@@ -123,6 +150,7 @@ let () =
         let disable = Disable, Arg.info ["no-cache"] ~doc in
         Arg.(value & vflag Use [disable])
     in
+
 
     let preprocess_t =
       let module P = Fastpack.Preprocessor in
@@ -193,7 +221,9 @@ let () =
         $ output_directory_t
         $ output_filename_t
         $ mode_t
+        $ mock_t
         $ node_modules_path_t
+        $ resolve_extension_t
         $ target_t
         $ cache_t
         $ preprocess_t

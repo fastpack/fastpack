@@ -1,4 +1,4 @@
-open Util
+open Test
 
 let%expect_test "transpile-strip-flow.js" =
   test transpile "transpile-strip-flow.js";

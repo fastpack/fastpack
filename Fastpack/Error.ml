@@ -38,7 +38,7 @@ let to_string package_dir error =
   | CannotResolveModule (path, dep) ->
     let dep_str = Module.Dependency.to_string ~dir:(Some package_dir) dep in
     Printf.sprintf
-      "Cannot resolve module:\n\t%s\nWhile processing dependency request:\n\t%s\n"
+      "\n%s\nWhile processing dependency request:\n\t%s\n"
       path
       dep_str
 

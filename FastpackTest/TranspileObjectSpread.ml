@@ -1,4 +1,4 @@
-open Util
+open Test
 
 let%expect_test "transpile-object-spread.js" =
   test transpile "transpile-object-spread.js";

@@ -12,7 +12,10 @@ install:
 	@esy install
 
 test: build-dev
-	@esy jbuilder runtest --dev
+	@esy jbuilder runtest --dev --diff-command "git --no-pager diff --no-index --color"
+
+train: build-dev
+	@esy jbuilder runtest --auto-promote --dev --diff-command "git --no-pager diff --no-index --color"
 
 setup-test:
 	cd test && for TEST in `ls`; \
