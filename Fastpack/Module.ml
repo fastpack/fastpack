@@ -10,13 +10,13 @@ type state = Initial
 type file_location = {
   filename : string option;
   preprocessors: (string * string) list;
-
-}
+} [@@deriving show {with_path = false}]
 
 type location = Main of string list
               | Runtime
               | EmptyModule
               | File of file_location
+              [@@deriving show{with_path = false}]
 
 type module_type = | CJS | CJS_esModule | ESM
 
@@ -125,6 +125,14 @@ let make_id base_dir location =
     in
     location_to_string ~base_dir:(Some base_dir) location |> to_var_name
 
+let is_internal request =
+  request = "$fp$empty" || request = "$fp$runtime" || request = "$fp$main"
+
+let resolved_file2 ?(preprocessors=[]) filename =
+  match filename with
+  | Some "$fp$empty" -> EmptyModule
+  | Some "$fp$runtime" -> Runtime
+  | _ -> File { filename; preprocessors }
 
 let resolved_file filename =
   File {

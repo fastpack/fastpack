@@ -57,6 +57,18 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__Reporter.cmx" {"Fastpack__Reporter.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Reporter.cmt" {"Fastpack__Reporter.cmt"}
   "_build/install/default/lib/Fastpack/Reporter.ml" {"Reporter.ml"}
+  "_build/install/default/lib/Fastpack/Fastpack__Resolver.cmi" {"Fastpack__Resolver.cmi"}
+  "_build/install/default/lib/Fastpack/Fastpack__Resolver.cmx" {"Fastpack__Resolver.cmx"}
+  "_build/install/default/lib/Fastpack/Fastpack__Resolver.cmt" {"Fastpack__Resolver.cmt"}
+  "_build/install/default/lib/Fastpack/Resolver.ml" {"Resolver.ml"}
+  "_build/install/default/lib/Fastpack/Fastpack__Run.cmi" {"Fastpack__Run.cmi"}
+  "_build/install/default/lib/Fastpack/Fastpack__Run.cmx" {"Fastpack__Run.cmx"}
+  "_build/install/default/lib/Fastpack/Fastpack__Run.cmt" {"Fastpack__Run.cmt"}
+  "_build/install/default/lib/Fastpack/Run.ml" {"Run.ml"}
+  "_build/install/default/lib/Fastpack/Fastpack__RunAsync.cmi" {"Fastpack__RunAsync.cmi"}
+  "_build/install/default/lib/Fastpack/Fastpack__RunAsync.cmx" {"Fastpack__RunAsync.cmx"}
+  "_build/install/default/lib/Fastpack/Fastpack__RunAsync.cmt" {"Fastpack__RunAsync.cmt"}
+  "_build/install/default/lib/Fastpack/RunAsync.ml" {"RunAsync.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__Version.cmi" {"Fastpack__Version.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Version.cmx" {"Fastpack__Version.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Version.cmt" {"Fastpack__Version.cmt"}
