@@ -2,13 +2,13 @@ open Fastpack.Resolver
 module FS = FastpackUtil.FS
 module Preprocessor = Fastpack.Preprocessor
 
-type result = (Fastpack.Module.location * string list) [@@deriving show]
+type resolved = (Fastpack.Module.location * string list) [@@deriving show]
 
 let test_path = Test.get_test_path "resolve"
 
-let show result =
+let show resolved =
   Format.(pp_set_margin str_formatter 10000);
-  pp_result Format.str_formatter result;
+  pp_resolved Format.str_formatter resolved;
   Format.flush_str_formatter ()
   |> String.replace ~sub:"{ " ~by:"{\n  "
   |> String.replace ~sub:"; " ~by:";\n  "
