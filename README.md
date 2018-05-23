@@ -67,6 +67,13 @@ OPTIONS
            `pager', `groff' or `plain'. With `auto', the format is `pager` or
            `plain' whenever the TERM env var is `dumb' or undefined.
 
+       --mock=PACKAGE[:SUBSTITUTE]
+           Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is
+           omitted empty module is used.
+
+       -n NAME, --name=NAME (absent=index.js)
+           Output File Name. The target bundle filename will be NAME
+
        --no-cache
            Do not use cache at all (effective in development mode only)
 
@@ -74,13 +81,8 @@ OPTIONS
            Paths to 'node_modules' directory. Should be inside the project
            directory.. Defaults to ['node_modules']
 
-       -n NAME, --name=NAME
-           Output file name. The target bundle will be DIR/NAME.
-           Default: index.js
-
-       -o DIR, --output=DIR
-           Output Directory. The target bundle will be DIR/NAME
-           Default: ./bundle/
+       -o DIR, --output=DIR (absent=./bundle)
+           Output Directory. The target bundle will be DIR/index.js.
 
        --postprocess=COMMAND
            Apply shell command on a bundle file. The content of the bundle
@@ -103,6 +105,12 @@ OPTIONS
        --report=[ json ] (absent=text)
            Output packer statistics
 
+       --resolve-extension=EXTENSION
+           Provide extensions to be considered by the resolver for the
+           extension-less path. Extensions will be tried in the specified
+           order. If no extension should be tried, provide '' as an argument.
+           Defaults to [.js, .json]
+
        --target=[ app | esm | cjs ] (absent=app)
            Deployment target.
 
@@ -111,7 +119,6 @@ OPTIONS
 
        -w, --watch
            Watch file changes and rebuild bundle
-
 ```
 
 ## Development

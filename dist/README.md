@@ -49,11 +49,11 @@ NAME
        fpack - Pack JavaScript code into a single bundle
 
 SYNOPSIS
-       fpack [OPTION]... [INPUT]
+       fpack [OPTION]... [ENTRY POINTS]...
 
 ARGUMENTS
-       INPUT
-           Entry point JavaScript file
+       ENTRY POINTS
+           Entry points. Default: ['.']
 
 OPTIONS
        -d, --debug
@@ -67,11 +67,22 @@ OPTIONS
            `pager', `groff' or `plain'. With `auto', the format is `pager` or
            `plain' whenever the TERM env var is `dumb' or undefined.
 
-       --no-cache
-           Do not use cache at all
+       --mock=PACKAGE[:SUBSTITUTE]
+           Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is
+           omitted empty module is used.
 
-       -o DIR, --output=DIR
-           Output Directory. The target bundle will be DIR/index.js
+       -n NAME, --name=NAME (absent=index.js)
+           Output File Name. The target bundle filename will be NAME
+
+       --no-cache
+           Do not use cache at all (effective in development mode only)
+
+       --node-modules=PATH, --nm=PATH
+           Paths to 'node_modules' directory. Should be inside the project
+           directory.. Defaults to ['node_modules']
+
+       -o DIR, --output=DIR (absent=./bundle)
+           Output Directory. The target bundle will be DIR/index.js.
 
        --postprocess=COMMAND
            Apply shell command on a bundle file. The content of the bundle
@@ -79,17 +90,35 @@ OPTIONS
            multiple commands are specified they will be applied in the order
            of appearance
 
-       --target=[ app | es6 | cjs ]
-           Deployment target.
+       --preprocess=PATTERN:PROCESSOR?OPTIONS[!...]
+           Preprocess modules matching the PATTERN with the PROCESSOR.
+           Optionally, the processor may receive some OPTIONS in form:
+           'x=y&a=b'. There are 2 kinds of currently supported processors:
+           'builtin' and the Webpack loader. 'builtin' preprocessor provides
+           the following transpilers: stripping Flow types, object spread &
+           rest operators, class properties (including statics), class/method
+           decorators, and React-assumed JSX conversion. 'builtin' may be
+           skipped when setting this option, i.e. '\.js$' and '\.js$:builtin'
+           are absolutely equal. An example of using the Webpack loader:
+           '\.js$:babel-loader?filename=.babelrc'.
 
-       --transpile=PATTERN
-           Apply transpilers to files matching PATTERN the regular expression.
-           Currently available transpilers are: stripping Flow types, object
-           spread & rest opertions, class properties (including statics),
-           class/method decorators, and React-assumed JSX conversion.
+       --report=[ json ] (absent=text)
+           Output packer statistics
+
+       --resolve-extension=EXTENSION
+           Provide extensions to be considered by the resolver for the
+           extension-less path. Extensions will be tried in the specified
+           order. If no extension should be tried, provide '' as an argument.
+           Defaults to [.js, .json]
+
+       --target=[ app | esm | cjs ] (absent=app)
+           Deployment target.
 
        --version
            Show version information.
+
+       -w, --watch
+           Watch file changes and rebuild bundle
 
 ```
 
