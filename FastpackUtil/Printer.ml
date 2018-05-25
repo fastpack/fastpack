@@ -1202,7 +1202,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
             in
             let parens =
               match String.length body with
-              | 0 -> true
+              | 0 -> true (* TODO: this should be an error *)
               | _ ->
                 match String.get body 0 with
                 | '{' -> true

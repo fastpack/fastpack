@@ -23,4 +23,9 @@ React.createElement("div", null, React.createElement(React.Fragment, null, 'oops
 React.createElement("div", null, React.createElement(React.Fragment, null, React.createElement("div", null), React.createElement("div", null)));
 const App = ({components}) => React.createElement("div", null, components.map((Comp, i) => React.createElement("div", {"key": i}, React.createElement(Comp, null))));
 React.createElement(X, {"component": true ? React.createElement(Comp1, null) : React.createElement(Comp2, null)});
+React.createElement(X, null);
+/*
+<div></div>
+*/
 |}]
+

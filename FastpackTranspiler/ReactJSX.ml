@@ -160,32 +160,32 @@ let transpile _ program =
       let transpile_child ((loc, child) : Loc.t child) =
         let expr = match child with
           | Element element ->
-            (loc, transpile_element element)
+            Some (loc, transpile_element element)
           | ExpressionContainer { expression = ExpressionContainer.Expression expression } ->
-            AstMapper.map_expression context expression
+            Some (AstMapper.map_expression context expression)
           | ExpressionContainer { expression = ExpressionContainer.EmptyExpression _ } ->
-            raise (Error.TranspilerError (
-              loc,
-              "Found EmptyExpression container"
-            ))
+            None
           | Text { value; raw } ->
             let raw = trim_text raw in
-            (loc, E.Literal {
+            Some (loc, E.Literal {
                 value = Ast.Literal.String value;
                 raw = ("'" ^ String.replace ~sub:"'" ~by:"\\'" raw ^ "'");
-              })
+            })
           | Fragment fragment ->
-            (loc, transpile_fragment fragment)
+            Some (loc, transpile_fragment fragment)
           | SpreadChild _ ->
             raise (Error.TranspilerError (
               loc,
               "SpreadChild are not implemented"
             ))
         in
-        E.Expression expr
+        match expr with
+        | Some expr -> [E.Expression expr]
+        | None -> []
       in
       children
       |> List.map transpile_child
+      |> List.concat
       |> List.filter
         (fun child ->
           match child with
