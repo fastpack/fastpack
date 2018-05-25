@@ -1198,6 +1198,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
               |> emit_expression expr
               |> pop_parent_function f
               |> contents
+              |> String.trim
             in
             let parens =
               match String.length body with
