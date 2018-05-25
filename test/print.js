@@ -194,3 +194,8 @@ export * from "y";
 export * as test from "y";
 
 export default function F() {};
+
+export const fff1 = x => ({"x": 1}[x]);
+export const fff2 = x => ({"x": x}.x);
+export const fff3 = x => ({} + {});
+export const fff4 = x => ({} ? 1 : x);

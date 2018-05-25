@@ -305,6 +305,10 @@ let make
             | Some (InternalRequest resolved) ->
               return (resolved, [])
             | Some ((PathRequest request) as r) ->
+              let request =
+                request
+                ^ (match path with | None -> "" | Some path -> "/" ^ path)
+              in
               withContext
                 (Printf.sprintf "...yes '%s'." (request_to_string r))
                 (resolve_simple_request ~seen ~basedir request)

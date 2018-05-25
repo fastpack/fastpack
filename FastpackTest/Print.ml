@@ -1,6 +1,7 @@
 open Test
 
 let%expect_test "print.js" =
+
   test (print ~with_scope:false) "print.js";
   [%expect_exact {|/** bindings */
 var x = 1;

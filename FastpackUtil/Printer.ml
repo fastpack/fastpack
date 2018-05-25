@@ -164,6 +164,11 @@ module Parens = struct
         false
 end
 
+let with_tmp_buffer ctx =
+  { ctx with buf = Buffer.create 1024 }
+
+let contents ctx =
+  Buffer.contents ctx.buf
 
 let fail_if cond message =
   if cond then ie message else ()
@@ -1186,16 +1191,25 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
             |> emit_newline
         | F.BodyExpression expr ->
           fun ctx ->
+            let body =
+              ctx
+              |> with_tmp_buffer
+              |> push_parent_function f
+              |> emit_expression expr
+              |> pop_parent_function f
+              |> contents
+            in
             let parens =
-              match expr with
-              | _, E.Object _ -> true
-              | _ -> false
+              match String.length body with
+              | 0 -> true
+              | _ ->
+                match String.get body 0 with
+                | '{' -> true
+                | _ -> false
             in
             ctx
             |> emit_if parens (emit "(")
-            |> push_parent_function f
-            |> emit_expression ~parens:false expr
-            |> pop_parent_function f
+            |> emit body
             |> emit_if parens (emit ")")
        )
     |> remove_scope
