@@ -7,14 +7,31 @@ type resolved = (Fastpack.Module.location * string list) [@@deriving show]
 let test_path = Test.get_test_path "resolve"
 
 let show resolved =
-  Format.(pp_set_margin str_formatter 10000);
+  let resolved =
+    let (location, dependencies) = resolved in
+    let location =
+      match location with
+      | Fastpack.Module.File { filename; preprocessors } ->
+        let filename =
+          match filename with
+          | None -> None
+          | Some filename -> Some (Test.cleanup_project_path filename)
+        in
+        let preprocessors =
+          preprocessors
+          |> List.map (
+            fun (p, opt) ->
+              Test.(cleanup_project_path p, cleanup_project_path opt)
+          )
+        in
+        Fastpack.Module.File { filename; preprocessors }
+      | _ -> location
+    in
+    (location, List.map Test.cleanup_project_path dependencies)
+  in
+  Format.(pp_set_margin str_formatter 60);
   pp_resolved Format.str_formatter resolved;
   Format.flush_str_formatter ()
-  |> String.replace ~sub:"{ " ~by:"{\n  "
-  |> String.replace ~sub:"; " ~by:";\n  "
-  |> String.replace ~sub:" }), " ~by:"\n}),\n"
-  |> String.replace ~sub:"[\"" ~by:"[\n  \""
-  |> String.replace ~sub:"\"]" ~by:"\"\n]"
 
 let resolve
   ?(project_dir=test_path)
@@ -57,41 +74,37 @@ let resolve
 let%expect_test "." =
   resolve ".";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = []
-}),
-[])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors = [] }),
+ [])
 |}]
 
 let%expect_test "./index" =
   resolve "./index";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = []
-}),
-[])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors = [] }),
+ [])
 |}]
 
 let%expect_test "./index.js" =
   resolve "./index.js";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = []
-}),
-[])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors = [] }),
+ [])
 |}]
 
 let%expect_test "/.../index.js (abs path)" =
   resolve (FS.abs_path test_path "./index.js");
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = []
-}),
-[])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors = [] }),
+ [])
 |}]
 
 let%expect_test "./notfound" =
@@ -117,25 +130,21 @@ Cannot resolve module
 let%expect_test "dependency" =
   resolve "dependency";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/dependency/dependency-entry-point.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/dependency/dependency-entry-point.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/dependency/package.json"])
 |}]
 
 let%expect_test "dependency/module" =
   resolve "dependency/module";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/dependency/module.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/dependency/module.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/dependency/package.json"])
 |}]
 
 
@@ -196,35 +205,30 @@ let%expect_test "mock to empty module" =
 let%expect_test "mock to path" =
   resolve ~mock:[("fs", Mock "./fs.js")] "fs";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/fs.js");
-  preprocessors = []
-}),
-[])
+((File
+    { filename = (Some "/.../test/resolve/fs.js");
+      preprocessors = [] }),
+ [])
 |}]
 
 let%expect_test "mock to package" =
   resolve ~mock:[("fs", Mock "dependency")] "fs";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/dependency/dependency-entry-point.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/dependency/dependency-entry-point.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/dependency/package.json"])
 |}]
 
 let%expect_test "mock to path in package" =
   resolve ~mock:[("fs", Mock "dependency/module")] "fs";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/dependency/module.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/dependency/module.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/dependency/package.json"])
 |}]
 
 
@@ -258,13 +262,10 @@ let%expect_test "mocked file" =
     ~mock:[("./node_modules/dependency/module.js", Mock "./index.js")]
     "dependency/module";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/dependency/package.json"])
 |}]
 
 let%expect_test "mocked file (fails)" =
@@ -304,99 +305,92 @@ Resolver went into cycle
 let%expect_test "browser entry point" =
   resolve "browser-entry-point";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/browser-entry-point/browser/index.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/browser-entry-point/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/browser-entry-point/browser/index.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/browser-entry-point/package.json"
+   ])
 |}]
 
 let%expect_test "browser shim" =
   resolve "browser-shim";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/browser-shim/index-browser.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/browser-shim/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/browser-shim/index-browser.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/browser-shim/package.json"
+   ])
 |}]
 
 let%expect_test "browser shim: file mapped to file" =
   resolve ~basedir:"node_modules/browser-shim" "./module";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/browser-shim/module-browser.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/browser-shim/package.json";
-  "/.../test/resolve/node_modules/browser-shim/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/browser-shim/module-browser.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/browser-shim/package.json";
+   "/.../test/resolve/node_modules/browser-shim/package.json"
+   ])
 |}]
 
 let%expect_test "browser shim: package mapped to empty module" =
   resolve ~basedir:"node_modules/browser-shim" "skip-package";
   [%expect_exact {|
-(EmptyModule, [
-  "/.../test/resolve/node_modules/browser-shim/package.json"
-])
+(EmptyModule,
+ ["/.../test/resolve/node_modules/browser-shim/package.json"
+   ])
 |}]
 
 let%expect_test "browser shim: package mapped to another package" =
   resolve ~basedir:"node_modules/browser-shim" "to-pkg";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/dependency/dependency-entry-point.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/browser-shim/package.json";
-  "/.../test/resolve/node_modules/browser-shim/package.json";
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/dependency/dependency-entry-point.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/browser-shim/package.json";
+   "/.../test/resolve/node_modules/browser-shim/package.json";
+   "/.../test/resolve/node_modules/dependency/package.json"
+   ])
 |}]
 
 let%expect_test "browser shim: package mapped to file" =
   resolve ~basedir:"node_modules/browser-shim" "to-file";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/node_modules/browser-shim/file.js");
-  preprocessors = []
-}),
-[
-  "/.../test/resolve/node_modules/browser-shim/package.json";
-  "/.../test/resolve/node_modules/browser-shim/package.json"
-])
+((File
+    { filename =
+      (Some "/.../test/resolve/node_modules/browser-shim/file.js");
+      preprocessors = [] }),
+ ["/.../test/resolve/node_modules/browser-shim/package.json";
+   "/.../test/resolve/node_modules/browser-shim/package.json"
+   ])
 |}]
 
 let%expect_test "preprocessors" =
   resolve "dependency?k=v&a=b!./fs!./index";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = [("/.../test/resolve/node_modules/dependency/dependency-entry-point.js", "k=v&a=b");
-  ("/.../test/resolve/fs.js", "")]
-}),
-[
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors =
+      [("/.../test/resolve/node_modules/dependency/dependency-entry-point.js",
+        "k=v&a=b"); ("/.../test/resolve/fs.js", "")]
+      }),
+ ["/.../test/resolve/node_modules/dependency/package.json"])
 |}]
 
 let%expect_test "preprocessors: no argument" =
   resolve "dependency?k=v&a=b!./fs!";
   [%expect_exact {|
-((File {
-  filename = None;
-  preprocessors = [("/.../test/resolve/node_modules/dependency/dependency-entry-point.js", "k=v&a=b");
-  ("/.../test/resolve/fs.js", "")]
-}),
-[
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename = None;
+      preprocessors =
+      [("/.../test/resolve/node_modules/dependency/dependency-entry-point.js",
+        "k=v&a=b"); ("/.../test/resolve/fs.js", "")]
+      }),
+ ["/.../test/resolve/node_modules/dependency/package.json"])
 |}]
 
 let%expect_test "preprocessors: empty request" =
@@ -412,11 +406,10 @@ Empty request
 let%expect_test "preprocessors: configured only" =
   resolve ~preprocessor:Preprocessor.transpile_all "./index";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = [("builtin", "")]
-}),
-[])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors = [("builtin", "")] }),
+ [])
 |}]
 
 let%expect_test "preprocessors: configured and specified" =
@@ -424,18 +417,21 @@ let%expect_test "preprocessors: configured and specified" =
   let preprocessor = Lwt_main.run(Preprocessor.(make [of_string config] test_path ".")) in
   resolve ~preprocessor "dependency?k=v&a=b!./fs!./index";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = [("/.../test/resolve/node_modules/browser-shim/index-browser.js", "x=1");
-  ("/.../test/resolve/node_modules/browser-entry-point/browser/index.js", "");
-  ("/.../test/resolve/node_modules/dependency/dependency-entry-point.js", "k=v&a=b");
-  ("/.../test/resolve/fs.js", "")]
-}),
-[
-  "/.../test/resolve/node_modules/browser-shim/package.json";
-  "/.../test/resolve/node_modules/browser-entry-point/package.json";
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors =
+      [("/.../test/resolve/node_modules/browser-shim/index-browser.js",
+        "x=1");
+        ("/.../test/resolve/node_modules/browser-entry-point/browser/index.js",
+         "");
+        ("/.../test/resolve/node_modules/dependency/dependency-entry-point.js",
+         "k=v&a=b");
+        ("/.../test/resolve/fs.js", "")]
+      }),
+ ["/.../test/resolve/node_modules/browser-shim/package.json";
+   "/.../test/resolve/node_modules/browser-entry-point/package.json";
+   "/.../test/resolve/node_modules/dependency/package.json"
+   ])
 |}]
 
 let%expect_test "preprocessors: ignore configured processors" =
@@ -443,14 +439,13 @@ let%expect_test "preprocessors: ignore configured processors" =
   let preprocessor = Lwt_main.run(Preprocessor.(make [of_string config] test_path ".")) in
   resolve ~preprocessor "!dependency?k=v&a=b!./fs!./index";
   [%expect_exact {|
-((File {
-  filename = (Some "/.../test/resolve/index.js");
-  preprocessors = [("/.../test/resolve/node_modules/dependency/dependency-entry-point.js", "k=v&a=b");
-  ("/.../test/resolve/fs.js", "")]
-}),
-[
-  "/.../test/resolve/node_modules/dependency/package.json"
-])
+((File
+    { filename = (Some "/.../test/resolve/index.js");
+      preprocessors =
+      [("/.../test/resolve/node_modules/dependency/dependency-entry-point.js",
+        "k=v&a=b"); ("/.../test/resolve/fs.js", "")]
+      }),
+ ["/.../test/resolve/node_modules/dependency/package.json"])
 |}]
 
 let%expect_test "preprocessors: error" =
