@@ -61,11 +61,11 @@ let resolve
       Lwt.catch
         resolve'
         (function
-          | Error msg -> Lwt.return msg
+          | Error msg -> Lwt.return (Test.cleanup_project_path msg)
           | exn -> raise exn
         )
     ) in
-    print_endline (Test.cleanup_project_path ("\n" ^ msg))
+    print_endline ("\n" ^ msg)
 
 (*
  * Resolve simple file requests
