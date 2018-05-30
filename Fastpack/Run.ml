@@ -2,8 +2,8 @@
 (**
  * Computation with structured error reporting.
  *)
-type 'a t = ('a, error) result
-and error = string * context
+type ('a, 'b) t = ('a, 'b error) result
+and 'b error = 'b * context
 and context = string list
 
 let return v =

@@ -1,4 +1,4 @@
-type 'a t = 'a Run.t Lwt.t
+type ('a, 'b) t = ('a, 'b) Run.t Lwt.t
 
 let return v = Lwt.return (Ok v)
 
