@@ -1,5 +1,7 @@
 module FS = FastpackUtil.FS
 module M = Map.Make(String)
+module Run = FastpackUtil.Run
+module RunAsync = FastpackUtil.RunAsync
 
 module Mock = struct
   type t = Empty
