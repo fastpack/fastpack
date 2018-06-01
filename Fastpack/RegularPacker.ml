@@ -191,7 +191,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
 
     let define_export exported local =
       Printf.sprintf
-        "Object.defineProperty(exports, \"%s\", {get: function() {return %s;}});"
+        "Object.defineProperty(exports, \"%s\", {enumerable: true, get: function() {return %s;}});"
         exported
         local
     in
