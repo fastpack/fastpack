@@ -66,7 +66,7 @@ process = { env: {} };
 })
 ({
 "a": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nlet a1 = \"Тест\";;Object.defineProperty(exports, \"a1\", {get: function() {return a1;}});\nlet a2 = \"Привет, мир\";;Object.defineProperty(exports, \"a2\", {get: function() {return a2;}});\nlet a3 = \"哈囉世界\";;Object.defineProperty(exports, \"a3\", {get: function() {return a3;}});\nlet a4 = \"💩\";;Object.defineProperty(exports, \"a4\", {get: function() {return a4;}});\nexports.default = {a1: a1, a2: a2, a3: a3, a4: a4};\n\n//# sourceURL=fpack:///a.js");
+eval("module.exports.__esModule = true;\nlet a1 = \"Тест\";;Object.defineProperty(exports, \"a1\", {enumerable: true, get: function() {return a1;}});\nlet a2 = \"Привет, мир\";;Object.defineProperty(exports, \"a2\", {enumerable: true, get: function() {return a2;}});\nlet a3 = \"哈囉世界\";;Object.defineProperty(exports, \"a3\", {enumerable: true, get: function() {return a3;}});\nlet a4 = \"💩\";;Object.defineProperty(exports, \"a4\", {enumerable: true, get: function() {return a4;}});\nexports.default = {a1: a1, a2: a2, a3: a3, a4: a4};\n\n//# sourceURL=fpack:///a.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(/* \"./a\" */ \"a\");\nconsole.log(_1__a.a1, _1__a.a2, _1__a.a3);\nexports.default = function() {\n  console.log(\"Русский\", \"development\",\n              \"разработка\");\n}\n\n//# sourceURL=fpack:///index.js");
