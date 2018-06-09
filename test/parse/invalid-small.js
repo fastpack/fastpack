@@ -1,2 +1,2 @@
-
-console.log("Hello, world!);
+for(i = 1;);
+class(){}
