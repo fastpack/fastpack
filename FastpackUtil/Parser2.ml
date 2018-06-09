@@ -1,3 +1,4 @@
+module Loc = FlowParser.Loc
 
 let parse_options = Some FlowParser.Parser_env.({
     esproposal_optional_chaining = false;
@@ -9,9 +10,28 @@ let parse_options = Some FlowParser.Parser_env.({
     use_strict = false;
   })
 
-let formatError errs =
-  errs
-  |> List.map (fun (_, err) -> FlowParser.Parse_error.PP.error err)
+let formatError ~source ~errors =
+  let lineno_width = 4 in
+  let separator = "| " in
+  let lines =
+    String.lines source
+    |> List.mapi (fun i line ->
+        let lineno =
+          String.pad ~side:`Left ~c:' ' lineno_width (string_of_int (i + 1))
+        in
+        lineno ^ separator ^ line
+      )
+    |> Array.of_list in
+  errors
+  |> List.map (fun ((loc : Loc.t), err) ->
+      let line = lines.(loc.start.line - 1) in
+      let pointer =
+        String.pad ~side:`Left ~c:' '
+          (lineno_width + String.length separator + loc.start.column + 1)
+          "^"
+      in
+      line ^ "\n" ^ pointer ^ " " ^ FlowParser.Parse_error.PP.error err
+    )
   |> String.concat "\n"
 
 let parse ~location_str source =
@@ -20,7 +40,7 @@ let parse ~location_str source =
     try
       return (FlowParser.Parser_flow.program source ~parse_options)
     with
-    | FlowParser.Parse_error.Error args ->
-      error (formatError args)
+    | FlowParser.Parse_error.Error errors ->
+      error (formatError ~source ~errors)
   )
 
