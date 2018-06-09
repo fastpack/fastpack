@@ -110,7 +110,7 @@ let%expect_test "/.../index.js (abs path)" =
 let%expect_test "./notfound" =
   resolve "./notfound";
   [%expect_exact {|
-Cannot resolve module
+CONTEXT:
   Resolving './notfound'. Base directory: '/.../test/resolve'
   Resolving '/.../test/resolve/notfound'.
   File exists? '/.../test/resolve/notfound'
@@ -121,6 +121,8 @@ Cannot resolve module
   ...no.
   Is directory? '/.../test/resolve/notfound'
   ...no.
+
+Cannot resolve module
 |}]
 
 (*
@@ -154,7 +156,7 @@ let%expect_test "'not-found' from ./subdir with custom node_modules" =
     ~basedir:"subdir"
     "not-found";
   [%expect_exact {|
-Cannot find package path
+CONTEXT:
   Resolving 'not-found'. Base directory: '/.../test/resolve/subdir'
   Resolving 'not-found'.
   Mocked package?
@@ -168,6 +170,8 @@ Cannot find package path
   ...no.
   Path exists? '/.../test/resolve/node_modules/not-found'
   ...no.
+
+Cannot find package path
 |}]
 
 
@@ -176,6 +180,8 @@ let%expect_test "no internal modules in mock" =
     ~mock:[("$fp$runtime", Empty)]
     "dependency";
   [%expect_exact {|
+CONTEXT:
+
 Cannot mock internal package: $fp$runtime
 |}]
 
@@ -184,6 +190,8 @@ let%expect_test "cannot mock path in package" =
     ~mock:[("dependency/some/path", Empty)]
     "dependency";
   [%expect_exact {|
+CONTEXT:
+
 Cannot mock path inside the package: dependency/some/path
 |}]
 
@@ -192,6 +200,8 @@ let%expect_test "cannot mock file with anything else but file" =
     ~mock:[("./some/file.js", Mock "some-package")]
     "dependency";
   [%expect_exact {|
+CONTEXT:
+
 File could be only mocked with another file, not package: ./some/file.js:some-package
 |}]
 
@@ -235,7 +245,7 @@ let%expect_test "mock to path in package" =
 let%expect_test "resolve path in package with mocking to path in package (should fail)" =
   resolve ~mock:[("fs", Mock "dependency/module")] "fs/some-path";
   [%expect_exact {|
-Cannot resolve module
+CONTEXT:
   Resolving 'fs/some-path'. Base directory: '/.../test/resolve'
   Resolving 'fs/some-path'.
   Mocked package?
@@ -254,6 +264,8 @@ Cannot resolve module
   ...no.
   Is directory? '/.../test/resolve/node_modules/dependency/module/some-path'
   ...no.
+
+Cannot resolve module
 |}]
 
 
@@ -273,7 +285,7 @@ let%expect_test "mocked file (fails)" =
     ~mock:[("./node_modules/dependency/module.js", Mock "./not-found.js")]
     "dependency/module";
   [%expect_exact {|
-File not found: /.../test/resolve/not-found.js
+CONTEXT:
   Resolving 'dependency/module'. Base directory: '/.../test/resolve'
   Resolving 'dependency/module'.
   Mocked package?
@@ -285,6 +297,8 @@ File not found: /.../test/resolve/not-found.js
   ...not found.
   Mocked file?
   ...yes. '/.../test/resolve/not-found.js'
+
+File not found: /.../test/resolve/not-found.js
 |}]
 
 let%expect_test "resolver cycle" =
@@ -292,7 +306,7 @@ let%expect_test "resolver cycle" =
     ~mock:[("pkg1", Mock "pkg2"); ("pkg2", Mock "pkg1")]
     "pkg1";
   [%expect_exact {|
-Resolver went into cycle
+CONTEXT:
   Resolving 'pkg1'. Base directory: '/.../test/resolve'
   Resolving 'pkg1'.
   Mocked package?
@@ -300,6 +314,8 @@ Resolver went into cycle
   Resolving 'pkg2'.
   Mocked package?
   ...yes 'pkg1'.
+
+Resolver went into cycle
 |}]
 
 let%expect_test "browser entry point" =
@@ -396,10 +412,12 @@ let%expect_test "preprocessors: no argument" =
 let%expect_test "preprocessors: empty request" =
   resolve "dependency?k=v&a=b!!./fs!./index";
   [%expect_exact {|
-Empty request
+CONTEXT:
   Resolving 'dependency?k=v&a=b!!./fs!./index'. Base directory: '/.../test/resolve'
   Resolving preprocessors 'dependency?k=v&a=b!!./fs'
   Resolving preprocessor '', base directory '/.../test/resolve'
+
+Empty request
 |}]
 
 
@@ -453,7 +471,7 @@ let%expect_test "preprocessors: error" =
   let preprocessor = Lwt_main.run(Preprocessor.(make [of_string config] test_path ".")) in
   resolve ~preprocessor "dependency-not-found?k=v&a=b!./fs!./index";
   [%expect_exact {|
-Cannot find package path
+CONTEXT:
   Resolving 'dependency-not-found?k=v&a=b!./fs!./index'. Base directory: '/.../test/resolve'
   Resolving preprocessors 'browser-shim?x=1!browser-entry-point!dependency-not-found?k=v&a=b!./fs'
   Resolving preprocessor 'dependency-not-found?k=v&a=b', base directory '/.../test/resolve'
@@ -465,4 +483,6 @@ Cannot find package path
   Resolving package path
   Path exists? '/.../test/resolve/node_modules/dependency-not-found'
   ...no.
+
+Cannot find package path
 |}]

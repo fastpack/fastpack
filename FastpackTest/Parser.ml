@@ -18,6 +18,10 @@ OK
 let%expect_test "parse/invalid-small.js" =
   parse "parse/invalid-small.js";
   [%expect_exact {|
+CONTEXT:
+  Parsing parse/invalid-small.js
+
+Parse Errors:
    1| for(i = 1;);
                 ^ Unexpected token )
    1| for(i = 1;);
@@ -30,5 +34,38 @@ let%expect_test "parse/invalid-small.js" =
               ^ Unexpected token }
    3| 
       ^ Unexpected end of input
+|}]
+
+let%expect_test "parse/invalid-small.js" =
+  parse "parse/invalid-small.js";
+  [%expect_exact {|
+CONTEXT:
   Parsing parse/invalid-small.js
+
+Parse Errors:
+   1| for(i = 1;);
+                ^ Unexpected token )
+   1| for(i = 1;);
+                 ^ Unexpected token ;
+   2| class(){}
+      ^ Unexpected token class
+   2| class(){}
+             ^ Unexpected token {
+   2| class(){}
+              ^ Unexpected token }
+   3| 
+      ^ Unexpected end of input
+|}]
+
+let%expect_test "parse/test.css" =
+  parse "parse/test.css";
+  [%expect_exact {|
+CONTEXT:
+  Parsing parse/test.css
+
+Parse Error
+
+SUGGESTION:
+Looks like you are trying to parse the CSS file. Try to preprocess them like this:
+  --preprocess='\.css$:style-loader!css-loader'
 |}]
