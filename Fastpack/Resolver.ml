@@ -75,7 +75,7 @@ let make
     then return (InternalRequest request)
     else
       match request with
-      | "" -> error ("Empty request")
+      | "" -> error_str ("Empty request")
       | _ ->
         match String.get request 0 with
         | '.' -> return (PathRequest (FS.abs_path basedir request))
@@ -84,7 +84,7 @@ let make
           begin
             match String.split_on_char '/' request with
             | [] | _::[] ->
-              error (Printf.sprintf "Bad scoped package name: %s" request)
+              error_str (Printf.sprintf "Bad scoped package name: %s" request)
             | scope :: package :: [] ->
               return (PackageRequest (scope ^ "/" ^ package, None))
             | scope::package::rest ->
@@ -92,7 +92,7 @@ let make
           end
         | _ ->
           match String.split_on_char '/' request with
-          | [] -> error "Bad package request"
+          | [] -> error_str "Bad package request"
           | package::[] -> return (PackageRequest (package, None))
           | package::rest -> return (PackageRequest (package, Some (String.concat "/" rest)))
   in
@@ -110,11 +110,11 @@ let make
           in
           match normalized_key, normalized_value with
           | InternalRequest _, _ ->
-            error ("Cannot mock internal package: " ^ k)
+            error_str ("Cannot mock internal package: " ^ k)
           | PackageRequest (_, Some _), _ ->
-            error ("Cannot mock path inside the package: " ^ k)
+            error_str ("Cannot mock path inside the package: " ^ k)
           | PathRequest _, PackageRequest _ ->
-            error ("File could be only mocked with another file, not package: "
+            error_str ("File could be only mocked with another file, not package: "
                    ^ k ^ ":" ^ Mock.to_string v)
           | _ ->
             return (RequestMap.add normalized_key normalized_value acc)
@@ -161,7 +161,7 @@ let make
       | [] ->
         if try_directory
         then resolve_directory path
-        else error "Cannot resolve module"
+        else error_str "Cannot resolve module"
       | ext :: rest ->
         let filename = path ^ ext in
         let context = Printf.sprintf "File exists? '%s'" filename in
@@ -192,7 +192,7 @@ let make
             resolve_file ~try_directory:false (path ^ "/index")
         )
       | _ ->
-        withContext "...no." (error "Cannot resolve module")
+        withContext "...no." (error_str "Cannot resolve module")
     ))
   in
 
@@ -221,7 +221,7 @@ let make
     let open RunAsync.Syntax in
     let rec exists' paths =
       match paths with
-      | [] -> error "Cannot find package path"
+      | [] -> error_str "Cannot find package path"
       | path :: rest ->
         let context = Printf.sprintf "Path exists? '%s'" path in
         RunAsync.(withContext context (
@@ -255,7 +255,7 @@ let make
       RunAsync.liftOfRun (normalize_request ~basedir request)
     in
     match RequestSet.mem normalized_request seen with
-    | true -> error "Resolver went into cycle"
+    | true -> error_str "Resolver went into cycle"
     | false ->
       let seen = RequestSet.add normalized_request seen in
       let context =
@@ -289,12 +289,12 @@ let make
                         | Some ({ st_kind = Lwt_unix.S_REG; _ }, _) ->
                           return (path, [])
                         | _ ->
-                          error ("File not found: " ^ path)
+                          error_str ("File not found: " ^ path)
                       )
                     | Some (InternalRequest request) ->
                       return (request, [])
                     | Some _ ->
-                      error "Incorrect mock configuration"
+                      error_str "Incorrect mock configuration"
                     | None ->
                       return (resolved, [])
                   )
@@ -370,7 +370,7 @@ let make
       RunAsync.withContext context (
         let%bind request, options =
           match String.split_on_char '?' preprocessor with
-          | [] -> error "Empty request"
+          | [] -> error_str "Empty request"
           | request :: [] -> return (request, "")
           | request :: options -> return (request, String.concat "?" options)
         in
@@ -396,7 +396,7 @@ let make
         to_parts (String.split_on_char '!' request)
       in
       match List.rev parts with
-      | [] -> error "Empty request"
+      | [] -> error_str "Empty request"
       | filename :: preprocessors ->
         let resolve_preprocessors preprocessors =
           let rec resolve_preprocessors' = function

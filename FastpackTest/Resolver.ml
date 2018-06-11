@@ -121,7 +121,6 @@ CONTEXT:
   ...no.
   Is directory? '/.../test/resolve/notfound'
   ...no.
-
 Cannot resolve module
 |}]
 
@@ -170,7 +169,6 @@ CONTEXT:
   ...no.
   Path exists? '/.../test/resolve/node_modules/not-found'
   ...no.
-
 Cannot find package path
 |}]
 
@@ -180,8 +178,6 @@ let%expect_test "no internal modules in mock" =
     ~mock:[("$fp$runtime", Empty)]
     "dependency";
   [%expect_exact {|
-CONTEXT:
-
 Cannot mock internal package: $fp$runtime
 |}]
 
@@ -190,8 +186,6 @@ let%expect_test "cannot mock path in package" =
     ~mock:[("dependency/some/path", Empty)]
     "dependency";
   [%expect_exact {|
-CONTEXT:
-
 Cannot mock path inside the package: dependency/some/path
 |}]
 
@@ -200,8 +194,6 @@ let%expect_test "cannot mock file with anything else but file" =
     ~mock:[("./some/file.js", Mock "some-package")]
     "dependency";
   [%expect_exact {|
-CONTEXT:
-
 File could be only mocked with another file, not package: ./some/file.js:some-package
 |}]
 
@@ -264,7 +256,6 @@ CONTEXT:
   ...no.
   Is directory? '/.../test/resolve/node_modules/dependency/module/some-path'
   ...no.
-
 Cannot resolve module
 |}]
 
@@ -297,7 +288,6 @@ CONTEXT:
   ...not found.
   Mocked file?
   ...yes. '/.../test/resolve/not-found.js'
-
 File not found: /.../test/resolve/not-found.js
 |}]
 
@@ -314,7 +304,6 @@ CONTEXT:
   Resolving 'pkg2'.
   Mocked package?
   ...yes 'pkg1'.
-
 Resolver went into cycle
 |}]
 
@@ -416,7 +405,6 @@ CONTEXT:
   Resolving 'dependency?k=v&a=b!!./fs!./index'. Base directory: '/.../test/resolve'
   Resolving preprocessors 'dependency?k=v&a=b!!./fs'
   Resolving preprocessor '', base directory '/.../test/resolve'
-
 Empty request
 |}]
 
@@ -483,6 +471,5 @@ CONTEXT:
   Resolving package path
   Path exists? '/.../test/resolve/node_modules/dependency-not-found'
   ...no.
-
 Cannot find package path
 |}]
