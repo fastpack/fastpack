@@ -2,8 +2,11 @@ type 'a t = 'a Run.t Lwt.t
 
 let return v = Lwt.return (Ok v)
 
-let error msg =
-  Lwt.return (Run.error msg)
+let error error =
+  Lwt.return (Run.error error)
+
+let error_str msg =
+  Lwt.return (Run.error_str msg)
 
 let withContext msg v =
   let%lwt v = v in
@@ -38,6 +41,7 @@ let waitAll xs =
 module Syntax = struct
   let return = return
   let error = error
+  let error_str = error_str
 
   module Let_syntax = struct
     let bind = bind
