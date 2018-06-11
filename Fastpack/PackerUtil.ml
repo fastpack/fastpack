@@ -194,7 +194,7 @@ end
 
 module Context = struct
   type t = {
-    project_dir : string;
+    current_dir : string;
     project_package : Package.t;
     output_dir : string;
     entry_location : Module.location;
@@ -208,17 +208,17 @@ module Context = struct
     graph : DependencyGraph.t;
   }
 
-  let to_string { project_dir; stack; mode; current_location; _ } =
+  let to_string { current_dir; stack; mode; current_location; _ } =
     let stack =
       stack
-      |> List.map (Module.Dependency.to_string ~dir:(Some project_dir))
+      |> List.map (Module.Dependency.to_string ~dir:(Some current_dir))
       |> String.concat "\t\n"
     in
     let location_str =
-      Module.location_to_string ~base_dir:(Some project_dir) current_location
+      Module.location_to_string ~base_dir:(Some current_dir) current_location
     in
     Printf.([
-        sprintf "Project Directory: %s" project_dir;
+        sprintf "Project Directory: %s" current_dir;
         sprintf "Mode: %s" (Mode.to_string mode);
         "Call Stack:" ^ if stack <> ""
                         then sprintf "\n\t%s" stack
@@ -239,9 +239,9 @@ let string_of_error ctx error =
   Printf.sprintf
     "\n%s\n%s"
     (Context.to_string ctx)
-    (Error.to_string ctx.project_dir error)
+    (Error.to_string ctx.current_dir error)
 
-let relative_name {Context. project_dir; _} filename =
+let relative_name {Context. current_dir; _} filename =
   match Str.string_match (Str.regexp "^builtin:") filename 0 with
   | true ->
     filename
@@ -249,8 +249,8 @@ let relative_name {Context. project_dir; _} filename =
     String.(
       sub
         filename
-        (length project_dir + 1)
-        (length filename - length project_dir - 1)
+        (length current_dir + 1)
+        (length filename - length current_dir - 1)
     )
 
 let resolve (ctx : Context.t) (request : Module.Dependency.t) =
@@ -262,7 +262,7 @@ let resolve (ctx : Context.t) (request : Module.Dependency.t) =
     | Module.Runtime
     | Module.EmptyModule
     | Module.Main _ ->
-      ctx.project_dir
+      ctx.current_dir
   in
   Lwt.catch
     (fun () ->
@@ -292,7 +292,7 @@ let read_module
         Lwt.return ctx.project_package
       | Module.File { filename = Some filename; _ } ->
         let%lwt package, _ =
-          cache.find_package_for_filename ctx.project_dir filename
+          cache.find_package_for_filename ctx.current_dir filename
         in
         Lwt.return package
       | Module.File { filename = None; _ } ->
@@ -301,7 +301,7 @@ let read_module
         | Some (m : Module.t) -> Lwt.return m.package
     in
     Module.{
-      id = make_id ctx.project_dir location;
+      id = make_id ctx.current_dir location;
       location;
       package;
       resolved_dependencies = [];
@@ -341,7 +341,7 @@ let read_module
         match filename with
         | Some filename ->
           let%lwt _ =
-            if not (FilePath.is_subdir filename ctx.project_dir)
+            if not (FilePath.is_subdir filename ctx.current_dir)
             then Lwt.fail (PackError (ctx, CannotLeavePackageDir filename))
             else Lwt.return_unit
           in

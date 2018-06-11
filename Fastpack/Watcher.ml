@@ -4,8 +4,8 @@ module M = Map.Make(String)
 open PackerUtil
 let debug = Logs.debug
 
-let collect_links project_dir =
-  let node_modules = FilePath.concat project_dir "node_modules" in
+let collect_links current_dir =
+  let node_modules = FilePath.concat current_dir "node_modules" in
   let%lwt dirs =
     match%lwt FS.stat_option node_modules with
     |Some { st_kind = Unix.S_DIR; _ } ->
@@ -95,7 +95,7 @@ let watch
     ~pack
     ~(cache : Cache.t)
     ~graph
-    ~project_dir
+    ~current_dir
     get_context
   =
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
@@ -106,7 +106,7 @@ let watch
   Lwt_unix.on_signal Sys.sigterm (fun _ -> Lwt.wakeup_exn u ExitOK) |> ignore;
 
   let process = ref None in
-  let%lwt link_map = collect_links project_dir in
+  let%lwt link_map = collect_links current_dir in
   let link_paths =
     link_map
     |> M.bindings
@@ -114,8 +114,8 @@ let watch
     |> List.sort (fun s1 s2 -> Pervasives.compare (String.length s1) (String.length s2))
     |> List.rev
   in
-  let common_root = common_root (project_dir :: link_paths) in
-  let common_root = if common_root <> "" then common_root else project_dir in
+  let common_root = common_root (current_dir :: link_paths) in
+  let common_root = if common_root <> "" then common_root else current_dir in
   let%lwt (started_process, ch_in) = start_watchman common_root in
   process := Some started_process;
   let%lwt () = Lwt_io.(

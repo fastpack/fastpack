@@ -34,7 +34,7 @@ let show resolved =
   Format.flush_str_formatter ()
 
 let resolve
-  ?(project_dir=test_path)
+  ?(current_dir=test_path)
   ?(mock=[])
   ?(node_modules_paths=["node_modules"])
   ?(extensions=[".js"; ".json"])
@@ -42,12 +42,12 @@ let resolve
   ?(basedir=test_path)
   request
   =
-    let basedir = FS.abs_path project_dir basedir in
+    let basedir = FS.abs_path current_dir basedir in
     let resolve' () =
       let%lwt cache = Fastpack.Cache.(create Memory) in
       let { resolve } =
         make
-          ~project_dir
+          ~current_dir
           ~mock
           ~node_modules_paths
           ~extensions

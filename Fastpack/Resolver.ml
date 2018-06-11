@@ -60,7 +60,7 @@ let request_to_string req =
     pkg ^ (match path with | None -> "" | Some path -> "/" ^ path)
 
 let make
-  ~(project_dir : string)
+  ~(current_dir : string)
   ~(mock : (string * Mock.t) list)
   ~(node_modules_paths : string list)
   ~(extensions : string list)
@@ -100,11 +100,11 @@ let make
       let open Run.Syntax in
       Run.foldLeft
         ~f:(fun acc (k, v) ->
-          let%bind normalized_key = normalize_request ~basedir:project_dir k in
+          let%bind normalized_key = normalize_request ~basedir:current_dir k in
           let%bind normalized_value =
             match v with
             | Mock.Empty -> return (InternalRequest "$fp$empty")
-            | Mock.Mock v -> normalize_request ~basedir:project_dir v
+            | Mock.Mock v -> normalize_request ~basedir:current_dir v
           in
           match normalized_key, normalized_value with
           | InternalRequest _, _ ->
@@ -142,7 +142,7 @@ let make
         package_json_cache := M.add dir package !package_json_cache;
         Lwt.return package
       | false ->
-        if dir = project_dir
+        if dir = current_dir
         then
           Lwt.return (Package.empty)
         else begin
@@ -202,15 +202,15 @@ let make
            match String.get node_modules_path 0 with
            | '/' -> [FilePath.concat node_modules_path package_name]
            | _ ->
-             let rec gen_paths current_dir =
+             let rec gen_paths dir =
                let package_path =
                  FilePath.concat
-                   (FilePath.concat current_dir node_modules_path)
+                   (FilePath.concat dir node_modules_path)
                    package_name
                in
-               if current_dir = project_dir
+               if dir = current_dir
                then [package_path]
-               else package_path :: (FilePath.dirname current_dir |> gen_paths)
+               else package_path :: (FilePath.dirname dir |> gen_paths)
              in
              gen_paths basedir
         )

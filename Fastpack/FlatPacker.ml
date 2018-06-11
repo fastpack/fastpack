@@ -45,7 +45,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
   in
 
   let gen_wrapper_binding location =
-    let module_id = Module.make_id ctx.project_dir location in
+    let module_id = Module.make_id ctx.current_dir location in
     Printf.sprintf "$w__%s" module_id
   in
 
@@ -228,7 +228,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
                     then
                       let location_str =
                         Module.location_to_string
-                          ~base_dir:(Some ctx.project_dir)
+                          ~base_dir:(Some ctx.current_dir)
                           m.location
                       in
                       raise (PackError (ctx, CannotFindExportedName (remote, location_str)))
