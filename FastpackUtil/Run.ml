@@ -71,7 +71,6 @@ let with_suggestion suggestion v =
   | Error (msg, context) ->
     Error (msg, { context with suggestion = Some suggestion })
 
-
 let liftOfStringError v =
   match v with
   | Ok v -> Ok v
@@ -80,19 +79,6 @@ let liftOfStringError v =
 let formatError error =
   pp_error ~ppf:Format.str_formatter error;
   Format.flush_str_formatter ()
-  (* let context = *)
-  (*   lines *)
-  (*   |> List.map (fun line -> "  " ^ line) *)
-  (*   |> (fun context -> "CONTEXT:" :: context) *)
-  (*   |> String.concat "\n" *)
-  (* in *)
-  (* let suggestion = *)
-  (*   match suggestion with *)
-  (*   | Some suggestion -> "\n\nSUGGESTION:\n" ^ suggestion *)
-  (*   | None -> "" *)
-  (* in *)
-  (* context ^ "\n\n" ^ msg ^ suggestion *)
-
 
 let foldLeft ~f ~init xs =
   let rec fold acc xs =  match acc, xs with

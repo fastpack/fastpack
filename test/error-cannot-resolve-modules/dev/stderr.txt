@@ -6,7 +6,7 @@ Call Stack:
 Processing Module: index.js
 
 
-Cannot resolve module
+CONTEXT:
   Resolving './c'. Base directory: '/.../test/error-cannot-resolve-modules'
   Resolving '/.../test/error-cannot-resolve-modules/c'.
   File exists? '/.../test/error-cannot-resolve-modules/c'
@@ -17,5 +17,6 @@ Cannot resolve module
   ...no.
   Is directory? '/.../test/error-cannot-resolve-modules/c'
   ...no.
+Cannot resolve module
 While processing dependency request:
 	'./c' from module: index.js
