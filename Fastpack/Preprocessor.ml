@@ -204,9 +204,14 @@ let make configs base_dir output_dir =
         configs
         |> List.fold_left
           (fun acc { pattern; processors; _ } ->
-            match Re.exec_opt pattern relname with
-            | None -> acc
-            | Some _ -> acc @ processors
+            match acc with
+            | [] ->
+              begin
+                match Re.exec_opt pattern relname with
+                | None -> []
+                | Some _ -> processors
+              end
+            | _ -> acc
           )
           []
         |> List.rev
