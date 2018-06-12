@@ -80,7 +80,7 @@ let formatError error =
   pp_error ~ppf:Format.str_formatter error;
   Format.flush_str_formatter ()
 
-let foldLeft ~f ~init xs =
+let fold_left ~f ~init xs =
   let rec fold acc xs =  match acc, xs with
     | Error err, _ -> Error err
     | Ok acc, [] -> Ok acc
