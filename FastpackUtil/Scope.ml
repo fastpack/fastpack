@@ -285,11 +285,11 @@ let of_function_block stmts =
   let bindings = ref (M.empty) in
 
   let add_bindings node =
-    List.iter
-      (fun ((loc, name), typ, shorthand) ->
-        bindings := update_bindings loc name typ shorthand !bindings
+    bindings := List.fold_left (fun bindings ((loc, name), typ, shorthand) ->
+        update_bindings loc name typ shorthand bindings
       )
-      @@ names_of_node node
+      !bindings
+      (names_of_node node)
   in
 
   let exports = ref {

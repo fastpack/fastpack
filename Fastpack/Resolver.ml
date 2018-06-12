@@ -100,7 +100,7 @@ let make
   let mock_map =
     let build_mock_map () =
       let open Run.Syntax in
-      Run.foldLeft
+      Run.fold_left
         ~f:(fun acc (k, v) ->
           let%bind normalized_key = normalize_request ~basedir:current_dir k in
           let%bind normalized_value =
