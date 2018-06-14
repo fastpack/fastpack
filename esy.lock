@@ -614,10 +614,10 @@
   peerDependencies:
     ocaml " >= 4.4.1000"
 
-"@opam/ppxlib@ >= 0.1.0", "@opam/ppxlib@ >= 0.1.0  <= 0.2.0":
+"@opam/ppxlib@ >= 0.1.0", "@opam/ppxlib@ >= 0.1.0  < 0.3.0", "@opam/ppxlib@0.2.0":
   version "0.2.0"
   uid "93d82ced03be89fddafba96a102130b6"
-  resolved "@opam/ppxlib@0.2.0-13c15ee8edd6fa714c280cdc3fb9326c.tgz"
+  resolved "@opam/ppxlib@0.2.0-93d82ced03be89fddafba96a102130b6.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"
