@@ -170,7 +170,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
       | ExportFinder.Yes | ExportFinder.Maybe -> ()
       | ExportFinder.No ->
         let location_str =
-          Module.location_to_string ~base_dir:(Some ctx.project_dir) m.location
+          Module.location_to_string ~base_dir:(Some ctx.current_dir) m.location
         in
         raise (PackError (ctx, CannotFindExportedName (name, location_str)))
     in
@@ -801,7 +801,7 @@ process = { env: {} };
             ~workspace
             ~ctx:(m, dep_map) in
         let%lwt () =
-          Module.location_to_string ~base_dir:(Some ctx.project_dir) m.location
+          Module.location_to_string ~base_dir:(Some ctx.current_dir) m.location
           |> Printf.sprintf "\\n//# sourceURL=fpack:///%s\");"
           |> emit
         in

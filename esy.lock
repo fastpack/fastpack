@@ -425,7 +425,7 @@
 
 "@opam/ppx_compare@ >= 100000000.11.0  < 100000000.12.0":
   version "100000000.11.0"
-  uid a5b1d7c2186e091f0ea69284eed6c137
+  uid "3bd5aced00a182128b071a2e63901190"
   resolved "@opam/ppx_compare@100000000.11.0-6151234c2bed40a7efd973b46eab4149.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -433,7 +433,7 @@
     "@opam/base" " >= 100000000.11.0  < 100000000.12.0"
     "@opam/jbuilder" " >= 1.0.0-beta181"
     "@opam/ocaml-migrate-parsetree" " >= 1.0.0"
-    "@opam/ppxlib" " >= 0.1.0  <= 0.2.0"
+    "@opam/ppxlib" " >= 0.1.0  < 0.3.0"
   peerDependencies:
     ocaml " >= 4.4.1000"
 
@@ -564,7 +564,7 @@
 
 "@opam/ppx_sexp_conv@ >= 100000000.11.0  < 100000000.12.0":
   version "100000000.11.0"
-  uid b1dfc78c4705a1a75a29cb1c17f3e948
+  uid ffc715db36865abe7794aceeb46a5e1d
   resolved "@opam/ppx_sexp_conv@100000000.11.0-4fe1e425c5ca6250f1047e918d9cacb6.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -572,7 +572,7 @@
     "@opam/base" " >= 100000000.11.0  < 100000000.12.0"
     "@opam/jbuilder" " >= 1.0.0-beta181"
     "@opam/ocaml-migrate-parsetree" " >= 1.0.0"
-    "@opam/ppxlib" " >= 0.1.0  <= 0.2.0"
+    "@opam/ppxlib" " >= 0.1.0  < 0.3.0"
   peerDependencies:
     ocaml " >= 4.4.1000"
 
@@ -601,7 +601,7 @@
 
 "@opam/ppx_variants_conv@ >= 100000000.11.0  < 100000000.12.0":
   version "100000000.11.0"
-  uid a915d2095cdb030d738864e6df504bcc
+  uid "6d0972d637a41690660801b5c72dfe65"
   resolved "@opam/ppx_variants_conv@100000000.11.0-31aa55282c987d27035065a517f14d44.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -609,15 +609,15 @@
     "@opam/base" " >= 100000000.11.0  < 100000000.12.0"
     "@opam/jbuilder" " >= 1.0.0-beta181"
     "@opam/ocaml-migrate-parsetree" " >= 1.0.0"
-    "@opam/ppxlib" " >= 0.1.0  <= 0.2.0"
+    "@opam/ppxlib" " >= 0.1.0  < 0.3.0"
     "@opam/variantslib" " >= 100000000.11.0  < 100000000.12.0"
   peerDependencies:
     ocaml " >= 4.4.1000"
 
-"@opam/ppxlib@ >= 0.1.0", "@opam/ppxlib@ >= 0.1.0  <= 0.2.0":
+"@opam/ppxlib@ >= 0.1.0", "@opam/ppxlib@ >= 0.1.0  < 0.3.0", "@opam/ppxlib@0.2.0":
   version "0.2.0"
-  uid "13c15ee8edd6fa714c280cdc3fb9326c"
-  resolved "@opam/ppxlib@0.2.0-13c15ee8edd6fa714c280cdc3fb9326c.tgz"
+  uid "93d82ced03be89fddafba96a102130b6"
+  resolved "@opam/ppxlib@0.2.0-93d82ced03be89fddafba96a102130b6.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
     "@esy-ocaml/substs" "^0.0.1"
@@ -694,7 +694,7 @@
 
 "@opam/sequence@*":
   version "1.0.0"
-  uid c7ee13c8a8625f72cde85a522db6e3cb
+  uid ee28c9ab135576d1b2167cf4c3137274
   resolved "@opam/sequence@1.0.0-c7ee13c8a8625f72cde85a522db6e3cb.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -703,7 +703,7 @@
     "@opam/jbuilder" " >= 1.0.0-beta12"
     "@opam/result" "*"
   peerDependencies:
-    ocaml "*"
+    ocaml " < 4.7.0"
 
 "@opam/sexplib0@ >= 100000000.11.0  < 100000000.12.0":
   version "100000000.11.0"
@@ -754,7 +754,7 @@
 
 "@opam/utop@^2.0.2":
   version "2.1.0"
-  uid "52ddf36354cf7530843a68ffd29ed6ac"
+  uid "1cdb125d1fe88a786f78fdbd62b3d2de"
   resolved "@opam/utop@2.1.0-52ddf36354cf7530843a68ffd29ed6ac.tgz"
   dependencies:
     "@esy-ocaml/esy-installer" "^0.0.0"
@@ -770,7 +770,7 @@
     "@opam/ocamlfind" " >= 1.7.2"
     "@opam/react" " >= 1.0.0"
   peerDependencies:
-    ocaml " >= 4.2.3000"
+    ocaml " >= 4.2.3000  < 4.7.0"
 
 "@opam/variantslib@ >= 100000000.11.0  < 100000000.12.0":
   version "100000000.11.0"

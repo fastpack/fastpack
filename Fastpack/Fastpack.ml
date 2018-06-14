@@ -38,27 +38,27 @@ type options = {
 
 
 let prepare_and_pack options start_time =
-  let%lwt project_dir = Lwt_unix.getcwd () in
+  let%lwt current_dir = Lwt_unix.getcwd () in
   let%lwt entry_points =
     options.entry_points
     |> Lwt_list.map_p
       (fun entry_point ->
-        let abs_path = FS.abs_path project_dir entry_point in
+        let abs_path = FS.abs_path current_dir entry_point in
         match%lwt FS.stat_option abs_path with
         | Some { st_kind = Unix.S_REG; _ } ->
-          Lwt.return ("./" ^ (FS.relative_path project_dir abs_path))
+          Lwt.return ("./" ^ (FS.relative_path current_dir abs_path))
         | _ ->
           Lwt.return entry_point
       )
   in
 
-  let output_dir = FS.abs_path project_dir options.output_directory in
+  let output_dir = FS.abs_path current_dir options.output_directory in
   let output_file = FS.abs_path output_dir options.output_filename in
   let%lwt () = FS.makedirs output_dir in
   let%lwt preprocessor =
     Preprocessor.make
       options.preprocess
-      project_dir
+      current_dir
       output_dir
   in
   let%lwt cache, cache_report, pack_f =
@@ -73,18 +73,18 @@ let prepare_and_pack options start_time =
         | Cache.Use ->
           let filename =
             String.concat "-" [
-              project_dir |> Digest.string |> Digest.to_hex;
+              current_dir |> Digest.string |> Digest.to_hex;
               Version.github_commit
             ]
           in
-          let node_modules = FilePath.concat project_dir "node_modules" in
+          let node_modules = FilePath.concat current_dir "node_modules" in
           let%lwt dir =
             match%lwt FS.try_dir node_modules with
             | Some dir ->
               FilePath.concat (FilePath.concat dir ".cache") "fpack"
               |> Lwt.return
             | None ->
-              FilePath.concat (FilePath.concat project_dir ".cache") "fpack"
+              FilePath.concat (FilePath.concat current_dir ".cache") "fpack"
               |> Lwt.return
           in
           let%lwt () = FS.makedirs dir in
@@ -98,7 +98,7 @@ let prepare_and_pack options start_time =
       Lwt.return (cache, cache_report, RegularPacker.pack)
   in
   let%lwt project_package, _ =
-    cache.find_package_for_filename project_dir (FilePath.concat project_dir "package.json")
+    cache.find_package_for_filename current_dir (FilePath.concat current_dir "package.json")
   in
   let entry_location = Module.Main entry_points in
   let extensions =
@@ -109,7 +109,7 @@ let prepare_and_pack options start_time =
   let get_context current_location =
     let resolver =
       Resolver.make
-        ~project_dir
+        ~current_dir
         ~mock:(options.mock)
         ~node_modules_paths:(options.node_modules_paths)
         ~extensions
@@ -125,7 +125,7 @@ let prepare_and_pack options start_time =
       Context.
       entry_location;
       current_location;
-      project_dir;
+      current_dir;
       project_package;
       output_dir;
       stack = [];
@@ -234,7 +234,7 @@ let prepare_and_pack options start_time =
              ~pack:pack_postprocess_report
              ~cache
              ~graph
-             ~project_dir
+             ~current_dir
              get_context
          | _ ->
            (* TODO: noop warning*)

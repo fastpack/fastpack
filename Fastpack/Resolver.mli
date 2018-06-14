@@ -12,7 +12,7 @@ type t = {
 
 exception Error of string
 
-val make : project_dir:string ->
+val make : current_dir:string ->
            mock:(string * Mock.t) list ->
            node_modules_paths:string list ->
            extensions:string list ->
