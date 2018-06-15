@@ -142,7 +142,7 @@ module NodeServer = struct
     processes := [process];
     Lwt.return_unit
 
-  let process output_dir loaders filename source =
+  let process project_dir output_dir loaders filename source =
     let%lwt () =
       if (List.length !processes) = 0 then start output_dir else Lwt.return_unit;
     in
@@ -156,6 +156,7 @@ module NodeServer = struct
     let to_json_string s = `String s in
     let message =
       `Assoc [
+        ("rootContext", `String project_dir);
         ("loaders", `List (List.map to_json_string loaders));
         ("filename", CCOpt.map_or ~default:(`Null) to_json_string filename);
         ("source", CCOpt.map_or ~default:(`Null) to_json_string source)
@@ -191,7 +192,7 @@ module NodeServer = struct
 
 end
 
-let make configs base_dir output_dir =
+let make configs project_dir output_dir =
 
   let processors = ref M.empty in
 
@@ -199,7 +200,7 @@ let make configs base_dir output_dir =
     match M.get filename !processors with
     | Some processors -> processors
     | None ->
-      let relname = FS.relative_path base_dir filename in
+      let relname = FS.relative_path project_dir filename in
       let p =
         configs
         |> List.fold_left
@@ -247,7 +248,7 @@ let make configs base_dir output_dir =
           | _ ->
             make_chain
               rest
-              ((NodeServer.process output_dir loaders filename) :: chain)
+              ((NodeServer.process project_dir output_dir loaders filename) :: chain)
       in
       let preprocessors =
         List.map

@@ -103,9 +103,6 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
 
     let n_module = ref 0 in
     let module_vars = ref M.empty in
-    (* let get_module_var (m : Module.t) = *)
-    (*   M.get m.id !module_vars *)
-    (* in *)
     let ensure_module_var ?(name=None) request (m : Module.t) =
       match M.get m.Module.id !module_vars, name with
       | Some var, None ->
@@ -128,10 +125,6 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
     in
 
     let module_default_vars = ref M.empty in
-    (* let get_module_default_var (m : Module.t) = *)
-    (*   M.get m.id !module_default_vars *)
-    (* in *)
-
     let ensure_module_default_var m =
       match M.get m.Module.id !module_default_vars with
       | Some var ->
@@ -235,7 +228,6 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
                  (loc, local)
                  remote
              | None ->
-
                failwith ("Cannot export previously undefined name:" ^ local)
              | _ ->
                local
@@ -532,7 +524,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
             arguments = [E.Expression (_, E.Literal { value = L.String request; _ })];
             _
           } ->
-          if (not @@ has_binding "require") then begin
+          if not (has_binding "require") then begin
             let dep = add_dependency request in
             patch_loc_with
               loc
@@ -545,7 +537,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
 
         | E.Identifier (loc, "require") ->
           let () =
-            if (not @@ has_binding "require")
+            if not (has_binding "require")
             then patch_loc loc "__fastpack_require__"
             else ()
           in
