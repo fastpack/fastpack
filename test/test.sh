@@ -41,8 +41,12 @@ tmp_dir="$tests_dir/tmp_output"
 tmp_stdout="$tests_dir/tmp_stdout.txt"
 tmp_stderr="$tests_dir/tmp_stdout.txt"
 
+source "$tests_dir/skip.sh"
 
 for file in `ls $tests_dir/*/*.sh | grep "$pattern"`; do
+    if is_skipped $file; then
+        continue
+    fi
     rm -rf $tmp_dir
     rm -rf $tmp_stdout
     rm -rf $tmp_stderr
@@ -111,5 +115,5 @@ fi
 if [ -n "$pattern" ]; then
     message="Pattern mode. Consider running all the tests."
 fi
-report $color "Total: $total. Failed: $failed." "${message:-}"
+report $color "Total: $total. Failed: $failed. Skipped: ${#skip[@]}" "${message:-}"
 exit "$exit_code"
