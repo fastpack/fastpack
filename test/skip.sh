@@ -1,11 +1,13 @@
 #!/bin/bash
 
 declare -a skip=(
+"cache-reporting/stdout.sh"
 "error-cannot-find-exported-name/prod.sh"
 "error-dependency-cycle/prod.sh"
 "error-scope-naming-collision/prod.sh"
 "error-scope-previously-undefined-export/prod.sh"
 "pack-all-static/prod.sh"
+"pack-browser/test.sh"
 "pack-builtins/prod.sh"
 "pack-cra/prod.sh"
 "pack-custom-loader/prod.sh"
@@ -21,6 +23,8 @@ declare -a skip=(
 "pack-transpiler-runtime/prod.sh"
 "pack-ts/prod.sh"
 "pack-utf8/prod.sh"
+"report-json/prod-stdout.sh"
+"transpile-builtin/test.sh"
 )
 
 tests_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
