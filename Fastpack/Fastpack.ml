@@ -10,7 +10,6 @@ module Resolver = Resolver
 module Preprocessor = Preprocessor
 module Reporter = Reporter
 module RegularPacker = RegularPacker
-module FlatPacker = FlatPacker
 module Watcher = Watcher
 
 
@@ -64,8 +63,9 @@ let prepare_and_pack options start_time =
   let%lwt cache, cache_report, pack_f =
     match options.mode with
     | Mode.Production ->
-      let%lwt cache = Cache.(create Memory) in
-      Lwt.return (cache, None, FlatPacker.pack)
+      failwith "FlatPacker is excluded"
+      (* let%lwt cache = Cache.(create Memory) in *)
+      (* Lwt.return (cache, None, FlatPacker.pack) *)
     | Mode.Test
     | Mode.Development ->
       let%lwt cache, cache_report =
