@@ -170,14 +170,13 @@ let watch
         (* Something is changed in the dir, but we don't care *)
         | [] ->
           Lwt.return graph
-        (* Maybe a build dependency like .babelrc, need to check further *)
+        (* Exactly one module is changed *)
         | [m] ->
           begin
-            let%lwt (ctx : Context.t) =
-              get_context (Some m.location)
-            in
             DependencyGraph.remove_module graph m;
-            let ctx = { ctx with graph } in
+            let ctx =
+              get_context ~current_location:(Some m.location) ~graph:(Some graph)
+            in
             match%lwt pack ctx start_time with
             | Some graph ->
               Lwt.return graph
@@ -186,7 +185,7 @@ let watch
               Lwt.return graph
           end
         | _ ->
-          let%lwt ( ctx : Context.t) = get_context None in
+          let ctx = get_context ~current_location:None ~graph:None in
           match%lwt pack ctx start_time with
           | Some graph -> Lwt.return graph
           | None -> Lwt.return graph
