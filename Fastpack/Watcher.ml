@@ -146,10 +146,10 @@ let watch
 
   let report = Reporter.report_string ~cache:None ~mode:None in
 
-  let pack cache ctx start_time =
+  let pack ctx start_time =
     Lwt.catch
       (fun () ->
-         let%lwt {Reporter. graph; _} = pack ~report ~cache ~ctx start_time in
+         let%lwt {Reporter. graph; _} = pack ~report ~ctx start_time in
          Lwt.return_some graph
       )
       handle_error
@@ -178,7 +178,7 @@ let watch
             in
             DependencyGraph.remove_module graph m;
             let ctx = { ctx with graph } in
-            match%lwt pack cache ctx start_time with
+            match%lwt pack ctx start_time with
             | Some graph ->
               Lwt.return graph
             | None ->
@@ -187,7 +187,7 @@ let watch
           end
         | _ ->
           let%lwt ( ctx : Context.t) = get_context None in
-          match%lwt pack cache ctx start_time with
+          match%lwt pack ctx start_time with
           | Some graph -> Lwt.return graph
           | None -> Lwt.return graph
       in

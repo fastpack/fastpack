@@ -122,29 +122,31 @@ let prepare_and_pack options start_time =
     in
     Lwt.return {
       Context.
-      entry_location;
-      current_location;
       current_dir;
       project_package;
       output_dir;
+      output_file;
+      entry_location;
+      current_location;
       stack = [];
       mode = options.mode;
       target = options.target;
       resolver;
       preprocessor;
       export_finder = ExportFinder.make ();
-      graph = DependencyGraph.empty ()
+      graph = DependencyGraph.empty ();
+      cache
     }
   in
-  let pack_postprocess cache ctx ch =
+  let pack_postprocess ctx ch =
     match options.postprocess with
     | [] ->
-      pack_f cache ctx ch
+      pack_f ctx ch
     | processors ->
       (* pack to memory *)
       let bytes = Lwt_bytes.create 50_000_000 in
       let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-      let%lwt ret = pack_f cache ctx mem_ch in
+      let%lwt ret = pack_f ctx mem_ch in
       let%lwt data =
         Lwt_list.fold_left_s
           (fun data cmd ->
@@ -175,7 +177,7 @@ let prepare_and_pack options start_time =
     | JSON -> Reporter.report_json
     | Text -> Reporter.report_string ~cache:cache_report ~mode:(Some options.mode)
   in
-  let pack_postprocess_report ~report ~cache ~ctx start_time =
+  let pack_postprocess_report ~report ~ctx start_time =
     let temp_file = Filename.temp_file "" ".bundle.js" in
     Lwt.finalize
       (fun () ->
@@ -185,7 +187,7 @@ let prepare_and_pack options start_time =
             ~perm:0o640
             ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
             temp_file
-            (pack_postprocess cache ctx)
+            (pack_postprocess ctx)
         in
         let%lwt () = Lwt_unix.rename temp_file output_file in
         let%lwt () = report start_time stats in
@@ -212,7 +214,7 @@ let prepare_and_pack options start_time =
   in
   let init_run () =
     Lwt.catch
-      (fun () -> pack_postprocess_report ~report ~cache ~ctx start_time)
+      (fun () -> pack_postprocess_report ~report ~ctx start_time)
       (function
        | PackError (ctx, error) ->
          raise (ExitError (Context.string_of_error ctx error))
