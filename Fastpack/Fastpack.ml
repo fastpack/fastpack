@@ -34,9 +34,10 @@ type options = {
   watch : bool;
 }
 
-
 let prepare_and_pack options start_time =
   let%lwt current_dir = Lwt_unix.getcwd () in
+
+  (* entry points *)
   let%lwt entry_points =
     options.entry_points
     |> Lwt_list.map_p
@@ -49,63 +50,85 @@ let prepare_and_pack options start_time =
           Lwt.return entry_point
       )
   in
+  let entry_location = Module.Main entry_points in
 
-  let output_dir = FS.abs_path current_dir options.output_directory in
-  let output_file = FS.abs_path output_dir options.output_filename in
+  (* output directory & output filename *)
+  let output_dir, output_file =
+    let output_dir = FS.abs_path current_dir options.output_directory in
+    let output_file = FS.abs_path output_dir options.output_filename in
+    let output_file_parent_dir = FilePath.dirname output_file in
+    if output_dir = output_file_parent_dir
+    || FilePath.is_updir output_dir output_file_parent_dir
+    then
+      (output_dir, output_file)
+    else
+      let error =
+        "Output filename must be a subpath of output directory.\n" ^
+        "Output directory:\n  " ^ output_dir ^ "\n" ^
+        "Output filename:\n  " ^ output_file ^ "\n"
+      in
+      raise (ExitError error)
+  in
+  (* TODO: the next line may not belong here *)
+  (* TODO: also cleanup the directory before emitting, maybe? *)
   let%lwt () = FS.makedirs output_dir in
+
+  (* preprocessor *)
   let%lwt preprocessor =
     Preprocessor.make
       options.preprocess
       current_dir
       output_dir
   in
-  let%lwt cache, cache_report, pack_f =
-    match options.mode with
-    | Mode.Production ->
-      failwith "FlatPacker is excluded"
-      (* let%lwt cache = Cache.(create Memory) in *)
-      (* Lwt.return (cache, None, FlatPacker.pack) *)
-    | Mode.Test
-    | Mode.Development ->
-      let%lwt cache, cache_report =
-        match options.cache with
-        | Cache.Use ->
-          let filename =
-            String.concat "-" [
-              current_dir |> Digest.string |> Digest.to_hex;
-              Version.github_commit
-            ]
-          in
-          let node_modules = FilePath.concat current_dir "node_modules" in
-          let%lwt dir =
-            match%lwt FS.try_dir node_modules with
-            | Some dir ->
-              FilePath.concat (FilePath.concat dir ".cache") "fpack"
-              |> Lwt.return
-            | None ->
-              FilePath.concat (FilePath.concat current_dir ".cache") "fpack"
-              |> Lwt.return
-          in
-          let%lwt () = FS.makedirs dir in
-          let cache_filename = FilePath.concat dir filename in
-          let%lwt cache = Cache.(create (Persistent cache_filename)) in
-          Lwt.return (cache, Some (if cache.starts_empty then "empty" else "used"))
-        | Cache.Disable ->
-          let%lwt cache = Cache.(create Memory) in
-          Lwt.return (cache, Some "disabled")
+
+  (* TODO: remove *)
+  let pack_f = Packer.pack in
+
+  (* cache & cache reporting *)
+  let%lwt cache, cache_report =
+    match options.cache with
+    | Cache.Use ->
+      let filename =
+        String.concat "-" [
+          current_dir |> Digest.string |> Digest.to_hex;
+          Version.github_commit
+        ]
       in
-      Lwt.return (cache, cache_report, Packer.pack)
+      let node_modules = FilePath.concat current_dir "node_modules" in
+      let%lwt dir =
+        match%lwt FS.try_dir node_modules with
+        | Some dir ->
+          FilePath.concat (FilePath.concat dir ".cache") "fpack"
+          |> Lwt.return
+        | None ->
+          FilePath.concat (FilePath.concat current_dir ".cache") "fpack"
+          |> Lwt.return
+      in
+      let%lwt () = FS.makedirs dir in
+      let cache_filename = FilePath.concat dir filename in
+      let%lwt cache = Cache.(create (Persistent cache_filename)) in
+      Lwt.return (cache, Some (if cache.starts_empty then "empty" else "used"))
+    | Cache.Disable ->
+      let%lwt cache = Cache.(create Memory) in
+      Lwt.return (cache, Some "disabled")
   in
+
+  (* main package.json *)
   let%lwt project_package, _ =
     cache.find_package_for_filename current_dir (FilePath.concat current_dir "package.json")
   in
-  let entry_location = Module.Main entry_points in
+
+  (* make sure resolve extensions all start with '.'*)
   let extensions =
     options.resolve_extension
     |> List.filter (fun ext -> String.trim ext <> "")
     |> List.map (fun ext -> match String.get ext 0 with | '.' -> ext | _ -> "." ^ ext)
   in
-  let get_context current_location =
+
+  (* function which initializes context may have optional start location as
+   * well as graph
+   *)
+  let get_context ~current_location ~graph =
     let resolver =
       Resolver.make
         ~current_dir
@@ -115,63 +138,59 @@ let prepare_and_pack options start_time =
         ~preprocessor
         ~cache
     in
-    let current_location =
-      match current_location with
-      | None -> entry_location
-      | Some current_location -> current_location
-    in
-    Lwt.return {
+    {
       Context.
       current_dir;
       project_package;
       output_dir;
       output_file;
       entry_location;
-      current_location;
+      current_location = CCOpt.get_or ~default:entry_location current_location;
       stack = [];
       mode = options.mode;
       target = options.target;
       resolver;
       preprocessor;
       export_finder = ExportFinder.make ();
-      graph = DependencyGraph.empty ();
+      graph = CCOpt.get_or ~default:(DependencyGraph.empty ()) graph;
       cache
     }
   in
-  let pack_postprocess ctx ch =
-    match options.postprocess with
-    | [] ->
-      pack_f ctx ch
-    | processors ->
-      (* pack to memory *)
-      let bytes = Lwt_bytes.create 50_000_000 in
-      let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in
-      let%lwt ret = pack_f ctx mem_ch in
-      let%lwt data =
-        Lwt_list.fold_left_s
-          (fun data cmd ->
-            let (stdin, stdout) = Unix.pipe () in
-            let%lwt () =
-              Lwt_process.(
-                pwrite
-                  ~env:(Unix.environment ())
-                  ~stdout:(`FD_move stdout)
-                  (shell cmd)
-                  data
-              )
-            in
-            let stdin_ch = Lwt_io.of_unix_fd ~mode:Lwt_io.Input stdin in
-            Lwt_io.read stdin_ch
-          )
-          (Lwt_io.position mem_ch
-           |> Int64.to_int
-           |> Lwt_bytes.extract bytes 0
-           |> Lwt_bytes.to_string)
-          processors
-      in
-      let%lwt () = Lwt_io.write ch data in
-      Lwt.return { ret with size = String.length data }
-  in
+  (* TODO: move this to the TreeShakingEmitter *)
+  (* let pack_postprocess ctx ch = *)
+  (*   match options.postprocess with *)
+  (*   | [] -> *)
+  (*     pack_f ctx ch *)
+  (*   | processors -> *)
+  (*     (1* pack to memory *1) *)
+  (*     let bytes = Lwt_bytes.create 50_000_000 in *)
+  (*     let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in *)
+  (*     let%lwt ret = pack_f ctx mem_ch in *)
+  (*     let%lwt data = *)
+  (*       Lwt_list.fold_left_s *)
+  (*         (fun data cmd -> *)
+  (*           let (stdin, stdout) = Unix.pipe () in *)
+  (*           let%lwt () = *)
+  (*             Lwt_process.( *)
+  (*               pwrite *)
+  (*                 ~env:(Unix.environment ()) *)
+  (*                 ~stdout:(`FD_move stdout) *)
+  (*                 (shell cmd) *)
+  (*                 data *)
+  (*             ) *)
+  (*           in *)
+  (*           let stdin_ch = Lwt_io.of_unix_fd ~mode:Lwt_io.Input stdin in *)
+  (*           Lwt_io.read stdin_ch *)
+  (*         ) *)
+  (*         (Lwt_io.position mem_ch *)
+  (*          |> Int64.to_int *)
+  (*          |> Lwt_bytes.extract bytes 0 *)
+  (*          |> Lwt_bytes.to_string) *)
+  (*         processors *)
+  (*     in *)
+  (*     let%lwt () = Lwt_io.write ch data in *)
+  (*     Lwt.return { ret with size = String.length data } *)
+  (* in *)
   let report =
     match options.report with
     | JSON -> Reporter.report_json
@@ -187,7 +206,7 @@ let prepare_and_pack options start_time =
             ~perm:0o640
             ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
             temp_file
-            (pack_postprocess ctx)
+            (pack_f ctx)
         in
         let%lwt () = Lwt_unix.rename temp_file output_file in
         let%lwt () = report start_time stats in
@@ -198,20 +217,7 @@ let prepare_and_pack options start_time =
          then Lwt_unix.unlink temp_file;
       )
   in
-  let%lwt ctx = get_context None in
-  let () =
-    let output_dir2 = FilePath.dirname output_file in
-    if output_dir = output_dir2
-    || FilePath.is_updir output_dir output_dir2
-    then ()
-    else
-      let error = Error.CliArgumentError
-        ("Output filename must be a subpath of output directory.\n" ^
-        "Output directory:\n  " ^ output_dir ^ "\n" ^
-        "Output filename:\n  " ^ output_file ^ "\n")
-      in
-      raise (ExitError (Context.string_of_error ctx error))
-  in
+  let ctx = get_context ~current_location:None ~graph:None in
   let init_run () =
     Lwt.catch
       (fun () -> pack_postprocess_report ~report ~ctx start_time)
