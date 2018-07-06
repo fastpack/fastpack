@@ -240,7 +240,7 @@ let get_module_type stmts =
 
 
 
-let pack (cache : Cache.t) (ctx : Context.t) output_channel =
+let pack (ctx : Context.t) output_channel =
 
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
   let%lwt () =
@@ -251,6 +251,8 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
       )))
     else Lwt.return_unit
   in
+
+  let cache = ctx.cache in
 
   let modifier s =
     let json = Yojson.to_string (`String s) in

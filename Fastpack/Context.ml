@@ -2,6 +2,7 @@ type t = {
   current_dir : string;
   project_package : Package.t;
   output_dir : string;
+  output_file : string;
   entry_location : Module.location;
   current_location : Module.location;
   stack : Module.Dependency.t list;
@@ -10,6 +11,7 @@ type t = {
   resolver : Resolver.t;
   preprocessor : Preprocessor.t;
   export_finder : ExportFinder.t;
+  cache : Cache.t;
   graph : DependencyGraph.t;
 }
 
