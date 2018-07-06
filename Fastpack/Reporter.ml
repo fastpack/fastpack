@@ -28,7 +28,7 @@ let report_string ?(cache=None) ?(mode=None) start_time { graph; size } =
   let mode =
     match mode with
     | None -> ""
-    | Some mode -> PackerUtil.Mode.to_string mode |> Printf.sprintf "Mode: %s."
+    | Some mode -> Mode.to_string mode |> Printf.sprintf "Mode: %s."
   in
   Printf.sprintf
     "Packed in %.3fs. Bundle: %s. Modules: %d. %s%s\n"

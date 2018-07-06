@@ -2,24 +2,250 @@
 module MLSet = Module.LocationSet 
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
+
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
+module S = Ast.Statement
+module E = Ast.Expression
+module P = Ast.Pattern
+module L = Ast.Literal
+
 module UTF8 = FastpackUtil.UTF8
-
-open PackerUtil
-
+module FS = FastpackUtil.FS
 module Parser = FastpackUtil.Parser
 module Scope = FastpackUtil.Scope
 module Visit = FastpackUtil.Visit
 
 let debug = Logs.debug
-
 let re_name = Re_posix.compile_pat "[^A-Za-z0-9_]+"
+
+
+let resolve (ctx : Context.t) (request : Module.Dependency.t) =
+  let basedir =
+    match request.requested_from with
+    | Module.File { filename = Some filename; _ } ->
+      FilePath.dirname filename
+    | Module.File { filename = None; _ }
+    | Module.Runtime
+    | Module.EmptyModule
+    | Module.Main _ ->
+      ctx.current_dir
+  in
+  Lwt.catch
+    (fun () ->
+       ctx.resolver.resolve ~basedir request.request
+    )
+    (function
+      | Resolver.Error path ->
+        Lwt.fail (Context.PackError (ctx, CannotResolveModule (path, request)))
+      | exn ->
+        raise exn
+    )
+
+let read_module
+    ?(from_module=None)
+    ~(ctx : Context.t)
+    ~(cache : Cache.t)
+    (location : Module.location) =
+  debug (fun x -> x "READING: %s" (Module.location_to_string location));
+  let make_module location source =
+    let%lwt package =
+      match location with
+      | Module.EmptyModule | Module.Runtime ->
+        Lwt.return Package.empty
+      | Module.Main _ ->
+        Lwt.return ctx.project_package
+      | Module.File { filename = Some filename; _ } ->
+        let%lwt package, _ =
+          cache.find_package_for_filename ctx.current_dir filename
+        in
+        Lwt.return package
+      | Module.File { filename = None; _ } ->
+        match from_module with
+        | None -> Lwt.return ctx.project_package
+        | Some (m : Module.t) -> Lwt.return m.package
+    in
+    Module.{
+      id = make_id ctx.current_dir location;
+      location;
+      package;
+      resolved_dependencies = [];
+      build_dependencies = M.empty;
+      module_type = Module.CJS;
+      files = [];
+      state = Initial;
+      workspace = Workspace.of_string source;
+      scope = FastpackUtil.Scope.empty;
+      exports = FastpackUtil.Scope.empty_exports;
+    }
+    |> Lwt.return
+  in
+
+  match location with
+  | Module.Main entry_points ->
+    let source =
+      entry_points
+      |> List.map (fun req -> Printf.sprintf "import '%s';\n" req)
+      |> String.concat ""
+    in
+    make_module location source
+
+  | Module.EmptyModule ->
+    make_module location "module.exports = {};"
+
+  | Module.Runtime ->
+    make_module location FastpackTranspiler.runtime
+
+  | Module.File { filename; _ } ->
+    match%lwt cache.get_module location with
+    | Some m ->
+      Lwt.return m
+    | None ->
+      (* filename is Some (abs path) or None at this point *)
+      let%lwt source, self_dependency =
+        match filename with
+        | Some filename ->
+          let%lwt _ =
+            if not (FilePath.is_subdir filename ctx.current_dir)
+            then Lwt.fail (Context.PackError (ctx, CannotLeavePackageDir filename))
+            else Lwt.return_unit
+          in
+          let%lwt { content; _ }, _ =
+            Lwt.catch
+              (fun () -> cache.get_file filename )
+              (function
+                | Cache.FileDoesNotExist filename ->
+                  Lwt.fail (Context.PackError (ctx, CannotReadModule filename))
+                | exn ->
+                  raise exn
+              )
+          in
+          (* strip #! from the very beginning *)
+          let content_length = String.length content in
+          let content =
+            if  content_length > 2
+            then
+              if String.get content 0 = '#' && String.get content 1 = '!'
+              then
+                let nl_index = String.find ~sub:"\n" content in
+                String.sub content nl_index (content_length - nl_index)
+              else
+                content
+            else
+              content
+          in
+          Lwt.return (Some content, [filename])
+        | None ->
+          Lwt.return (None, [])
+      in
+      let { Preprocessor. process; _ } = ctx.preprocessor in
+      let%lwt source, build_dependencies, files =
+        Lwt.catch
+          (fun () -> process location source)
+          (function
+           | FlowParser.Parse_error.Error args ->
+             let location_str = Module.location_to_string location in
+             Lwt.fail (Context.PackError (ctx, CannotParseFile (location_str, args)))
+           | Preprocessor.Error message ->
+             Lwt.fail (Context.PackError (ctx, PreprocessorError message))
+           | FastpackUtil.Error.UnhandledCondition message ->
+             Lwt.fail (Context.PackError (ctx, UnhandledCondition message))
+           | exn ->
+             Lwt.fail exn
+          )
+      in
+
+      let%lwt files =
+        Lwt_list.map_s
+          (fun filename ->
+            let%lwt {content; _}, _ = cache.get_file filename in
+            Lwt.return (filename, content)
+          )
+          files
+      in
+
+      let%lwt m = make_module location source in
+      let%lwt build_dependencies =
+        Lwt_list.fold_left_s
+          (fun build_dependencies filename ->
+             let%lwt { digest; _ }, _ = cache.get_file filename in
+             Lwt.return (M.add filename digest build_dependencies)
+          )
+          M.empty
+          (self_dependency @ build_dependencies)
+      in
+      let m = {
+        m with
+        state = Module.Preprocessed;
+        files;
+        build_dependencies;
+      } in
+
+      let () = cache.modify_content m source in
+      Lwt.return m
+
+
+let emit_module_files (ctx : Context.t) (m : Module.t) =
+  Lwt_list.iter_s
+    (fun (filename, content) ->
+      let path = FS.abs_path ctx.output_dir filename in
+      let%lwt () = FS.makedirs (FilePath.dirname path) in
+      Lwt_io.(with_file
+                ~mode:Lwt_io.Output
+                ~perm:0o640
+                ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+                path
+                (fun ch -> write ch content)
+             )
+    )
+    m.files
+
+let is_json (location : Module.location) =
+  match location with
+  | Module.File { filename = Some filename; _ } ->
+    String.suffix ~suf:".json" filename
+  | _ ->
+    false
+
+
+let get_module_type stmts =
+  (* TODO: what if module has only import() expression? *)
+  let import_or_export module_type ((_, stmt) : Loc.t S.t) =
+    match module_type with
+    | Module.ESM | Module.CJS_esModule -> module_type
+    | Module.CJS ->
+      match stmt with
+      | S.Expression {
+          expression = (_, E.Assignment {
+              operator = E.Assignment.Assign;
+              left = (_, P.Expression (_, E.Member {
+                  _object = (_, E.Identifier (_, "exports"));
+                  property = E.Member.PropertyIdentifier (_, "__esModule");
+                  computed = false;
+                  _
+                }));
+              right = (_, E.Literal { value = L.Boolean true; _});
+          });
+          _
+        } ->
+        Module.CJS_esModule
+      | S.ExportDefaultDeclaration _
+      | S.ExportNamedDeclaration _
+      | S.ImportDeclaration _ ->
+        Module.ESM
+      | _ ->
+        module_type
+  in
+  List.fold_left import_or_export Module.CJS stmts
+
+
 
 let pack (cache : Cache.t) (ctx : Context.t) output_channel =
 
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
   let%lwt () =
     if (ctx.Context.target = Target.ESM)
-    then Lwt.fail (PackError (ctx, NotImplemented (
+    then Lwt.fail (Context.PackError (ctx, NotImplemented (
         None, "EcmaScript6 target is not supported "
               ^ "for the regular packer - use flat\n"
       )))
@@ -87,7 +313,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
       match Module.DependencyMap.get dep dep_map with
       | Some m -> m
       | None ->
-        raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
+        raise (Context.PackError (ctx, CannotResolveModule (dep.request, dep)))
     in
 
     let rec avoid_name_collision ?(n=0) name =
@@ -165,7 +391,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
         let location_str =
           Module.location_to_string ~base_dir:(Some ctx.current_dir) m.location
         in
-        raise (PackError (ctx, CannotFindExportedName (name, location_str)))
+        raise (Context.PackError (ctx, CannotFindExportedName (name, location_str)))
     in
 
     let export_from_specifiers =
@@ -204,14 +430,14 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
           ensure_module_default_var m
         in
         if default_definition <> ""
-        then raise (PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
+        then raise (Context.PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
         else default_var
       | _ ->
         let module_var, module_var_definition =
           ensure_module_var "" m
         in
         if module_var_definition <> ""
-        then raise (PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
+        then raise (Context.PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
         else module_var ^ "." ^ remote
     in
 
@@ -561,7 +787,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
 
         | E.Import _ ->
           let msg = "import(_) is supported only with the constant argument" in
-          raise (PackError (ctx, NotImplemented (Some loc, msg)))
+          raise (Context.PackError (ctx, NotImplemented (Some loc, msg)))
 
         | _ ->
           Visit.Continue visit_ctx;
@@ -612,9 +838,9 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
             with
             | FlowParser.Parse_error.Error args ->
               let location_str = Module.location_to_string m.location in
-              raise (PackError (ctx, CannotParseFile (location_str, args)))
+              raise (Context.PackError (ctx, CannotParseFile (location_str, args)))
             | Scope.ScopeError reason ->
-              raise (PackError (ctx, ScopeError reason))
+              raise (Context.PackError (ctx, ScopeError reason))
         in
         { m with workspace; scope; exports; module_type }, dependencies
       end
