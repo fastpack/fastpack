@@ -1,23 +1,22 @@
+module FS = FastpackUtil.FS
 
 module Version = Version
 module Error = Error
 module Cache = Cache
-module Mode = PackerUtil.Mode
-module Target = PackerUtil.Target
-module Context = PackerUtil.Context
+module Mode = Mode
+module Target = Target
+module Context = Context
 module Module = Module
 module Resolver = Resolver
 module Preprocessor = Preprocessor
 module Reporter = Reporter
-module RegularPacker = RegularPacker
+module Packer = Packer
 module Watcher = Watcher
 
 
-open PackerUtil
-
-exception PackError = PackerUtil.PackError
-exception ExitError = PackerUtil.ExitError
-exception ExitOK = PackerUtil.ExitOK
+exception PackError = Context.PackError
+exception ExitError = Context.ExitError
+exception ExitOK = Context.ExitOK
 
 type options = {
   entry_points : string list;
@@ -95,7 +94,7 @@ let prepare_and_pack options start_time =
           let%lwt cache = Cache.(create Memory) in
           Lwt.return (cache, Some "disabled")
       in
-      Lwt.return (cache, cache_report, RegularPacker.pack)
+      Lwt.return (cache, cache_report, Packer.pack)
   in
   let%lwt project_package, _ =
     cache.find_package_for_filename current_dir (FilePath.concat current_dir "package.json")
@@ -209,14 +208,14 @@ let prepare_and_pack options start_time =
         "Output directory:\n  " ^ output_dir ^ "\n" ^
         "Output filename:\n  " ^ output_file ^ "\n")
       in
-      raise (ExitError (string_of_error ctx error))
+      raise (ExitError (Context.string_of_error ctx error))
   in
   let init_run () =
     Lwt.catch
       (fun () -> pack_postprocess_report ~report ~cache ~ctx start_time)
       (function
        | PackError (ctx, error) ->
-         raise (ExitError (string_of_error ctx error))
+         raise (ExitError (Context.string_of_error ctx error))
        | exn ->
          raise exn
       )

@@ -1,7 +1,6 @@
 open Lwt.Infix
 module FS = FastpackUtil.FS
 module M = Map.Make(String)
-open PackerUtil
 let debug = Logs.debug
 
 let collect_links current_dir =
@@ -102,8 +101,8 @@ let watch
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
    * *)
   let w, u = Lwt.wait () in
-  Lwt_unix.on_signal Sys.sigint (fun _ -> Lwt.wakeup_exn u ExitOK) |> ignore;
-  Lwt_unix.on_signal Sys.sigterm (fun _ -> Lwt.wakeup_exn u ExitOK) |> ignore;
+  Lwt_unix.on_signal Sys.sigint (fun _ -> Lwt.wakeup_exn u Context.ExitOK) |> ignore;
+  Lwt_unix.on_signal Sys.sigterm (fun _ -> Lwt.wakeup_exn u Context.ExitOK) |> ignore;
 
   let process = ref None in
   let%lwt link_map = collect_links current_dir in
@@ -136,9 +135,9 @@ let watch
   in
 
   let handle_error = function
-    | PackError (ctx, error) ->
+    | Context.PackError (ctx, error) ->
       let%lwt () =
-        (string_of_error ctx error) ^ "\n" |> Lwt_io.(write stderr)
+        (Context.string_of_error ctx error) ^ "\n" |> Lwt_io.(write stderr)
       in
       Lwt.return_none
     | exn ->
