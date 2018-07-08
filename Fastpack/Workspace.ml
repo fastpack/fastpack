@@ -16,8 +16,6 @@ type 'ctx t = {
   (* List of patches sorted in desceding order *)
   patches: 'ctx patch list;
 
-  (* Function to be applied to the module text or patch results *)
-  modifier : (string -> string) option;
 }
 
 and 'ctx patch = {
@@ -46,8 +44,8 @@ type 'ctx patcher = {
   sub_loc : Loc.t -> string;
 }
 
-let of_string ?(modifier=None) s =
-  { value = s; patches = []; modifier }
+let of_string s =
+  { value = s; patches = []; }
 
 let patch w p =
   { w with patches = p::w.patches }
@@ -62,14 +60,10 @@ let print_patches patches =
   patches
 
 let write
+    ?(modify = fun s -> s)
     ~(output_channel : Lwt_io.output_channel)
     ~(workspace : 'a t)
     ~(ctx : 'a) =
-  let modify =
-    match workspace.modifier with
-    | None -> fun s -> s
-    | Some modifier -> modifier
-  in
   match workspace.patches with
   | [] ->
     let value = modify workspace.value in
