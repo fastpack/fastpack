@@ -225,7 +225,7 @@ let get_module_type stmts =
 
 
 
-let pack (ctx : Context.t) output_channel =
+let build (ctx : Context.t) =
 
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
   let%lwt () =
@@ -893,4 +893,4 @@ let pack (ctx : Context.t) output_channel =
   let {Context. current_location; _ } = ctx in
   let%lwt entry = read_module ~ctx ~cache current_location in
   let%lwt _ = process ctx ctx.graph entry in
-  ScopedEmitter.emit ctx output_channel
+  Lwt.return_unit

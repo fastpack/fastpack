@@ -88,15 +88,7 @@ let ask_watchman ch =
     in
     Lwt.return_some files
 
-
-
-let watch
-    ~pack
-    ~(cache : Cache.t)
-    ~graph
-    ~current_dir
-    get_context
-  =
+let watch ~run ~(ctx : Context.t) =
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
    * *)
@@ -105,7 +97,7 @@ let watch
   Lwt_unix.on_signal Sys.sigterm (fun _ -> Lwt.wakeup_exn u Context.ExitOK) |> ignore;
 
   let process = ref None in
-  let%lwt link_map = collect_links current_dir in
+  let%lwt link_map = collect_links ctx.current_dir in
   let link_paths =
     link_map
     |> M.bindings
@@ -113,8 +105,8 @@ let watch
     |> List.sort (fun s1 s2 -> Pervasives.compare (String.length s1) (String.length s2))
     |> List.rev
   in
-  let common_root = common_root (current_dir :: link_paths) in
-  let common_root = if common_root <> "" then common_root else current_dir in
+  let common_root = common_root (ctx.current_dir :: link_paths) in
+  let common_root = if common_root <> "" then common_root else ctx.current_dir in
   let%lwt (started_process, ch_in) = start_watchman common_root in
   process := Some started_process;
   let%lwt () = Lwt_io.(
@@ -134,27 +126,6 @@ let watch
         | None -> failwith ("Path not found in the links map: " ^ path)
   in
 
-  let handle_error = function
-    | Context.PackError (ctx, error) ->
-      let%lwt () =
-        (Context.string_of_error ctx error) ^ "\n" |> Lwt_io.(write stderr)
-      in
-      Lwt.return_none
-    | exn ->
-      raise exn
-  in
-
-  let report = Reporter.report_string ~cache:None ~mode:None in
-
-  let pack ctx start_time =
-    Lwt.catch
-      (fun () ->
-         let%lwt {Reporter. graph; _} = pack ~report ~ctx start_time in
-         Lwt.return_some graph
-      )
-      handle_error
-  in
-
   let rec read_pack graph =
     match%lwt ask_watchman ch_in with
     | None ->
@@ -164,7 +135,7 @@ let watch
       let filenames =
         List.map (fun filename -> find_linked_path filename link_paths) filenames
       in
-      List.iter cache.remove filenames;
+      List.iter ctx.cache.remove filenames;
       let%lwt graph  =
         match DependencyGraph.get_modules_by_filenames graph filenames with
         (* Something is changed in the dir, but we don't care *)
@@ -174,21 +145,30 @@ let watch
         | [m] ->
           begin
             DependencyGraph.remove_module graph m;
-            let ctx =
-              get_context ~current_location:(Some m.location) ~graph:(Some graph)
+            let%lwt result =
+              run
+                ~current_location:(Some m.location)
+                ~graph:(Some graph)
+                ~initial:false
+                ~start_time
             in
-            match%lwt pack ctx start_time with
-            | Some graph ->
-              Lwt.return graph
-            | None ->
+            match result with
+            | Ok ctx -> Lwt.return ctx.Context.graph
+            | Error _ ->
               DependencyGraph.add_module graph m;
               Lwt.return graph
           end
         | _ ->
-          let ctx = get_context ~current_location:None ~graph:None in
-          match%lwt pack ctx start_time with
-          | Some graph -> Lwt.return graph
-          | None -> Lwt.return graph
+          let%lwt result =
+            run
+              ~current_location:None
+              ~graph:None
+              ~initial:false
+              ~start_time
+          in
+          match result with
+          | Ok ctx -> Lwt.return ctx.Context.graph
+          | Error _ -> Lwt.return graph
       in
       (read_pack [@tailcall]) graph
   in
@@ -201,4 +181,4 @@ let watch
     in
     Lwt.return_unit
   in
-  Lwt.finalize (fun () -> read_pack graph <?> w) finalize
+  Lwt.finalize (fun () -> read_pack ctx.Context.graph <?> w) finalize

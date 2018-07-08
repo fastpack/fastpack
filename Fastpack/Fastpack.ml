@@ -10,7 +10,6 @@ module Module = Module
 module Resolver = Resolver
 module Preprocessor = Preprocessor
 module Reporter = Reporter
-module Packer = Packer
 module Watcher = Watcher
 
 
@@ -81,8 +80,6 @@ let prepare_and_pack options start_time =
       output_dir
   in
 
-  (* TODO: remove *)
-  let pack_f = Packer.pack in
 
   (* cache & cache reporting *)
   let%lwt cache, cache_report =
@@ -107,10 +104,10 @@ let prepare_and_pack options start_time =
       let%lwt () = FS.makedirs dir in
       let cache_filename = FilePath.concat dir filename in
       let%lwt cache = Cache.(create (Persistent cache_filename)) in
-      Lwt.return (cache, Some (if cache.starts_empty then "empty" else "used"))
+      Lwt.return (cache, if cache.starts_empty then "empty" else "used")
     | Cache.Disable ->
       let%lwt cache = Cache.(create Memory) in
-      Lwt.return (cache, Some "disabled")
+      Lwt.return (cache, "disabled")
   in
 
   (* main package.json *)
@@ -125,10 +122,13 @@ let prepare_and_pack options start_time =
     |> List.map (fun ext -> match String.get ext 0 with | '.' -> ext | _ -> "." ^ ext)
   in
 
-  (* function which initializes context may have optional start location as
-   * well as graph
-   *)
-  let get_context ~current_location ~graph =
+  let {Reporter. report_ok; report_error } = Reporter.make options.report in
+  let run ~current_location ~graph ~initial ~start_time =
+    let message =
+      if initial
+      then Printf.sprintf " Cache: %s. Mode: %s." cache_report (Mode.to_string options.mode)
+      else ""
+    in
     let resolver =
       Resolver.make
         ~current_dir
@@ -138,7 +138,7 @@ let prepare_and_pack options start_time =
         ~preprocessor
         ~cache
     in
-    {
+    let ctx = {
       Context.
       current_dir;
       project_package;
@@ -155,104 +155,49 @@ let prepare_and_pack options start_time =
       graph = CCOpt.get_or ~default:(DependencyGraph.empty ()) graph;
       cache
     }
-  in
-  (* TODO: move this to the TreeShakingEmitter *)
-  (* let pack_postprocess ctx ch = *)
-  (*   match options.postprocess with *)
-  (*   | [] -> *)
-  (*     pack_f ctx ch *)
-  (*   | processors -> *)
-  (*     (1* pack to memory *1) *)
-  (*     let bytes = Lwt_bytes.create 50_000_000 in *)
-  (*     let mem_ch = Lwt_io.of_bytes ~mode:Lwt_io.Output bytes in *)
-  (*     let%lwt ret = pack_f ctx mem_ch in *)
-  (*     let%lwt data = *)
-  (*       Lwt_list.fold_left_s *)
-  (*         (fun data cmd -> *)
-  (*           let (stdin, stdout) = Unix.pipe () in *)
-  (*           let%lwt () = *)
-  (*             Lwt_process.( *)
-  (*               pwrite *)
-  (*                 ~env:(Unix.environment ()) *)
-  (*                 ~stdout:(`FD_move stdout) *)
-  (*                 (shell cmd) *)
-  (*                 data *)
-  (*             ) *)
-  (*           in *)
-  (*           let stdin_ch = Lwt_io.of_unix_fd ~mode:Lwt_io.Input stdin in *)
-  (*           Lwt_io.read stdin_ch *)
-  (*         ) *)
-  (*         (Lwt_io.position mem_ch *)
-  (*          |> Int64.to_int *)
-  (*          |> Lwt_bytes.extract bytes 0 *)
-  (*          |> Lwt_bytes.to_string) *)
-  (*         processors *)
-  (*     in *)
-  (*     let%lwt () = Lwt_io.write ch data in *)
-  (*     Lwt.return { ret with size = String.length data } *)
-  (* in *)
-  let report =
-    match options.report with
-    | JSON -> Reporter.report_json
-    | Text -> Reporter.report_string ~cache:cache_report ~mode:(Some options.mode)
-  in
-  let pack_postprocess_report ~report ~ctx start_time =
-    let temp_file = Filename.temp_file "" ".bundle.js" in
-    Lwt.finalize
-      (fun () ->
-        let%lwt stats =
-          Lwt_io.with_file
-            ~mode:Lwt_io.Output
-            ~perm:0o640
-            ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
-            temp_file
-            (pack_f ctx)
-        in
-        let%lwt () = Lwt_unix.rename temp_file output_file in
-        let%lwt () = report start_time stats in
-        Lwt.return stats
-      )
-      (fun () ->
-         if%lwt Lwt_unix.file_exists temp_file
-         then Lwt_unix.unlink temp_file;
-      )
-  in
-  let ctx = get_context ~current_location:None ~graph:None in
-  let init_run () =
+    in
     Lwt.catch
-      (fun () -> pack_postprocess_report ~report ~ctx start_time)
+      (fun () ->
+        let%lwt () = GraphBuilder.build ctx in
+        let%lwt emitted_modules, files =
+          match options.mode with
+          | Mode.Production -> failwith "Not impl"
+          | Mode.Test
+          | Mode.Development ->
+            ScopedEmitter.emit ctx
+        in
+        let ctx = { ctx with graph = DependencyGraph.cleanup ctx.graph emitted_modules; } in
+        let%lwt () = report_ok ~message:(Some message) ~start_time ~ctx ~files in
+        Lwt.return_ok ctx
+      )
       (function
-       | PackError (ctx, error) ->
-         raise (ExitError (Context.string_of_error ctx error))
-       | exn ->
-         raise exn
+        | PackError (ctx, error) ->
+          let%lwt () = report_error ~ctx ~error in
+          if initial then raise (ExitError "") else Lwt.return_error ctx
+        | exn -> raise exn
       )
   in
   Lwt.finalize
     (fun () ->
-       let%lwt {Reporter. graph; _} = init_run () in
-       match options.watch with
-       | false ->
-         Lwt.return_unit
-       | true ->
-         match options.mode with
-         | Development ->
-           Watcher.watch
-             ~pack:pack_postprocess_report
-             ~cache
-             ~graph
-             ~current_dir
-             get_context
-         | _ ->
-           (* TODO: noop warning*)
+       match%lwt run ~graph:None ~current_location:None ~initial:true ~start_time with
+       | Error _ -> raise (ExitError "")
+       | Ok ctx ->
+         match options.watch with
+         | false ->
            Lwt.return_unit
+         | true ->
+           match options.mode with
+           | Development ->
+             Watcher.watch ~ctx ~run
+           | _ ->
+             (* TODO: noop warning*)
+             Lwt.return_unit
     )
     (fun () ->
        let%lwt () = cache.dump () in
        let () = preprocessor.Preprocessor.finalize () in
        Lwt.return_unit
     )
-
 
 let pack_main options start_time =
   Lwt_main.run (prepare_and_pack options start_time)
