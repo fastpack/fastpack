@@ -1,5 +1,5 @@
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module E = Ast.Expression
 module P = Ast.Pattern
 module S= Ast.Statement
@@ -96,11 +96,7 @@ let rec visit_statement ctx ((loc, statement) : Loc.t S.t) =
       | S.With { _object; body } ->
         visit_statement ctx body
 
-      | S.TypeAlias {
-          id = _id;
-          typeParameters = _typeParameters;
-          right = _right
-        } ->
+      | S.TypeAlias _ ->
         ()
 
       | S.Switch { discriminant; cases } ->
@@ -119,7 +115,7 @@ let rec visit_statement ctx ((loc, statement) : Loc.t S.t) =
       | S.Try { block; handler = try_handler; finalizer } ->
         visit_block ctx block;
         visit_if_some ctx (fun ctx (_loc, { S.Try.CatchClause. param; body }) ->
-            visit_pattern ctx param;
+            visit_if_some ctx visit_pattern param;
             visit_block ctx body
           ) try_handler;
         visit_if_some ctx visit_block finalizer
@@ -190,10 +186,10 @@ let rec visit_statement ctx ((loc, statement) : Loc.t S.t) =
   in
   ctx.handler.leave_statement ctx (loc, statement)
 
-and visit_class ctx {Class. body = (_, { body }); superClass; _} =
+and visit_class ctx {Class. body = (_, { body }); super; _} =
   (** TODO: handle `classDecorators` *)
   (** TODO: handle `implements` *)
-  visit_if_some ctx visit_expression superClass;
+  visit_if_some ctx visit_expression super;
   visit_list ctx (fun ctx item -> match item with
       | Class.Body.Method (_loc, {
           kind = _kind;
@@ -206,7 +202,7 @@ and visit_class ctx {Class. body = (_, { body }); superClass; _} =
       | Class.Body.Property (_loc, {
           key;
           value;
-          typeAnnotation = _typeAnnotation;
+          annot = _typeAnnotation;
           static = _static;
           variance = _variance;
         }) ->
@@ -215,7 +211,7 @@ and visit_class ctx {Class. body = (_, { body }); superClass; _} =
       | Class.Body.PrivateField (_loc, {
           key = _key;
           value;
-          typeAnnotation = _typeAnnotation;
+          annot = _typeAnnotation;
           static = _static;
           variance = _variance
         }) ->
@@ -282,14 +278,16 @@ and visit_expression ctx ((loc, expression) as expr) =
       visit_expression ctx consequent;
       visit_expression ctx alternate
 
-    | E.New { callee; arguments } ->
+    | E.New { callee; arguments; _ } ->
       visit_expression ctx callee;
       visit_list ctx visit_expression_or_spread arguments
 
+    | E.OptionalCall { call = { callee; arguments; _ };  _ }
     | E.Call { callee; arguments; _ } ->
       visit_expression ctx callee;
       visit_list ctx visit_expression_or_spread arguments
 
+    | E.OptionalMember { member = { _object; property; _ }; _ }
     | E.Member { _object; property; _ } ->
       visit_expression ctx _object;
       begin
@@ -328,7 +326,7 @@ and visit_pattern ctx ((_loc, pattern) as p : Loc.t P.t) =
   | Continue ctx ->
     match pattern with
 
-    | P.Object { properties; typeAnnotation = _typeAnnotation } ->
+    | P.Object { properties; _ } ->
       visit_list
         ctx
         (fun ctx prop -> match prop with
@@ -338,7 +336,7 @@ and visit_pattern ctx ((_loc, pattern) as p : Loc.t P.t) =
              visit_pattern ctx argument
         ) properties
 
-    | P.Array { elements; typeAnnotation = _typeAnnotation } ->
+    | P.Array { elements; _ } ->
       visit_list
         ctx
         (fun ctx element -> match element with

@@ -1,5 +1,5 @@
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module E = Ast.Expression
 module P = Ast.Pattern
 module S = Ast.Statement
@@ -59,6 +59,8 @@ module Parens = struct
     | E.Conditional _ -> 4
     | E.Logical { operator = E.Logical.Or; _ } -> 5
     | E.Logical { operator = E.Logical.And; _ } -> 6
+    | E.Logical { operator = E.Logical.NullishCoalesce; _ } ->
+      ie "NullishCoalesce is not supported"
     | E.Binary { operator = E.Binary.BitOr; _ } -> 7
     | E.Binary { operator = E.Binary.Xor; _ } -> 8
     | E.Binary { operator = E.Binary.BitAnd; _ } -> 9
@@ -113,6 +115,8 @@ module Parens = struct
     | E.TemplateLiteral _
     | E.This -> 100
 
+    | E.OptionalCall _ -> ie "Optional Call is not supported"
+    | E.OptionalMember _ -> ie "Optional Member is not supported"
     | E.TypeCast _ -> ie "Precedence: TypeCast is not supported"
     | E.Generator _ -> ie "Precedence: Generator is not supported"
     | E.Comprehension _ -> ie "Precedence: Comprehension is not supported"
@@ -422,7 +426,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> emit_block block
         |> emit_if_some (fun (_loc, { S.Try.CatchClause. param; body }) ctx ->
             ctx
-            |> emit " catch (" |> emit_pattern param |> emit ") "
+            |> emit " catch (" |> emit_if_some emit_pattern param |> emit ") "
             |> emit_block body
           ) handler
         |> emit_if_some (fun finalizer ctx ->
@@ -805,6 +809,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> emit_expression left
         |> (match operator with
             | E.Logical.Or -> emit " || "
+            | E.Logical.NullishCoalesce -> emit "?"
             | E.Logical.And -> emit " && ")
         |> emit_expression right
       | E.Conditional { test; consequent; alternate } ->
@@ -814,19 +819,21 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         |> emit_expression consequent
         |> emit " : "
         |> emit_expression alternate
-      | E.New { callee; arguments } ->
+      | E.New { callee; arguments; _ } ->
         ctx
         |> emit "new "
         |> emit_expression callee
         |> emit "("
         |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
         |> emit ")"
+      | E.OptionalCall { call = { callee; arguments; _ }; _ }
       | E.Call { callee; arguments; _ } ->
         ctx
         |> emit_expression callee
         |> emit "("
         |> emit_list ~emit_sep:emit_comma emit_expression_or_spread arguments
         |> emit ")"
+      | E.OptionalMember { member = { _object; property; computed; _ }; _ }
       | E.Member { _object; property; computed; _ } ->
         let emit_property property =
           match property with
@@ -979,10 +986,9 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
 
   and emit_class { id;
                    body = (_, { body });
-                   superClass; typeParameters;
-                   superTypeParameters;
+                   super;
                    implements;
-                   classDecorators; } ctx =
+                   _ } ctx =
     let emit_class_element item ctx =
       match item with
       | C.Body.Method (loc, {
@@ -990,11 +996,10 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
           key;
           value;
           static;
-          decorators
+          _
         }) ->
         ctx
         |> emit_comments loc
-        |> emit_list emit_decorator decorators
         |> (if static then emit "static " else emit_none)
         |> (match kind with
             | C.Method.Constructor -> emit_none
@@ -1008,16 +1013,15 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
       | C.Body.Property (loc, {
           key;
           value;
-          typeAnnotation;
           static;
-          variance
+          variance;
+          _
         }) ->
         ctx
         |> emit_comments loc
         |> (if static then emit "static " else emit_none)
         |> emit_if_some emit_variance variance
         |> emit_object_property_key key
-        |> emit_if_some emit_type_annotation typeAnnotation
         |> emit_if_some (fun _ -> emit " = ") value
         |> emit_if_some emit_expression value
         |> emit_semicolon
@@ -1029,15 +1033,12 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
         (List.length implements > 0)
         "ClassDeclaration: implements is not supported";
       ctx
-      |> emit_list emit_decorator classDecorators
       |> emit "class "
       |> emit_if_some emit_identifier id
-      |> emit_if_some emit_type_parameter_declaration typeParameters
       |> emit_if_some
-        (fun superClass ctx ->
-           ctx |> emit " extends " |> emit_expression superClass)
-        superClass
-      |> emit_if_some emit_type_parameter_instantiation superTypeParameters
+        (fun super ctx ->
+           ctx |> emit " extends " |> emit_expression super)
+        super
       |> emit " {"
       |> indent
       |> emit_list ~emit_sep:emit_newline emit_class_element body
@@ -1074,7 +1075,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
   and emit_pattern (loc, pattern) ctx =
     let ctx = emit_comments loc ctx in
     match pattern with
-    | P.Object { properties; typeAnnotation } ->
+    | P.Object { properties; _ } ->
       ctx
       |> emit "{"
       |> emit_list ~emit_sep:emit_comma
@@ -1089,8 +1090,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
              ctx |> emit "..." |> emit_pattern argument
         ) properties
       |> emit "}"
-      |> emit_if_some emit_type_annotation typeAnnotation
-    | P.Array { elements; typeAnnotation } ->
+    | P.Array { elements; _ } ->
       ctx
       |> emit "["
       |> emit_list ~emit_sep:emit_comma
@@ -1102,14 +1102,12 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
              ctx |> emit "..." |> emit_pattern argument)
         elements
       |> emit "]"
-      |> emit_if_some emit_type_annotation typeAnnotation
     | P.Assignment { left; right } ->
       ctx |> emit_pattern left |> emit " = " |> emit_expression right
-    | P.Identifier { name; typeAnnotation; optional } ->
+    | P.Identifier { name; optional; _ } ->
       ctx
       |> emit_identifier name
       |> (if optional then emit "?" else emit_none)
-      |> emit_if_some emit_type_annotation typeAnnotation
     | P.Expression expr ->
       emit_expression expr ctx
 
@@ -1133,12 +1131,12 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     | E.Object.Property.Computed expr ->
       ctx |> emit "[" |> emit_expression ~parens:false expr |> emit "]"
 
-  and emit_decorator decorator ctx =
-    ctx
-    |> emit "@("
-    |> emit_expression decorator
-    |> emit ")"
-    |> emit_newline
+  (* and emit_decorator decorator ctx = *)
+  (*   ctx *)
+  (*   |> emit "@(" *)
+  (*   |> emit_expression decorator *)
+  (*   |> emit ")" *)
+  (*   |> emit_newline *)
 
   and emit_function ?(as_arrow=false) ?(as_method=false) ?emit_id ((loc, {
       F.
@@ -1149,8 +1147,7 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
       generator;
       predicate = _predicate;
       expression = _expression;
-      returnType;
-      typeParameters
+      _
     }) as f) ctx =
     (** TODO: handle `predicate`, `expression` ? *)
     let omit_parameter_parens =
@@ -1166,7 +1163,6 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
     |> (match emit_id with
         | None -> emit_if_some emit_identifier id
         | Some emit_id -> emit_id)
-    |> emit_if_some emit_type_parameter_declaration typeParameters
     |> emit_if (not omit_parameter_parens) (emit "(")
     |> emit_list ~emit_sep:emit_comma emit_pattern params
     |> emit_if (List.length params > 0 && rest <> None) (emit ",")
@@ -1178,7 +1174,6 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
       ~emit_newline_after:false
       (Scope.of_function ctx.parents f)
     |> emit_if as_arrow (emit " =>")
-    |> emit_if_some emit_type_annotation returnType
     |> emit_space
     |> (match body with
         | F.BodyBlock ((loc, _) as block) ->
@@ -1214,9 +1209,6 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
             |> emit_if parens (emit ")")
        )
     |> remove_scope
-
-  and emit_type_annotation (loc, typeAnnotation) ctx =
-    ctx |> emit_comments loc |> emit ": " |> emit_type typeAnnotation
 
   and emit_variance (_, variance) =
     match variance with
@@ -1268,94 +1260,6 @@ let print ?(with_scope=false) (_, (statements : Loc.t S.t list), comments) =
       ctx |> emit_expression ~parens:false expression
     | E.Spread (_, { argument }) ->
       ctx |> emit "..." |> emit_expression ~parens:false argument
-
-  and emit_type (loc, value) ctx =
-    let ctx = emit_comments loc ctx in
-    match value with
-    | T.Any -> emit "any" ctx
-    | T.Mixed -> emit "mixed" ctx
-    | T.Empty -> ctx
-    | T.Void -> emit "void" ctx
-    | T.Null -> emit "null" ctx
-    | T.Number -> emit "number" ctx
-    | T.String -> emit "string" ctx
-    | T.Boolean -> emit "boolean" ctx
-    | T.Nullable typ -> ctx |> emit "?" |> emit_type typ
-    | T.Function typ -> emit_function_type (loc, typ) ctx
-    | T.Object typ ->
-      emit_object_type (loc, typ) ctx
-    | T.Array typ ->
-      ctx |> emit "Array<" |> emit_type typ |> emit ">"
-    | T.Generic typ -> emit_generic_type (loc, typ) ctx
-    | T.Union (_,_,_) -> ctx
-    | T.Intersection (_,_,_) -> ctx
-    | T.Typeof typ ->
-      ctx
-      |> emit "typeof "
-      |> emit_type typ
-    | T.Tuple typs ->
-      ctx
-      |> emit "["
-      |> emit_list ~emit_sep:emit_comma emit_type typs
-      |> emit "]"
-    | T.StringLiteral { value = _; raw } -> emit raw ctx
-    | T.NumberLiteral { value = _; raw } -> emit raw ctx
-    | T.BooleanLiteral value -> emit (if value then "true" else "false") ctx
-    | T.Exists -> emit "*" ctx
-
-  and emit_object_type (_loc, _value) _ctx =
-    ie "emit_object_type: not implemented"
-
-  and emit_type_generic_identifier id ctx =
-    match id with
-    | T.Generic.Identifier.Unqualified id ->
-      ctx |> emit_identifier id
-    | T.Generic.Identifier.Qualified (_loc, { qualification; id }) ->
-      ctx
-      |> emit_identifier id
-      |> emit ": "
-      |> emit_type_generic_identifier qualification
-
-  and emit_generic_type (loc, { id; typeParameters }) ctx =
-    ctx
-    |> emit_comments loc
-    |> emit_type_generic_identifier id
-    |> emit_if_some emit_type_parameter_instantiation typeParameters
-
-  and emit_function_type (_loc, _value) _ctx =
-    ie "emit_function_type: not implemented"
-
-  and emit_type_parameter (loc, value) ctx =
-    let { T.ParameterDeclaration.TypeParam.
-          name;
-          bound;
-          variance;
-          default } = value
-    in
-    ctx
-    |> emit_comments loc
-    |> emit_if_some emit_variance variance
-    |> emit_identifier name
-    |> emit_if_some
-      (fun (_, bound) ctx -> ctx |> emit ": " |> emit_type bound)
-      bound
-    |> emit_if_some
-      (fun default ctx -> ctx |> emit " = " |> emit_type default)
-      default
-
-  and emit_type_parameter_declaration (loc, { params }) ctx =
-    ctx
-    |> emit_comments loc
-    |> emit "<"
-    |> emit_list ~emit_sep:emit_comma emit_type_parameter params
-    |> emit ">"
-
-  and emit_type_parameter_instantiation (loc, { params }) ctx =
-    ctx
-    |> emit_comments loc
-    |> emit "<"
-    |> emit_list ~emit_sep:emit_comma emit_type params
-    |> emit ">"
 
   and emit_literal (loc, {L. raw; _ }) ctx =
     ctx |> emit_comments loc |> emit raw

@@ -1,13 +1,13 @@
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 
 let transpile _context program =
   let map_function _scope (loc, func) : (Loc.t * Loc.t Ast.Function.t) =
     (loc,
      { func with
        predicate = None;
-       returnType = None;
-       typeParameters = None;
+       return = None;
+       tparams = None;
      })
   in
 
@@ -15,10 +15,10 @@ let transpile _context program =
     let module P = Ast.Pattern in
     let pattern =
       match pattern with
-      | P.Object obj -> P.Object { obj with typeAnnotation = None}
-      | P.Array arr -> P.Array { arr with typeAnnotation = None }
+      | P.Object obj -> P.Object { obj with annot = None}
+      | P.Array arr -> P.Array { arr with annot = None }
       | P.Identifier ident ->
-        P.Identifier { ident with typeAnnotation = None; optional = false }
+        P.Identifier { ident with annot = None; optional = false }
       | node -> node
     in
     (loc, pattern)
@@ -31,16 +31,16 @@ let transpile _context program =
       List.filter_map
         (fun el ->
            match el with
-           | C.Body.Property (loc, ({ value; typeAnnotation; static; variance; _ } as prop)) ->
+           | C.Body.Property (loc, ({ value; annot; static; variance; _ } as prop)) ->
              (* this strips away properties declared only as type annotations *)
              if (not static
                  && value = None
-                 && (typeAnnotation <> None || variance <> None))
+                 && (annot <> None || variance <> None))
              then None
              else Some (
                  C.Body.Property (loc, {
                      prop with
-                     typeAnnotation = None;
+                     annot = None;
                      variance = None;
                  })
                )
@@ -50,8 +50,8 @@ let transpile _context program =
       body
     in
     { cls with
-      typeParameters = None;
-      superTypeParameters = None;
+      tparams = None;
+      super_targs = None;
       implements = [];
       body=(body_loc, {C.Body. body})
     }

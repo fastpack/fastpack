@@ -1,5 +1,5 @@
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module S = Ast.Statement
 module E = Ast.Expression
 module L = Ast.Literal
@@ -32,7 +32,7 @@ let e_literal_str s =
 let p_identifier name =
   P.Identifier { P.Identifier.
                  name = (Loc.none, name);
-                 typeAnnotation = None;
+                 annot = None;
                  optional = false;}
 
 let e_identifier name =
@@ -44,7 +44,6 @@ let member _object property =
     _object = _object;
     property = E.Member.PropertyIdentifier (Loc.none, property);
     computed = false;
-    optional = false;
   }
 
 let member_expr _object expr =
@@ -52,14 +51,13 @@ let member_expr _object expr =
     _object = _object;
     property = E.Member.PropertyExpression expr;
     computed = true;
-    optional = false;
   }
 
 let call callee arguments =
   Loc.none, E.Call {
     callee;
+    targs = None;
     arguments = List.map (fun arg -> E.Expression arg) arguments;
-    optional = false;
   }
 
 let object_ properties =
@@ -116,7 +114,7 @@ let variable_declaration loc kind name value =
     declarations = [(Loc.none, { S.VariableDeclaration.Declarator.
       id = (Loc.none, Ast.Pattern.Identifier {
         name = (Loc.none, name);
-        typeAnnotation = None;
+        annot = None;
         optional = false;
       });
       init = Some value

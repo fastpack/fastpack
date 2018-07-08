@@ -1,11 +1,11 @@
-module Loc = FlowParser.Loc
+module Loc = Flow_parser.Loc
 module Scope = FastpackUtil.Scope
 
 type reason =
   | CannotReadModule of string
   | CannotLeavePackageDir of string
   | CannotResolveModule of (string * Module.Dependency.t)
-  | CannotParseFile of string * ((Loc.t * FlowParser.Parse_error.t) list)
+  | CannotParseFile of string * ((Loc.t * Flow_parser.Parse_error.t) list)
   | NotImplemented of Loc.t option * string
   | CannotRenameModuleBinding of Loc.t * string * Module.Dependency.t
   | DependencyCycle of string list
@@ -44,7 +44,7 @@ let to_string package_dir error =
 
   | CannotParseFile (location_str, errors) ->
     let format_error (loc, error) =
-      loc_to_string loc ^ " " ^ FlowParser.Parse_error.PP.error error
+      loc_to_string loc ^ " " ^ Flow_parser.Parse_error.PP.error error
     in
     Printf.sprintf
       "Parse Error\nFile: %s\n\t"

@@ -1,8 +1,8 @@
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
 
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module S = Ast.Statement
 module E = Ast.Expression
 module P = Ast.Pattern
@@ -378,7 +378,7 @@ let read_module
         Lwt.catch
           (fun () -> process location source)
           (function
-           | FlowParser.Parse_error.Error args ->
+           | Flow_parser.Parse_error.Error args ->
              let location_str = Module.location_to_string location in
              Lwt.fail (PackError (ctx, CannotParseFile (location_str, args)))
            | Preprocessor.Error message ->

@@ -1,6 +1,7 @@
 
 let parse_source source =
-  let parse_options = Some FlowParser.Parser_env.({
+  let parse_options = Some Flow_parser.Parser_env.({
+      esproposal_nullish_coalescing = false; (* TODO: what's this? *)
       esproposal_optional_chaining = false;
       esproposal_class_instance_fields = true;
       esproposal_class_static_fields = true;
@@ -10,4 +11,4 @@ let parse_source source =
       use_strict = false;
     })
   in
-  FlowParser.Parser_flow.program source ~parse_options
+  Flow_parser.Parser_flow.program source ~parse_options

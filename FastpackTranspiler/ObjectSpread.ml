@@ -4,8 +4,8 @@
  **)
 module AstMapper = FastpackUtil.AstMapper
 module AstHelper = FastpackUtil.AstHelper
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module E = Ast.Expression
 module F = Ast.Function
 module S = Ast.Statement
@@ -60,10 +60,9 @@ module Helper = struct
           computed = false;
           _object = Loc.none, E.Identifier (Loc.none, "Object");
           property = E.Member.PropertyIdentifier (Loc.none, "assign");
-          optional = false;
         };
       arguments = (E.Expression empty_object_literal)::(List.rev arguments);
-      optional = false;
+      targs = None;
     }
 
   let object_omit expr keys =
@@ -74,10 +73,9 @@ module Helper = struct
           computed = false;
           _object = Loc.none, E.Identifier (Loc.none, "$fpack");
           property = E.Member.PropertyIdentifier (Loc.none, "objectOmit");
-          optional = false;
         };
       arguments = [E.Expression expr; E.Expression keys];
-      optional = false;
+      targs = None;
     }
 
   let object_pattern_key_to_expr = function
@@ -392,8 +390,8 @@ module TranspileObjectSpreadRest = struct
           generator = false;
           predicate = None;
           expression = false;
-          typeParameters = None;
-          returnType = None;
+          tparams = None;
+          return = None;
           body = F.BodyBlock (Loc.none, {
             body = variables @ assignments @ [
                   Loc.none, S.Return {argument = Some result}
@@ -536,7 +534,7 @@ module TranspileObjectSpreadRest = struct
             declarations = [(Loc.none, { S.VariableDeclaration.Declarator.
               id = (Loc.none, Ast.Pattern.Identifier {
                 name = (Loc.none, binding);
-                typeAnnotation = None;
+                annot = None;
                 optional = false;
               });
               init = None
@@ -602,35 +600,40 @@ module TranspileObjectSpreadRest = struct
 
   module Try = struct
     let test ((_,{ param; _ }) : Loc.t S.Try.CatchClause.t) =
-      Pattern.test param
+      match param with
+      | None -> false
+      | Some param -> Pattern.test param
 
     let transpile context scope
-        (loc, {S.Try.CatchClause. body = (body_loc, { body }); param }) =
-      let name = context.Context.gen_binding scope in
-      let new_param =
-        (Loc.none, P.Identifier {
-            name = (Loc.none, name);
-            typeAnnotation = None;
-            optional = false
-        })
-      in
-      let body =
-        (Loc.none,
-         S.VariableDeclaration (
-           VariableDeclaration.transpile context scope {
-             S.VariableDeclaration.
-             kind = S.VariableDeclaration.Let;
-             declarations = [
-               Loc.none, { S.VariableDeclaration.Declarator.
-                 id = param;
-                 init = Some (AstHelper.e_identifier name);
-               }
-             ]
-           }
-         )
-        ) :: body
-      in
-      loc, {S.Try.CatchClause. param = new_param; body = (body_loc, { body }) }
+        ((loc, {S.Try.CatchClause. body = (body_loc, { body }); param }) as orig) =
+      match param with
+      | None -> orig
+      | Some param ->
+        let name = context.Context.gen_binding scope in
+        let new_param =
+          (Loc.none, P.Identifier {
+              name = (Loc.none, name);
+              annot = None;
+              optional = false
+          })
+        in
+        let body =
+          (Loc.none,
+           S.VariableDeclaration (
+             VariableDeclaration.transpile context scope {
+               S.VariableDeclaration.
+               kind = S.VariableDeclaration.Let;
+               declarations = [
+                 Loc.none, { S.VariableDeclaration.Declarator.
+                   id = param;
+                   init = Some (AstHelper.e_identifier name);
+                 }
+               ]
+             }
+           )
+          ) :: body
+        in
+        loc, {S.Try.CatchClause. param = Some new_param; body = (body_loc, { body }) }
   end
 
   module ForOf = struct
@@ -654,7 +657,7 @@ module TranspileObjectSpreadRest = struct
             declarations = [(Loc.none, { S.VariableDeclaration.Declarator.
               id = (Loc.none, Ast.Pattern.Identifier {
                 name = (Loc.none, binding);
-                typeAnnotation = None;
+                annot = None;
                 optional = false;
               });
               init = None

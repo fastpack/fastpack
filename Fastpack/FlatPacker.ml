@@ -1,7 +1,7 @@
 open PackerUtil
 
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module S = Ast.Statement
 module E = Ast.Expression
 module L = Ast.Literal
@@ -738,7 +738,7 @@ let pack (cache : Cache.t) (ctx : Context.t) result_channel =
             try
                 analyze m.id m.location source
             with
-            | FlowParser.Parse_error.Error args ->
+            | Flow_parser.Parse_error.Error args ->
               let location_str = Module.location_to_string m.location in
               raise (PackError (ctx, CannotParseFile (location_str, args)))
             | Scope.ScopeError reason ->

@@ -5,7 +5,7 @@
 
 *)
 
-module Loc = FlowParser.Loc
+module Loc = Flow_parser.Loc
 module UTF8 = FastpackUtil.UTF8
 
 type 'ctx t = {

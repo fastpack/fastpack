@@ -1,5 +1,5 @@
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module S = Ast.Statement
 module E = Ast.Expression
 module C = Ast.Class
@@ -55,7 +55,7 @@ module Transform = struct
     }
 
   let transform_class cls =
-    let {C. id; classDecorators; superClass; body = (_, { body }); _ } = cls in
+    let {C. id; classDecorators; super; body = (_, { body }); _ } = cls in
 
     let props, methods =
       List.partition
@@ -159,7 +159,7 @@ module Transform = struct
               ))
           | None ->
             let maybe_super =
-              match superClass with
+              match super with
               | None -> []
               | Some _ ->
                 [Loc.none, S.Expression {
@@ -170,7 +170,7 @@ module Transform = struct
                               argument =  AstHelper.e_identifier "args"
                             })
                         ];
-                        optional = false;
+                        targs = None
                       };
                     directive = None
                   }
@@ -199,8 +199,8 @@ module Transform = struct
                       generator = false;
                       predicate = None;
                       expression = false;
-                      returnType = None;
-                      typeParameters = None;
+                      return = None;
+                      tparams = None;
                     })
                 }))
           | _ -> Error.ie "Only constructor is expected here"
@@ -224,7 +224,7 @@ module Transform = struct
     (cls, id, statics, classDecorators, decorators)
 
   let wrap_class cls statics classDecorators decorators =
-    let to_expr_array = to_array (fun el -> el) in
+    let to_expr_array = to_array (fun (_, {C.Decorator. expression }) -> expression) in
 
     let statics =
       statics

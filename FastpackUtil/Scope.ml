@@ -1,5 +1,5 @@
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module S = Ast.Statement
 module F = Ast.Function
 module P = Ast.Pattern
@@ -513,7 +513,7 @@ let of_block parents (((_ : Loc.t), { S.Block. body }) as block) scope =
             _, {S.Try.CatchClause. body; param }
           ); _})) :: _
           when body = block ->
-          names_of_pattern param
+          (match param with | None -> [] | Some param -> names_of_pattern param)
           |> List.map (fun (id, shorthand) -> (id, Let, shorthand))
           |> gather_bindings
         | _ ->

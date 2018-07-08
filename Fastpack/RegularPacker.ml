@@ -35,8 +35,8 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
     let ((_, stmts, _) as program), _ = Parser.parse_source source in
 
 
-    let module Ast = FlowParser.Ast in
-    let module Loc = FlowParser.Loc in
+    let module Ast = Flow_parser.Ast in
+    let module Loc = Flow_parser.Loc in
     let module S = Ast.Statement in
     let module E = Ast.Expression in
     let module L = Ast.Literal in
@@ -610,7 +610,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
             try
                 analyze m.id m.location source
             with
-            | FlowParser.Parse_error.Error args ->
+            | Flow_parser.Parse_error.Error args ->
               let location_str = Module.location_to_string m.location in
               raise (PackError (ctx, CannotParseFile (location_str, args)))
             | Scope.ScopeError reason ->

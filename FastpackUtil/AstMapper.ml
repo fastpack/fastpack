@@ -1,5 +1,5 @@
-module Ast = FlowParser.Ast
-module Loc = FlowParser.Loc
+module Ast = Flow_parser.Ast
+module Loc = Flow_parser.Loc
 module Expression = Ast.Expression
 module Pattern = Ast.Pattern
 module Statement = Ast.Statement
@@ -126,7 +126,7 @@ and map_statement ctx (loc, statement) =
             (fun ctx (loc, { Statement.Try.CatchClause. param; body }) ->
                (loc, {
                    Statement.Try.CatchClause.
-                   param = map_pattern ctx param;
+                   param = map_if_some ctx map_pattern param;
                    body = map_block ctx body
                  })
           ) _handler;
@@ -239,11 +239,11 @@ and map_statement ctx (loc, statement) =
   in
   ctx.handler.map_statement ctx (loc, statement)
 
-and map_class ctx ({Class. body = (body_loc, { body }); superClass; _} as n) =
+and map_class ctx ({Class. body = (body_loc, { body }); super; _} as n) =
   (** TODO: handle `classDecorators` *)
   {
     n with
-    superClass = map_if_some ctx map_expression superClass;
+    super = map_if_some ctx map_expression super;
     body = (body_loc, {
         Class.Body.
         body = map_list ctx (fun ctx item ->
@@ -270,10 +270,10 @@ and map_expression ctx (loc, expression) =
     }
     in
     match expression with
-    | Expression.TypeCast { expression; typeAnnotation } ->
+    | Expression.TypeCast { expression; annot } ->
       Expression.TypeCast {
         expression = map_expression ctx expression;
-        typeAnnotation
+        annot
       }
     | Expression.Array { elements } ->
       Expression.Array {
@@ -341,15 +341,31 @@ and map_expression ctx (loc, expression) =
       let alternate = map_expression ctx alternate in
       Expression.Conditional { test; consequent; alternate }
 
-    | Expression.New { callee; arguments } ->
+    | Expression.New { callee; arguments; targs } ->
       let callee = map_expression ctx callee in
       let arguments = map_list ctx map_expression_or_spread arguments in
-      Expression.New { callee; arguments }
+      Expression.New { callee; arguments; targs }
 
-    | Expression.Call { callee; arguments; optional } ->
+    | Expression.OptionalCall { call = { callee; arguments; targs }; optional } ->
       let callee = map_expression ctx callee in
       let arguments = map_list ctx map_expression_or_spread arguments in
-      Expression.Call { callee; arguments; optional }
+      Expression.OptionalCall { call = { callee; arguments; targs }; optional }
+
+    | Expression.Call { callee; arguments; targs } ->
+      let callee = map_expression ctx callee in
+      let arguments = map_list ctx map_expression_or_spread arguments in
+      Expression.Call { callee; arguments; targs }
+
+    | Expression.OptionalMember ({ member; optional }) ->
+      let _object = map_expression ctx member._object in
+      let property = match member.property with
+        | Expression.Member.PropertyPrivateName _
+        | Expression.Member.PropertyIdentifier _ -> member.property
+        | Expression.Member.PropertyExpression expr ->
+          let expr = map_expression ctx expr in
+          Expression.Member.PropertyExpression expr
+      in
+      Expression.OptionalMember { member = { member with _object; property}; optional }
 
     | Expression.Member ({ _object; property; _ } as n) ->
       let _object = map_expression ctx _object in
