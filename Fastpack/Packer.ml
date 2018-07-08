@@ -254,7 +254,7 @@ let pack (ctx : Context.t) output_channel =
 
   let cache = ctx.cache in
 
-  let modifier s =
+  let to_eval s =
     let json = Yojson.to_string (`String s) in
     String.(sub json 1 (length json - 2))
   in
@@ -270,7 +270,7 @@ let pack (ctx : Context.t) output_channel =
     let module L = Ast.Literal in
 
     let dependencies = ref [] in
-    let workspace = ref (Workspace.of_string ~modifier:(Some modifier) source) in
+    let workspace = ref (Workspace.of_string source) in
     let ({Workspace.
           patch;
           patch_with;
@@ -831,7 +831,7 @@ let pack (ctx : Context.t) output_channel =
           | true ->
             let workspace =
               Printf.sprintf "module.exports = %s;" source
-              |> Workspace.of_string ~modifier:(Some modifier)
+              |> Workspace.of_string
             in
             (workspace, [], Scope.empty, Scope.empty_exports, Module.CJS)
           | false ->
@@ -1015,8 +1015,14 @@ process = { env: {} };
           |> emit
         in
         let%lwt () = emit "eval(\"" in
+        let modify =
+          match m.state with
+          | Module.Analyzed -> fun s -> s
+          | _ -> to_eval
+        in
         let%lwt content =
           Workspace.write
+            ~modify
             ~output_channel
             ~workspace
             ~ctx:(m, dep_map) in
@@ -1034,12 +1040,9 @@ process = { env: {} };
             ()
         in
         let () =
-          match m.workspace.Workspace.modifier with
-          | None -> ()
-          | Some _ ->
-            DependencyGraph.add_module
-              graph
-              { m with workspace = Workspace.of_string content }
+          DependencyGraph.add_module
+            graph
+            { m with workspace = Workspace.of_string content }
         in
         let%lwt () = emit "\n},\n" in
         Lwt.return_unit

@@ -5,6 +5,10 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__Cache.cmx" {"Fastpack__Cache.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Cache.cmt" {"Fastpack__Cache.cmt"}
   "_build/install/default/lib/Fastpack/Cache.ml" {"Cache.ml"}
+  "_build/install/default/lib/Fastpack/Fastpack__Context.cmi" {"Fastpack__Context.cmi"}
+  "_build/install/default/lib/Fastpack/Fastpack__Context.cmx" {"Fastpack__Context.cmx"}
+  "_build/install/default/lib/Fastpack/Fastpack__Context.cmt" {"Fastpack__Context.cmt"}
+  "_build/install/default/lib/Fastpack/Context.ml" {"Context.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__DependencyGraph.cmi" {"Fastpack__DependencyGraph.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__DependencyGraph.cmx" {"Fastpack__DependencyGraph.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__DependencyGraph.cmt" {"Fastpack__DependencyGraph.cmt"}
@@ -27,10 +31,10 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__.cmx" {"Fastpack__.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__.cmt" {"Fastpack__.cmt"}
   "_build/install/default/lib/Fastpack/Fastpack__.ml-gen" {"Fastpack__.ml-gen"}
-  "_build/install/default/lib/Fastpack/Fastpack__FlatPacker.cmi" {"Fastpack__FlatPacker.cmi"}
-  "_build/install/default/lib/Fastpack/Fastpack__FlatPacker.cmx" {"Fastpack__FlatPacker.cmx"}
-  "_build/install/default/lib/Fastpack/Fastpack__FlatPacker.cmt" {"Fastpack__FlatPacker.cmt"}
-  "_build/install/default/lib/Fastpack/FlatPacker.ml" {"FlatPacker.ml"}
+  "_build/install/default/lib/Fastpack/Fastpack__Mode.cmi" {"Fastpack__Mode.cmi"}
+  "_build/install/default/lib/Fastpack/Fastpack__Mode.cmx" {"Fastpack__Mode.cmx"}
+  "_build/install/default/lib/Fastpack/Fastpack__Mode.cmt" {"Fastpack__Mode.cmt"}
+  "_build/install/default/lib/Fastpack/Mode.ml" {"Mode.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__Module.cmi" {"Fastpack__Module.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Module.cmx" {"Fastpack__Module.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Module.cmt" {"Fastpack__Module.cmt"}
@@ -41,18 +45,14 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__Package.cmti" {"Fastpack__Package.cmti"}
   "_build/install/default/lib/Fastpack/Package.mli" {"Package.mli"}
   "_build/install/default/lib/Fastpack/Package.ml" {"Package.ml"}
-  "_build/install/default/lib/Fastpack/Fastpack__PackerUtil.cmi" {"Fastpack__PackerUtil.cmi"}
-  "_build/install/default/lib/Fastpack/Fastpack__PackerUtil.cmx" {"Fastpack__PackerUtil.cmx"}
-  "_build/install/default/lib/Fastpack/Fastpack__PackerUtil.cmt" {"Fastpack__PackerUtil.cmt"}
-  "_build/install/default/lib/Fastpack/PackerUtil.ml" {"PackerUtil.ml"}
+  "_build/install/default/lib/Fastpack/Fastpack__Packer.cmi" {"Fastpack__Packer.cmi"}
+  "_build/install/default/lib/Fastpack/Fastpack__Packer.cmx" {"Fastpack__Packer.cmx"}
+  "_build/install/default/lib/Fastpack/Fastpack__Packer.cmt" {"Fastpack__Packer.cmt"}
+  "_build/install/default/lib/Fastpack/Packer.ml" {"Packer.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__Preprocessor.cmi" {"Fastpack__Preprocessor.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Preprocessor.cmx" {"Fastpack__Preprocessor.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Preprocessor.cmt" {"Fastpack__Preprocessor.cmt"}
   "_build/install/default/lib/Fastpack/Preprocessor.ml" {"Preprocessor.ml"}
-  "_build/install/default/lib/Fastpack/Fastpack__RegularPacker.cmi" {"Fastpack__RegularPacker.cmi"}
-  "_build/install/default/lib/Fastpack/Fastpack__RegularPacker.cmx" {"Fastpack__RegularPacker.cmx"}
-  "_build/install/default/lib/Fastpack/Fastpack__RegularPacker.cmt" {"Fastpack__RegularPacker.cmt"}
-  "_build/install/default/lib/Fastpack/RegularPacker.ml" {"RegularPacker.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__Reporter.cmi" {"Fastpack__Reporter.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Reporter.cmx" {"Fastpack__Reporter.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Reporter.cmt" {"Fastpack__Reporter.cmt"}
@@ -71,6 +71,10 @@ lib: [
   "_build/install/default/lib/Fastpack/Fastpack__RunAsync.cmx" {"Fastpack__RunAsync.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__RunAsync.cmt" {"Fastpack__RunAsync.cmt"}
   "_build/install/default/lib/Fastpack/RunAsync.ml" {"RunAsync.ml"}
+  "_build/install/default/lib/Fastpack/Fastpack__Target.cmi" {"Fastpack__Target.cmi"}
+  "_build/install/default/lib/Fastpack/Fastpack__Target.cmx" {"Fastpack__Target.cmx"}
+  "_build/install/default/lib/Fastpack/Fastpack__Target.cmt" {"Fastpack__Target.cmt"}
+  "_build/install/default/lib/Fastpack/Target.ml" {"Target.ml"}
   "_build/install/default/lib/Fastpack/Fastpack__Version.cmi" {"Fastpack__Version.cmi"}
   "_build/install/default/lib/Fastpack/Fastpack__Version.cmx" {"Fastpack__Version.cmx"}
   "_build/install/default/lib/Fastpack/Fastpack__Version.cmt" {"Fastpack__Version.cmt"}
