@@ -192,16 +192,32 @@ process = { env: {} };
       !emitted_modules
       StringSet.empty
   in
+  Lwt.return (
+    emitted_modules,
+    Lwt_io.position output_channel |> Int64.to_int
+  )
+  (* DependencyGraph.cleanup ctx.graph emitted_modules; *)
+  (* Lwt_io.position output_channel |> Int64.to_int |> Lwt.return *)
 
-  Lwt.return {
-    Reporter.
-    graph = DependencyGraph.cleanup ctx.graph emitted_modules;
-    size = Lwt_io.position output_channel |> Int64.to_int
-  }
-
-let emit (ctx : Context.t) output_channel =
-  (* TODO: produce output channel here *)
-  run ctx output_channel
+let emit (ctx : Context.t) =
+  let temp_file = Filename.temp_file "" ".bundle.js" in
+  Lwt.finalize
+    (fun () ->
+      let%lwt emitted_modules, size =
+        Lwt_io.with_file
+          ~mode:Lwt_io.Output
+          ~perm:0o640
+          ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
+          temp_file
+          (run ctx)
+      in
+      let%lwt () = Lwt_unix.rename temp_file ctx.output_file in
+      Lwt.return (emitted_modules, [{Reporter. name = ctx.output_file; size}])
+    )
+    (fun () ->
+       if%lwt Lwt_unix.file_exists temp_file
+       then Lwt_unix.unlink temp_file;
+    )
 
 let update_graph () =
   failwith "not implemented"
