@@ -12,7 +12,7 @@ module Visit = FastpackUtil.Visit
 
 let debug = Logs.debug
 
-let re_name = Re.Posix.compile_pat "[^A-Za-z0-9_]+"
+let re_name = Re_posix.compile_pat "[^A-Za-z0-9_]+"
 
 let pack (cache : Cache.t) (ctx : Context.t) output_channel =
 
