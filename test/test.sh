@@ -60,8 +60,8 @@ for file in `ls $tests_dir/*/*.sh | grep "$pattern"`; do
         bash $file >$tmp_stdout 2>$tmp_stderr
     result="$?"
     set -e
-    $sed_cmd "s-$base_dir-/...-g" $tmp_stdout
-    $sed_cmd "s-$base_dir-/...-g" $tmp_stderr
+    $sed_cmd "s!$base_dir!/...!g" $tmp_stdout
+    $sed_cmd "s!$base_dir!/...!g" $tmp_stderr
     if ! [ "$result" -eq "0" ]; then
         mv $tmp_stderr "$tmp_dir/stderr.txt"
     fi

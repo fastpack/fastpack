@@ -81,6 +81,7 @@ release-dist:
 	@echo "[INFO]  [RELEASE] Building Linux x64 binary release..."
 	@$(MAKE) -C linux-build build
 	@echo "[INFO]  [RELEASE] Composing release package..."
+	@cp -R node-service dist
 	@cp linux-build/fpack.exe dist/vendor-linux/fpack.exe
 	@cp _build/default/bin/fpack.exe dist/vendor-darwin/fpack.exe
 	@echo "[INFO]  [RELEASE] DONE, now you can do the following:"
