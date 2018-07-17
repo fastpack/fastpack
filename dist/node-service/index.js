@@ -43,11 +43,16 @@ function load(message) {
     return;
   }
 
+  var rootContext = message.rootContext || null;
   var loaders = message.loaders || [];
   var filename = message.filename || null;
   var source = message.source || null;
 
   try {
+    if(!rootContext) {
+      throw "rootContext is not provided";
+    }
+
     var files = [];
     var runner = require("loader-runner");
     runner.runLoaders(
@@ -62,6 +67,7 @@ function load(message) {
             errors: [],
             meta: {}
           },
+          rootContext: rootContext,
           fs: fs,
           loadModule: function(request, callback) {
             callback(
