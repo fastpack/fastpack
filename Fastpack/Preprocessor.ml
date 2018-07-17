@@ -55,9 +55,9 @@ let of_string s =
   in
   let pattern =
     try
-      Re.Posix.compile_pat pattern_s
+      Re_posix.compile_pat pattern_s
     with
-    | Re.Posix.Parse_error ->
+    | Re_posix.Parse_error ->
       raise (Failure "Pattern regexp parse error. Use POSIX syntax")
   in
   { pattern_s; pattern; processors }

@@ -123,10 +123,10 @@ OPTIONS
 
 ## Development
 
-Make sure you have `esy` installed:
+Make sure you have `esy` (at least `0.1.31` version) installed:
 
 ```bash
-npm install -g esy
+npm install -g esy@0.1.31
 ```
 
 Now install dependencies & build everything:
