@@ -8,7 +8,7 @@
       "jbuilder build"
     ],
     "install": [
-      "jbuilder install --prefix=#{self.install}"
+      "esy-installer Fastpack.install"
     ],
     "buildsInSource": "_build"
   },
