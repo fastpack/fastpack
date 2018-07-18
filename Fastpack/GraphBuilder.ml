@@ -67,7 +67,7 @@ let get_module_type stmts =
                   _
                 }));
               right = (_, E.Literal { value = L.Boolean true; _});
-          });
+            });
           _
         } ->
         Module.CJS_esModule
@@ -183,23 +183,24 @@ let read_module
         Lwt.catch
           (fun () -> process location source)
           (function
-           | FlowParser.Parse_error.Error args ->
-             let location_str = Module.location_to_string location in
-             Lwt.fail (Context.PackError (ctx, CannotParseFile (location_str, args)))
-           | Preprocessor.Error message ->
-             Lwt.fail (Context.PackError (ctx, PreprocessorError message))
-           | FastpackUtil.Error.UnhandledCondition message ->
-             Lwt.fail (Context.PackError (ctx, UnhandledCondition message))
-           | exn ->
-             Lwt.fail exn
+            | FlowParser.Parse_error.Error args ->
+              let location_str = Module.location_to_string location in
+              let%lwt lines = Error.readlines location_str in
+              Lwt.fail (Context.PackError (ctx, CannotParseFile (location_str, args, lines)))
+            | Preprocessor.Error message ->
+              Lwt.fail (Context.PackError (ctx, PreprocessorError message))
+            | FastpackUtil.Error.UnhandledCondition message ->
+              Lwt.fail (Context.PackError (ctx, UnhandledCondition message))
+            | exn ->
+              Lwt.fail exn
           )
       in
 
       let%lwt files =
         Lwt_list.map_s
           (fun filename ->
-            let%lwt {content; _}, _ = cache.get_file filename in
-            Lwt.return (filename, content)
+             let%lwt {content; _}, _ = cache.get_file filename in
+             Lwt.return (filename, content)
           )
           files
       in
@@ -252,13 +253,13 @@ let build (ctx : Context.t) =
     let dependencies = ref [] in
     let workspace = ref (Workspace.of_string source) in
     let ({Workspace.
-          patch;
-          patch_with;
-          patch_loc;
-          patch_loc_with;
-          remove;
-          _
-        } as patcher) = Workspace.make_patcher workspace
+           patch;
+           patch_with;
+           patch_loc;
+           patch_loc_with;
+           remove;
+           _
+         } as patcher) = Workspace.make_patcher workspace
     in
 
     let program_scope, exports = Scope.of_program stmts in
@@ -381,12 +382,12 @@ let build (ctx : Context.t) =
         (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
                   local = (_, local);
                   exported }) ->
-           let exported =
-             match exported with
-             | Some (_, name) -> name
-             | None -> local
-           in
-           exported, local
+          let exported =
+            match exported with
+            | Some (_, name) -> name
+            | None -> local
+          in
+          exported, local
         )
     in
 
@@ -514,35 +515,35 @@ let build (ctx : Context.t) =
             patch_loc_with
               loc
               (fun (_, dep_map) ->
-                let (m : Module.t) = get_module dep dep_map
-                in
-                let namespace, _names =
-                  match specifiers with
-                  | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
-                    Some name, []
-                  | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
-                    None,
-                    specifiers
-                    |> List.map
-                      (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
-                  | None ->
-                    None, []
-                in
-                let has_names = default <> None || specifiers <> None in
-                match has_names with
-                (* import 'some'; *)
-                | false ->
-                  fastpack_require m.id dep.request ^ ";\n"
-                | true ->
-                  let _, module_var_definition =
-                    ensure_module_var ~name:namespace dep.request m
-                  in
-                  let _, module_default_var_definition =
-                    match default with
-                    | None -> "", ""
-                    | Some _ -> ensure_module_default_var m
-                  in
-                  module_var_definition ^ module_default_var_definition
+                 let (m : Module.t) = get_module dep dep_map
+                 in
+                 let namespace, _names =
+                   match specifiers with
+                   | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
+                     Some name, []
+                   | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
+                     None,
+                     specifiers
+                     |> List.map
+                       (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
+                   | None ->
+                     None, []
+                 in
+                 let has_names = default <> None || specifiers <> None in
+                 match has_names with
+                 (* import 'some'; *)
+                 | false ->
+                   fastpack_require m.id dep.request ^ ";\n"
+                 | true ->
+                   let _, module_var_definition =
+                     ensure_module_var ~name:namespace dep.request m
+                   in
+                   let _, module_default_var_definition =
+                     match default with
+                     | None -> "", ""
+                     | Some _ -> ensure_module_default_var m
+                   in
+                   module_var_definition ^ module_default_var_definition
               );
 
           | S.ExportNamedDeclaration {
@@ -622,29 +623,29 @@ let build (ctx : Context.t) =
             patch_loc_with
               loc
               (fun (_, dep_map) ->
-                let m = get_module dep dep_map in
-                let module_var, module_var_definition =
-                  ensure_module_var dep.request m
-                in
-                let updated_exports =
-                  match m.module_type with
-                  | Module.CJS
-                  | Module.CJS_esModule ->
-                    Printf.sprintf
-                      "Object.assign(module.exports, __fastpack_require__.omitDefault(%s));"
-                      module_var
-                  | Module.ESM ->
-                    let {ExportFinder. exports; _ } =
-                      ctx.export_finder.get_all dep_map m
-                    in
-                    exports
-                    |> M.bindings
-                    |> List.filter (fun (name, _) -> name <> "default")
-                    |> List.map (fun (name, _) -> (name, module_var ^ "." ^ name))
-                    |> List.map (fun (exported, local) -> define_export exported local)
-                    |> String.concat ""
-                in
-                module_var_definition ^ "" ^ updated_exports
+                 let m = get_module dep dep_map in
+                 let module_var, module_var_definition =
+                   ensure_module_var dep.request m
+                 in
+                 let updated_exports =
+                   match m.module_type with
+                   | Module.CJS
+                   | Module.CJS_esModule ->
+                     Printf.sprintf
+                       "Object.assign(module.exports, __fastpack_require__.omitDefault(%s));"
+                       module_var
+                   | Module.ESM ->
+                     let {ExportFinder. exports; _ } =
+                       ctx.export_finder.get_all dep_map m
+                     in
+                     exports
+                     |> M.bindings
+                     |> List.filter (fun (name, _) -> name <> "default")
+                     |> List.map (fun (name, _) -> (name, module_var ^ "." ^ name))
+                     |> List.map (fun (exported, local) -> define_export exported local)
+                     |> String.concat ""
+                 in
+                 module_var_definition ^ "" ^ updated_exports
               )
 
           | S.ExportDefaultDeclaration {
@@ -655,14 +656,14 @@ let build (ctx : Context.t) =
               declaration = S.ExportDefaultDeclaration.Declaration (
                   _,
                   S.FunctionDeclaration { id=None; _ }
-              );
+                );
               default;
             }
           | S.ExportDefaultDeclaration {
               declaration = S.ExportDefaultDeclaration.Declaration (
                   _,
                   S.ClassDeclaration { id=None; _ }
-              );
+                );
               default
             } ->
             patch
@@ -674,14 +675,14 @@ let build (ctx : Context.t) =
               declaration = S.ExportDefaultDeclaration.Declaration (
                   expr_loc,
                   S.FunctionDeclaration { id = Some (_, id); _ }
-              );
+                );
               _
             }
           | S.ExportDefaultDeclaration {
               declaration = S.ExportDefaultDeclaration.Declaration (
                   expr_loc,
                   S.ClassDeclaration { id = Some (_, id); _ }
-              );
+                );
               _
             } ->
             remove
@@ -704,26 +705,26 @@ let build (ctx : Context.t) =
       | Visit.Continue visit_ctx ->
         match expr with
         | E.Object { properties } ->
-            properties
-            |> List.iter
-              (fun prop ->
-                 match prop with
-                  | E.Object.Property (loc, E.Object.Property.Init {
-                      key = E.Object.Property.Identifier (_, name) ;
-                      shorthand = true;
-                      _
-                    })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
-                  | _ -> ()
-              );
-            Visit.Continue visit_ctx
+          properties
+          |> List.iter
+            (fun prop ->
+               match prop with
+               | E.Object.Property (loc, E.Object.Property.Init {
+                   key = E.Object.Property.Identifier (_, name) ;
+                   shorthand = true;
+                   _
+                 })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
+               | _ -> ()
+            );
+          Visit.Continue visit_ctx
 
         | E.Import (_, E.Literal { value = L.String request; _ }) ->
           let dep = add_dependency request in
           patch_loc_with
             loc
             (fun (_, dep_map) ->
-              let {Module. id = module_id; _} = get_module dep dep_map in
-              fastpack_import module_id dep.request
+               let {Module. id = module_id; _} = get_module dep dep_map in
+               fastpack_import module_id dep.request
             );
           Visit.Break
 
@@ -737,8 +738,8 @@ let build (ctx : Context.t) =
             patch_loc_with
               loc
               (fun (_, dep_map) ->
-                let {Module. id = module_id; _} = get_module dep dep_map in
-                fastpack_require module_id dep.request
+                 let {Module. id = module_id; _} = get_module dep dep_map in
+                 fastpack_require module_id dep.request
               );
           end;
           Visit.Break
@@ -806,6 +807,7 @@ let build (ctx : Context.t) =
       if m.state <> Module.Analyzed
       then begin
         let source = m.Module.workspace.Workspace.value in
+        (print_endline ("SOURCE IN GRAPH_BUILD: " ^ source));
         let (workspace, dependencies, scope, exports, module_type) =
           match is_json m.location with
           | true ->
@@ -816,11 +818,13 @@ let build (ctx : Context.t) =
             (workspace, [], Scope.empty, Scope.empty_exports, Module.CJS)
           | false ->
             try
-                analyze m.id m.location source
+              analyze m.id m.location source
             with
             | FlowParser.Parse_error.Error args ->
               let location_str = Module.location_to_string m.location in
-              raise (Context.PackError (ctx, CannotParseFile (location_str, args)))
+              let lines = (String.split_on_char '\n' source) in
+              let withLineNumbers = lines |> List.mapi (fun i line -> (i + 1, line)) in
+              raise (Context.PackError (ctx, CannotParseFile (location_str, args, withLineNumbers)))
             | Scope.ScopeError reason ->
               raise (Context.PackError (ctx, ScopeError reason))
         in
@@ -840,7 +844,7 @@ let build (ctx : Context.t) =
                in
                Lwt.return ((req, resolved), build_dependencies)
             )
-          dependencies
+            dependencies
         in
         let%lwt resolved_dependencies, build_dependencies =
           Lwt_list.fold_left_s
@@ -873,17 +877,17 @@ let build (ctx : Context.t) =
     let%lwt () =
       Lwt_list.iter_s
         (fun (req, resolved) ->
-          let resolved_str = Module.location_to_string resolved in
-          let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
-            | None ->
-              let ctx = { ctx with stack = req :: ctx.stack } in
-              let%lwt m = read_module ~ctx ~cache ~from_module:(Some m) resolved in
-              process ctx graph m
-            | Some m ->
-              Lwt.return m
-          in
-          DependencyGraph.add_dependency graph m (req, Some dep_module.location);
-          Lwt.return_unit
+           let resolved_str = Module.location_to_string resolved in
+           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
+             | None ->
+               let ctx = { ctx with stack = req :: ctx.stack } in
+               let%lwt m = read_module ~ctx ~cache ~from_module:(Some m) resolved in
+               process ctx graph m
+             | Some m ->
+               Lwt.return m
+           in
+           DependencyGraph.add_dependency graph m (req, Some dep_module.location);
+           Lwt.return_unit
         )
         m.resolved_dependencies
     in
