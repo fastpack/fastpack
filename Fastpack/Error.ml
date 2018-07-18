@@ -80,10 +80,16 @@ let to_string package_dir error =
 
   | CannotParseFile (location_str, errors, source) ->
     let lines = split_with_lineno source in
-    let format_error (loc, _) = get_codeframe loc lines in
+    let format_error (loc, error) = 
+      let error_desc = FlowParser.Parse_error.PP.error error in 
+      "--------------------\n"
+      ^ error_desc ^ " at " ^ (loc_to_string loc)
+      ^ "\n\n"
+      ^ (get_codeframe loc lines)
+    in
     print_with_color "Parse Error\n" Red 
     ^ print_with_color (location_str ^ "\n\n") Cyan
-    ^ (String.concat "\n" (List.map format_error errors))
+    ^ (String.concat "\n\n" (List.map format_error errors))
     ^ "\n"
 
   | NotImplemented (some_loc, message) ->
