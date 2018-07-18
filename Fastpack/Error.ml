@@ -23,7 +23,7 @@ let get_codeframe (loc:Loc.t) lines =
   in
   let formatted = List.map (fun (i, line) -> (
         if loc.start.line <= i && i <= loc._end.line then 
-          let error_substring = String.sub line (loc.start.column-1) (loc._end.column - loc.start.column) in
+          let error_substring = String.sub line (loc.start.column) (loc._end.column - loc.start.column) in
           let colored_error = print_with_color error_substring Red in
           let colored_line = String.replace ~sub:error_substring ~by: colored_error line in
           (print_with_color (string_of_int i) Red) ^ " │ " ^ colored_line  
@@ -33,22 +33,15 @@ let get_codeframe (loc:Loc.t) lines =
   String.concat "\n" formatted
 
 
-let readlines filepath = 
-  (* let filepath = match loc.source with
-     | None -> "";
-     | Some Builtins -> ""
-     | Some file -> (FlowParser.File_key.to_string file)
-     in *)
-  let%lwt content = Lwt_io.(with_file ~mode:Input filepath read) in
-  let lines = (String.split_on_char '\n' content) in
-  let withLineNumbers = lines |> List.mapi (fun i line -> (i + 1, line)) in
-  Lwt.return withLineNumbers
+let split_with_lineno str = 
+  let lines = (String.split_on_char '\n' str) in
+  lines |> List.mapi (fun i line -> (i + 1, line))
 
 type reason =
   | CannotReadModule of string
   | CannotLeavePackageDir of string
   | CannotResolveModule of (string * Module.Dependency.t)
-  | CannotParseFile of string * ((Loc.t * FlowParser.Parse_error.t) list) * (int* string) list
+  | CannotParseFile of string * ((Loc.t * FlowParser.Parse_error.t) list) * string
   | NotImplemented of Loc.t option * string
   | CannotRenameModuleBinding of Loc.t * string * Module.Dependency.t
   | DependencyCycle of string list
@@ -85,14 +78,9 @@ let to_string package_dir error =
       path
       dep_str
 
-  | CannotParseFile (location_str, errors, lines) ->
-    let format_error (loc, _) =
-      get_codeframe loc lines 
-      (* loc_to_string loc ^ " " ^ FlowParser.Parse_error.PP.error error *)
-    in
-    (* (Printf.sprintf
-       ("Parse Error\nFile: %s")
-       (String.replace ~sub:(package_dir ^ "/") ~by:"" location_str)) *)
+  | CannotParseFile (location_str, errors, source) ->
+    let lines = split_with_lineno source in
+    let format_error (loc, _) = get_codeframe loc lines in
     print_with_color "Parse Error\n" Red 
     ^ print_with_color (location_str ^ "\n\n") Cyan
     ^ (String.concat "\n" (List.map format_error errors))

@@ -185,8 +185,10 @@ let read_module
           (function
             | FlowParser.Parse_error.Error args ->
               let location_str = Module.location_to_string location in
-              let%lwt lines = Error.readlines location_str in
-              Lwt.fail (Context.PackError (ctx, CannotParseFile (location_str, args, lines)))
+              let src = match source with 
+                | Some src -> src
+                | None -> "" in
+              Lwt.fail (Context.PackError (ctx, CannotParseFile (location_str, args, src)))
             | Preprocessor.Error message ->
               Lwt.fail (Context.PackError (ctx, PreprocessorError message))
             | FastpackUtil.Error.UnhandledCondition message ->
@@ -807,7 +809,6 @@ let build (ctx : Context.t) =
       if m.state <> Module.Analyzed
       then begin
         let source = m.Module.workspace.Workspace.value in
-        (print_endline ("SOURCE IN GRAPH_BUILD: " ^ source));
         let (workspace, dependencies, scope, exports, module_type) =
           match is_json m.location with
           | true ->
@@ -821,10 +822,8 @@ let build (ctx : Context.t) =
               analyze m.id m.location source
             with
             | FlowParser.Parse_error.Error args ->
-              let location_str = Module.location_to_string m.location in
-              let lines = (String.split_on_char '\n' source) in
-              let withLineNumbers = lines |> List.mapi (fun i line -> (i + 1, line)) in
-              raise (Context.PackError (ctx, CannotParseFile (location_str, args, withLineNumbers)))
+              let location_str = Module.location_to_string m.location in 
+              raise (Context.PackError (ctx, CannotParseFile (location_str, args, source)))
             | Scope.ScopeError reason ->
               raise (Context.PackError (ctx, ScopeError reason))
         in

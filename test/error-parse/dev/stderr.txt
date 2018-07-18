@@ -11,5 +11,5 @@ Processing Module: a.js
 
 \033[0m1 │ // missing second half of addition
 2 │ function hello() {
-\033[0;31m3\033[0m │  a \033[0;31m+\033[0m;
+\033[0;31m3\033[0m │  a + \033[0;31m;\033[0m
 4 │ }
