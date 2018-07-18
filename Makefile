@@ -31,6 +31,7 @@ setup-test:
 clean-test:
 	cd test && for TEST in `ls`; \
 	   do [ -d "$$TEST" ] \
+		  && [ -f "$$TEST/package.json" ] \
 	      && [ -d "$$TEST/node_modules" ] \
 		  && rm -rf "$$TEST/node_modules"; \
 		done \
