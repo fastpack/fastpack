@@ -42,6 +42,46 @@ let resolve (ctx : Context.t) (request : Module.Dependency.t) =
         raise exn
     )
 
+let is_json (location : Module.location) =
+  match location with
+  | Module.File { filename = Some filename; _ } ->
+    String.suffix ~suf:".json" filename
+  | _ ->
+    false
+
+
+let get_module_type stmts =
+  (* TODO: what if module has only import() expression? *)
+  let import_or_export module_type ((_, stmt) : Loc.t S.t) =
+    match module_type with
+    | Module.ESM | Module.CJS_esModule -> module_type
+    | Module.CJS ->
+      match stmt with
+      | S.Expression {
+          expression = (_, E.Assignment {
+              operator = E.Assignment.Assign;
+              left = (_, P.Expression (_, E.Member {
+                  _object = (_, E.Identifier (_, "exports"));
+                  property = E.Member.PropertyIdentifier (_, "__esModule");
+                  computed = false;
+                  _
+                }));
+              right = (_, E.Literal { value = L.Boolean true; _});
+          });
+          _
+        } ->
+        Module.CJS_esModule
+      | S.ExportDefaultDeclaration _
+      | S.ExportNamedDeclaration _
+      | S.ImportDeclaration _ ->
+        Module.ESM
+      | _ ->
+        module_type
+  in
+  List.fold_left import_or_export Module.CJS stmts
+
+
+
 let read_module
     ?(from_module=None)
     ~(ctx : Context.t)
@@ -183,46 +223,6 @@ let read_module
 
       let () = cache.modify_content m source in
       Lwt.return m
-
-
-let is_json (location : Module.location) =
-  match location with
-  | Module.File { filename = Some filename; _ } ->
-    String.suffix ~suf:".json" filename
-  | _ ->
-    false
-
-
-let get_module_type stmts =
-  (* TODO: what if module has only import() expression? *)
-  let import_or_export module_type ((_, stmt) : Loc.t S.t) =
-    match module_type with
-    | Module.ESM | Module.CJS_esModule -> module_type
-    | Module.CJS ->
-      match stmt with
-      | S.Expression {
-          expression = (_, E.Assignment {
-              operator = E.Assignment.Assign;
-              left = (_, P.Expression (_, E.Member {
-                  _object = (_, E.Identifier (_, "exports"));
-                  property = E.Member.PropertyIdentifier (_, "__esModule");
-                  computed = false;
-                  _
-                }));
-              right = (_, E.Literal { value = L.Boolean true; _});
-          });
-          _
-        } ->
-        Module.CJS_esModule
-      | S.ExportDefaultDeclaration _
-      | S.ExportNamedDeclaration _
-      | S.ImportDeclaration _ ->
-        Module.ESM
-      | _ ->
-        module_type
-  in
-  List.fold_left import_or_export Module.CJS stmts
-
 
 
 let build (ctx : Context.t) =
