@@ -7,21 +7,22 @@ Call Stack:
 Processing Module: a.js
 
 \033[0;31mParse Error
-\033[0m\033[0;36m/.../test/error-parse/a.js
-
-\033[0m--------------------
-Unexpected token ; at (3:5) - (3:6):
-
-1 │ // missing second half of addition
-2 │ function hello() {
-\033[0;31m3\033[0m │  a + \033[0;31m;\033[0m
-4 │ }
+\033[0m\033[1;36m/.../test/error-parse/a.js\033[0m
 
 --------------------
-Unexpected identifier at (6:6) - (6:7):
+Unexpected token ; at (3:14) - (3:15):
 
-3 │  a + ;
-4 │ }
-5 │ 
-\033[0;31m6\033[0m │ let a \033[0;31mb\033[0m = 5;
-7 │ 
+ 1 │ // missing second half of addition
+ 2 │ function hello() {
+\033[0;31m 3\033[0m │   "§ © Æ ¿" + \033[0;31m;\033[0m
+ 4 │ }
+
+
+--------------------
+Unexpected identifier at (10:6) - (10:11):
+
+ 8 │ 
+ 9 │ 
+\033[0;31m10\033[0m │ let a \033[0;31maaaaa\033[0m = 5;
+11 │ export default hello;
+

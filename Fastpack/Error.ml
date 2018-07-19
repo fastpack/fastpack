@@ -2,18 +2,23 @@ module Loc = FlowParser.Loc
 module Scope = FastpackUtil.Scope
 
 type color = Cyan | Red | Black | White;;
+type font = Regular | Bold;;
 
-let print_with_color str col = 
+let print_with_color ?font:(font=Regular) str col = 
   let col = match col with 
-    | Cyan -> 36 
-    | Red -> 31
-    | Black -> 30
-    | White -> 37
+    | Cyan -> "36"
+    | Red -> "31"
+    | Black -> "30"
+    | White -> "37"
   in
-  "\\033[0;" ^ (string_of_int col) ^ "m" ^ str ^ "\\033[0m";;
+  let f = match font with 
+    | Regular -> "0"
+    | Bold -> "1"
+  in
+  "\\033[" ^ f ^ ";" ^ col ^ "m" ^ str ^ "\\033[0m"
 
 let get_codeframe (loc:Loc.t) lines = 
-  let startLine = max 0 (loc.start.line - 3) in
+  let startLine = max 0 (loc.start.line - 2) in
   let endLine = min (List.length lines) (loc._end.line + 1) in
   let codeframe = (List.filter_map (fun (i,line) -> 
       if startLine <= i  && i <= endLine then 
@@ -21,15 +26,26 @@ let get_codeframe (loc:Loc.t) lines =
       else None
     ) lines) 
   in
-  let formatted = List.map (fun (i, line) -> (
-        if loc.start.line <= i && i <= loc._end.line then 
-          let error_substring = String.sub line (loc.start.column) (loc._end.column - loc.start.column) in
-          let colored_error = print_with_color error_substring Red in
-          let colored_line = String.replace ~sub:error_substring ~by: colored_error line in
-          (print_with_color (string_of_int i) Red) ^ " │ " ^ colored_line  
-        else
-          (string_of_int i) ^ " │ " ^ line 
-      )) codeframe in 
+  let maxLineNo = List.fold_left (fun n (i, _) -> max n i) 0 lines in
+  let maxDigits = String.length (string_of_int maxLineNo) in
+  let formatted = List.map (fun (i, line) -> 
+      let isErrorLine = loc.start.line <= i && i <= loc._end.line in
+      let isTTY = (Unix.isatty Unix.stderr) || true in
+      let lineNo = String.pad (maxDigits) (string_of_int i) in
+      match (isErrorLine, isTTY ) with
+      | false, _ -> lineNo ^ " │ " ^ line 
+      | true, false -> 
+        let (offset, length) = (loc.start.column + 1), loc._end.column - loc.start.column in
+        let whitespaceBeforeBar = String.repeat " " (maxDigits + 1) in
+        let whitespaceAfterBar = String.repeat " " offset in
+        let carets = String.repeat "^" length in
+        lineNo ^ " │ " ^ line ^ "\n" ^ whitespaceBeforeBar ^ "│" ^ whitespaceAfterBar ^ carets
+      | true, true -> 
+        let error_substring = FastpackUtil.UTF8.sub line (loc.start.column) (loc._end.column - loc.start.column) in
+        let colored_error = print_with_color error_substring Red in
+        let colored_line = String.replace ~sub:error_substring ~by: colored_error line in
+        (print_with_color lineNo Red) ^ " │ " ^ colored_line  
+    ) codeframe in 
   String.concat "\n" formatted
 
 
@@ -86,9 +102,11 @@ let to_string package_dir error =
       ^ error_desc ^ " at " ^ (loc_to_string loc)
       ^ "\n\n"
       ^ (get_codeframe loc lines)
+      ^ "\n"
     in
     print_with_color "Parse Error\n" Red 
-    ^ print_with_color (location_str ^ "\n\n") Cyan
+    ^ print_with_color ~font:Bold location_str Cyan
+    ^ "\n\n"
     ^ (String.concat "\n\n" (List.map format_error errors))
     ^ "\n"
 

@@ -1,8 +1,11 @@
 // missing second half of addition
 function hello() {
- a + ;
+  "§ © Æ ¿" + ;
 }
 
-let a b = 5;
 
+
+
+
+let a aaaaa = 5;
 export default hello;
