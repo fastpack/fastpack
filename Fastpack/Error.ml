@@ -104,8 +104,16 @@ let to_string package_dir error =
       ^ (get_codeframe loc lines)
       ^ "\n"
     in
-    print_with_color "Parse Error\n" Red 
-    ^ print_with_color ~font:Bold location_str Cyan
+    let (error_title, location) = 
+      if Unix.isatty Unix.stderr then
+        (print_with_color "Parse Error\n" Red, 
+         print_with_color ~font:Bold location_str Cyan)
+      else 
+        ("Parse Error\n", location_str)
+
+    in
+    error_title 
+    ^ location
     ^ "\n\n"
     ^ (String.concat "\n\n" (List.map format_error errors))
     ^ "\n"

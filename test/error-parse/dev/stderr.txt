@@ -6,8 +6,8 @@ Call Stack:
 './index.js' from module: $fp$main
 Processing Module: a.js
 
-[0;31mParse Error
-[0m[1;36m/.../test/error-parse/a.js[0m
+Parse Error
+/.../test/error-parse/a.js
 
 --------------------
 Unexpected token ; at (3:14) - (3:15):
