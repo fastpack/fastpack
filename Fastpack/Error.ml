@@ -15,7 +15,7 @@ let print_with_color ?font:(font=Regular) str col =
     | Regular -> "0"
     | Bold -> "1"
   in
-  "\\033[" ^ f ^ ";" ^ col ^ "m" ^ str ^ "\\033[0m"
+  "\027[" ^ f ^ ";" ^ col ^ "m" ^ str ^ "\027[0m"
 
 let get_codeframe (loc:Loc.t) lines = 
   let startLine = max 0 (loc.start.line - 2) in
@@ -30,7 +30,7 @@ let get_codeframe (loc:Loc.t) lines =
   let maxDigits = String.length (string_of_int maxLineNo) in
   let formatted = List.map (fun (i, line) -> 
       let isErrorLine = loc.start.line <= i && i <= loc._end.line in
-      let isTTY = (Unix.isatty Unix.stderr) || true in
+      let isTTY = (Unix.isatty Unix.stderr) in
       let lineNo = String.pad (maxDigits) (string_of_int i) in
       match (isErrorLine, isTTY ) with
       | false, _ -> lineNo ^ " │ " ^ line 
