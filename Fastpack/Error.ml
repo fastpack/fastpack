@@ -17,10 +17,10 @@ let print_with_color ?font:(font=Regular) str col =
   in
   "\027[" ^ f ^ ";" ^ col ^ "m" ^ str ^ "\027[0m"
 
-let get_codeframe (loc:Loc.t) lines = 
+let get_codeframe (loc: Loc.t) lines = 
   let startLine = max 0 (loc.start.line - 2) in
   let endLine = min (List.length lines) (loc._end.line + 1) in
-  let codeframe = (List.filter_map (fun (i,line) -> 
+  let codeframe = (List.filter_map (fun (i, line) -> 
       if startLine <= i  && i <= endLine then 
         Some (i, line) 
       else None
@@ -32,10 +32,10 @@ let get_codeframe (loc:Loc.t) lines =
       let isErrorLine = loc.start.line <= i && i <= loc._end.line in
       let isTTY = (Unix.isatty Unix.stderr) in
       let lineNo = String.pad (maxDigits) (string_of_int i) in
-      match (isErrorLine, isTTY ) with
+      match (isErrorLine, isTTY) with
       | false, _ -> lineNo ^ " │ " ^ line 
       | true, false -> 
-        let (offset, length) = (loc.start.column + 1), loc._end.column - loc.start.column in
+        let (offset, length) = (loc.start.column + 1), (loc._end.column - loc.start.column) in
         let whitespaceBeforeBar = String.repeat " " (maxDigits + 1) in
         let whitespaceAfterBar = String.repeat " " offset in
         let carets = String.repeat "^" length in
@@ -47,11 +47,6 @@ let get_codeframe (loc:Loc.t) lines =
         (print_with_color lineNo Red) ^ " │ " ^ colored_line  
     ) codeframe in 
   String.concat "\n" formatted
-
-
-let split_with_lineno str = 
-  let lines = (String.split_on_char '\n' str) in
-  lines |> List.mapi (fun i line -> (i + 1, line))
 
 type reason =
   | CannotReadModule of string
@@ -95,12 +90,13 @@ let to_string package_dir error =
       dep_str
 
   | CannotParseFile (location_str, errors, source) ->
-    let lines = split_with_lineno source in
+    let lines = String.split_on_char '\n' source
+                |> List.mapi (fun i line -> (i + 1, line)) in
     let format_error (loc, error) = 
       let error_desc = FlowParser.Parse_error.PP.error error in 
       "--------------------\n"
-      ^ error_desc ^ " at " ^ (loc_to_string loc)
-      ^ "\n\n"
+      ^ error_desc ^ " at " ^ (loc_to_string loc) ^ "\n"
+      ^ "\n"
       ^ (get_codeframe loc lines)
       ^ "\n"
     in
@@ -109,12 +105,11 @@ let to_string package_dir error =
         (print_with_color "Parse Error\n" Red, 
          print_with_color ~font:Bold location_str Cyan)
       else 
-        ("Parse Error\n", location_str)
-
+        ("Parse Error\n", location_str) 
     in
     error_title 
-    ^ location
-    ^ "\n\n"
+    ^ location ^ "\n"
+    ^ "\n"
     ^ (String.concat "\n\n" (List.map format_error errors))
     ^ "\n"
 
