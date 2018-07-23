@@ -17,25 +17,24 @@ let print_with_color ?font:(font=Regular) str col =
   in
   "\027[" ^ f ^ ";" ^ col ^ "m" ^ str ^ "\027[0m"
 
-let get_codeframe (loc: Loc.t) lines = 
+let get_codeframe ?(isTTY=false) (loc: Loc.t) lines = 
   let startLine = max 0 (loc.start.line - 2) in
   let endLine = min (List.length lines) (loc._end.line + 1) in
-  let codeframe = (List.filter_map (fun (i, line) -> 
+  let codeframe = List.filter_map (fun (i, line) -> 
       if startLine <= i  && i <= endLine then 
         Some (i, line) 
       else None
-    ) lines) 
+    ) lines
   in
   let maxLineNo = List.fold_left (fun n (i, _) -> max n i) 0 lines in
   let maxDigits = String.length (string_of_int maxLineNo) in
   let formatted = List.map (fun (i, line) -> 
       let isErrorLine = loc.start.line <= i && i <= loc._end.line in
-      let isTTY = (Unix.isatty Unix.stderr) in
-      let lineNo = String.pad (maxDigits) (string_of_int i) in
-      match (isErrorLine, isTTY) with
+      let lineNo = String.pad maxDigits (string_of_int i) in
+      match isErrorLine, isTTY with
       | false, _ -> lineNo ^ " │ " ^ line 
       | true, false -> 
-        let (offset, length) = (loc.start.column + 1), (loc._end.column - loc.start.column) in
+        let offset, length = (loc.start.column + 1), (loc._end.column - loc.start.column) in
         let whitespaceBeforeBar = String.repeat " " (maxDigits + 1) in
         let whitespaceAfterBar = String.repeat " " offset in
         let carets = String.repeat "^" length in
@@ -90,18 +89,21 @@ let to_string package_dir error =
       dep_str
 
   | CannotParseFile (location_str, errors, source) ->
+    let isTTY = FastpackUtil.FS.isatty Unix.stderr in
     let lines = String.split_on_char '\n' source
                 |> List.mapi (fun i line -> (i + 1, line)) in
-    let format_error (loc, error) = 
+    let format_error ?(isTTY=false) (loc, error) = 
       let error_desc = FlowParser.Parse_error.PP.error error in 
-      "--------------------\n"
-      ^ error_desc ^ " at " ^ (loc_to_string loc) ^ "\n"
-      ^ "\n"
-      ^ (get_codeframe loc lines)
-      ^ "\n"
+      String.concat "\n" [
+        "--------------------";
+        error_desc ^ " at " ^ (loc_to_string loc);
+        "";
+        (get_codeframe ~isTTY loc lines);
+        ""; 
+      ]
     in
     let (error_title, location) = 
-      if Unix.isatty Unix.stderr then
+      if isTTY then
         (print_with_color "Parse Error\n" Red, 
          print_with_color ~font:Bold location_str Cyan)
       else 
