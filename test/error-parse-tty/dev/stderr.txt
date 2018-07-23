@@ -1,21 +1,20 @@
 
-Project Directory: /.../test/error-parse
+Project Directory: /.../test/error-parse-tty
 Mode: development
 Call Stack:
 	'./a' from module: index.js	
 './index.js' from module: $fp$main
 Processing Module: a.js
 
-Parse Error
-/.../test/error-parse/a.js
+[0;31mParse Error
+[0m[1;36m/.../test/error-parse-tty/a.js[0m
 
 --------------------
 Unexpected token ; at (3:14) - (3:15):
 
  1 │ // missing second half of addition
  2 │ function hello() {
- 3 │   "§ © Æ ¿" + ;
-   │               ^
+[0;31m 3[0m │   "§ © Æ ¿" + [0;31m;[0m
  4 │ }
 
 --------------------
@@ -23,7 +22,6 @@ Unexpected identifier at (10:6) - (10:11):
 
  8 │ 
  9 │ 
-10 │ let a aaaaa = 5;
-   │       ^^^^^
+[0;31m10[0m │ let a [0;31maaaaa[0m = 5;
 11 │ export default hello;
 

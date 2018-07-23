@@ -92,7 +92,7 @@ let to_string package_dir error =
     let isTTY = FastpackUtil.FS.isatty Unix.stderr in
     let lines = String.split_on_char '\n' source
                 |> List.mapi (fun i line -> (i + 1, line)) in
-    let format_error ?(isTTY=false) (loc, error) = 
+    let format_error isTTY (loc, error) = 
       let error_desc = FlowParser.Parse_error.PP.error error in 
       String.concat "\n" [
         "--------------------";
@@ -109,11 +109,12 @@ let to_string package_dir error =
       else 
         ("Parse Error\n", location_str) 
     in
-    error_title 
-    ^ location ^ "\n"
-    ^ "\n"
-    ^ (String.concat "\n\n" (List.map format_error errors))
-    ^ "\n"
+    String.concat "\n" [
+      error_title ^ location;
+      "";
+      String.concat "\n" (List.map (format_error isTTY) errors);
+      ""; 
+    ]
 
   | NotImplemented (some_loc, message) ->
     let loc =
