@@ -1,6 +1,36 @@
 module Loc = FlowParser.Loc
 module Scope = FastpackUtil.Scope
 
+(* 
+  assoc list of nodejs libs and their mock implementations
+  as listed on: https://github.com/webpack/node-libs-browser
+*)
+let nodelibs = [
+  "assert", "defunctzombie/commonjs-assert";
+  "buffer", "feross/buffer";
+  "console","Raynos/console-browserify";
+  "constants","juliangruber/constants-browserify";
+  "crypto","crypto-browserify/crypto-browserify";
+  "domain","bevry/domain-browser";
+  "events","Gozala/events";
+  "http","jhiesey/stream-http";
+  "https","substack/https-browserify";
+  "os","CoderPuppy/os-browserify";
+  "path","substack/path-browserify";
+  "process","shtylman/node-process";
+  "punycode","bestiejs/punycode.js";
+  "querystring","mike-spainhower/querystring";
+  "stream","stream";
+  "string_decoder","rvagg/string_decoder";
+  "sys","defunctzombie/node-util";
+  "timers","jryans/timers-browserify";
+  "tty","substack/tty-browserify";
+  "url","defunctzombie/node-url";
+  "util","defunctzombie/node-util";
+  "vm","substack/vm-browserify";
+  "zlib","devongovett/browserify-zlib";
+] 
+
 type color = Cyan | Red | Black | White;;
 type font = Regular | Bold;;
 
@@ -46,7 +76,6 @@ let get_codeframe ?(isTTY=false) (loc: Loc.t) lines =
         (print_with_color lineNo Red) ^ " │ " ^ colored_line  
     ) codeframe in 
   String.concat "\n" formatted
-
 type reason =
   | CannotReadModule of string
   | CannotLeavePackageDir of string
@@ -79,14 +108,20 @@ let to_string package_dir error =
   | CannotLeavePackageDir filename ->
     Printf.sprintf
       "%s is out of the working directory\n"
-      filename
+      filename 
 
-  | CannotResolveModule (path, dep) ->
-    let dep_str = Module.Dependency.to_string ~dir:(Some package_dir) dep in 
-    Printf.sprintf
-      "\n%s\nWhile processing dependency request:\n\t%s\n"
-      path
-      dep_str
+  | CannotResolveModule (_, dep) ->
+    let dep_str = Module.Dependency.to_string ~dir:(Some package_dir) dep in
+    let error_msg = "Cannot resolve request for " ^ dep_str in
+    (match List.assoc_opt dep.request nodelibs with
+     | None -> error_msg ^ "\n"
+     | Some mock -> String.concat "\n" [
+         error_msg;
+         "This looks like base node.js library and unlikely is required in the browser environment.";
+         "If you still want to use it, here is the suggested command line option:";
+         (Printf.sprintf "--mock %s:%s" dep.request mock);
+       ]
+    )
 
   | CannotParseFile (location_str, errors, source) ->
     let isTTY = FastpackUtil.FS.isatty Unix.stderr in
@@ -126,12 +161,12 @@ let to_string package_dir error =
 
   | CannotRenameModuleBinding (loc, id, dep) ->
     Printf.sprintf "
-Cannot rename module binding:
-%s %s
-Import Request: %s
-Typically, it means that you are trying to use the name before importing it in
+                            Cannot rename module binding:
+      %s %s
+        Import Request: %s
+      Typically, it means that you are trying to use the name before importing it in
 the code.
-"
+      "
       (loc_to_string loc)
       id
       (Module.Dependency.to_string ~dir:(Some package_dir) dep)

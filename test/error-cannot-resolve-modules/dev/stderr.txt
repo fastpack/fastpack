@@ -1,21 +1,2 @@
 
-Project Directory: /.../test/error-cannot-resolve-modules
-Mode: development
-Call Stack:
-	'./index.js' from module: $fp$main
-Processing Module: index.js
-
-
-Cannot resolve module
-  Resolving './c'. Base directory: '/.../test/error-cannot-resolve-modules'
-  Resolving '/.../test/error-cannot-resolve-modules/c'.
-  File exists? '/.../test/error-cannot-resolve-modules/c'
-  ...no.
-  File exists? '/.../test/error-cannot-resolve-modules/c.js'
-  ...no.
-  File exists? '/.../test/error-cannot-resolve-modules/c.json'
-  ...no.
-  Is directory? '/.../test/error-cannot-resolve-modules/c'
-  ...no.
-While processing dependency request:
-	'./c' from module: index.js
+Cannot resolve request for './c' from module: index.js

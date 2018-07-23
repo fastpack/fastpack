@@ -1,12 +1,8 @@
 
-Project Directory: /.../test/error-cannot-rename-module-binding
-Mode: development
-Call Stack: (empty)
-Processing Module: $fp$main
 
-
-Cannot rename module binding:
-(3:9) - (3:10): a
-Import Request: './a' from module: index.js
-Typically, it means that you are trying to use the name before importing it in
+                            Cannot rename module binding:
+      (3:9) - (3:10): a
+        Import Request: './a' from module: index.js
+      Typically, it means that you are trying to use the name before importing it in
 the code.
+      

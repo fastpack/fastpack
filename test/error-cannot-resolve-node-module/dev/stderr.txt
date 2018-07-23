@@ -1,0 +1,5 @@
+
+Cannot resolve request for 'url' from module: index.js
+This looks like base node.js library and unlikely is required in the browser environment.
+If you still want to use it, here is the suggested command line option:
+--mock url:defunctzombie/node-url
