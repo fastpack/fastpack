@@ -1,6 +1,6 @@
 
-[0;31mParse Error
-[0m[1;36m/.../test/error-parse-tty/a.js[0m
+[0;31mParse error[0m 
+[1;36m/.../test/error-parse-tty/a.js[0m
 
 --------------------
 Unexpected token ; at (3:14) - (3:15):

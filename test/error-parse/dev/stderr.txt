@@ -1,5 +1,5 @@
 
-Parse Error
+Parse error 
 /.../test/error-parse/a.js
 
 --------------------

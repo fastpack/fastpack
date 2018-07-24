@@ -1,2 +1,3 @@
 
-Cannot resolve request for './c' from module: index.js
+Module resolution error: cannot resolve './c'
+/.../test/error-cannot-resolve-modules/index.js
