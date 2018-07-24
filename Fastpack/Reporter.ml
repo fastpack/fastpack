@@ -13,11 +13,11 @@ let report_string ?(cache=None) ?(mode=None) start_time { graph; size } =
       if size >= 1048576
       then sprintf "%.2fMb" (float_of_int size /. 1048576.0)
       else
-        if size >= 1024
-        then sprintf
-            "%dKb"
-            (float_of_int size /. 1024.0 +. 0.5 |> floor |> int_of_float)
-        else sprintf "%db" size
+      if size >= 1024
+      then sprintf
+          "%dKb"
+          (float_of_int size /. 1024.0 +. 0.5 |> floor |> int_of_float)
+      else sprintf "%db" size
     )
   in
   let cache =
@@ -49,12 +49,12 @@ let report_json _start_time { graph; _ } =
     |> Sequence.sort ~cmp:Pervasives.compare
     |> Sequence.to_list
   in
-    `Assoc [
-      ("modulesPaths", `List modulePaths)
-    ]
-    |> to_string ~std:true
-    |> (fun s -> s ^ "\n")
-    |> Lwt_io.write Lwt_io.stdout
+  `Assoc [
+    ("modulesPaths", `List modulePaths)
+  ]
+  |> to_string ~std:true
+  |> (fun s -> s ^ "\n")
+  |> Lwt_io.write Lwt_io.stdout
 
 
 type file = {
@@ -72,11 +72,11 @@ module Text = struct
         if size >= 1048576
         then sprintf "%.2fMb" (float_of_int size /. 1048576.0)
         else
-          if size >= 1024
-          then sprintf
-              "%dKb"
-              (float_of_int size /. 1024.0 +. 0.5 |> floor |> int_of_float)
-          else sprintf "%db" size
+        if size >= 1024
+        then sprintf
+            "%dKb"
+            (float_of_int size /. 1024.0 +. 0.5 |> floor |> int_of_float)
+        else sprintf "%db" size
       )
     in
     Printf.sprintf
@@ -88,8 +88,8 @@ module Text = struct
     |> Lwt_io.write Lwt_io.stdout
 
   let report_error ~(ctx : Context.t) ~(error: Error.reason) =
-    Context.string_of_error ctx error
-    |> Lwt_io.write Lwt_io.stderr
+    let error_msg = Context.string_of_error ctx error in
+    Lwt_io.write Lwt_io.stderr error_msg
 
 end
 
@@ -137,10 +137,10 @@ end
 
 type t = {
   report_ok : ?message:string option
-              -> start_time:float
-              -> ctx:Context.t
-              -> files:file list
-              -> unit Lwt.t;
+    -> start_time:float
+    -> ctx:Context.t
+    -> files:file list
+    -> unit Lwt.t;
   report_error : ctx:Context.t -> error:Error.reason -> unit Lwt.t;
 }
 
