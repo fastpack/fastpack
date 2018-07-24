@@ -6,29 +6,39 @@ module Scope = FastpackUtil.Scope
   as listed on: https://github.com/webpack/node-libs-browser
 *)
 let nodelibs = [
-  "assert", "defunctzombie/commonjs-assert";
-  "buffer", "feross/buffer";
-  "console","Raynos/console-browserify";
-  "constants","juliangruber/constants-browserify";
-  "crypto","crypto-browserify/crypto-browserify";
-  "domain","bevry/domain-browser";
-  "events","Gozala/events";
-  "http","jhiesey/stream-http";
-  "https","substack/https-browserify";
-  "os","CoderPuppy/os-browserify";
-  "path","substack/path-browserify";
-  "process","shtylman/node-process";
-  "punycode","bestiejs/punycode.js";
-  "querystring","mike-spainhower/querystring";
-  "stream","stream";
-  "string_decoder","rvagg/string_decoder";
-  "sys","defunctzombie/node-util";
-  "timers","jryans/timers-browserify";
-  "tty","substack/tty-browserify";
-  "url","defunctzombie/node-url";
-  "util","defunctzombie/node-util";
-  "vm","substack/vm-browserify";
-  "zlib","devongovett/browserify-zlib";
+  "assert", Some "assert";
+  "buffer", Some "buffer";
+  "child_process", None;
+  "cluster", None;
+  "console", Some "console-browserify";
+  "constants", Some "constants-browserify";
+  "crypto", Some "crypto-browserify";
+  "dgram", None;
+  "dns", None;
+  "domain", Some "domain-browser";
+  "events", Some "events";
+  "fs", None;
+  "http", Some "stream-http";
+  "https", Some "https-browserify";
+  "module", None;
+  "net", None;
+  "os", Some "os-browserify";
+  "path", Some "path-browserify";
+  "process", Some "process";
+  "punycode", Some "punycode";
+  "querystring", Some "querystring-es3";
+  "readline", None;
+  "repl", None;
+  "stream", Some "stream-browserify";
+  "string_decoder", Some "string_decoder";
+  "sys", Some "util";
+  "timers", Some "timers-browserify";
+  "tls", None;
+  "tty", Some "tty-browserify";
+  "url", Some "url";
+  "util", Some "util";
+  "vm", Some "vm-browserify";
+  "zlib", Some "browserify-zlib";
 ] 
 
 type color = Cyan | Red | Black | White;;
@@ -115,11 +125,17 @@ let to_string package_dir error =
     let error_msg = "Cannot resolve request for " ^ dep_str in
     (match List.assoc_opt dep.request nodelibs with
      | None -> error_msg ^ "\n"
-     | Some mock -> String.concat "\n" [
+     | Some None -> String.concat "\n" [
+         error_msg;
+         "This looks like base node.js library which does not have any browser implementation we are aware of";
+       ]
+     | Some Some mock -> String.concat "\n" [
          error_msg;
          "This looks like base node.js library and unlikely is required in the browser environment.";
-         "If you still want to use it, here is the suggested command line option:";
-         (Printf.sprintf "--mock %s:%s" dep.request mock);
+         "If you still want to use it, first install the browser implementation with:";
+         Printf.sprintf "npm install --save %s" mock;
+         "And then add this command line option when running fpack:";
+         Printf.sprintf "--mock %s:%s" dep.request mock;
        ]
     )
 
@@ -127,6 +143,7 @@ let to_string package_dir error =
     let isTTY = FastpackUtil.FS.isatty Unix.stderr in
     let lines = String.split_on_char '\n' source
                 |> List.mapi (fun i line -> (i + 1, line)) in
+
     let format_error isTTY (loc, error) = 
       let error_desc = FlowParser.Parse_error.PP.error error in 
       String.concat "\n" [

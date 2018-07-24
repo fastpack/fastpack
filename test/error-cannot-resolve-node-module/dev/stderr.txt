@@ -2,4 +2,6 @@
 Cannot resolve request for 'url' from module: index.js
 This looks like base node.js library and unlikely is required in the browser environment.
 If you still want to use it, here is the suggested command line option:
---mock url:defunctzombie/node-url
+--mock url:url
+Cannot resolve request for 'dns' from module: index2.js
+This looks like base node.js library which does not have any browser implementation we are aware of

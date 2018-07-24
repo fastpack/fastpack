@@ -1,11 +1,4 @@
 
-Project Directory: /.../test/error-parse-tty
-Mode: development
-Call Stack:
-	'./a' from module: index.js	
-'./index.js' from module: $fp$main
-Processing Module: a.js
-
 [0;31mParse Error
 [0m[1;36m/.../test/error-parse-tty/a.js[0m
 
