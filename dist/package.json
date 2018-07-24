@@ -6,7 +6,7 @@
     "fpack": "fpack"
   },
   "scripts": {
-    "postinstall": "make --silent --no-print-directory install"
+    "postinstall": "node postinstall.js"
   },
   "repository": {
     "type": "git",
