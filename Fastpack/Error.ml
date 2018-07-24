@@ -2,7 +2,7 @@ module Loc = FlowParser.Loc
 module Scope = FastpackUtil.Scope
 
 (*
-  assoc list of nodejs libs and their mock implementations
+  assoc list of nodejs libs and their browser implementations
   as listed on: https://github.com/webpack/node-libs-browser
 *)
 let nodelibs = [
