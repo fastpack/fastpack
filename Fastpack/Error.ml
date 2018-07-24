@@ -132,24 +132,21 @@ let to_string package_dir error =
 
   | CannotResolveModule (_, dep) ->
     let isTTY = FastpackUtil.FS.isatty Unix.stderr in
-    let (error_title, location) = format_error_header ~isTTY ~subtitle: ("cannot resolve '" ^ dep.request ^ "'") (
+    let (error_title, error_path) = format_error_header ~isTTY ~subtitle: ("cannot resolve '" ^ dep.request ^ "'") (
         "Module resolution error:",
         Module.location_to_string dep.requested_from
       )
     in
     (match List.assoc_opt dep.request nodelibs with
-     | None -> String.concat "\n" [
-         error_title;
-         location;
-       ]
+     | None -> String.concat "\n" [ error_title; error_path; ]
      | Some None -> String.concat "\n" [
          error_title;
-         location;
+         error_path;
          "This looks like base node.js library which does not have any browser implementation we are aware of";
        ]
      | Some Some mock -> String.concat "\n" [
          error_title;
-         location;
+         error_path;
          "This looks like base node.js library and unlikely is required in the browser environment.";
          "If you still want to use it, first install the browser implementation with:";
          "";
@@ -176,10 +173,10 @@ let to_string package_dir error =
         "";
       ]
     in
-    let (error_title, location) = format_error_header ~isTTY ("Parse error", location_str) in
+    let (error_title, error_path) = format_error_header ~isTTY ("Parse error", location_str) in
     String.concat "\n" [
       error_title;
-      location;
+      error_path;
       "";
       String.concat "\n" (List.map (format_error isTTY) errors);
       "";
