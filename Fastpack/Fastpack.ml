@@ -177,7 +177,9 @@ let prepare_and_pack options start_time =
     | Text -> Reporter.report_string ~cache:cache_report ~mode:(Some options.mode)
   in
   let pack_postprocess_report ~report ~cache ~ctx start_time =
-    let temp_file = Filename.temp_file "" ".bundle.js" in
+    let temp_file =
+      Filename.temp_file ~temp_dir:output_dir ".fpack" ".bundle.js"
+    in
     Lwt.finalize
       (fun () ->
         let%lwt stats =
