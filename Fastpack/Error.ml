@@ -192,13 +192,12 @@ let to_string package_dir error =
     loc ^ message
 
   | CannotRenameModuleBinding (loc, id, dep) ->
-    Printf.sprintf "
-                            Cannot rename module binding:
-      %s %s
-        Import Request: %s
-      Typically, it means that you are trying to use the name before importing it in
+    Printf.sprintf "Cannot rename module binding:
+%s %s
+Import Request: %s
+Typically, it means that you are trying to use the name before importing it in
 the code.
-      "
+"
       (loc_to_string loc)
       id
       (Module.Dependency.to_string ~dir:(Some package_dir) dep)
