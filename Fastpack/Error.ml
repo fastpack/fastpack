@@ -73,7 +73,8 @@ let get_codeframe ?(isTTY=false) (loc: Loc.t) lines =
   let codeframe = List.filter_map (fun (i, line) ->
       if startLine <= i  && i <= endLine then
         Some (i, line)
-      else None
+      else 
+        None
     ) lines
   in
   let maxLineNo = List.fold_left (fun n (i, _) -> max n i) 0 lines in
