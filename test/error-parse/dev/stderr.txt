@@ -20,3 +20,4 @@ Unexpected identifier at (10:6) - (10:11):
    │       ^^^^^
 11 │ export default hello;
 
+

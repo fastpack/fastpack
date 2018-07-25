@@ -18,3 +18,4 @@ Unexpected identifier at (10:6) - (10:11):
 [0;31m10[0m │ let a [0;31maaaaa[0m = 5;
 11 │ export default hello;
 
+

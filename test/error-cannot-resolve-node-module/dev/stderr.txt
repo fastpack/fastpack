@@ -9,6 +9,7 @@ If you still want to use it, first install the browser implementation with:
 And then add this command line option when running fpack:
 
 		--mock url:url
+
 Module resolution error: cannot resolve 'dns'
 /.../test/error-cannot-resolve-node-module/index2.js
 This looks like base node.js library which does not have any browser implementation we are aware of
