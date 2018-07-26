@@ -42,6 +42,5 @@ exception ExitOK
 
 let string_of_error ctx error =
   Printf.sprintf
-    "\n%s\n%s"
-    (to_string ctx)
+    "\n%s\n"
     (Error.to_string ctx.current_dir error)

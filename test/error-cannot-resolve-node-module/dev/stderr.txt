@@ -1,0 +1,15 @@
+
+Module resolution error: cannot resolve 'url'
+/.../test/error-cannot-resolve-node-module/index.js
+This looks like base node.js library and unlikely is required in the browser environment.
+If you still want to use it, first install the browser implementation with:
+
+		npm install --save url
+
+And then add this command line option when running fpack:
+
+		--mock url:url
+
+Module resolution error: cannot resolve 'dns'
+/.../test/error-cannot-resolve-node-module/index2.js
+This looks like base node.js library which does not have any browser implementation we are aware of
