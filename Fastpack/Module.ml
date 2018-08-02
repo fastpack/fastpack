@@ -42,7 +42,7 @@ let location_to_string ?(base_dir=None) location =
     | None -> filename
     | Some base_dir ->
       match String.get filename 0 with
-      | '/' -> FilePath.make_relative base_dir filename
+      | '/' -> FS.relative_path base_dir filename
       | _ -> filename
   in
   match location with

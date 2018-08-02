@@ -302,7 +302,7 @@ let read_module
         | Some (m : Module.t) -> Lwt.return m.package
     in
     Module.{
-      id = make_id ctx.current_dir location;
+      id = make_id ctx.project_root location;
       location;
       package;
       resolved_dependencies = [];
