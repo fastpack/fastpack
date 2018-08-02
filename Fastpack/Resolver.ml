@@ -208,7 +208,6 @@ let make
                    (FilePath.concat dir node_modules_path)
                    package_name
                in
-
                if dir = current_dir
                then [package_path]
                else package_path :: (FilePath.dirname dir |> gen_paths)

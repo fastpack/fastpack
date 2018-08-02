@@ -34,7 +34,6 @@ let show resolved =
   Format.flush_str_formatter ()
 
 let resolve
-  ?(project_root=test_path)
   ?(current_dir=test_path)
   ?(mock=[])
   ?(node_modules_paths=["node_modules"])
@@ -48,7 +47,6 @@ let resolve
       let%lwt cache = Fastpack.Cache.(create Memory) in
       let { resolve } =
         make
-          ~project_root
           ~current_dir
           ~mock
           ~node_modules_paths
