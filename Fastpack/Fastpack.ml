@@ -34,6 +34,7 @@ type options = {
   postprocess : string list;
   report : Reporter.report;
   watch : bool;
+  serve: bool;
 }
 
 
@@ -174,7 +175,7 @@ let prepare_and_pack options start_time =
   let report =
     match options.report with
     | JSON -> Reporter.report_json
-    | Text -> Reporter.report_string ~cache:cache_report ~mode:(Some options.mode)
+    | Text -> Reporter.report_string ~cache:cache_report ~mode:(Some options.mode) ~sendMessage:None
   in
   let pack_postprocess_report ~report ~cache ~ctx start_time =
     let temp_file =
@@ -226,19 +227,34 @@ let prepare_and_pack options start_time =
   Lwt.finalize
     (fun () ->
        let%lwt {Reporter. graph; _} = init_run () in
-       match options.watch with
-       | false ->
+       match (options.watch, options.serve) with
+       | (false, true)
+       | (false, false) ->
          Lwt.return_unit
-       | true ->
-         match options.mode with
-         | Development ->
+       | (true, false) ->
+         if options.mode == Development then
            Watcher.watch
              ~pack:pack_postprocess_report
              ~cache
              ~graph
              ~current_dir
              get_context
-         | _ ->
+         else
+           (* TODO: noop warning*)
+           Lwt.return_unit
+       | (true, true) ->
+         if options.mode == Development then
+           let (sendMessage, server) = FastpackDevserver.Main.start () in
+           let watcher = Watcher.watch
+               ~pack:pack_postprocess_report
+               ~cache
+               ~graph
+               ~current_dir
+               ~sendMessage:(Some sendMessage)
+               get_context;
+           in
+           Lwt.join [watcher; server]
+         else
            (* TODO: noop warning*)
            Lwt.return_unit
     )

@@ -7,7 +7,7 @@ type t = {
 
 type report = | JSON | Text
 
-let report_string ?(cache=None) ?(mode=None) start_time { graph; size } =
+let report_string ?(cache=None) ?(mode=None) ?(sendMessage=None) start_time { graph; size } =
   let pretty_size =
     Printf.(
       if size >= 1048576
@@ -37,7 +37,15 @@ let report_string ?(cache=None) ?(mode=None) start_time { graph; size } =
     (DependencyGraph.length graph)
     cache
     mode
-  |> Lwt_io.write Lwt_io.stdout
+  |> (fun str ->
+      let%lwt () = match sendMessage with
+        | Some(sM) -> 
+          let () = print_endline "sendMessage" in
+          sM str
+        | None -> Lwt.return ()
+      in
+      Lwt_io.write Lwt_io.stdout str
+    )
 
 let report_json _start_time { graph; _ } =
   let open Yojson.Basic
