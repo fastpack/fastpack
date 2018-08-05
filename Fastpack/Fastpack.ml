@@ -175,7 +175,7 @@ let prepare_and_pack options start_time =
   let report =
     match options.report with
     | JSON -> Reporter.report_json
-    | Text -> Reporter.report_string ~cache:cache_report ~mode:(Some options.mode) ~sendMessage:None
+    | Text -> Reporter.report_string ~cache:cache_report ~mode:(Some options.mode)
   in
   let pack_postprocess_report ~report ~cache ~ctx start_time =
     let temp_file =
@@ -246,12 +246,12 @@ let prepare_and_pack options start_time =
          if options.mode == Development then
            let (sendMessage, server) = FastpackDevserver.Main.start () in
            let watcher = Watcher.watch
+               ~sendMessage
                ~pack:pack_postprocess_report
                ~cache
                ~graph
                ~current_dir
-               ~sendMessage:(Some sendMessage)
-               get_context;
+               get_context
            in
            Lwt.join [watcher; server]
          else

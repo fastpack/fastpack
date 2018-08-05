@@ -92,11 +92,11 @@ let ask_watchman ch =
 
 
 let watch
+    ?sendMessage
     ~pack
     ~(cache : Cache.t)
     ~graph
     ~current_dir
-    ?(sendMessage=None)
     get_context
   =
   (* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
@@ -146,7 +146,7 @@ let watch
       raise exn
   in
 
-  let report = Reporter.report_string ~cache:None ~mode:None ~sendMessage in
+  let report = Reporter.report_string ?sendMessage ~cache:None ~mode:None in
 
   let pack cache ctx start_time =
     Lwt.catch
