@@ -188,7 +188,7 @@ module NodeServer = struct
       Lwt.return (source, dependencies, files)
 
   let finalize () =
-    List.iter (fun p -> p#terminate) !processes
+    List.iter (fun p -> p#terminate; p#close |> ignore) !processes
 
 end
 

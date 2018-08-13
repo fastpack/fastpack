@@ -36,6 +36,9 @@ val lookup_module : t -> string -> Module.t option
 val lookup_dependencies :
   t -> Module.t -> (Module.DependencyMap.key * Module.t option) list
 
+(** Return all dependencies as a mapping *)
+val to_dependency_map : t -> Module.t Module.DependencyMap.t
+
 (** Return a list of modules in the depgraph sorted in a topological order. *)
 val sort : t -> Module.t -> Module.t list
 

@@ -30,6 +30,7 @@ let open_process cmd =
         ~env:(Unix.environment ())
         ~stdin:(`FD_move process_in)
         ~stdout:(`FD_move process_out)
+        ~stderr:`Dev_null
         (shell cmd)
     )
   in

@@ -1,12 +1,12 @@
 {
   "name": "fpack",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Pack JS code into a single bundle fast & easy.",
   "bin": {
     "fpack": "fpack"
   },
   "scripts": {
-    "postinstall": "make --silent --no-print-directory install"
+    "postinstall": "node postinstall.js"
   },
   "repository": {
     "type": "git",
