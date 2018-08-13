@@ -758,6 +758,7 @@ process = { env: {} };
   let emitted_modules = ref (MLSet.empty) in
   let emit graph entry =
     let emit bytes = Lwt_io.write output_channel bytes in
+    let dep_map = DependencyGraph.to_dependency_map graph in
     let rec emit_module (m : Module.t) =
       if MLSet.mem m.location !emitted_modules
       then Lwt.return_unit
@@ -765,20 +766,14 @@ process = { env: {} };
         emitted_modules := MLSet.add m.location !emitted_modules;
         let%lwt () = emit_module_files ctx m in
         let workspace = m.Module.workspace in
-        let dep_map = Module.DependencyMap.empty in
         let dependencies = DependencyGraph.lookup_dependencies graph m in
-        let%lwt dep_map =
-          Lwt_list.fold_left_s
-            (fun dep_map (dep, m) ->
+        let%lwt () =
+          Lwt_list.iter_s
+            (fun (_, m) ->
                match m with
-               | None ->
-                 Lwt.return dep_map
-               | Some m ->
-                 let%lwt () = emit_module m in
-                 let dep_map = Module.DependencyMap.add dep m dep_map in
-                 Lwt.return dep_map
+               | None -> Lwt.return_unit
+               | Some m -> emit_module m
             )
-            dep_map
             dependencies
         in
         let%lwt () =

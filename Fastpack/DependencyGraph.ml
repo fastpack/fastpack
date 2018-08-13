@@ -14,6 +14,8 @@ let empty ?(size=5000) () = {
   files = Hashtbl.create (size * 5);
 }
 
+
+
 let lookup table key =
   Hashtbl.find_opt table key
 
@@ -31,6 +33,21 @@ let lookup_dependencies graph (m : Module.t) =
         (dep, lookup_module graph location_str)
     )
     (Hashtbl.find_all graph.dependencies location_str)
+
+let to_dependency_map graph =
+  Hashtbl.map_list (fun _ (dep, location_opt) ->
+      match location_opt with
+      | None -> failwith "something wrong, unresolved dependency"
+      | Some location ->
+        match lookup_module graph (Module.location_to_string location) with
+        | None -> failwith "not good at all, unknown location"
+        | Some m -> (dep, m)
+    )
+    graph.dependencies
+  |> List.fold_left
+    (fun dep_map (dep, m) -> Module.DependencyMap.add dep m dep_map)
+    Module.DependencyMap.empty
+
 
 let add_module graph (m : Module.t) =
   let location_str = Module.location_to_string m.location in
