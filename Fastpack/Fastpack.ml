@@ -136,7 +136,8 @@ let prepare_and_pack options start_time =
     in
     let resolver =
       Resolver.make
-        ~current_dir:project_root
+        ~project_root:project_root
+        ~current_dir:current_dir
         ~mock:(options.mock)
         ~node_modules_paths:(options.node_modules_paths)
         ~extensions

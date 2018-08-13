@@ -763,14 +763,14 @@
         ],
         "files": [
           {
-            "name": "ocaml-stub",
-            "content":
-              "#!/bin/sh\n\nBINDIR=$(dirname \"$(command -v ocamlc)\")\n\"$BINDIR/ocaml\" -I \"$OCAML_TOPLEVEL_PATH\" \"$@\"\n"
-          },
-          {
             "name": "ocamlfind.install",
             "content":
               "bin: [\n  \"src/findlib/ocamlfind\" {\"ocamlfind\"}\n  \"?src/findlib/ocamlfind_opt\" {\"ocamlfind\"}\n  \"?tools/safe_camlp4\"\n]\ntoplevel: [\"src/findlib/topfind\"]\n"
+          },
+          {
+            "name": "ocaml-stub",
+            "content":
+              "#!/bin/sh\n\nBINDIR=$(dirname \"$(command -v ocamlc)\")\n\"$BINDIR/ocaml\" -I \"$OCAML_TOPLEVEL_PATH\" \"$@\"\n"
           },
           {
             "name": "_esy/build",
