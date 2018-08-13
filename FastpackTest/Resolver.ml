@@ -47,6 +47,7 @@ let resolve
       let%lwt cache = Fastpack.Cache.(create Memory) in
       let { resolve } =
         make
+          ~project_root:current_dir
           ~current_dir
           ~mock
           ~node_modules_paths
