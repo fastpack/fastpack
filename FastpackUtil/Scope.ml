@@ -298,18 +298,30 @@ let of_function_block stmts =
       names = M.empty
   } in
 
-  let export_bindings =
-    List.iter
-      (fun (name, remote) ->
-         bindings := export_binding name remote !bindings;
-         match M.get name !bindings with
-         | None ->
-           Error.ie ("Binding should exist at this point: " ^ name)
-         | Some binding ->
-           exports := {
-             !exports with
-             names = M.add remote (Own (name, binding)) !exports.names
-           }
+  (* TODO: rework *)
+  let future_exports = ref [] in
+
+  let export_bindings exports =
+    future_exports := exports :: !future_exports;
+  in
+
+  let complete_exports () =
+    !future_exports
+    |> List.rev
+    |> List.iter (fun e ->
+      List.iter
+        (fun (name, remote) ->
+           bindings := export_binding name remote !bindings;
+           match M.get name !bindings with
+           | None ->
+             Error.ie ("Binding should exist at this point: " ^ name)
+           | Some binding ->
+             exports := {
+               !exports with
+               names = M.add remote (Own (name, binding)) !exports.names
+             }
+        )
+        e
       )
   in
 
@@ -497,6 +509,7 @@ let of_function_block stmts =
   let () =
     Visit.visit handler ([], stmts, [])
   in
+  complete_exports ();
   !bindings, !exports
 
 
