@@ -92,6 +92,7 @@ let ask_watchman ch =
 
 
 let watch
+    ?sendMessage
     ~pack
     ~(cache : Cache.t)
     ~graph
@@ -145,7 +146,7 @@ let watch
       raise exn
   in
 
-  let report = Reporter.report_string ~cache:None ~mode:None in
+  let report = Reporter.report_string ?sendMessage ~cache:None ~mode:None in
 
   let pack cache ctx start_time =
     Lwt.catch

@@ -19,6 +19,7 @@ let () =
         report
         watch
         debug
+        serve
       =
       if debug then begin
         Logs.set_level (Some Logs.Debug);
@@ -40,6 +41,7 @@ let () =
             postprocess;
             report;
             watch;
+            serve;
           }
         in
         `Ok (Fastpack.pack_main options time)
@@ -215,6 +217,11 @@ let () =
       Arg.(value & flag & info ["d"; "debug"] ~doc)
     in
 
+    let serve_t =
+      let doc = "Watch and serve files with automatic reload" in
+      Arg.(value & flag & info ["s"; "serve"] ~doc)
+    in
+
     Term.(ret (
         const run
         $ entry_points_t
@@ -231,6 +238,7 @@ let () =
         $ report_t
         $ watch_t
         $ debug_t
+        $ serve_t
     ))
   in
 

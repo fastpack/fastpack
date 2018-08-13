@@ -52,6 +52,11 @@
     "@opam/ppx_expect": "*",
     "@opam/ppx_let": "*",
     "@opam/ppx_deriving": "^4.2.1",
+    "@opam/websocket-lwt": "*",
+    "@opam/cohttp": "*",
+    "@opam/cohttp-lwt-unix": "*",
+    "@opam/conduit-lwt-unix": "*",
+    "@esy-ocaml/reason": "*",
     "ocaml": "~4.6.1"
   }
 }
