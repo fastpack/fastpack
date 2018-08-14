@@ -1,2 +1,1 @@
-
-$FPACK index-1.js --preprocess='^.*'
+$FPACK index.js --preprocess='^.*' --mock=foo --mock=bar --mock=baz --mock=react
