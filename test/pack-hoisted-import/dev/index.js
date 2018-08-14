@@ -65,14 +65,17 @@ process = { env: {} };
   return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
-"dep2": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("\n//# sourceURL=fpack:///dep2.js");
+"a": function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nfunction a1() {return 'a1'};Object.defineProperty(exports, \"a1\", {enumerable: true, get: function() {return a1;}});;\nfunction a2() {return 'a2'};Object.defineProperty(exports, \"a2\", {enumerable: true, get: function() {return a2;}});;\n\n//# sourceURL=fpack:///a.js");
 },
-"dep1": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./dep2.js\" */ \"dep2\");\n\n\n\n//# sourceURL=fpack:///dep1.js");
+"b": function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("console.log('b executed');\n\n//# sourceURL=fpack:///b.js");
+},
+"c": function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nexports.default = function () { return 'c'};\n\n//# sourceURL=fpack:///c.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./dep1.js\" */ \"dep1\");\n\n\n\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(/* \"./a\" */ \"a\");\n__fastpack_require__(/* \"./b\" */ \"b\");\n\nconst _2__c = __fastpack_require__(/* \"./c\" */ \"c\");\n\nconsole.log(_1__a.a1() + _1__a.a2() + _2__c.default());\n\n\n\n\n\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");

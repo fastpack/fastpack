@@ -1,7 +1,0 @@
-
-Cannot rename module binding:
-(3:9) - (3:10): a
-Import Request: './a' from module: index.js
-Typically, it means that you are trying to use the name before importing it in
-the code.
-

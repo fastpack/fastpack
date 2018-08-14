@@ -260,6 +260,7 @@ let build (ctx : Context.t) =
            patch_loc;
            patch_loc_with;
            remove;
+           remove_loc;
            _
          } as patcher) = Workspace.make_patcher workspace
     in
@@ -323,7 +324,7 @@ let build (ctx : Context.t) =
         then var, ""
         else var, define_var name var
       | None, Some name ->
-        module_vars := M.add m.Module.id name !module_vars;
+        module_vars := M.add m.id name !module_vars;
         name, define_var name (fastpack_require m.id request)
       | None, None ->
         let var =
@@ -400,7 +401,7 @@ let build (ctx : Context.t) =
         local
     in
 
-    let patch_imported_name ~dep_map ~from_request (loc, local_name) remote =
+    let patch_imported_name ~dep_map ~from_request _ remote =
       let dep = {
         Module.Dependency.
         request = from_request;
@@ -411,19 +412,15 @@ let build (ctx : Context.t) =
       let () = ensure_export_exists ~dep_map m remote in
       match remote with
       | "default" ->
-        let default_var, default_definition =
+        let default_var, _ =
           ensure_module_default_var m
         in
-        if default_definition <> ""
-        then raise (Context.PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
-        else default_var
+        default_var
       | _ ->
-        let module_var, module_var_definition =
+        let module_var, _ =
           ensure_module_var "" m
         in
-        if module_var_definition <> ""
-        then raise (Context.PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
-        else module_var ^ "." ^ remote
+        module_var ^ "." ^ remote
     in
 
     let define_local_exports ~dep_map exports =
@@ -471,6 +468,11 @@ let build (ctx : Context.t) =
       module_var_definition ^ exports
     in
 
+    (* let top_imports = ref [] in *)
+    (* let add_top_import stmt = *)
+    (*   top_imports := stmt :: !top_imports *)
+    (* in *)
+
 
     let enter_function {Visit. parents; _} f =
       push_scope (Scope.of_function parents f (top_scope ()))
@@ -514,39 +516,36 @@ let build (ctx : Context.t) =
               _;
             } ->
             let dep = add_dependency request in
-            patch_loc_with
-              loc
+            patch_with 0 0
               (fun (_, dep_map) ->
-                 let (m : Module.t) = get_module dep dep_map
-                 in
-                 let namespace, _names =
+                 let (m : Module.t) = get_module dep dep_map in
+                 let namespace =
                    match specifiers with
                    | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
-                     Some name, []
-                   | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
-                     None,
-                     specifiers
-                     |> List.map
-                       (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
-                   | None ->
-                     None, []
+                     Some name
+                   | _ ->
+                     None
                  in
                  let has_names = default <> None || specifiers <> None in
-                 match has_names with
-                 (* import 'some'; *)
-                 | false ->
-                   fastpack_require m.id dep.request ^ ";\n"
-                 | true ->
-                   let _, module_var_definition =
-                     ensure_module_var ~name:namespace dep.request m
-                   in
-                   let _, module_default_var_definition =
-                     match default with
-                     | None -> "", ""
-                     | Some _ -> ensure_module_default_var m
-                   in
-                   module_var_definition ^ module_default_var_definition
+                 let patch =
+                   match has_names with
+                   (* import 'some'; *)
+                   | false ->
+                     fastpack_require m.id dep.request ^ ";\n"
+                   | true ->
+                     let _, module_var_definition =
+                       ensure_module_var ~name:namespace dep.request m
+                     in
+                     let _, module_default_var_definition =
+                       match default with
+                       | None -> "", ""
+                       | Some _ -> ensure_module_default_var m
+                     in
+                     module_var_definition ^ module_default_var_definition
+                 in
+                 if patch = "" then "" else (patch ^ "\n")
               );
+              remove_loc loc;
 
           | S.ExportNamedDeclaration {
               exportKind = S.ExportValue;
@@ -778,6 +777,13 @@ let build (ctx : Context.t) =
           Visit.Continue visit_ctx;
     in
 
+    let module_type = get_module_type stmts in
+    let () =
+      if module_type = Module.ESM
+      then patch 0 0 "module.exports.__esModule = true;\n"
+      else ()
+    in
+
     let handler =
       {
         Visit.default_visit_handler with
@@ -792,12 +798,6 @@ let build (ctx : Context.t) =
       }
     in
     Visit.visit handler program;
-    let module_type = get_module_type stmts in
-    let () =
-      if module_type = Module.ESM
-      then patch 0 0 "module.exports.__esModule = true;\n"
-      else ()
-    in
 
     (!workspace, !dependencies, program_scope, exports, module_type)
   in

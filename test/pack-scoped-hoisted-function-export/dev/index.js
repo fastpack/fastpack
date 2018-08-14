@@ -69,7 +69,7 @@ process = { env: {} };
 eval("module.exports.__esModule = true;\nObject.defineProperty(exports, \"get\", {enumerable: true, get: function() {return get;}});\nfunction get() {}\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

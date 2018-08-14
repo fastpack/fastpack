@@ -72,7 +72,7 @@ eval("module.exports.__esModule = true;\nexports.default = \"dep.js\";\n\n//# so
 eval("var dep = __fastpack_require__(/* \"./dep\" */ \"dep\");\n\nfunction f(require) {\n  return require(\"./dep\");\n}\n\nfunction g() {\n  var s = f(x => x);\n  var dep2 = __fastpack_require__(/* \"./dep\" */ \"dep\");\n  document.body.innerHTML = `Imported: ${dep.default} Imported: ${\n    dep2.default\n  } Untouched: ${s}`;\n}\n\ng();\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

@@ -69,10 +69,10 @@ process = { env: {} };
 eval("module.exports.__esModule = true;\nexports.default = x => x;\n\n//# sourceURL=fpack:///a.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(/* \"./a\" */ \"a\");\n\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(/* \"./a\" */ \"a\");\n\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });
