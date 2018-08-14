@@ -25,6 +25,7 @@ declare -a skip=(
 "pack-utf8/prod.sh"
 "report-json/prod-stdout.sh"
 "transpile-builtin/test.sh"
+"pack-scoped-hoisted-function-export/prod.sh"
 )
 
 tests_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
