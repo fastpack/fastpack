@@ -10,13 +10,13 @@ type state = Initial
 type file_location = {
   filename : string option;
   preprocessors: (string * string) list;
-} [@@deriving show {with_path = false}]
+} [@@deriving show {with_path = false}, eq, ord]
 
 type location = Main of string list
               | Runtime
               | EmptyModule
               | File of file_location
-              [@@deriving show{with_path = false}]
+              [@@deriving show{with_path = false}, eq, ord]
 
 type module_type = | CJS | CJS_esModule | ESM
 

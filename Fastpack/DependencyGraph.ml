@@ -3,8 +3,8 @@ module StringSet = Set.Make(String)
 exception Cycle of string list
 
 type t = {
-  modules : (string, Module.t) Hashtbl.t;
-  dependencies : (string, (Module.Dependency.t * Module.location option)) Hashtbl.t;
+  modules : (Module.location, Module.t) Hashtbl.t;
+  dependencies : (Module.location, (Module.Dependency.t * Module.location option)) Hashtbl.t;
   files : (string, Module.t) Hashtbl.t;
 }
 
@@ -23,23 +23,20 @@ let lookup_module graph location_str =
   lookup graph.modules location_str
 
 let lookup_dependencies graph (m : Module.t) =
-  let location_str = Module.location_to_string m.location in
   List.map
     (fun (dep, some_filename) ->
       match some_filename with
       | None -> (dep, None)
-      | Some location ->
-        let location_str = Module.location_to_string location in
-        (dep, lookup_module graph location_str)
+      | Some location -> (dep, lookup_module graph location)
     )
-    (Hashtbl.find_all graph.dependencies location_str)
+    (Hashtbl.find_all graph.dependencies m.location)
 
 let to_dependency_map graph =
   Hashtbl.map_list (fun _ (dep, location_opt) ->
       match location_opt with
       | None -> failwith "something wrong, unresolved dependency"
       | Some location ->
-        match lookup_module graph (Module.location_to_string location) with
+        match lookup_module graph location with
         | None -> failwith "not good at all, unknown location"
         | Some m -> (dep, m)
     )
@@ -50,30 +47,27 @@ let to_dependency_map graph =
 
 
 let add_module graph (m : Module.t) =
-  let location_str = Module.location_to_string m.location in
-  match Hashtbl.find_all graph.modules location_str with
+  match Hashtbl.find_all graph.modules m.location with
   | [] ->
-    Hashtbl.add graph.modules location_str m;
+    Hashtbl.add graph.modules m.location m;
     List.iter
       (fun filename -> Hashtbl.add graph.files filename m)
       (M.bindings m.build_dependencies |> List.map (fun (k, _) -> k))
   | _ :: [] ->
-    Hashtbl.remove graph.modules location_str;
-    Hashtbl.add graph.modules location_str m
+    Hashtbl.remove graph.modules m.location;
+    Hashtbl.add graph.modules m.location m
   | _ ->
     failwith "DependencyGraph: cannot add more modules"
 
 let add_dependency graph (m : Module.t) (dep : (Module.Dependency.t * Module.location option)) =
-  let location_str = Module.location_to_string m.location in
-  Hashtbl.add graph.dependencies location_str dep
+  Hashtbl.add graph.dependencies m.location dep
 
 let remove_module graph (m : Module.t) =
-  let location_str = Module.location_to_string m.location in
   let remove k v =
-    if k = location_str then None else Some v
+    if Module.equal_location k m.location then None else Some v
   in
-  let remove_files _ m =
-    if Module.(location_to_string m.location) = location_str
+  let remove_files _ m' =
+    if Module.equal_location m.location m'.Module.location
     then None
     else Some m
   in
@@ -94,15 +88,16 @@ let get_modules_by_filenames graph filenames =
   |> M.bindings
   |> List.map snd
 
+(* TODO: make emitted_modules be LocationSet *)
 let cleanup graph emitted_modules =
-  let keep location_str value =
-    if StringSet.mem location_str emitted_modules
+  let keep location value =
+    if StringSet.mem (Module.location_to_string location) emitted_modules
     then Some value
     else None
   in
   let () = Hashtbl.filter_map_inplace keep graph.modules in
   let () = Hashtbl.filter_map_inplace keep graph.dependencies in
-  let () = Hashtbl.filter_map_inplace (fun _ m -> keep Module.(location_to_string m.location) m) graph.files in
+  let () = Hashtbl.filter_map_inplace (fun _ m -> keep m.Module.location m) graph.files in
   graph
 
 let length graph =

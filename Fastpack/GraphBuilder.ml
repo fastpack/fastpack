@@ -81,7 +81,6 @@ let get_module_type stmts =
   List.fold_left import_or_export Module.CJS stmts
 
 
-
 let read_module
     ?(from_module=None)
     ~(ctx : Context.t)
@@ -185,7 +184,7 @@ let read_module
           (function
             | FlowParser.Parse_error.Error args ->
               let location_str = Module.location_to_string location in
-              let src = match source with 
+              let src = match source with
                 | Some src -> src
                 | None -> "" in
               Lwt.fail (Context.PackError (ctx, CannotParseFile (location_str, args, src)))
@@ -876,8 +875,7 @@ let build (ctx : Context.t) =
     let%lwt () =
       Lwt_list.iter_s
         (fun (req, resolved) ->
-           let resolved_str = Module.location_to_string resolved in
-           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
+           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
              | None ->
                let ctx = { ctx with stack = req :: ctx.stack } in
                let%lwt m = read_module ~ctx ~cache ~from_module:(Some m) resolved in

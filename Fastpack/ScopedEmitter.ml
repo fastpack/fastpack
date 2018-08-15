@@ -172,11 +172,10 @@ process = { env: {} };
   in
 
   let {Context. entry_location; graph; _ } = ctx in
-  let entry_location_str = Module.location_to_string entry_location in
   let entry =
-    match DependencyGraph.lookup_module graph entry_location_str with
+    match DependencyGraph.lookup_module graph entry_location with
     | Some m -> m
-    | None -> Error.ie (entry_location_str ^ " not found in the graph")
+    | None -> Error.ie (Module.location_to_string entry_location ^ " not found in the graph")
   in
   let%lwt _ = emit graph entry in
   let emitted_modules =

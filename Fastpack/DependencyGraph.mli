@@ -27,10 +27,10 @@ val add_dependency :
 val length : t -> int
 
 (** Return a sequence of all modules in the depgraph *)
-val modules : t -> (string * Module.t) Sequence.t
+val modules : t -> (Module.location * Module.t) Sequence.t
 
 (** Lookup module in the depgraph by id. *)
-val lookup_module : t -> string -> Module.t option
+val lookup_module : t -> Module.location -> Module.t option
 
 (** Lookup a list of dependencies for the specified module in the depgraph. *)
 val lookup_dependencies :
