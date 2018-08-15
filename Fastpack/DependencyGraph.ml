@@ -4,8 +4,8 @@ exception Cycle of string list
 
 type t = {
   modules : (Module.location, Module.t) Hashtbl.t;
-  static_dependencies : (Module.location, (Module.Dependency.t * Module.location option)) Hashtbl.t;
-  dynamic_dependencies : (Module.location, (Module.Dependency.t * Module.location option)) Hashtbl.t;
+  static_dependencies : (Module.location, (Module.Dependency.t * Module.location)) Hashtbl.t;
+  dynamic_dependencies : (Module.location, (Module.Dependency.t * Module.location)) Hashtbl.t;
   files : (string, Module.t) Hashtbl.t;
 }
 
@@ -33,22 +33,15 @@ let lookup_dependencies ~kind graph (m : Module.t) =
       @ (Hashtbl.find_all graph.dynamic_dependencies m.location)
   in
   List.map
-    (fun (dep, some_filename) ->
-      match some_filename with
-      | None -> (dep, None)
-      | Some location -> (dep, lookup_module graph location)
-    )
+    (fun (dep, location) -> (dep, lookup_module graph location))
     dependencies
 
 let to_dependency_map graph =
   let to_pairs =
-    Hashtbl.map_list (fun _ (dep, location_opt) ->
-        match location_opt with
-        | None -> failwith "something wrong, unresolved dependency"
-        | Some location ->
-          match lookup_module graph location with
-          | None -> failwith "not good at all, unknown location"
-          | Some m -> (dep, m)
+    Hashtbl.map_list (fun _ (dep, location) ->
+        match lookup_module graph location with
+        | None -> failwith "not good at all, unknown location"
+        | Some m -> (dep, m)
       )
   in
   List.fold_left
@@ -70,7 +63,7 @@ let add_module graph (m : Module.t) =
   | _ ->
     failwith "DependencyGraph: cannot add more modules"
 
-let add_dependency ~kind graph (m : Module.t) (dep : (Module.Dependency.t * Module.location option)) =
+let add_dependency ~kind graph (m : Module.t) (dep : (Module.Dependency.t * Module.location)) =
   let dependencies =
     match kind with
     | `Static -> graph.static_dependencies
@@ -89,6 +82,7 @@ let remove_module graph (m : Module.t) =
   in
   Hashtbl.filter_map_inplace remove graph.modules;
   Hashtbl.filter_map_inplace remove graph.static_dependencies;
+  Hashtbl.filter_map_inplace remove graph.dynamic_dependencies;
   Hashtbl.filter_map_inplace remove_files graph.files
 
 let get_modules_by_filenames graph filenames =
@@ -113,6 +107,7 @@ let cleanup graph emitted_modules =
   in
   let () = Hashtbl.filter_map_inplace keep graph.modules in
   let () = Hashtbl.filter_map_inplace keep graph.static_dependencies in
+  let () = Hashtbl.filter_map_inplace keep graph.dynamic_dependencies in
   let () = Hashtbl.filter_map_inplace (fun _ m -> keep m.Module.location m) graph.files in
   graph
 
@@ -122,7 +117,7 @@ let length graph =
 let modules graph =
   Hashtbl.to_seq graph.modules
 
-let sort graph entry =
+let get_static_chain graph entry =
   let modules = ref [] in
   let seen_globally = ref (StringSet.empty) in
   let add_module (m : Module.t) =

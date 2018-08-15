@@ -161,7 +161,9 @@ let prepare_and_pack options start_time =
         let%lwt () = GraphBuilder.build ctx in
         let%lwt emitted_modules, files =
           match options.mode with
-          | Mode.Production -> FlatEmitter.emit ctx
+          | Mode.Production ->
+            let%lwt () = ScopedEmitter.update_graph ctx in
+            FlatEmitter.emit ctx
           | Mode.Test
           | Mode.Development ->
             ScopedEmitter.emit ctx

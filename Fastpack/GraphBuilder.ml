@@ -471,12 +471,6 @@ let build (ctx : Context.t) =
       module_var_definition ^ exports
     in
 
-    (* let top_imports = ref [] in *)
-    (* let add_top_import stmt = *)
-    (*   top_imports := stmt :: !top_imports *)
-    (* in *)
-
-
     let enter_function {Visit. parents; _} f =
       push_scope (Scope.of_function parents f (top_scope ()))
     in
@@ -772,10 +766,6 @@ let build (ctx : Context.t) =
             | _ -> ()
           in Visit.Break;
 
-        | E.Import _ ->
-          let msg = "import(_) is supported only with the constant argument" in
-          raise (Context.PackError (ctx, NotImplemented (Some loc, msg)))
-
         | _ ->
           Visit.Continue visit_ctx;
     in
@@ -903,7 +893,7 @@ let build (ctx : Context.t) =
              | Some m ->
                Lwt.return m
            in
-           DependencyGraph.add_dependency ~kind graph m (req, Some dep_module.location);
+           DependencyGraph.add_dependency ~kind graph m (req, dep_module.location);
            Lwt.return_unit
         )
         dependencies

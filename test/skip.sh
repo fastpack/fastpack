@@ -12,7 +12,6 @@ declare -a skip=(
 "pack-cra/prod.sh"
 "pack-custom-loader/prod.sh"
 "pack-file-cached/prod.sh"
-"pack-flat/prod.sh"
 "pack-flat-collisions/prod.sh"
 "pack-flat-reexport/prod.sh"
 "pack-less/prod.sh"

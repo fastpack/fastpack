@@ -207,5 +207,6 @@ let emit (ctx : Context.t) =
        then Lwt_unix.unlink temp_file;
     )
 
-let update_graph () =
-  failwith "not implemented"
+let update_graph (ctx: Context.t) =
+  let%lwt _ = run ctx Lwt_io.null in
+  Lwt.return_unit
