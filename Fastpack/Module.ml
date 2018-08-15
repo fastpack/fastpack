@@ -166,7 +166,7 @@ module DependencyMap = Map.Make(struct
   end)
 
 module LocationSet = Set.Make(struct
-    let compare = Pervasives.compare
+    let compare = compare_location
     type t = location
   end)
 

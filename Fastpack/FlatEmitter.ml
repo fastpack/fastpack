@@ -31,7 +31,7 @@ let run (_ctx : Context.t) _output_channel =
   (*   | `String s -> s *)
   (*   | _ -> failwith "unexpected module content" *)
   (* in *)
-  Lwt.return (StringSet.empty, 0)
+  Lwt.return (Module.LocationSet.empty, 0)
 
 let emit (ctx : Context.t) =
   let temp_file =

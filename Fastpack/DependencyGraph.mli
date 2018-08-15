@@ -46,4 +46,4 @@ val sort : t -> Module.t -> Module.t list
 val get_modules_by_filenames: t -> string list -> Module.t list
 
 (** Remove all modules except those which locations are specified *)
-val cleanup : t -> Set.Make(String).t -> t
+val cleanup : t -> Module.LocationSet.t -> t

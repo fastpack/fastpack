@@ -178,16 +178,8 @@ process = { env: {} };
     | None -> Error.ie (Module.location_to_string entry_location ^ " not found in the graph")
   in
   let%lwt _ = emit graph entry in
-  let emitted_modules =
-    MLSet.fold
-      (fun location acc ->
-        StringSet.add (Module.location_to_string location) acc
-      )
-      !emitted_modules
-      StringSet.empty
-  in
   Lwt.return (
-    emitted_modules,
+    !emitted_modules,
     Lwt_io.position output_channel |> Int64.to_int
   )
   (* DependencyGraph.cleanup ctx.graph emitted_modules; *)

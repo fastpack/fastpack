@@ -91,7 +91,7 @@ let get_modules_by_filenames graph filenames =
 (* TODO: make emitted_modules be LocationSet *)
 let cleanup graph emitted_modules =
   let keep location value =
-    if StringSet.mem (Module.location_to_string location) emitted_modules
+    if Module.LocationSet.mem location emitted_modules
     then Some value
     else None
   in
