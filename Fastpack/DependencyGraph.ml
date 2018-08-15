@@ -4,46 +4,57 @@ exception Cycle of string list
 
 type t = {
   modules : (Module.location, Module.t) Hashtbl.t;
-  dependencies : (Module.location, (Module.Dependency.t * Module.location option)) Hashtbl.t;
+  static_dependencies : (Module.location, (Module.Dependency.t * Module.location option)) Hashtbl.t;
+  dynamic_dependencies : (Module.location, (Module.Dependency.t * Module.location option)) Hashtbl.t;
   files : (string, Module.t) Hashtbl.t;
 }
 
 let empty ?(size=5000) () = {
   modules = Hashtbl.create size;
-  dependencies = Hashtbl.create (size * 20);
+  static_dependencies = Hashtbl.create (size * 20);
+  dynamic_dependencies = Hashtbl.create (size * 20);
   files = Hashtbl.create (size * 5);
 }
-
 
 
 let lookup table key =
   Hashtbl.find_opt table key
 
-let lookup_module graph location_str =
-  lookup graph.modules location_str
+let lookup_module graph location =
+  lookup graph.modules location
 
-let lookup_dependencies graph (m : Module.t) =
+let lookup_dependencies ~kind graph (m : Module.t) =
+  let dependencies =
+    match kind with
+    | `Static -> Hashtbl.find_all graph.static_dependencies m.location
+    | `Dynamic -> Hashtbl.find_all graph.dynamic_dependencies m.location
+    | `All ->
+      (Hashtbl.find_all graph.static_dependencies m.location)
+      @ (Hashtbl.find_all graph.dynamic_dependencies m.location)
+  in
   List.map
     (fun (dep, some_filename) ->
       match some_filename with
       | None -> (dep, None)
       | Some location -> (dep, lookup_module graph location)
     )
-    (Hashtbl.find_all graph.dependencies m.location)
+    dependencies
 
 let to_dependency_map graph =
-  Hashtbl.map_list (fun _ (dep, location_opt) ->
-      match location_opt with
-      | None -> failwith "something wrong, unresolved dependency"
-      | Some location ->
-        match lookup_module graph location with
-        | None -> failwith "not good at all, unknown location"
-        | Some m -> (dep, m)
-    )
-    graph.dependencies
-  |> List.fold_left
+  let to_pairs =
+    Hashtbl.map_list (fun _ (dep, location_opt) ->
+        match location_opt with
+        | None -> failwith "something wrong, unresolved dependency"
+        | Some location ->
+          match lookup_module graph location with
+          | None -> failwith "not good at all, unknown location"
+          | Some m -> (dep, m)
+      )
+  in
+  List.fold_left
     (fun dep_map (dep, m) -> Module.DependencyMap.add dep m dep_map)
     Module.DependencyMap.empty
+    (to_pairs graph.static_dependencies @ to_pairs graph.dynamic_dependencies)
 
 
 let add_module graph (m : Module.t) =
@@ -59,8 +70,13 @@ let add_module graph (m : Module.t) =
   | _ ->
     failwith "DependencyGraph: cannot add more modules"
 
-let add_dependency graph (m : Module.t) (dep : (Module.Dependency.t * Module.location option)) =
-  Hashtbl.add graph.dependencies m.location dep
+let add_dependency ~kind graph (m : Module.t) (dep : (Module.Dependency.t * Module.location option)) =
+  let dependencies =
+    match kind with
+    | `Static -> graph.static_dependencies
+    | `Dynamic -> graph.dynamic_dependencies
+  in
+  Hashtbl.add dependencies m.location dep
 
 let remove_module graph (m : Module.t) =
   let remove k v =
@@ -72,7 +88,7 @@ let remove_module graph (m : Module.t) =
     else Some m
   in
   Hashtbl.filter_map_inplace remove graph.modules;
-  Hashtbl.filter_map_inplace remove graph.dependencies;
+  Hashtbl.filter_map_inplace remove graph.static_dependencies;
   Hashtbl.filter_map_inplace remove_files graph.files
 
 let get_modules_by_filenames graph filenames =
@@ -96,7 +112,7 @@ let cleanup graph emitted_modules =
     else None
   in
   let () = Hashtbl.filter_map_inplace keep graph.modules in
-  let () = Hashtbl.filter_map_inplace keep graph.dependencies in
+  let () = Hashtbl.filter_map_inplace keep graph.static_dependencies in
   let () = Hashtbl.filter_map_inplace (fun _ m -> keep m.Module.location m) graph.files in
   graph
 
@@ -140,7 +156,7 @@ let sort graph entry =
         let () =
           List.iter
             sort'
-            (List.filter_map (fun (_, m) -> m) (lookup_dependencies graph m))
+            (List.filter_map (fun (_, m) -> m) (lookup_dependencies ~kind:`Static graph m))
         in
           add_module m;
   in

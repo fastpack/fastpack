@@ -108,7 +108,8 @@ let read_module
       id = make_id ctx.current_dir location;
       location;
       package;
-      resolved_dependencies = [];
+      static_dependencies = [];
+      dynamic_dependencies = [];
       build_dependencies = M.empty;
       module_type = Module.CJS;
       files = [];
@@ -251,7 +252,6 @@ let build (ctx : Context.t) =
     let module E = Ast.Expression in
     let module L = Ast.Literal in
 
-    let dependencies = ref [] in
     let workspace = ref (Workspace.of_string source) in
     let ({Workspace.
            patch;
@@ -357,16 +357,20 @@ let build (ctx : Context.t) =
           var, module_var_definition ^ (define_var var expression)
     in
 
-    let add_dependency request =
+    let static_dependencies = ref [] in
+    let dynamic_dependencies = ref [] in
+    let add_dependency ~kind request =
       let dep = {
         Module.Dependency.
         request;
         requested_from = location;
       } in
-      begin
-        dependencies := dep :: !dependencies;
-        dep
-      end
+      let () =
+        match kind with
+        | `Static -> static_dependencies := dep :: !static_dependencies
+        | `Dynamic -> dynamic_dependencies := dep :: !dynamic_dependencies
+      in
+      dep
     in
 
     let ensure_export_exists ~dep_map (m: Module.t) name =
@@ -514,7 +518,7 @@ let build (ctx : Context.t) =
               default;
               _;
             } ->
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_with 0 0
               (fun (_, dep_map) ->
                  let (m : Module.t) = get_module dep dep_map in
@@ -583,7 +587,7 @@ let build (ctx : Context.t) =
               specifiers = Some (S.ExportNamedDeclaration.ExportSpecifiers specifiers);
               source = Some (_, { value = request; _ });
             } ->
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
@@ -600,7 +604,7 @@ let build (ctx : Context.t) =
                   S.ExportNamedDeclaration.ExportBatchSpecifier (_, Some (_, spec)));
               source = Some (_, { value = request; _ });
             } ->
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
@@ -619,7 +623,7 @@ let build (ctx : Context.t) =
                 );
               source = Some (_, { value = request; _ });
             } ->
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
@@ -719,7 +723,7 @@ let build (ctx : Context.t) =
           Visit.Continue visit_ctx
 
         | E.Import (_, E.Literal { value = L.String request; _ }) ->
-          let dep = add_dependency request in
+          let dep = add_dependency ~kind:`Dynamic request in
           patch_loc_with
             loc
             (fun (_, dep_map) ->
@@ -734,7 +738,7 @@ let build (ctx : Context.t) =
             _
           } ->
           if not (has_binding "require") then begin
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
@@ -798,43 +802,49 @@ let build (ctx : Context.t) =
     in
     Visit.visit handler program;
 
-    (!workspace, !dependencies, program_scope, exports, module_type)
+    (!workspace, !static_dependencies, !dynamic_dependencies,
+     program_scope, exports, module_type)
   in
 
   (* Gather dependencies *)
   let rec process (ctx : Context.t) graph (m : Module.t) =
     let ctx = { ctx with current_location = m.location } in
-    let m, dependencies =
+
+    (* find module static & dynamic module dependencies
+     * both come empty if modules was cached *)
+    let m, static_dependencies, dynamic_dependencies =
       if m.state <> Module.Analyzed
       then begin
         let source = m.Module.workspace.Workspace.value in
-        let (workspace, dependencies, scope, exports, module_type) =
+        let (workspace, static_dependencies, dynamic_dependencies, scope, exports, module_type) =
           match is_json m.location with
           | true ->
             let workspace =
               Printf.sprintf "module.exports = %s;" source
               |> Workspace.of_string
             in
-            (workspace, [], Scope.empty, Scope.empty_exports, Module.CJS)
+            (workspace, [], [], Scope.empty, Scope.empty_exports, Module.CJS)
           | false ->
             try
               analyze m.id m.location source
             with
             | FlowParser.Parse_error.Error args ->
-              let location_str = Module.location_to_string m.location in 
+              let location_str = Module.location_to_string m.location in
               raise (Context.PackError (ctx, CannotParseFile (location_str, args, source)))
             | Scope.ScopeError reason ->
               raise (Context.PackError (ctx, ScopeError reason))
         in
-        { m with workspace; scope; exports; module_type }, dependencies
+        ({ m with workspace; scope; exports; module_type },
+         static_dependencies,
+         dynamic_dependencies)
       end
       else
-        m, []
+        m, [], []
     in
     let%lwt m =
       if m.state <> Module.Analyzed
       then begin
-        let%lwt dependencies =
+        let resolve_dependencies =
           Lwt_list.map_p
             (fun req ->
                let%lwt resolved, build_dependencies =
@@ -842,9 +852,11 @@ let build (ctx : Context.t) =
                in
                Lwt.return ((req, resolved), build_dependencies)
             )
-            dependencies
         in
-        let%lwt resolved_dependencies, build_dependencies =
+        let%lwt static_dependencies = resolve_dependencies static_dependencies in
+        let%lwt dynamic_dependencies = resolve_dependencies dynamic_dependencies in
+
+        let collect_dependencies dependencies build_dependencies =
           Lwt_list.fold_left_s
             (fun (resolved, build) (r, b) ->
                let%lwt build =
@@ -858,12 +870,20 @@ let build (ctx : Context.t) =
                in
                Lwt.return (r :: resolved, build)
             )
-            ([], m.build_dependencies)
+            ([], build_dependencies)
             dependencies
+        in
+        let build_dependencies = m.build_dependencies in
+        let%lwt static_dependencies, build_dependencies =
+          collect_dependencies static_dependencies build_dependencies
+        in
+        let%lwt dynamic_dependencies, build_dependencies =
+          collect_dependencies dynamic_dependencies build_dependencies
         in
         Lwt.return {
           m with
-          resolved_dependencies = List.rev resolved_dependencies;
+          static_dependencies = List.rev static_dependencies;
+          dynamic_dependencies = List.rev dynamic_dependencies;
           build_dependencies
         }
       end
@@ -872,7 +892,7 @@ let build (ctx : Context.t) =
     in
     DependencyGraph.add_module graph m;
 
-    let%lwt () =
+    let update_graph ~kind dependencies =
       Lwt_list.iter_s
         (fun (req, resolved) ->
            let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
@@ -883,11 +903,13 @@ let build (ctx : Context.t) =
              | Some m ->
                Lwt.return m
            in
-           DependencyGraph.add_dependency graph m (req, Some dep_module.location);
+           DependencyGraph.add_dependency ~kind graph m (req, Some dep_module.location);
            Lwt.return_unit
         )
-        m.resolved_dependencies
+        dependencies
     in
+    let%lwt () = update_graph ~kind:`Static m.static_dependencies in
+    let%lwt () = update_graph ~kind:`Dynamic m.dynamic_dependencies in
     Lwt.return m
   in
 

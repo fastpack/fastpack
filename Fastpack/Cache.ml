@@ -15,7 +15,8 @@ module ModuleEntry = struct
     files : (string * string) list;
     content : string;
     build_dependencies : string M.t;
-    resolved_dependencies : (Module.Dependency.t * Module.location) list;
+    static_dependencies : (Module.Dependency.t * Module.location) list;
+    dynamic_dependencies : (Module.Dependency.t * Module.location) list;
     scope: Scope.t;
     exports: Scope.exports;
   }
@@ -353,7 +354,8 @@ let create (init : init) =
         files;
         content;
         build_dependencies;
-        resolved_dependencies;
+        static_dependencies;
+        dynamic_dependencies;
         scope;
         exports
       } ->
@@ -367,7 +369,8 @@ let create (init : init) =
           location;
           state;
           package;
-          resolved_dependencies;
+          static_dependencies;
+          dynamic_dependencies;
           build_dependencies;
           module_type;
           files;
@@ -389,7 +392,8 @@ let create (init : init) =
         state = m.state;
         package = m.package;
         build_dependencies = m.build_dependencies;
-        resolved_dependencies = m.resolved_dependencies;
+        static_dependencies = m.static_dependencies;
+        dynamic_dependencies = m.dynamic_dependencies;
         module_type = m.module_type;
         files = m.files;
         scope = m.scope;

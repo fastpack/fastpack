@@ -106,7 +106,7 @@ process = { env: {} };
         emitted_modules := MLSet.add m.location !emitted_modules;
         let%lwt () = emit_module_files ctx m in
         let workspace = m.Module.workspace in
-        let dependencies = DependencyGraph.lookup_dependencies graph m in
+        let dependencies = DependencyGraph.lookup_dependencies ~kind:`All graph m in
         let%lwt () =
           Lwt_list.iter_s
             (fun (_, m) ->

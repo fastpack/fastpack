@@ -179,8 +179,11 @@ type t = {
 
   package : Package.t;
 
-  (** List of resolved dependencies, populated for cached modules *)
-  resolved_dependencies : (Dependency.t * location) list;
+  (** List of resolved static dependencies, populated for cached modules *)
+  static_dependencies : (Dependency.t * location) list;
+
+  (** List of resolved dynamic dependencies, populated for cached modules *)
+  dynamic_dependencies : (Dependency.t * location) list;
 
   (** Mapping of filename to digest *)
   build_dependencies : string M.t;
@@ -191,7 +194,7 @@ type t = {
   (** CJS / CSJ with __esModule flag / EcmaScript *)
   module_type : module_type;
 
-  (** "side-effect" files to be emitted with module *)
+  (** "side-effect" files to be emitted alongside with module *)
   files : (string * string) list;
 
   (** Module source along with transformations applied *)

@@ -21,7 +21,8 @@ val remove_module : t -> Module.t -> unit
 
 (** Add dependency between modules to the depgraph. *)
 val add_dependency :
-  t -> Module.t -> Module.DependencyMap.key * Module.location option -> unit
+  kind:[< `Dynamic | `Static ]
+  -> t -> Module.t -> Module.DependencyMap.key * Module.location option -> unit
 
 (** Number of modules in the depgraph. *)
 val length : t -> int
@@ -34,7 +35,8 @@ val lookup_module : t -> Module.location -> Module.t option
 
 (** Lookup a list of dependencies for the specified module in the depgraph. *)
 val lookup_dependencies :
-  t -> Module.t -> (Module.DependencyMap.key * Module.t option) list
+  kind:[< `All | `Dynamic | `Static ]
+  -> t -> Module.t -> (Module.DependencyMap.key * Module.t option) list
 
 (** Return all dependencies as a mapping *)
 val to_dependency_map : t -> Module.t Module.DependencyMap.t
