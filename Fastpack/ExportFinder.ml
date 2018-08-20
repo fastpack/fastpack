@@ -52,8 +52,8 @@ let make () =
                  M.merge
                    (fun key v1 v2 ->
                       match v1, v2 with
-                      | Some _, Some _ ->
-                        failwith ("Cannot export twice: " ^ key)
+                      | Some v1, Some v2 ->
+                        failwith ("Cannot export twice: " ^ key ^ " Module 1: " ^ (Module.location_to_string v1.parent_module.location) ^ ". Module 2: " ^ (Module.location_to_string v2.parent_module.location))
                       | Some v, None | None, Some v ->
                         Some v
                       | None, None ->
