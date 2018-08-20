@@ -162,8 +162,8 @@ let prepare_and_pack options start_time =
         let%lwt emitted_modules, files =
           match options.mode with
           | Mode.Production ->
-            let%lwt () = ScopedEmitter.update_graph ctx in
-            FlatEmitter.emit ctx
+            raise (PackError (ctx, NotImplemented (None, "Production build is not implemented yet"
+                                                   ^ "\nUse `--development` for now")))
           | Mode.Test
           | Mode.Development ->
             ScopedEmitter.emit ctx
