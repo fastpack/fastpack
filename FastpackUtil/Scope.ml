@@ -140,7 +140,7 @@ let export_binding name remote bindings =
     M.add name { binding with exported = Some [remote] } bindings
   | Some ({ exported = Some names; _ } as binding) ->
     if List.mem remote names
-    then Error.ie @@ "Cannot export twice: " ^ name (* Flow parser handles this*)
+    then Error.ie @@ "Scope > Cannot export twice: " ^ name (* Flow parser handles this*)
     else M.add name { binding with exported = Some (remote :: names) } bindings
   | None ->
     raise @@ ScopeError (PreviouslyUndefinedExport name)
