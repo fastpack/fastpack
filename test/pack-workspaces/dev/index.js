@@ -65,14 +65,14 @@ process = { env: {} };
   return __fastpack_require__(__fastpack_require__.s = '$fp$main');
 })
 ({
-"nm$package$$_$$1$babel$$_$$transpile": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nexports.default = class {\n  field = 'babel-transpile';\n}\n\n//# sourceURL=fpack:///nm/package-1/babel-transpile.js");
+"NM$$babel$$_$$loader$lib$indexDOT$$js$$B$$nm$package$$_$$1$babel$$_$$transpile": function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\nexports.default = class {\n  constructor() {\n    _defineProperty(this, \"field\", 'babel-transpile');\n  }\n\n}\n//# sourceURL=fpack:///node_modules/babel-loader/lib/index.js!nm/package-1/babel-transpile.js");
 },
 "builtin$$B$$nm$package$$_$$1$builtin$$_$$transpile": function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nexports.default = class  {\n  constructor( ...args) {\n    Object.defineProperty(this, \"field\", {\"configurable\": true, \"enumerable\": true, \"writable\": true, \"value\": 'builtin-transpile'});\n    \n  }\n  \n};\n\n//# sourceURL=fpack:///builtin!nm/package-1/builtin-transpile.js");
 },
 "nm$package$$_$$1$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__babel_transpile_js = __fastpack_require__(/* \"./babel-transpile.js\" */ \"nm$package$$_$$1$babel$$_$$transpile\");\nconst _2__builtin_transpile_js = __fastpack_require__(/* \"./builtin-transpile.js\" */ \"builtin$$B$$nm$package$$_$$1$builtin$$_$$transpile\");\n\n\n\nexports.default = function () {\n  console.log('package-1')\n  console.log(_1__babel_transpile_js.default, _2__builtin_transpile_js.default)\n}\n\n//# sourceURL=fpack:///nm/package-1/index.js");
+eval("module.exports.__esModule = true;\nconst _1__babel_transpile_js = __fastpack_require__(/* \"./babel-transpile.js\" */ \"NM$$babel$$_$$loader$lib$indexDOT$$js$$B$$nm$package$$_$$1$babel$$_$$transpile\");\nconst _2__builtin_transpile_js = __fastpack_require__(/* \"./builtin-transpile.js\" */ \"builtin$$B$$nm$package$$_$$1$builtin$$_$$transpile\");\n\n\n\nexports.default = function () {\n  console.log('package-1')\n  console.log(_1__babel_transpile_js.default, _2__builtin_transpile_js.default)\n}\n\n//# sourceURL=fpack:///nm/package-1/index.js");
 },
 "app$nm$package$$_$$2$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nexports.default = function () {\n  console.log('package-2')\n}\n\n//# sourceURL=fpack:///app/nm/package-2/index.js");

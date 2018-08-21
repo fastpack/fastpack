@@ -78,14 +78,14 @@ let prepare_and_pack options start_time =
     current_dir
     options.project_root_path
   in
-  Unix.chdir project_root;
 
   (* preprocessor *)
   let%lwt preprocessor =
     Preprocessor.make
-      options.preprocess
-      project_root
-      output_dir
+      ~configs: options.preprocess
+      ~project_root
+      ~current_dir
+      ~output_dir
   in
 
   (* cache & cache reporting *)
