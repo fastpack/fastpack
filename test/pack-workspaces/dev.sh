@@ -4,4 +4,6 @@ $FPACK index.js \
   --no-cache \
   --project-root="../" \
   --mock="mocked:./mock" \
+  --preprocess="babel-transpile:babel-loader" \
+  --preprocess="builtin-transpile:builtin" \
   --nm ./nm
