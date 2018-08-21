@@ -73,14 +73,20 @@ let prepare_and_pack options start_time =
   (* TODO: also cleanup the directory before emitting, maybe? *)
   let%lwt () = FS.makedirs output_dir in
 
+  (* project_root *)
+  let project_root = FastpackUtil.FS.abs_path
+    current_dir
+    options.project_root_path
+  in
+  Unix.chdir project_root;
+
   (* preprocessor *)
   let%lwt preprocessor =
     Preprocessor.make
       options.preprocess
-      current_dir
+      project_root
       output_dir
   in
-
 
   (* cache & cache reporting *)
   let%lwt cache, cache_report =
@@ -129,10 +135,6 @@ let prepare_and_pack options start_time =
       if initial
       then Printf.sprintf " Cache: %s. Mode: %s." cache_report (Mode.to_string options.mode)
       else ""
-    in
-    let project_root = FastpackUtil.FS.abs_path
-      current_dir
-      options.project_root_path
     in
     let resolver =
       Resolver.make

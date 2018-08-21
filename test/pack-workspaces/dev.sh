@@ -6,4 +6,5 @@ $FPACK index.js \
   --mock="mocked:./mock" \
   --preprocess="babel-transpile:babel-loader" \
   --preprocess="builtin-transpile:builtin" \
-  --nm ./nm
+  --nm ./nm \
+  --nm node_modules
