@@ -1,11 +1,23 @@
 
-Project Directory: /.../test/error-parse
-Mode: development
-Call Stack:
-	'./a' from module: index.js	
-'./index.js' from module: $fp$main
-Processing Module: a.js
+Parse error 
+/.../test/error-parse/a.js
 
-Parse Error
-File: a.js
-	(1:15) - (1:16): Unexpected token ;
+--------------------
+Unexpected token ; at (3:14) - (3:15):
+
+ 1 │ // missing second half of addition
+ 2 │ function hello() {
+ 3 │   "§ © Æ ¿" + ;
+   │               ^
+ 4 │ }
+
+--------------------
+Unexpected identifier at (10:6) - (10:11):
+
+ 8 │ 
+ 9 │ 
+10 │ let a aaaaa = 5;
+   │       ^^^^^
+11 │ export default hello;
+
+

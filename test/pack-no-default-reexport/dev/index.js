@@ -75,10 +75,10 @@ eval("module.exports.__esModule = true;\nexports.default = \"y exported\";\ncons
 eval("module.exports.__esModule = true;\nconst _1__x = __fastpack_require__(/* \"./x\" */ \"x\");Object.defineProperty(exports, \"x\", {enumerable: true, get: function() {return _1__x.x;}});\nconst _2__y = __fastpack_require__(/* \"./y\" */ \"y\");Object.defineProperty(exports, \"y\", {enumerable: true, get: function() {return _2__y.y;}});\n\n//# sourceURL=fpack:///reexport.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__reexport = __fastpack_require__(/* \"./reexport\" */ \"reexport\");\nconsole.log(_1__reexport.x,_1__reexport.y);\n\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1__reexport = __fastpack_require__(/* \"./reexport\" */ \"reexport\");\n\nconsole.log(_1__reexport.x,_1__reexport.y);\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

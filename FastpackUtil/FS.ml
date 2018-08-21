@@ -61,3 +61,10 @@ let is_text_file filename =
   match Re.exec_opt pat_text_ext filename with
   | Some _ -> true
   | None -> false
+
+let isatty channel = 
+  let forceTTY = match Sys.getenv_opt "FPACK_FORCE_TTY" with
+    |  Some "true" -> true
+    | _ -> false
+  in
+  forceTTY || (Unix.isatty channel)

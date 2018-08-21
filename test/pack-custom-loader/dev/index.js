@@ -75,10 +75,10 @@ eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" +
 eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" + \"not empty\" + \". Query: ?bool=true.</div>\";\nmodule.exports = {};\n  \n//# sourceURL=fpack:///custom-loader.js?bool=true!index.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./custom-loader!\" */ \"custom$$_$$loaderDOT$$js$$B$$\");\n\n__fastpack_require__(/* \"./custom-loader?bool=true!\" */ \"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$\");\n\n__fastpack_require__(/* \"./custom-loader?bool=true!./index.js\" */ \"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index\");\n\n\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./custom-loader!\" */ \"custom$$_$$loaderDOT$$js$$B$$\");\n\n__fastpack_require__(/* \"./custom-loader?bool=true!\" */ \"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$\");\n\n__fastpack_require__(/* \"./custom-loader?bool=true!./index.js\" */ \"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index\");\n\n\n\n\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

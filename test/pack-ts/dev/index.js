@@ -72,7 +72,7 @@ eval("\"use strict\";\nfunction render() {\n    document.body.innerHTML = \"<h1>
 eval("\"use strict\";\nexports.__esModule = true;\nvar render = __fastpack_require__(/* \"./render.ts\" */ \"NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts\");\nrender();\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!index.ts");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.ts\" */ \"NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.ts\" */ \"NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });
