@@ -136,8 +136,8 @@ let prepare_and_pack options start_time =
     in
     let resolver =
       Resolver.make
-        ~project_root:project_root
-        ~current_dir:current_dir
+        ~project_root
+        ~current_dir
         ~mock:(options.mock)
         ~node_modules_paths:(options.node_modules_paths)
         ~extensions
@@ -146,8 +146,8 @@ let prepare_and_pack options start_time =
     in
     let ctx = {
       Context.
-      current_dir;
       project_root;
+      current_dir;
       project_package;
       output_dir;
       output_file;

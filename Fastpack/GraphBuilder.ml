@@ -105,7 +105,7 @@ let read_module
         | Some (m : Module.t) -> Lwt.return m.package
     in
     Module.{
-      id = make_id ctx.current_dir location;
+      id = make_id ctx.project_root location;
       location;
       package;
       static_dependencies = [];
@@ -146,7 +146,7 @@ let read_module
         match filename with
         | Some filename ->
           let%lwt _ =
-            if not (FilePath.is_subdir filename ctx.current_dir)
+            if not (FilePath.is_subdir filename ctx.project_root)
             then Lwt.fail (Context.PackError (ctx, CannotLeavePackageDir filename))
             else Lwt.return_unit
           in

@@ -134,7 +134,7 @@ process = { env: {} };
             ~workspace
             ~ctx:(m, dep_map) in
         let%lwt () =
-          Module.location_to_string ~base_dir:(Some ctx.current_dir) m.location
+          Module.location_to_string ~base_dir:(Some ctx.project_root) m.location
           |> Printf.sprintf "\\n//# sourceURL=fpack:///%s\");"
           |> emit
         in
