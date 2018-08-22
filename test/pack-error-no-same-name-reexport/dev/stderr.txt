@@ -3,6 +3,7 @@ fpack: internal error, uncaught exception:
          "ExportFinder > Cannot export twice: x. Module 1: /.../test/pack-error-no-same-name-reexport/x2.js. Module 2: /.../test/pack-error-no-same-name-reexport/x1.js")
        Raised at file "src/core/lwt.ml", line 3008, characters 20-29
        Called from file "src/unix/lwt_main.ml", line 42, characters 8-18
+       Called from file "Fastpack/Fastpack.ml" (inlined), line 214, characters 2-52
        Called from file "bin/fpack.ml", line 47, characters 12-45
        Called from file "src/cmdliner_term.ml", line 27, characters 19-24
        Called from file "src/cmdliner.ml", line 27, characters 27-34
