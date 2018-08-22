@@ -69,13 +69,13 @@ process = { env: {} };
 eval("\n//# sourceURL=fpack:///dep2.js");
 },
 "dep1": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./dep2.js\" */ \"dep2\");\n\n\n//# sourceURL=fpack:///dep1.js");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./dep2.js\" */ \"dep2\");\n\n\n\n//# sourceURL=fpack:///dep1.js");
 },
 "index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./dep1.js\" */ \"dep1\");\n\n\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./dep1.js\" */ \"dep1\");\n\n\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

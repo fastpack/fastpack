@@ -75,7 +75,7 @@ eval("module.exports = {prod: true};\n\n//# sourceURL=fpack:///prod.js");
 eval("\nlet p;\n\n// if-then-no-else\n{}\n\n{}\n\n{}\n\n{}\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\n// if-then-else\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\n\n// alternative statement\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\n// logical AND expression\nif (\"development\" == \"production\" && x && y && z)\n  p = __fastpack_require__(/* \"./prod\" */ \"prod\");\nelse\n  p = __fastpack_require__(/* \"./dev\" */ \"dev\");\n\n// conditional operator\np = __fastpack_require__(/* \"./dev\" */ \"dev\");\nconsole.log(\"development\");\n\n// bug\nif (true) {} else {}\nif (false) {} else {console.log(\"dev!\")}\n\n// bug\nImage.propTypes = call());\n\n//# sourceURL=fpack:///index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

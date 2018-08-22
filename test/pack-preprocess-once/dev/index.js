@@ -75,10 +75,10 @@ eval("module.exports.__esModule = true;\nexports.default = function () {\n  cons
 eval("module.exports.__esModule = true;\nexports.default = function () {\n  console.log(3);\n  \n}\n;\n\n//# sourceURL=fpack:///builtin!log3.js");
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__log1 = __fastpack_require__(/* \"./log1\" */ \"logSourceDOT$$js$$B$$log1\");\nconst _2__log2 = __fastpack_require__(/* \"./log2\" */ \"builtin$$B$$log2\");\nconst _3__log3 = __fastpack_require__(/* \"./log3\" */ \"builtin$$B$$log3\");\n_1__log1.default();\n_2__log2.default();\n_3__log3.default();\n\n//# sourceURL=fpack:///builtin!index.js");
+eval("module.exports.__esModule = true;\nconst _1__log1 = __fastpack_require__(/* \"./log1\" */ \"logSourceDOT$$js$$B$$log1\");\nconst _2__log2 = __fastpack_require__(/* \"./log2\" */ \"builtin$$B$$log2\");\nconst _3__log3 = __fastpack_require__(/* \"./log3\" */ \"builtin$$B$$log3\");\n\n\n\n_1__log1.default();\n_2__log2.default();\n_3__log3.default();\n\n//# sourceURL=fpack:///builtin!index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"builtin$$B$$index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"builtin$$B$$index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

@@ -78,10 +78,10 @@ eval("module.exports.__esModule = true;\nconst $__fpack__ = __fastpack_require__
 eval("module.exports.__esModule = true;\nconst $__fpack__ = __fastpack_require__(/* \"$fp$runtime\" */ \"$fp$runtime\");\nlet ExportNamedClass = $__fpack__.defineClass(class ExportNamedClass {\n    \n  }, [{\"name\": \"prop\", \"value\": \"ExportNamedClass\"}], [], []);;Object.defineProperty(exports, \"ExportNamedClass\", {enumerable: true, get: function() {return ExportNamedClass;}});\n;\n\n//# sourceURL=fpack:///builtin!ExportNamedClass.js");
 },
 "builtin$$B$$index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__ExportDefaultNamedClass = __fastpack_require__(/* \"./ExportDefaultNamedClass\" */ \"builtin$$B$$ExportDefaultNamedClass\");\nconst _2__ExportDefaultClass = __fastpack_require__(/* \"./ExportDefaultClass\" */ \"builtin$$B$$ExportDefaultClass\");\nconst _3__ExportNamedClass = __fastpack_require__(/* \"./ExportNamedClass\" */ \"builtin$$B$$ExportNamedClass\");\nconsole.log(_1__ExportDefaultNamedClass.default.prop);\nconsole.log(_2__ExportDefaultClass.default.prop);\n\n//# sourceURL=fpack:///builtin!index.js");
+eval("module.exports.__esModule = true;\nconst _1__ExportDefaultNamedClass = __fastpack_require__(/* \"./ExportDefaultNamedClass\" */ \"builtin$$B$$ExportDefaultNamedClass\");\nconst _2__ExportDefaultClass = __fastpack_require__(/* \"./ExportDefaultClass\" */ \"builtin$$B$$ExportDefaultClass\");\nconst _3__ExportNamedClass = __fastpack_require__(/* \"./ExportNamedClass\" */ \"builtin$$B$$ExportNamedClass\");\n\n\n\nconsole.log(_1__ExportDefaultNamedClass.default.prop);\nconsole.log(_2__ExportDefaultClass.default.prop);\n\n//# sourceURL=fpack:///builtin!index.js");
 },
 "$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"builtin$$B$$index\");\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"builtin$$B$$index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 
 });

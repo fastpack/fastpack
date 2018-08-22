@@ -2,34 +2,245 @@
 module MLSet = Module.LocationSet 
 module StringSet = Set.Make(String)
 module M = Map.Make(String)
+
+module Ast = FlowParser.Ast
+module Loc = FlowParser.Loc
+module S = Ast.Statement
+module E = Ast.Expression
+module P = Ast.Pattern
+module L = Ast.Literal
+
 module UTF8 = FastpackUtil.UTF8
-
-open PackerUtil
-
+module FS = FastpackUtil.FS
 module Parser = FastpackUtil.Parser
 module Scope = FastpackUtil.Scope
 module Visit = FastpackUtil.Visit
 
 let debug = Logs.debug
-
 let re_name = Re_posix.compile_pat "[^A-Za-z0-9_]+"
 
-let pack (cache : Cache.t) (ctx : Context.t) output_channel =
+
+let resolve (ctx : Context.t) (request : Module.Dependency.t) =
+  let basedir =
+    match request.requested_from with
+    | Module.File { filename = Some filename; _ } ->
+      FilePath.dirname filename
+    | Module.File { filename = None; _ }
+    | Module.Runtime
+    | Module.EmptyModule
+    | Module.Main _ ->
+      ctx.current_dir
+  in
+  Lwt.catch
+    (fun () ->
+       ctx.resolver.resolve ~basedir request.request
+    )
+    (function
+      | Resolver.Error path ->
+        Lwt.fail (Context.PackError (ctx, CannotResolveModule (path, request)))
+      | exn ->
+        raise exn
+    )
+
+let is_json (location : Module.location) =
+  match location with
+  | Module.File { filename = Some filename; _ } ->
+    String.suffix ~suf:".json" filename
+  | _ ->
+    false
+
+
+let get_module_type stmts =
+  (* TODO: what if module has only import() expression? *)
+  let import_or_export module_type ((_, stmt) : Loc.t S.t) =
+    match module_type with
+    | Module.ESM | Module.CJS_esModule -> module_type
+    | Module.CJS ->
+      match stmt with
+      | S.Expression {
+          expression = (_, E.Assignment {
+              operator = E.Assignment.Assign;
+              left = (_, P.Expression (_, E.Member {
+                  _object = (_, E.Identifier (_, "exports"));
+                  property = E.Member.PropertyIdentifier (_, "__esModule");
+                  computed = false;
+                  _
+                }));
+              right = (_, E.Literal { value = L.Boolean true; _});
+            });
+          _
+        } ->
+        Module.CJS_esModule
+      | S.ExportDefaultDeclaration _
+      | S.ExportNamedDeclaration _
+      | S.ImportDeclaration _ ->
+        Module.ESM
+      | _ ->
+        module_type
+  in
+  List.fold_left import_or_export Module.CJS stmts
+
+
+let read_module
+    ?(from_module=None)
+    ~(ctx : Context.t)
+    ~(cache : Cache.t)
+    (location : Module.location) =
+  debug (fun x -> x "READING: %s" (Module.location_to_string location));
+  let make_module location source =
+    let%lwt package =
+      match location with
+      | Module.EmptyModule | Module.Runtime ->
+        Lwt.return Package.empty
+      | Module.Main _ ->
+        Lwt.return ctx.project_package
+      | Module.File { filename = Some filename; _ } ->
+        let%lwt package, _ =
+          cache.find_package_for_filename ctx.current_dir filename
+        in
+        Lwt.return package
+      | Module.File { filename = None; _ } ->
+        match from_module with
+        | None -> Lwt.return ctx.project_package
+        | Some (m : Module.t) -> Lwt.return m.package
+    in
+    Module.{
+      id = make_id ctx.current_dir location;
+      location;
+      package;
+      static_dependencies = [];
+      dynamic_dependencies = [];
+      build_dependencies = M.empty;
+      module_type = Module.CJS;
+      files = [];
+      state = Initial;
+      workspace = Workspace.of_string source;
+      scope = FastpackUtil.Scope.empty;
+      exports = FastpackUtil.Scope.empty_exports;
+    }
+    |> Lwt.return
+  in
+
+  match location with
+  | Module.Main entry_points ->
+    let source =
+      entry_points
+      |> List.map (fun req -> Printf.sprintf "import '%s';\n" req)
+      |> String.concat ""
+    in
+    make_module location source
+
+  | Module.EmptyModule ->
+    make_module location "module.exports = {};"
+
+  | Module.Runtime ->
+    make_module location FastpackTranspiler.runtime
+
+  | Module.File { filename; _ } ->
+    match%lwt cache.get_module location with
+    | Some m ->
+      Lwt.return m
+    | None ->
+      (* filename is Some (abs path) or None at this point *)
+      let%lwt source, self_dependency =
+        match filename with
+        | Some filename ->
+          let%lwt _ =
+            if not (FilePath.is_subdir filename ctx.current_dir)
+            then Lwt.fail (Context.PackError (ctx, CannotLeavePackageDir filename))
+            else Lwt.return_unit
+          in
+          let%lwt { content; _ }, _ =
+            Lwt.catch
+              (fun () -> cache.get_file filename )
+              (function
+                | Cache.FileDoesNotExist filename ->
+                  Lwt.fail (Context.PackError (ctx, CannotReadModule filename))
+                | exn ->
+                  raise exn
+              )
+          in
+          (* strip #! from the very beginning *)
+          let content_length = String.length content in
+          let content =
+            if  content_length > 2
+            then
+              if String.get content 0 = '#' && String.get content 1 = '!'
+              then
+                let nl_index = String.find ~sub:"\n" content in
+                String.sub content nl_index (content_length - nl_index)
+              else
+                content
+            else
+              content
+          in
+          Lwt.return (Some content, [filename])
+        | None ->
+          Lwt.return (None, [])
+      in
+      let { Preprocessor. process; _ } = ctx.preprocessor in
+      let%lwt source, build_dependencies, files =
+        Lwt.catch
+          (fun () -> process location source)
+          (function
+            | FlowParser.Parse_error.Error args ->
+              let location_str = Module.location_to_string location in
+              let src = match source with
+                | Some src -> src
+                | None -> "" in
+              Lwt.fail (Context.PackError (ctx, CannotParseFile (location_str, args, src)))
+            | Preprocessor.Error message ->
+              Lwt.fail (Context.PackError (ctx, PreprocessorError message))
+            | FastpackUtil.Error.UnhandledCondition message ->
+              Lwt.fail (Context.PackError (ctx, UnhandledCondition message))
+            | exn ->
+              Lwt.fail exn
+          )
+      in
+
+      let%lwt files =
+        Lwt_list.map_s
+          (fun filename ->
+             let%lwt {content; _}, _ = cache.get_file filename in
+             Lwt.return (filename, content)
+          )
+          files
+      in
+
+      let%lwt m = make_module location source in
+      let%lwt build_dependencies =
+        Lwt_list.fold_left_s
+          (fun build_dependencies filename ->
+             let%lwt { digest; _ }, _ = cache.get_file filename in
+             Lwt.return (M.add filename digest build_dependencies)
+          )
+          M.empty
+          (self_dependency @ build_dependencies)
+      in
+      let m = {
+        m with
+        state = Module.Preprocessed;
+        files;
+        build_dependencies;
+      } in
+
+      let () = cache.modify_content m source in
+      Lwt.return m
+
+
+let build (ctx : Context.t) =
 
   (* TODO: handle this at a higher level, IllegalConfiguration error *)
   let%lwt () =
     if (ctx.Context.target = Target.ESM)
-    then Lwt.fail (PackError (ctx, NotImplemented (
+    then Lwt.fail (Context.PackError (ctx, NotImplemented (
         None, "EcmaScript6 target is not supported "
               ^ "for the regular packer - use flat\n"
       )))
     else Lwt.return_unit
   in
 
-  let modifier s =
-    let json = Yojson.to_string (`String s) in
-    String.(sub json 1 (length json - 2))
-  in
+  let cache = ctx.cache in
 
   let analyze _id location source =
     let ((_, stmts, _) as program), _ = Parser.parse_source source in
@@ -41,16 +252,16 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
     let module E = Ast.Expression in
     let module L = Ast.Literal in
 
-    let dependencies = ref [] in
-    let workspace = ref (Workspace.of_string ~modifier:(Some modifier) source) in
+    let workspace = ref (Workspace.of_string source) in
     let ({Workspace.
-          patch;
-          patch_with;
-          patch_loc;
-          patch_loc_with;
-          remove;
-          _
-        } as patcher) = Workspace.make_patcher workspace
+           patch;
+           patch_with;
+           patch_loc;
+           patch_loc_with;
+           remove;
+           remove_loc;
+           _
+         } as patcher) = Workspace.make_patcher workspace
     in
 
     let program_scope, exports = Scope.of_program stmts in
@@ -87,7 +298,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
       match Module.DependencyMap.get dep dep_map with
       | Some m -> m
       | None ->
-        raise (PackError (ctx, CannotResolveModule (dep.request, dep)))
+        raise (Context.PackError (ctx, CannotResolveModule (dep.request, dep)))
     in
 
     let rec avoid_name_collision ?(n=0) name =
@@ -112,7 +323,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
         then var, ""
         else var, define_var name var
       | None, Some name ->
-        module_vars := M.add m.Module.id name !module_vars;
+        module_vars := M.add m.id name !module_vars;
         name, define_var name (fastpack_require m.id request)
       | None, None ->
         let var =
@@ -146,16 +357,20 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
           var, module_var_definition ^ (define_var var expression)
     in
 
-    let add_dependency request =
+    let static_dependencies = ref [] in
+    let dynamic_dependencies = ref [] in
+    let add_dependency ~kind request =
       let dep = {
         Module.Dependency.
         request;
         requested_from = location;
       } in
-      begin
-        dependencies := dep :: !dependencies;
-        dep
-      end
+      let () =
+        match kind with
+        | `Static -> static_dependencies := dep :: !static_dependencies
+        | `Dynamic -> dynamic_dependencies := dep :: !dynamic_dependencies
+      in
+      dep
     in
 
     let ensure_export_exists ~dep_map (m: Module.t) name =
@@ -165,7 +380,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
         let location_str =
           Module.location_to_string ~base_dir:(Some ctx.current_dir) m.location
         in
-        raise (PackError (ctx, CannotFindExportedName (name, location_str)))
+        raise (Context.PackError (ctx, CannotFindExportedName (name, location_str)))
     in
 
     let export_from_specifiers =
@@ -173,12 +388,12 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
         (fun (_,{S.ExportNamedDeclaration.ExportSpecifier.
                   local = (_, local);
                   exported }) ->
-           let exported =
-             match exported with
-             | Some (_, name) -> name
-             | None -> local
-           in
-           exported, local
+          let exported =
+            match exported with
+            | Some (_, name) -> name
+            | None -> local
+          in
+          exported, local
         )
     in
 
@@ -189,7 +404,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
         local
     in
 
-    let patch_imported_name ~dep_map ~from_request (loc, local_name) remote =
+    let patch_imported_name ~dep_map ~from_request _ remote =
       let dep = {
         Module.Dependency.
         request = from_request;
@@ -200,19 +415,15 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
       let () = ensure_export_exists ~dep_map m remote in
       match remote with
       | "default" ->
-        let default_var, default_definition =
+        let default_var, _ =
           ensure_module_default_var m
         in
-        if default_definition <> ""
-        then raise (PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
-        else default_var
+        default_var
       | _ ->
-        let module_var, module_var_definition =
+        let module_var, _ =
           ensure_module_var "" m
         in
-        if module_var_definition <> ""
-        then raise (PackError(ctx, CannotRenameModuleBinding (loc, local_name, dep)))
-        else module_var ^ "." ^ remote
+        module_var ^ "." ^ remote
     in
 
     let define_local_exports ~dep_map exports =
@@ -260,7 +471,6 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
       module_var_definition ^ exports
     in
 
-
     let enter_function {Visit. parents; _} f =
       push_scope (Scope.of_function parents f (top_scope ()))
     in
@@ -302,40 +512,37 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
               default;
               _;
             } ->
-            let dep = add_dependency request in
-            patch_loc_with
-              loc
+            let dep = add_dependency ~kind:`Static request in
+            patch_with 0 0
               (fun (_, dep_map) ->
-                let (m : Module.t) = get_module dep dep_map
-                in
-                let namespace, _names =
-                  match specifiers with
-                  | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
-                    Some name, []
-                  | Some (S.ImportDeclaration.ImportNamedSpecifiers specifiers) ->
-                    None,
-                    specifiers
-                    |> List.map
-                      (fun {S.ImportDeclaration. remote = (_, remote); _ } -> remote)
-                  | None ->
-                    None, []
-                in
-                let has_names = default <> None || specifiers <> None in
-                match has_names with
-                (* import 'some'; *)
-                | false ->
-                  fastpack_require m.id dep.request ^ ";\n"
-                | true ->
-                  let _, module_var_definition =
-                    ensure_module_var ~name:namespace dep.request m
-                  in
-                  let _, module_default_var_definition =
-                    match default with
-                    | None -> "", ""
-                    | Some _ -> ensure_module_default_var m
-                  in
-                  module_var_definition ^ module_default_var_definition
+                 let (m : Module.t) = get_module dep dep_map in
+                 let namespace =
+                   match specifiers with
+                   | Some (S.ImportDeclaration.ImportNamespaceSpecifier (_, (_, name))) ->
+                     Some name
+                   | _ ->
+                     None
+                 in
+                 let has_names = default <> None || specifiers <> None in
+                 let patch =
+                   match has_names with
+                   (* import 'some'; *)
+                   | false ->
+                     fastpack_require m.id dep.request ^ ";\n"
+                   | true ->
+                     let _, module_var_definition =
+                       ensure_module_var ~name:namespace dep.request m
+                     in
+                     let _, module_default_var_definition =
+                       match default with
+                       | None -> "", ""
+                       | Some _ -> ensure_module_default_var m
+                     in
+                     module_var_definition ^ module_default_var_definition
+                 in
+                 if patch = "" then "" else (patch ^ "\n")
               );
+              remove_loc loc;
 
           | S.ExportNamedDeclaration {
               exportKind = S.ExportValue;
@@ -374,7 +581,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
               specifiers = Some (S.ExportNamedDeclaration.ExportSpecifiers specifiers);
               source = Some (_, { value = request; _ });
             } ->
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
@@ -391,7 +598,7 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
                   S.ExportNamedDeclaration.ExportBatchSpecifier (_, Some (_, spec)));
               source = Some (_, { value = request; _ });
             } ->
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
@@ -410,33 +617,33 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
                 );
               source = Some (_, { value = request; _ });
             } ->
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
-                let m = get_module dep dep_map in
-                let module_var, module_var_definition =
-                  ensure_module_var dep.request m
-                in
-                let updated_exports =
-                  match m.module_type with
-                  | Module.CJS
-                  | Module.CJS_esModule ->
-                    Printf.sprintf
-                      "Object.assign(module.exports, __fastpack_require__.omitDefault(%s));"
-                      module_var
-                  | Module.ESM ->
-                    let {ExportFinder. exports; _ } =
-                      ctx.export_finder.get_all dep_map m
-                    in
-                    exports
-                    |> M.bindings
-                    |> List.filter (fun (name, _) -> name <> "default")
-                    |> List.map (fun (name, _) -> (name, module_var ^ "." ^ name))
-                    |> List.map (fun (exported, local) -> define_export exported local)
-                    |> String.concat ""
-                in
-                module_var_definition ^ "" ^ updated_exports
+                 let m = get_module dep dep_map in
+                 let module_var, module_var_definition =
+                   ensure_module_var dep.request m
+                 in
+                 let updated_exports =
+                   match m.module_type with
+                   | Module.CJS
+                   | Module.CJS_esModule ->
+                     Printf.sprintf
+                       "Object.assign(module.exports, __fastpack_require__.omitDefault(%s));"
+                       module_var
+                   | Module.ESM ->
+                     let {ExportFinder. exports; _ } =
+                       ctx.export_finder.get_all dep_map m
+                     in
+                     exports
+                     |> M.bindings
+                     |> List.filter (fun (name, _) -> name <> "default")
+                     |> List.map (fun (name, _) -> (name, module_var ^ "." ^ name))
+                     |> List.map (fun (exported, local) -> define_export exported local)
+                     |> String.concat ""
+                 in
+                 module_var_definition ^ "" ^ updated_exports
               )
 
           | S.ExportDefaultDeclaration {
@@ -447,14 +654,14 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
               declaration = S.ExportDefaultDeclaration.Declaration (
                   _,
                   S.FunctionDeclaration { id=None; _ }
-              );
+                );
               default;
             }
           | S.ExportDefaultDeclaration {
               declaration = S.ExportDefaultDeclaration.Declaration (
                   _,
                   S.ClassDeclaration { id=None; _ }
-              );
+                );
               default
             } ->
             patch
@@ -466,14 +673,14 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
               declaration = S.ExportDefaultDeclaration.Declaration (
                   expr_loc,
                   S.FunctionDeclaration { id = Some (_, id); _ }
-              );
+                );
               _
             }
           | S.ExportDefaultDeclaration {
               declaration = S.ExportDefaultDeclaration.Declaration (
                   expr_loc,
                   S.ClassDeclaration { id = Some (_, id); _ }
-              );
+                );
               _
             } ->
             remove
@@ -496,26 +703,26 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
       | Visit.Continue visit_ctx ->
         match expr with
         | E.Object { properties } ->
-            properties
-            |> List.iter
-              (fun prop ->
-                 match prop with
-                  | E.Object.Property (loc, E.Object.Property.Init {
-                      key = E.Object.Property.Identifier (_, name) ;
-                      shorthand = true;
-                      _
-                    })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
-                  | _ -> ()
-              );
-            Visit.Continue visit_ctx
+          properties
+          |> List.iter
+            (fun prop ->
+               match prop with
+               | E.Object.Property (loc, E.Object.Property.Init {
+                   key = E.Object.Property.Identifier (_, name) ;
+                   shorthand = true;
+                   _
+                 })  -> patch loc.Loc.start.offset 0 @@ name ^ ": "
+               | _ -> ()
+            );
+          Visit.Continue visit_ctx
 
         | E.Import (_, E.Literal { value = L.String request; _ }) ->
-          let dep = add_dependency request in
+          let dep = add_dependency ~kind:`Dynamic request in
           patch_loc_with
             loc
             (fun (_, dep_map) ->
-              let {Module. id = module_id; _} = get_module dep dep_map in
-              fastpack_import module_id dep.request
+               let {Module. id = module_id; _} = get_module dep dep_map in
+               fastpack_import module_id dep.request
             );
           Visit.Break
 
@@ -525,12 +732,12 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
             _
           } ->
           if not (has_binding "require") then begin
-            let dep = add_dependency request in
+            let dep = add_dependency ~kind:`Static request in
             patch_loc_with
               loc
               (fun (_, dep_map) ->
-                let {Module. id = module_id; _} = get_module dep dep_map in
-                fastpack_require module_id dep.request
+                 let {Module. id = module_id; _} = get_module dep dep_map in
+                 fastpack_require module_id dep.request
               );
           end;
           Visit.Break
@@ -559,12 +766,15 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
             | _ -> ()
           in Visit.Break;
 
-        | E.Import _ ->
-          let msg = "import(_) is supported only with the constant argument" in
-          raise (PackError (ctx, NotImplemented (Some loc, msg)))
-
         | _ ->
           Visit.Continue visit_ctx;
+    in
+
+    let module_type = get_module_type stmts in
+    let () =
+      if module_type = Module.ESM
+      then patch 0 0 "module.exports.__esModule = true;\n"
+      else ()
     in
 
     let handler =
@@ -581,50 +791,50 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
       }
     in
     Visit.visit handler program;
-    let module_type = get_module_type stmts in
-    let () =
-      if module_type = Module.ESM
-      then patch 0 0 "module.exports.__esModule = true;\n"
-      else ()
-    in
 
-    (!workspace, !dependencies, program_scope, exports, module_type)
+    (!workspace, !static_dependencies, !dynamic_dependencies,
+     program_scope, exports, module_type)
   in
 
   (* Gather dependencies *)
   let rec process (ctx : Context.t) graph (m : Module.t) =
     let ctx = { ctx with current_location = m.location } in
-    let m, dependencies =
+
+    (* find module static & dynamic module dependencies
+     * both come empty if modules was cached *)
+    let m, static_dependencies, dynamic_dependencies =
       if m.state <> Module.Analyzed
       then begin
         let source = m.Module.workspace.Workspace.value in
-        let (workspace, dependencies, scope, exports, module_type) =
+        let (workspace, static_dependencies, dynamic_dependencies, scope, exports, module_type) =
           match is_json m.location with
           | true ->
             let workspace =
               Printf.sprintf "module.exports = %s;" source
-              |> Workspace.of_string ~modifier:(Some modifier)
+              |> Workspace.of_string
             in
-            (workspace, [], Scope.empty, Scope.empty_exports, Module.CJS)
+            (workspace, [], [], Scope.empty, Scope.empty_exports, Module.CJS)
           | false ->
             try
-                analyze m.id m.location source
+              analyze m.id m.location source
             with
             | FlowParser.Parse_error.Error args ->
               let location_str = Module.location_to_string m.location in
-              raise (PackError (ctx, CannotParseFile (location_str, args)))
+              raise (Context.PackError (ctx, CannotParseFile (location_str, args, source)))
             | Scope.ScopeError reason ->
-              raise (PackError (ctx, ScopeError reason))
+              raise (Context.PackError (ctx, ScopeError reason))
         in
-        { m with workspace; scope; exports; module_type }, dependencies
+        ({ m with workspace; scope; exports; module_type },
+         static_dependencies,
+         dynamic_dependencies)
       end
       else
-        m, []
+        m, [], []
     in
     let%lwt m =
       if m.state <> Module.Analyzed
       then begin
-        let%lwt dependencies =
+        let resolve_dependencies =
           Lwt_list.map_p
             (fun req ->
                let%lwt resolved, build_dependencies =
@@ -632,9 +842,11 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
                in
                Lwt.return ((req, resolved), build_dependencies)
             )
-          dependencies
         in
-        let%lwt resolved_dependencies, build_dependencies =
+        let%lwt static_dependencies = resolve_dependencies static_dependencies in
+        let%lwt dynamic_dependencies = resolve_dependencies dynamic_dependencies in
+
+        let collect_dependencies dependencies build_dependencies =
           Lwt_list.fold_left_s
             (fun (resolved, build) (r, b) ->
                let%lwt build =
@@ -648,12 +860,20 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
                in
                Lwt.return (r :: resolved, build)
             )
-            ([], m.build_dependencies)
+            ([], build_dependencies)
             dependencies
+        in
+        let build_dependencies = m.build_dependencies in
+        let%lwt static_dependencies, build_dependencies =
+          collect_dependencies static_dependencies build_dependencies
+        in
+        let%lwt dynamic_dependencies, build_dependencies =
+          collect_dependencies dynamic_dependencies build_dependencies
         in
         Lwt.return {
           m with
-          resolved_dependencies = List.rev resolved_dependencies;
+          static_dependencies = List.rev static_dependencies;
+          dynamic_dependencies = List.rev dynamic_dependencies;
           build_dependencies
         }
       end
@@ -662,193 +882,28 @@ let pack (cache : Cache.t) (ctx : Context.t) output_channel =
     in
     DependencyGraph.add_module graph m;
 
-    let%lwt () =
+    let update_graph ~kind dependencies =
       Lwt_list.iter_s
         (fun (req, resolved) ->
-          let resolved_str = Module.location_to_string resolved in
-          let%lwt dep_module = match DependencyGraph.lookup_module graph resolved_str with
-            | None ->
-              let ctx = { ctx with stack = req :: ctx.stack } in
-              let%lwt m = read_module ~ctx ~cache ~from_module:(Some m) resolved in
-              process ctx graph m
-            | Some m ->
-              Lwt.return m
-          in
-          DependencyGraph.add_dependency graph m (req, Some dep_module.location);
-          Lwt.return_unit
+           let%lwt dep_module = match DependencyGraph.lookup_module graph resolved with
+             | None ->
+               let ctx = { ctx with stack = req :: ctx.stack } in
+               let%lwt m = read_module ~ctx ~cache ~from_module:(Some m) resolved in
+               process ctx graph m
+             | Some m ->
+               Lwt.return m
+           in
+           DependencyGraph.add_dependency ~kind graph m (req, dep_module.location);
+           Lwt.return_unit
         )
-        m.resolved_dependencies
+        dependencies
     in
+    let%lwt () = update_graph ~kind:`Static m.static_dependencies in
+    let%lwt () = update_graph ~kind:`Dynamic m.dynamic_dependencies in
     Lwt.return m
   in
 
-  (* emit required runtime *)
-  let emit_runtime out prefix entry_id =
-    Lwt_io.write out
-    @@ Printf.sprintf
-"
-// This function is a modified version of the one created by the Webpack project
-global = window;
-process = { env: {} };
-%s(function(modules) {
-  // The module cache
-  var installedModules = {};
-
-  // The require function
-  function __fastpack_require__(moduleId) {
-
-    // Check if module is in cache
-    if(installedModules[moduleId]) {
-      return installedModules[moduleId].exports;
-    }
-    // Create a new module (and put it into the cache)
-    var module = installedModules[moduleId] = {
-      id: moduleId,
-      l: false,
-      exports: {}
-    };
-
-    // Execute the module function
-    modules[moduleId].call(
-      module.exports,
-      module,
-      module.exports,
-      __fastpack_require__,
-      __fastpack_import__
-    );
-
-    // Flag the module as loaded
-    module.l = true;
-
-    // Return the exports of the module
-    return module.exports;
-  }
-
-  function __fastpack_import__(moduleId) {
-    if (!window.Promise) {
-      throw 'window.Promise is undefined, consider using a polyfill';
-    }
-    return new Promise(function(resolve, reject) {
-      try {
-        resolve(__fastpack_require__(moduleId));
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
-
-  __fastpack_require__.m = modules;
-  __fastpack_require__.c = installedModules;
-  __fastpack_require__.omitDefault = function(moduleVar) {
-    var keys = Object.keys(moduleVar);
-    var ret = {};
-    for(var i = 0, l = keys.length; i < l; i++) {
-      var key = keys[i];
-      if (key !== 'default') {
-        ret[key] = moduleVar[key];
-      }
-    }
-    return ret;
-  }
-  return __fastpack_require__(__fastpack_require__.s = '%s');
-})
-" prefix entry_id
-  in
-
-  let emitted_modules = ref (MLSet.empty) in
-  let emit graph entry =
-    let emit bytes = Lwt_io.write output_channel bytes in
-    let dep_map = DependencyGraph.to_dependency_map graph in
-    let rec emit_module (m : Module.t) =
-      if MLSet.mem m.location !emitted_modules
-      then Lwt.return_unit
-      else begin
-        emitted_modules := MLSet.add m.location !emitted_modules;
-        let%lwt () = emit_module_files ctx m in
-        let workspace = m.Module.workspace in
-        let dependencies = DependencyGraph.lookup_dependencies graph m in
-        let%lwt () =
-          Lwt_list.iter_s
-            (fun (_, m) ->
-               match m with
-               | None -> Lwt.return_unit
-               | Some m -> emit_module m
-            )
-            dependencies
-        in
-        let%lwt () =
-          m.id
-          |> Printf.sprintf "\"%s\": function(module, exports, __fastpack_require__, __fastpack_import__) {\n"
-          |> emit
-        in
-        let%lwt () = emit "eval(\"" in
-        let%lwt content =
-          Workspace.write
-            ~output_channel
-            ~workspace
-            ~ctx:(m, dep_map) in
-        let%lwt () =
-          Module.location_to_string ~base_dir:(Some ctx.current_dir) m.location
-          |> Printf.sprintf "\\n//# sourceURL=fpack:///%s\");"
-          |> emit
-        in
-        let m = { m with state = Module.Analyzed } in
-        let () =
-          match m.location with
-          | Module.File _ ->
-            cache.modify_content m content
-          | _ ->
-            ()
-        in
-        let () =
-          match m.workspace.Workspace.modifier with
-          | None -> ()
-          | Some _ ->
-            DependencyGraph.add_module
-              graph
-              { m with workspace = Workspace.of_string content }
-        in
-        let%lwt () = emit "\n},\n" in
-        Lwt.return_unit
-      end
-    in
-
-    let export =
-      match ctx.target with
-      | Target.CommonJS ->
-        "module.exports = "
-      | _ ->
-        ""
-    in
-
-    let%lwt () = emit_runtime output_channel export entry.Module.id in
-    let%lwt () = emit "({\n" in
-    let%lwt _ = emit_module entry in
-    let%lwt () = emit "\n});\n" in
-    Lwt.return_unit
-  in
-
-  let {Context. entry_location; current_location; _ } = ctx in
+  let {Context. current_location; _ } = ctx in
   let%lwt entry = read_module ~ctx ~cache current_location in
   let%lwt _ = process ctx ctx.graph entry in
-  let entry_location_str = Module.location_to_string entry_location in
-  let global_entry =
-    match DependencyGraph.lookup_module ctx.graph entry_location_str with
-    | Some m -> m
-    | None -> Error.ie (entry_location_str ^ " not found in the graph")
-  in
-  let%lwt _ = emit ctx.graph global_entry in
-  let emitted_modules =
-    Module.LocationSet.fold
-      (fun location acc ->
-        StringSet.add (Module.location_to_string location) acc
-      )
-      !emitted_modules
-      StringSet.empty
-  in
-
-  Lwt.return {
-    Reporter.
-    graph = DependencyGraph.cleanup ctx.graph emitted_modules;
-    size = Lwt_io.position output_channel |> Int64.to_int
-  }
+  Lwt.return_unit
