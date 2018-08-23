@@ -6,8 +6,7 @@ var outputDir = process.argv[2];
 var projectRoot = process.argv[3];
 var stdin = process.stdin;
 
-module.paths = [].concat(
-  process
+module.paths = process
     .cwd()
     // collect self and parents
     .split(path.sep)
@@ -17,9 +16,8 @@ module.paths = [].concat(
     // sort from the deepest to the root
     .reverse()
     // exclude paths outside of project root
-    .filter(item => item.includes(projectRoot)),
-  module.paths
-);
+    .filter(item => item.includes(projectRoot))
+    .concat(module.paths);
 
 var fromFile = path.join(process.cwd(), "noop.js");
 function resolve(request) {
