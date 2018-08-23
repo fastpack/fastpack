@@ -24,6 +24,7 @@ type options = {
   mode : Mode.t;
   mock : (string * Resolver.Mock.t) list;
   node_modules_paths : string list;
+  project_root_path : string;
   resolve_extension : string list;
   target : Target.t;
   cache : Cache.strategy;
@@ -72,14 +73,20 @@ let prepare_and_pack options start_time =
   (* TODO: also cleanup the directory before emitting, maybe? *)
   let%lwt () = FS.makedirs output_dir in
 
+  (* project_root *)
+  let project_root = FastpackUtil.FS.abs_path
+    current_dir
+    options.project_root_path
+  in
+
   (* preprocessor *)
   let%lwt preprocessor =
     Preprocessor.make
-      options.preprocess
-      current_dir
-      output_dir
+      ~configs: options.preprocess
+      ~project_root
+      ~current_dir
+      ~output_dir
   in
-
 
   (* cache & cache reporting *)
   let%lwt cache, cache_report =
@@ -131,6 +138,7 @@ let prepare_and_pack options start_time =
     in
     let resolver =
       Resolver.make
+        ~project_root
         ~current_dir
         ~mock:(options.mock)
         ~node_modules_paths:(options.node_modules_paths)
@@ -140,6 +148,7 @@ let prepare_and_pack options start_time =
     in
     let ctx = {
       Context.
+      project_root;
       current_dir;
       project_package;
       output_dir;

@@ -11,6 +11,7 @@ let () =
         mode
         mock
         node_modules_paths
+        project_root_path
         resolve_extension
         target
         cache
@@ -33,6 +34,7 @@ let () =
             mode;
             mock = (List.map snd mock);
             node_modules_paths;
+            project_root_path;
             resolve_extension;
             target;
             cache;
@@ -104,6 +106,15 @@ let () =
       in
       let docv = "PATH" in
       Arg.(value & opt_all string ["node_modules"] & info ["nm"; "node-modules"] ~docv ~doc)
+    in
+
+    let project_root_path_t =
+      let doc =
+        "Ancestor to which node_modules will be resolved."
+        ^ ". Defaults to '.'"
+      in
+      let docv = "PATH" in
+      Arg.(value & opt string "." & info ["project-root"] ~docv ~doc)
     in
 
     let mock_t =
@@ -223,6 +234,7 @@ let () =
         $ mode_t
         $ mock_t
         $ node_modules_path_t
+        $ project_root_path_t
         $ resolve_extension_t
         $ target_t
         $ cache_t

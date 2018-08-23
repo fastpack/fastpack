@@ -48,6 +48,10 @@ let location_to_string ?(base_dir=None) location =
   match location with
   | Main _ ->
     "$fp$main"
+  | EmptyModule ->
+    "$fp$empty"
+  | Runtime ->
+    "$fp$runtime"
   | File { filename; preprocessors; _ } ->
     let preprocessors =
       preprocessors
@@ -64,10 +68,6 @@ let location_to_string ?(base_dir=None) location =
       | None -> ""
     in
     if preprocessors <> "" then preprocessors ^ "!" ^ filename else filename
-  | EmptyModule ->
-    "$fp$empty"
-  | Runtime ->
-    "$fp$runtime"
 
 module CM = Map.Make(Char)
 

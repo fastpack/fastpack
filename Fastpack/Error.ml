@@ -131,7 +131,8 @@ let to_string package_dir error =
       "%s is out of the working directory\n"
       filename
 
-  | CannotResolveModule (_, dep) ->
+  (* TODO: rework this a little *)
+  | CannotResolveModule (msg, dep) ->
     let isTTY = FastpackUtil.FS.isatty Unix.stderr in
     let (error_title, error_path) = format_error_header ~isTTY ~subtitle: ("cannot resolve '" ^ dep.request ^ "'") (
         "Module resolution error:",
@@ -139,7 +140,7 @@ let to_string package_dir error =
       )
     in
     (match List.assoc_opt dep.request nodelibs with
-     | None -> String.concat "\n" [ error_title; error_path; ]
+     | None -> String.concat "\n" [ error_title; error_path; msg]
      | Some None -> String.concat "\n" [
          error_title;
          error_path;

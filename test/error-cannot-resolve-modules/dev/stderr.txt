@@ -1,3 +1,14 @@
 
 Module resolution error: cannot resolve './c'
 /.../test/error-cannot-resolve-modules/index.js
+Cannot resolve module
+  Resolving './c'. Base directory: '/.../test/error-cannot-resolve-modules'
+  Resolving '/.../test/error-cannot-resolve-modules/c'.
+  File exists? '/.../test/error-cannot-resolve-modules/c'
+  ...no.
+  File exists? '/.../test/error-cannot-resolve-modules/c.js'
+  ...no.
+  File exists? '/.../test/error-cannot-resolve-modules/c.json'
+  ...no.
+  Is directory? '/.../test/error-cannot-resolve-modules/c'
+  ...no.

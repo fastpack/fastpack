@@ -47,6 +47,7 @@ let resolve
       let%lwt cache = Fastpack.Cache.(create Memory) in
       let { resolve } =
         make
+          ~project_root:current_dir
           ~current_dir
           ~mock
           ~node_modules_paths
@@ -414,7 +415,13 @@ let%expect_test "preprocessors: configured only" =
 
 let%expect_test "preprocessors: configured and specified" =
   let config = "\\.js$:browser-shim?x=1!browser-entry-point" in
-  let preprocessor = Lwt_main.run(Preprocessor.(make [of_string config] test_path ".")) in
+  let preprocessor = Lwt_main.run(Preprocessor.(
+      make ~configs:[of_string config]
+        ~project_root:test_path
+        ~current_dir:test_path
+        ~output_dir:"."
+    ))
+  in
   resolve ~preprocessor "dependency?k=v&a=b!./fs!./index";
   [%expect_exact {|
 ((File
@@ -436,7 +443,13 @@ let%expect_test "preprocessors: configured and specified" =
 
 let%expect_test "preprocessors: ignore configured processors" =
   let config = "\\.js$:browser-shim?x=1!browser-entry-point" in
-  let preprocessor = Lwt_main.run(Preprocessor.(make [of_string config] test_path ".")) in
+  let preprocessor = Lwt_main.run(Preprocessor.(
+      make ~configs:[of_string config]
+        ~project_root:test_path
+        ~current_dir:test_path
+        ~output_dir:"."
+    ))
+  in
   resolve ~preprocessor "!dependency?k=v&a=b!./fs!./index";
   [%expect_exact {|
 ((File
@@ -450,7 +463,13 @@ let%expect_test "preprocessors: ignore configured processors" =
 
 let%expect_test "preprocessors: error" =
   let config = "\\.js$:browser-shim?x=1!browser-entry-point" in
-  let preprocessor = Lwt_main.run(Preprocessor.(make [of_string config] test_path ".")) in
+  let preprocessor = Lwt_main.run(Preprocessor.(
+      make ~configs:[of_string config]
+        ~project_root:test_path
+        ~current_dir:test_path
+        ~output_dir:"."
+    ))
+  in
   resolve ~preprocessor "dependency-not-found?k=v&a=b!./fs!./index";
   [%expect_exact {|
 Cannot find package path

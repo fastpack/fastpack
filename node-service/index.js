@@ -2,8 +2,24 @@ var path = require("path");
 var fs = require("fs");
 var Module = require("module");
 
-module.paths.unshift(path.join(process.cwd(), "node_modules"));
-module.paths.unshift(process.cwd());
+var outputDir = process.argv[2];
+var projectRoot = process.argv[3];
+var stdin = process.stdin;
+
+module.paths = [].concat(
+  process
+    .cwd()
+    // collect self and parents
+    .split(path.sep)
+    .map((_, index, array) => array.slice(0, index + 1))
+    // append node_modules to each path
+    .map(chunks => [...chunks, "node_modules"].join(path.sep))
+    // sort from the deepest to the root
+    .reverse()
+    // exclude paths outside of project root
+    .filter(item => item.includes(projectRoot)),
+  module.paths
+);
 
 var fromFile = path.join(process.cwd(), "noop.js");
 function resolve(request) {
@@ -49,7 +65,7 @@ function load(message) {
   var source = message.source || null;
 
   try {
-    if(!rootContext) {
+    if (!rootContext) {
       throw "rootContext is not provided";
     }
 
@@ -139,9 +155,7 @@ function load(message) {
   }
 }
 
-var outputDir = process.argv[2],
-  stdin = process.stdin,
-  rest = "";
+var rest = "";
 
 var writeOrig = process.stdout.write.bind(process.stdout);
 process.stdout.write = function() {};

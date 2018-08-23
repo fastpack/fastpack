@@ -110,7 +110,7 @@ module NodeServer = struct
   let fp_in_ch = ref Lwt_io.zero
   let fp_out_ch = ref Lwt_io.null
 
-  let start output_dir =
+  let start project_root output_dir =
     let module FS = FastpackUtil.FS in
     let fpack_binary_path =
       (* TODO: handle on Windows? *)
@@ -132,9 +132,10 @@ module NodeServer = struct
       find_fpack_root @@ FilePath.dirname fpack_binary_path
     in
     let cmd =
-      Printf.sprintf "node %s %s"
+      Printf.sprintf "node %s %s %s"
         (List.fold_left FilePath.concat fpack_root ["node-service"; "index.js"])
         output_dir
+        project_root
     in
     let%lwt (process, ch_in, ch_out) = FS.open_process cmd in
     fp_in_ch := ch_in;
@@ -142,9 +143,12 @@ module NodeServer = struct
     processes := [process];
     Lwt.return_unit
 
-  let process project_dir output_dir loaders filename source =
+  let process ~project_root ~current_dir ~output_dir ~loaders ~filename source =
     let%lwt () =
-      if (List.length !processes) = 0 then start output_dir else Lwt.return_unit;
+      if (List.length !processes) = 0 then
+        start project_root output_dir
+      else
+        Lwt.return_unit;
     in
     (* Do not pass binary data through the channel *)
     let source =
@@ -156,7 +160,7 @@ module NodeServer = struct
     let to_json_string s = `String s in
     let message =
       `Assoc [
-        ("rootContext", `String project_dir);
+        ("rootContext", `String current_dir);
         ("loaders", `List (List.map to_json_string loaders));
         ("filename", CCOpt.map_or ~default:(`Null) to_json_string filename);
         ("source", CCOpt.map_or ~default:(`Null) to_json_string source)
@@ -192,7 +196,7 @@ module NodeServer = struct
 
 end
 
-let make configs project_dir output_dir =
+let make ~configs ~project_root ~current_dir ~output_dir =
 
   let processors = ref M.empty in
 
@@ -200,7 +204,7 @@ let make configs project_dir output_dir =
     match M.get filename !processors with
     | Some processors -> processors
     | None ->
-      let relname = FS.relative_path project_dir filename in
+      let relname = FS.relative_path current_dir filename in
       let p =
         configs
         |> List.fold_left
@@ -248,7 +252,13 @@ let make configs project_dir output_dir =
           | _ ->
             make_chain
               rest
-              ((NodeServer.process project_dir output_dir loaders filename) :: chain)
+              ((NodeServer.process
+                ~project_root
+                ~current_dir
+                ~output_dir
+                ~loaders
+                ~filename
+              ) :: chain)
       in
       let preprocessors =
         List.map
