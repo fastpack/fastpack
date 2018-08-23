@@ -1,6 +1,7 @@
 #!/bin/bash
 
 declare -a skip=(
+"pack-error-no-same-name-reexport/dev.sh" # enable this one when error is properly reported
 "cache-reporting/stdout.sh"
 "error-cannot-find-exported-name/prod.sh"
 "error-dependency-cycle/prod.sh"
