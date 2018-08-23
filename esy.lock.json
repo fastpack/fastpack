@@ -1,7 +1,21 @@
 {
-  "hash": "ef3018f30cbb68b67a23f1b81d21b938",
+  "hash": "54e4db80ce43c3163141092aecdbcf64",
   "root": "fastpack@path:.",
   "node": {
+    "refmterr@3.1.7": {
+      "record": {
+        "name": "refmterr",
+        "version": "3.1.7",
+        "source":
+          "archive:https://registry.npmjs.org/refmterr/-/refmterr-3.1.7.tgz#sha1:fdd6a58e212b18c6a0685ff21f27a7df6621b3e8",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": [
+        "@esy-ocaml/reason@3.3.3", "@opam/jbuilder@opam:transition",
+        "@opam/re@opam:1.7.1"
+      ]
+    },
     "ocaml@4.6.4": {
       "record": {
         "name": "ocaml",
@@ -22,7 +36,8 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.0", "@opam/cmdliner@opam:1.0.2",
+        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/reason@3.3.3",
+        "@esy-ocaml/rtop@3.3.0", "@opam/cmdliner@opam:1.0.2",
         "@opam/containers@opam:1.3", "@opam/fileutils@opam:0.5.3",
         "@opam/fmt@opam:0.8.5", "@opam/jbuilder@opam:transition",
         "@opam/logs@opam:0.6.2", "@opam/lwt@opam:3.3.0",
@@ -31,7 +46,7 @@
         "@opam/ppx_let@opam:v0.11.0", "@opam/re@opam:1.7.1",
         "@opam/sedlex@opam:1.99.4", "@opam/sequence@opam:1.1",
         "@opam/utop@opam:2.2.0", "@opam/wtf8@opam:1.0.1",
-        "@opam/yojson@opam:1.4.0", "ocaml@4.6.4"
+        "@opam/yojson@opam:1.4.0", "ocaml@4.6.4", "refmterr@3.1.7"
       ]
     },
     "@opam/zed@opam:1.6": {
@@ -763,14 +778,14 @@
         ],
         "files": [
           {
-            "name": "ocamlfind.install",
-            "content":
-              "bin: [\n  \"src/findlib/ocamlfind\" {\"ocamlfind\"}\n  \"?src/findlib/ocamlfind_opt\" {\"ocamlfind\"}\n  \"?tools/safe_camlp4\"\n]\ntoplevel: [\"src/findlib/topfind\"]\n"
-          },
-          {
             "name": "ocaml-stub",
             "content":
               "#!/bin/sh\n\nBINDIR=$(dirname \"$(command -v ocamlc)\")\n\"$BINDIR/ocaml\" -I \"$OCAML_TOPLEVEL_PATH\" \"$@\"\n"
+          },
+          {
+            "name": "ocamlfind.install",
+            "content":
+              "bin: [\n  \"src/findlib/ocamlfind\" {\"ocamlfind\"}\n  \"?src/findlib/ocamlfind_opt\" {\"ocamlfind\"}\n  \"?tools/safe_camlp4\"\n]\ntoplevel: [\"src/findlib/topfind\"]\n"
           },
           {
             "name": "_esy/build",
@@ -867,6 +882,28 @@
         "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition"
       ]
     },
+    "@opam/merlin-extend@opam:0.3": {
+      "record": {
+        "name": "@opam/merlin-extend",
+        "version": "opam:0.3",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/merlin-extend.0.3+opam.tar.gz#md5:5bc02f7e256c5a2e99e8dc01b26b81c2",
+          "archive:https://github.com/let-def/merlin-extend/archive/v0.3.tar.gz#md5:9c6dfd4f53328f02f12fcc265f4e2dda"
+        ],
+        "files": [],
+        "opam": {
+          "name": "merlin-extend",
+          "version": "0.3",
+          "opam":
+            "opam-version: \"1.2\"\nmaintainer: \"Frederic Bour <frederic.bour@lakaban.net>\"\nauthors: \"Frederic Bour <frederic.bour@lakaban.net>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/let-def/merlin-extend\"\nbug-reports: \"https://github.com/let-def/merlin-extend\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"cppo\" {build}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: make\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"merlin_extend\"]\ndev-repo: \"git+https://github.com/let-def/merlin-extend.git\"",
+          "override": null
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.4",
+        "@opam/ocamlfind@opam:1.8.0"
+      ]
+    },
     "@opam/merlin@opam:3.1.0": {
       "record": {
         "name": "@opam/merlin",
@@ -887,6 +924,28 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/ocamlfind@opam:1.8.0",
         "@opam/yojson@opam:1.4.0"
+      ]
+    },
+    "@opam/menhir@opam:20170607": {
+      "record": {
+        "name": "@opam/menhir",
+        "version": "opam:20170607",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/menhir.20170607+opam.tar.gz#md5:aad332baa558bd26202cebc2b1b84a0b",
+          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20170607.tar.gz#md5:993b60845182c71d777b1f3cf9a01b96"
+        ],
+        "files": [],
+        "opam": {
+          "name": "menhir",
+          "version": "20170607",
+          "opam":
+            "opam-version: \"1.2\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"4.02\"\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"",
+          "override": null
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
+        "@opam/ocamlfind@opam:1.8.0"
       ]
     },
     "@opam/lwt_react@opam:1.1.1": {
@@ -1386,6 +1445,39 @@
         "opam": null
       },
       "dependencies": []
+    },
+    "@esy-ocaml/rtop@3.3.0": {
+      "record": {
+        "name": "@esy-ocaml/rtop",
+        "version": "3.3.0",
+        "source":
+          "archive:https://registry.npmjs.org/@esy-ocaml/rtop/-/rtop-3.3.0.tgz#sha1:f75ec07498a32f3fd029851975fa5b49fb9dcac4",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": [
+        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/reason@3.3.3",
+        "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
+        "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3",
+        "@opam/utop@opam:2.2.0"
+      ]
+    },
+    "@esy-ocaml/reason@3.3.3": {
+      "record": {
+        "name": "@esy-ocaml/reason",
+        "version": "3.3.3",
+        "source":
+          "archive:https://registry.npmjs.org/@esy-ocaml/reason/-/reason-3.3.3.tgz#sha1:cd4c673504f7217a11a77089b021b5ba9ed1f744",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": [
+        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
+        "@opam/jbuilder@opam:transition", "@opam/menhir@opam:20170607",
+        "@opam/merlin-extend@opam:0.3",
+        "@opam/ocaml-migrate-parsetree@opam:1.0.11",
+        "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3"
+      ]
     },
     "@esy-ocaml/esy-installer@0.0.0": {
       "record": {
