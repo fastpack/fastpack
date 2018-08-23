@@ -6,16 +6,20 @@ var outputDir = process.argv[2];
 var projectRoot = process.argv[3];
 var stdin = process.stdin;
 
-module.paths = process.cwd()
-  // collect self and parents
-  .split(path.sep)
-  .map((_, index, array) => array.slice(0, index + 1))
-  // append node_modules to each path
-  .map(chunks => [...chunks, 'node_modules'].join(path.sep))
-  // sort from the deepest to the root
-  .reverse()
-  // exclude paths outside of project root
-  .filter(item => item.includes(projectRoot))
+module.paths = [].concat(
+  process
+    .cwd()
+    // collect self and parents
+    .split(path.sep)
+    .map((_, index, array) => array.slice(0, index + 1))
+    // append node_modules to each path
+    .map(chunks => [...chunks, "node_modules"].join(path.sep))
+    // sort from the deepest to the root
+    .reverse()
+    // exclude paths outside of project root
+    .filter(item => item.includes(projectRoot)),
+  module.paths
+);
 
 var fromFile = path.join(process.cwd(), "noop.js");
 function resolve(request) {
@@ -27,7 +31,7 @@ function resolve(request) {
 }
 
 function handleError(e) {
-  var message = (e.message || e + "");
+  var message = e.message || e + "";
   var name = e.name || "UnknownError";
   var stack = e.stack || null;
   return { name: name, message: message, stack: stack };
@@ -61,7 +65,7 @@ function load(message) {
   var source = message.source || null;
 
   try {
-    if(!rootContext) {
+    if (!rootContext) {
       throw "rootContext is not provided";
     }
 
