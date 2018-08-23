@@ -141,14 +141,14 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
 type reason =
   | CannotReadModule(string)
   | CannotLeavePackageDir(string)
-  | CannotResolveModule((string, Module.Dependency.t))
+  | CannotResolveModule(string, Module.Dependency.t)
   | CannotParseFile(
       (string, list((Loc.t, FlowParser.Parse_error.t)), string),
     )
-  | NotImplemented((option(Loc.t), string))
-  | CannotRenameModuleBinding((Loc.t, string, Module.Dependency.t))
+  | NotImplemented(option(Loc.t), string)
+  | CannotRenameModuleBinding(Loc.t, string, Module.Dependency.t)
   | DependencyCycle(list(string))
-  | CannotFindExportedName((string, string))
+  | CannotFindExportedName(string, string)
   | ScopeError(Scope.reason)
   | PreprocessorError(string)
   | UnhandledCondition(string)
@@ -175,7 +175,7 @@ let to_string = (package_dir, error) =>
     Printf.sprintf("%s is out of the working directory\n", filename)
 
   /* TODO: rework this a little */
-  | CannotResolveModule((msg, dep)) =>
+  | CannotResolveModule(msg, dep) =>
     let isTTY = FastpackUtil.FS.isatty(Unix.stderr);
     let (error_title, error_path) =
       format_error_header(
@@ -249,7 +249,7 @@ let to_string = (package_dir, error) =>
       ],
     );
 
-  | NotImplemented((some_loc, message)) =>
+  | NotImplemented(some_loc, message) =>
     let loc =
       switch (some_loc) {
       | Some(loc) => loc_to_string(loc) ++ " "
@@ -258,7 +258,7 @@ let to_string = (package_dir, error) =>
 
     loc ++ message;
 
-  | CannotRenameModuleBinding((loc, id, dep)) =>
+  | CannotRenameModuleBinding(loc, id, dep) =>
     Printf.sprintf(
       "Cannot rename module binding:\n%s %s\nImport Request: %s\nTypically, it means that you are trying to use the name before importing it in\nthe code.\n",
       loc_to_string(loc),
@@ -274,7 +274,7 @@ let to_string = (package_dir, error) =>
       filenames,
     )
 
-  | CannotFindExportedName((name, location_str)) =>
+  | CannotFindExportedName(name, location_str) =>
     Printf.sprintf(
       "Cannot find exported name '%s' in module '%s'\n",
       name,

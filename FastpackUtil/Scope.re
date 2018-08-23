@@ -41,12 +41,12 @@ type exports = {
 }
 and export =
   | Default
-  | Own((string, binding))
+  | Own(string, binding)
   | ReExport(import)
   | ReExportNamespace(string);
 
 type reason =
-  | NamingCollision((string, Loc.t, Loc.t))
+  | NamingCollision(string, Loc.t, Loc.t)
   | PreviouslyUndefinedExport(string);
 
 exception ScopeError(reason);
@@ -62,7 +62,7 @@ let error_to_string = (error: reason) => {
     );
 
   switch (error) {
-  | NamingCollision((name, loc, prev_loc)) =>
+  | NamingCollision(name, loc, prev_loc) =>
     Printf.sprintf(
       "Naming Collision: name '%s' at %s is already defined at %s\n",
       name,
@@ -182,7 +182,7 @@ let update_bindings = (loc, name, typ, shorthand, bindings: M.t(binding)) =>
     M.add(name, {exported: None, loc, typ, shorthand}, bindings)
   | (Some({typ: Var, _}), Function) => bindings
   | (Some({loc: prev_loc, _}), _) =>
-    raise @@ ScopeError(NamingCollision((name, loc, prev_loc)))
+    raise @@ ScopeError(NamingCollision(name, loc, prev_loc))
   };
 
 let names_of_node = ((_, node): S.t(Loc.t)) => {
@@ -369,8 +369,7 @@ let of_function_block = stmts => {
                exports :=
                  {
                    ...exports^,
-                   names:
-                     M.add(remote, Own((name, binding)), exports^.names),
+                   names: M.add(remote, Own(name, binding), exports^.names),
                  }
              };
            },

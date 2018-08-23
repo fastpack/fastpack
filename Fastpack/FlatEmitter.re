@@ -36,7 +36,7 @@ let run = (ctx: Context.t, _output_channel) => {
     let chain =
       try (DependencyGraph.get_static_chain(graph, entry_module)) {
       | DependencyGraph.Cycle(filenames) =>
-        raise(Context.PackError((ctx, DependencyCycle(filenames))))
+        raise(Context.PackError(ctx, DependencyCycle(filenames)))
       };
 
     let%lwt () =

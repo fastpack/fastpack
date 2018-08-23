@@ -33,9 +33,7 @@ let resolve = (ctx: Context.t, request: Module.Dependency.t) => {
     () => ctx.resolver.resolve(~basedir, request.request),
     fun
     | Resolver.Error(path) =>
-      Lwt.fail(
-        Context.PackError((ctx, CannotResolveModule((path, request)))),
-      )
+      Lwt.fail(Context.PackError(ctx, CannotResolveModule(path, request)))
     | exn => raise(exn),
   );
 };
@@ -154,7 +152,7 @@ let read_module =
           let%lwt _ =
             if (!FilePath.is_subdir(filename, ctx.project_root)) {
               Lwt.fail(
-                Context.PackError((ctx, CannotLeavePackageDir(filename))),
+                Context.PackError(ctx, CannotLeavePackageDir(filename)),
               );
             } else {
               Lwt.return_unit;
@@ -165,9 +163,7 @@ let read_module =
               () => cache.get_file(filename),
               fun
               | Cache.FileDoesNotExist(filename) =>
-                Lwt.fail(
-                  Context.PackError((ctx, CannotReadModule(filename))),
-                )
+                Lwt.fail(Context.PackError(ctx, CannotReadModule(filename)))
               | exn => raise(exn),
             );
 
@@ -202,16 +198,16 @@ let read_module =
                 | None => ""
                 };
               Lwt.fail(
-                Context.PackError((
+                Context.PackError(
                   ctx,
                   CannotParseFile((location_str, args, src)),
-                )),
+                ),
               );
             }
           | Preprocessor.Error(message) =>
-            Lwt.fail(Context.PackError((ctx, PreprocessorError(message))))
+            Lwt.fail(Context.PackError(ctx, PreprocessorError(message)))
           | FastpackUtil.Error.UnhandledCondition(message) =>
-            Lwt.fail(Context.PackError((ctx, UnhandledCondition(message))))
+            Lwt.fail(Context.PackError(ctx, UnhandledCondition(message)))
           | exn => Lwt.fail(exn),
         );
 
@@ -248,14 +244,14 @@ let build = (ctx: Context.t) => {
   let%lwt () =
     if (ctx.Context.target == Target.ESM) {
       Lwt.fail(
-        Context.PackError((
+        Context.PackError(
           ctx,
-          NotImplemented((
+          NotImplemented(
             None,
             "EcmaScript6 target is not supported "
             ++ "for the regular packer - use flat\n",
-          )),
-        )),
+          ),
+        ),
       );
     } else {
       Lwt.return_unit;
@@ -311,9 +307,7 @@ let build = (ctx: Context.t) => {
       switch (Module.DependencyMap.get(dep, dep_map)) {
       | Some(m) => m
       | None =>
-        raise(
-          Context.PackError((ctx, CannotResolveModule((dep.request, dep)))),
-        )
+        raise(Context.PackError(ctx, CannotResolveModule(dep.request, dep)))
       };
 
     let rec avoid_name_collision = (~n=0, name) => {
@@ -404,10 +398,7 @@ let build = (ctx: Context.t) => {
           );
 
         raise(
-          Context.PackError((
-            ctx,
-            CannotFindExportedName((name, location_str)),
-          )),
+          Context.PackError(ctx, CannotFindExportedName(name, location_str)),
         );
       };
 
@@ -920,13 +911,13 @@ let build = (ctx: Context.t) => {
               | FlowParser.Parse_error.Error(args) =>
                 let location_str = Module.location_to_string(m.location);
                 raise(
-                  Context.PackError((
+                  Context.PackError(
                     ctx,
                     CannotParseFile((location_str, args, source)),
-                  )),
+                  ),
                 );
               | Scope.ScopeError(reason) =>
-                raise(Context.PackError((ctx, ScopeError(reason))))
+                raise(Context.PackError(ctx, ScopeError(reason)))
               }
             );
 

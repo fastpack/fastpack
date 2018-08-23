@@ -197,14 +197,14 @@ let prepare_and_pack = (options, start_time) => {
           switch (options.mode) {
           | Mode.Production =>
             raise(
-              PackError((
+              PackError(
                 ctx,
-                NotImplemented((
+                NotImplemented(
                   None,
                   "Production build is not implemented yet"
                   ++ "\nUse `--development` for now",
-                )),
-              )),
+                ),
+              ),
             )
           | Mode.Test
           | Mode.Development => ScopedEmitter.emit(ctx)
@@ -219,7 +219,7 @@ let prepare_and_pack = (options, start_time) => {
         Lwt.return_ok(ctx);
       },
       fun
-      | PackError((ctx, error)) => {
+      | PackError(ctx, error) => {
           let%lwt () = report_error(~ctx, ~error);
           if (initial) {
             raise(ExitError(""));

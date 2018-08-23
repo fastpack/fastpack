@@ -49,7 +49,7 @@ let to_string = ({current_dir, stack, mode, current_location, _}) => {
      );
 };
 
-exception PackError((t, Error.reason));
+exception PackError(t, Error.reason);
 exception ExitError(string);
 exception ExitOK;
 
