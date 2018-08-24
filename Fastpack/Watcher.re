@@ -77,6 +77,7 @@ let start_watchman = root => {
 
   let cmd = "watchman --no-save-state -j --no-pretty -p";
   let%lwt (started_process, ch_in, ch_out) = FS.open_process(cmd);
+  /* TODO: validate if process is started at all */
   let%lwt () = Lwt_io.write(ch_out, subscribe_message ++ "\n");
   let%lwt _ = Lwt_io.read_line(ch_in);
   /* TODO: validate answer */

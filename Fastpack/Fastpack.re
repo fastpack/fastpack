@@ -11,34 +11,18 @@ module Resolver = Resolver;
 module Preprocessor = Preprocessor;
 module Reporter = Reporter;
 module Watcher = Watcher;
+module CommonOptions = CommonOptions;
 
 exception PackError = Context.PackError;
 exception ExitError = Context.ExitError;
 exception ExitOK = Context.ExitOK;
 
-type options = {
-  entry_points: list(string),
-  output_directory: string,
-  output_filename: string,
-  mode: Mode.t,
-  mock: list((string, Resolver.Mock.t)),
-  node_modules_paths: list(string),
-  project_root_path: string,
-  resolve_extension: list(string),
-  target: Target.t,
-  cache: Cache.strategy,
-  preprocess: list(Preprocessor.config),
-  postprocess: list(string),
-  report: Reporter.report,
-  watch: bool,
-};
-
-let prepare_and_pack = (options, start_time) => {
+let prepare_and_pack = (options: CommonOptions.t, start_time) => {
   let%lwt current_dir = Lwt_unix.getcwd();
 
   /* entry points */
   let%lwt entry_points =
-    options.entry_points
+    options.entryPoints
     |> Lwt_list.map_p(entry_point => {
          let abs_path = FS.abs_path(current_dir, entry_point);
          switch%lwt (FS.stat_option(abs_path)) {
@@ -52,8 +36,8 @@ let prepare_and_pack = (options, start_time) => {
 
   /* output directory & output filename */
   let (output_dir, output_file) = {
-    let output_dir = FS.abs_path(current_dir, options.output_directory);
-    let output_file = FS.abs_path(output_dir, options.output_filename);
+    let output_dir = FS.abs_path(current_dir, options.outputDir);
+    let output_file = FS.abs_path(output_dir, options.outputFilename);
     let output_file_parent_dir = FilePath.dirname(output_file);
     if (output_dir == output_file_parent_dir
         || FilePath.is_updir(output_dir, output_file_parent_dir)) {
@@ -78,7 +62,7 @@ let prepare_and_pack = (options, start_time) => {
 
   /* project_root */
   let project_root =
-    FastpackUtil.FS.abs_path(current_dir, options.project_root_path);
+    FastpackUtil.FS.abs_path(current_dir, options.projectRootDir);
 
   /* preprocessor */
   let%lwt preprocessor =
@@ -138,7 +122,7 @@ let prepare_and_pack = (options, start_time) => {
 
   /* make sure resolve extensions all start with '.'*/
   let extensions =
-    options.resolve_extension
+    options.resolveExtension
     |> List.filter(ext => String.trim(ext) != "")
     |> List.map(ext =>
          switch (ext.[0]) {
@@ -165,7 +149,7 @@ let prepare_and_pack = (options, start_time) => {
         ~project_root,
         ~current_dir,
         ~mock=options.mock,
-        ~node_modules_paths=options.node_modules_paths,
+        ~node_modules_paths=options.nodeModulesPaths,
         ~extensions,
         ~preprocessor,
         ~cache,
