@@ -59,7 +59,7 @@ clean: clean-test
 # RELEASE
 #
 
-release-patch release-minor release-major:
+release-patch release-minor release-major release-prerelease:
 	@echo "[INFO]  [RELEASE] Checking if working tree is clean..."
 	@git diff-index --quiet HEAD --ignore-submodules -- \
 		|| (echo "[ERROR] [RELEASE] Working tree is dirty..." && exit 1)
@@ -68,13 +68,14 @@ release-patch release-minor release-major:
 	@sed \
 		-i '' \
 		-e "s/%%VERSION%%/$$(node -p "require('./package.json').version")/g" \
-		Fastpack/Version.ml
+		Fastpack/Version.re
 	@sed \
 		-i '' \
 		-e "s/%%COMMIT%%/$$(git log --pretty=format:'%h' -n 1)/g" \
-		Fastpack/Version.ml
+		Fastpack/Version.re
 	@$(MAKE) release-dist
-	@git checkout -- Fastpack/Version.ml
+	@git checkout -- Fastpack/Version.re
+	@cd dist && npm version --force $(@:release-%=%)
 
 release-dist:
 	@echo "[INFO]  [RELEASE] Building macOS binary release..."
@@ -90,6 +91,7 @@ release-dist:
 	@echo "[INFO]            - Go to the release directory: cd dist"
 	@echo "[INFO]            - Check that everything is ok: npm i -g ."
 	@echo "[INFO]            - Publish to npm registry: npm publish"
+	@echo "[WARN]            - or: npm publish --tag=next in case of prerelease"
 	@echo "[INFO]            - Go back: cd ../"
 	@echo "[INFO]            - Push release tag to GitHub: git push"
 
