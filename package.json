@@ -5,12 +5,11 @@
   "main": "index.js",
   "esy": {
     "build": [
-      "jbuilder build"
+      "jbuilder dune -p #{self.name}"
     ],
     "install": [
       "esy-installer Fastpack.install"
-    ],
-    "buildsInSource": "_build"
+    ]
   },
   "directories": {
     "example": "example",
@@ -40,7 +39,7 @@
     "@opam/cmdliner": "1.0.2",
     "@opam/containers": "1.3",
     "@opam/fileutils": "0.5.3",
-    "@opam/jbuilder": "*",
+    "@opam/dune": "*",
     "@opam/lwt": "3.3.0",
     "@opam/merlin": "*",
     "@opam/sequence": "*",

@@ -1,9 +1,0 @@
-(library
- ((name FastpackTest)
-  (modules (:standard))
-  (flags (:standard "-open" "Containers"))
-  (libraries (Fastpack FastpackUtil FastpackTranspiler lwt lwt.unix))
-  (inline_tests)
-  (preprocess (pps (lwt.ppx ppx_deriving.std ppx_inline_test ppx_expect)))
-  )
- )

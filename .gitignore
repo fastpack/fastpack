@@ -1,4 +1,5 @@
 node_modules/
+_release
 _build
 _install
 _esybuild
