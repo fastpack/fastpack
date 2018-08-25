@@ -1,20 +1,25 @@
-type report =
-  | JSON
-  | Text;
-
 type file = {
   name: string,
   size: int,
 };
 
-module Text = {
-  let report_ok =
+type report =
+  | JSON
+  | Text
+  | Internal(
       (
-        ~message=None,
+        ~message: option(string),
         ~start_time: float,
         ~ctx: Context.t,
-        ~files: list(file),
-      ) => {
+        ~files: list(file)
+      ) =>
+      Lwt.t(unit),
+      (~ctx: Context.t, ~error: Error.reason) => Lwt.t(unit),
+    );
+
+module Text = {
+  let report_ok =
+      (~message, ~start_time: float, ~ctx: Context.t, ~files: list(file)) => {
     /* TODO: fix next line when we report multiple files */
     let {size, _} = List.hd(files);
     let pretty_size =
@@ -42,19 +47,14 @@ module Text = {
   };
 
   let report_error = (~ctx: Context.t, ~error: Error.reason) => {
-    let error_msg = Context.string_of_error(ctx, error);
+    let error_msg = Context.stringOfError(ctx, error);
     Lwt_io.write(Lwt_io.stderr, error_msg);
   };
 };
 
 module JSON = {
   let report_ok =
-      (
-        ~message=None,
-        ~start_time: float,
-        ~ctx: Context.t,
-        ~files: list(file),
-      ) => {
+      (~message, ~start_time: float, ~ctx: Context.t, ~files: list(file)) => {
     open Yojson.Basic;
     let files =
       files
@@ -90,7 +90,7 @@ module JSON = {
 
   let report_error = (~ctx: Context.t, ~error: Error.reason) =>
     Yojson.Basic.(
-      `Assoc([("error", `String(Context.string_of_error(ctx, error)))])
+      `Assoc([("error", `String(Context.stringOfError(ctx, error)))])
       |> to_string(~std=true)
       |> (s => s ++ "\n")
       |> Lwt_io.write(Lwt_io.stderr)
@@ -100,7 +100,7 @@ module JSON = {
 type t = {
   report_ok:
     (
-      ~message: option(string)=?,
+      ~message: option(string),
       ~start_time: float,
       ~ctx: Context.t,
       ~files: list(file)
@@ -113,4 +113,5 @@ let make = (report: report) =>
   switch (report) {
   | JSON => JSON.{report_ok, report_error}
   | Text => Text.{report_ok, report_error}
+  | Internal(report_ok, report_error) => {report_ok, report_error}
   };
