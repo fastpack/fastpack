@@ -106,9 +106,20 @@ module Serve = {
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
+
+          let (broadcastToWebsocket, devserver) =
+            FastpackServe.Devserver.start(
+              ~port=3000,
+              ~output=options.outputDir,
+              ~proxyTarget=None,
+              ~proxyPath="/api",
+              ~proxyPathRewrite=None,
+              (),
+            );
+
           let report_ok =
               (
-                ~message as _message,
+                ~message,
                 ~start_time as _start_time,
                 ~ctx as _ctx,
                 ~files as _file,
@@ -116,14 +127,17 @@ module Serve = {
             /* TODO: this function is invoked when bundle is built successfully */
             print_endline("built successfully!");
             print_endline("It is good idea to ask clients to reload");
-            Lwt.return_unit;
+            switch (message) {
+            | Some(m) => broadcastToWebsocket(m)
+            | None => Lwt.return_unit
+            };
           };
 
-          let report_error = (~ctx as _ctx, ~error as _error) => {
+          let report_error = (~ctx as _ctx, ~error) => {
             /* TODO: this function is invoked when an error occured */
             print_endline("error occured!");
             print_endline("Maybe display an error?");
-            Lwt.return_unit;
+            broadcastToWebsocket("error");
           };
 
           /* TODO: maybe decouple mode from the CommonOptions ? */
@@ -147,7 +161,7 @@ module Serve = {
               | Error(_) => raise(Context.ExitError(""))
               | Ok(ctx) =>
                 /* super-functional web-server :) */
-                let server = Lwt_unix.sleep(600.);
+                let server = devserver;
                 let watcher = Watcher.watch(~ctx, ~pack);
                 Lwt.join([server, watcher]);
               },

@@ -1,0 +1,6 @@
+(jbuild_version 1)
+
+(library
+  ((name FastpackServe)
+  (public_name FastpackServe)
+  (libraries (lwt cohttp cohttp-lwt-unix websocket-lwt websocket-lwt.cohttp))))
