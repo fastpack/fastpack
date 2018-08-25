@@ -61,7 +61,7 @@ module Build = {
   let doc = "rebuild the bundle on a file change";
   let command = (
     Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("watch", ~doc, ~sdocs, ~exits),
+    Term.info("build", ~doc, ~sdocs, ~exits),
   );
 };
 
@@ -70,10 +70,10 @@ module Watch = {
     run(options.debug, () =>
       Lwt_main.run(
         {
-          /* TODO: maybe decouple mode from the CommonOptions ? */
-          let options = {...options, mode: Mode.Development};
           let start_time = Unix.gettimeofday();
-          let%lwt {Packer.pack, finalize} = Packer.make(options);
+          /* TODO: maybe decouple mode from the CommonOptions ? */
+          let%lwt {Packer.pack, finalize} =
+            Packer.make({...options, mode: Mode.Development});
 
           Lwt.finalize(
             () =>
@@ -86,7 +86,7 @@ module Watch = {
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(_) => Lwt.return_unit
+              | Ok(ctx) => Watcher.watch(~ctx, ~pack)
               },
             finalize,
           );
@@ -96,7 +96,7 @@ module Watch = {
   let doc = "build the bundle";
   let command = (
     Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("build", ~doc, ~sdocs, ~exits),
+    Term.info("watch", ~doc, ~sdocs, ~exits),
   );
 };
 
@@ -127,5 +127,5 @@ module Default = {
   );
 };
 
-let all = [Build.command, Help.command];
+let all = [Build.command, Watch.command, Help.command];
 let default = Default.command;
