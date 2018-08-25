@@ -2,6 +2,8 @@ open Cmdliner;
 
 let exits = Term.default_exits;
 let sdocs = Manpage.s_common_options;
+let version =
+  Version.(Printf.sprintf("%s (Commit: %s)", version, github_commit));
 
 let run = (debug, f) => {
   if (debug) {
@@ -58,19 +60,17 @@ module Build = {
     );
   let doc = "build the bundle";
   let command = (
-    Term.(ret (const(run) $ CommonOptions.term)),
+    Term.(ret(const(run) $ CommonOptions.term)),
     Term.info("build", ~doc, ~sdocs, ~exits),
   );
 };
 
 module Help = {
   let run = () => `Help((`Auto, None));
-  let version =
-    Version.(Printf.sprintf("%s (Commit: %s)", version, github_commit));
   let command = (
     Term.(ret(const(run) $ const())),
     Term.info(
-      "fpack",
+      "help",
       ~version,
       ~doc="Show this message and exit",
       ~sdocs,
@@ -79,5 +79,18 @@ module Help = {
   );
 };
 
+module Default = {
+  let command = (
+    fst(Build.command),
+    Term.info(
+      "fpack",
+      ~version,
+      ~doc="Pack JavaScript code into a single bundle",
+      ~sdocs,
+      ~exits,
+    ),
+  );
+};
+
 let all = [Build.command, Help.command];
-let default = Build.command;
+let default = Default.command;
