@@ -1,5 +1,3 @@
-module FS = FastpackUtil.FS;
-
 module Version = Version;
 module Error = Error;
 module Cache = Cache;
@@ -12,6 +10,7 @@ module Preprocessor = Preprocessor;
 module Reporter = Reporter;
 module Watcher = Watcher;
 module CommonOptions = CommonOptions;
+module Commands = Commands
 
 exception PackError = Context.PackError;
 exception ExitError = Context.ExitError;
