@@ -100,6 +100,70 @@ module Watch = {
   );
 };
 
+module Serve = {
+  let run = (options: CommonOptions.t) =>
+    run(options.debug, () =>
+      Lwt_main.run(
+        {
+          let start_time = Unix.gettimeofday();
+          let report_ok =
+              (
+                ~message as _message,
+                ~start_time as _start_time,
+                ~ctx as _ctx,
+                ~files as _file,
+              ) => {
+            /* TODO: this function is invoked when bundle is built successfully */
+            print_endline("built successfully!");
+            print_endline("It is good idea to ask clients to reload");
+            Lwt.return_unit;
+          };
+
+          let report_error = (~ctx as _ctx, ~error as _error) => {
+            /* TODO: this function is invoked when an error occured */
+            print_endline("error occured!");
+            print_endline("Maybe display an error?");
+            Lwt.return_unit;
+          };
+
+          /* TODO: maybe decouple mode from the CommonOptions ? */
+          let%lwt {Packer.pack, finalize} =
+            Packer.make({
+              ...options,
+              mode: Mode.Development,
+              report: Reporter.Internal(report_ok, report_error),
+            });
+
+          Lwt.finalize(
+            () =>
+              switch%lwt (
+                pack(
+                  ~graph=None,
+                  ~current_location=None,
+                  ~initial=true,
+                  ~start_time,
+                )
+              ) {
+              | Error(_) => raise(Context.ExitError(""))
+              | Ok(ctx) =>
+                /* super-functional web-server :) */
+                let server = Lwt_unix.sleep(600.);
+                let watcher = Watcher.watch(~ctx, ~pack);
+                Lwt.join([server, watcher]);
+              },
+            finalize,
+          );
+        },
+      )
+    );
+  let doc = "watch for file changes, rebuild bundle & serve";
+  let command = (
+    /* TODO: add options here */
+    Term.(ret(const(run) $ CommonOptions.term)),
+    Term.info("serve", ~doc, ~sdocs, ~exits),
+  );
+};
+
 module Help = {
   let run = () => `Help((`Auto, None));
   let command = (
@@ -127,5 +191,5 @@ module Default = {
   );
 };
 
-let all = [Build.command, Watch.command, Help.command];
+let all = [Build.command, Watch.command, Serve.command, Help.command];
 let default = Default.command;
