@@ -58,6 +58,41 @@ module Build = {
         },
       )
     );
+  let doc = "rebuild the bundle on a file change";
+  let command = (
+    Term.(ret(const(run) $ CommonOptions.term)),
+    Term.info("watch", ~doc, ~sdocs, ~exits),
+  );
+};
+
+module Watch = {
+  let run = (options: CommonOptions.t) =>
+    run(options.debug, () =>
+      Lwt_main.run(
+        {
+          /* TODO: maybe decouple mode from the CommonOptions ? */
+          let options = {...options, mode: Mode.Development};
+          let start_time = Unix.gettimeofday();
+          let%lwt {Packer.pack, finalize} = Packer.make(options);
+
+          Lwt.finalize(
+            () =>
+              switch%lwt (
+                pack(
+                  ~graph=None,
+                  ~current_location=None,
+                  ~initial=true,
+                  ~start_time,
+                )
+              ) {
+              | Error(_) => raise(Context.ExitError(""))
+              | Ok(_) => Lwt.return_unit
+              },
+            finalize,
+          );
+        },
+      )
+    );
   let doc = "build the bundle";
   let command = (
     Term.(ret(const(run) $ CommonOptions.term)),

@@ -14,7 +14,6 @@ type t = {
   preprocess: list(Preprocessor.config),
   postprocess: list(string),
   report: Reporter.report,
-  watch: bool,
   debug: bool,
 };
 let term = {
@@ -33,7 +32,6 @@ let term = {
         preprocess,
         postprocess,
         report,
-        watch,
         debug,
       ) => {
     entryPoints,
@@ -49,7 +47,6 @@ let term = {
     preprocess: List.map(snd, preprocess),
     postprocess,
     report,
-    watch,
     debug,
   };
 
@@ -204,11 +201,6 @@ let term = {
     );
   };
 
-  let watchT = {
-    let doc = "Watch file changes and rebuild bundle";
-    Arg.(value & flag & info(["w", "watch"], ~doc));
-  };
-
   let debugT = {
     let doc = "Print debug output";
     Arg.(value & flag & info(["d", "debug"], ~doc));
@@ -229,7 +221,6 @@ let term = {
     $ preprocessT
     $ postprocessT
     $ reportT
-    $ watchT
     $ debugT
   );
 };
