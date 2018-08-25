@@ -42,7 +42,7 @@ module Text = {
   };
 
   let report_error = (~ctx: Context.t, ~error: Error.reason) => {
-    let error_msg = Context.string_of_error(ctx, error);
+    let error_msg = Context.stringOfError(ctx, error);
     Lwt_io.write(Lwt_io.stderr, error_msg);
   };
 };
@@ -90,7 +90,7 @@ module JSON = {
 
   let report_error = (~ctx: Context.t, ~error: Error.reason) =>
     Yojson.Basic.(
-      `Assoc([("error", `String(Context.string_of_error(ctx, error)))])
+      `Assoc([("error", `String(Context.stringOfError(ctx, error)))])
       |> to_string(~std=true)
       |> (s => s ++ "\n")
       |> Lwt_io.write(Lwt_io.stderr)

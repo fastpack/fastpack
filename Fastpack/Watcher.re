@@ -103,7 +103,7 @@ let ask_watchman = ch =>
     Lwt.return_some(files);
   };
 
-let watch = (~run, ~ctx: Context.t) => {
+let watch = (~pack, ~ctx: Context.t) => {
   /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
    * */
@@ -170,7 +170,7 @@ let watch = (~run, ~ctx: Context.t) => {
         | [m] =>
           DependencyGraph.remove_module(graph, m);
           let%lwt result =
-            run(
+            pack(
               ~current_location=Some(m.location),
               ~graph=Some(graph),
               ~initial=false,
@@ -185,7 +185,7 @@ let watch = (~run, ~ctx: Context.t) => {
           };
         | _ =>
           let%lwt result =
-            run(
+            pack(
               ~current_location=None,
               ~graph=None,
               ~initial=false,
