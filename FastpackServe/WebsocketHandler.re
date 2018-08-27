@@ -76,7 +76,7 @@ let makeHandler = (~debug=false, ()): (string => Lwt.t(unit), handler) => {
                     )
                   )
                 | _ =>
-                  print_endline(
+                  debug_log(
                     Printf.sprintf("Received message \"%s\"", fr.content),
                   );
                   if (fr.content == "hello") {
@@ -104,7 +104,7 @@ let makeHandler = (~debug=false, ()): (string => Lwt.t(unit), handler) => {
         )
         >>= (
           ((resp, body, frames_out_fn)) => {
-            print_endline(
+            debug_log(
               Printf.sprintf(
                 "Adding client %s \n%!",
                 snd(conn) |> Cohttp.Connection.to_string,
