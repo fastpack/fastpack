@@ -39,9 +39,10 @@ let copy = (~source, ~output, ~port, ()) =>
         console.log(data);
         if (data.error) {
           console.log(data.error);
-          document.querySelector("#index").innerHTML = `<pre>${data.error}</pre>`;
+          const errorElement = document.createElement("pre");
+          errorElement.innerText = `${data.error}`;
+          document.body.appendChild(errorElement);
         } else {
-          debugger;
           window.location.reload();
         }
       }

@@ -127,25 +127,32 @@ module Serve = {
 
           let report_ok =
               (
-                ~message,
+                ~message as _message,
                 ~start_time as _start_time,
                 ~ctx as _ctx,
                 ~files as _file,
               ) => {
-            /* TODO: this function is invoked when bundle is built successfully */
             print_endline("built successfully!");
-            print_endline("It is good idea to ask clients to reload");
-            switch (message) {
-            | Some(m) => broadcastToWebsocket(m)
-            | None => Lwt.return_unit
-            };
+
+            Yojson.Basic.(
+              `Assoc([("build", `String("OK"))])
+              |> to_string(~std=true)
+              |> (s => s ++ "\n")
+              |> broadcastToWebsocket
+            );
           };
 
-          let report_error = (~ctx as _ctx, ~error) => {
-            /* TODO: this function is invoked when an error occured */
+          let report_error = (~ctx, ~error) => {
             print_endline("error occured!");
-            print_endline("Maybe display an error?");
-            broadcastToWebsocket("error");
+
+            Yojson.Basic.(
+              `Assoc([
+                ("error", `String(Context.stringOfError(ctx, error))),
+              ])
+              |> to_string(~std=true)
+              |> (s => s ++ "\n")
+              |> broadcastToWebsocket
+            );
           };
 
           /* TODO: maybe decouple mode from the CommonOptions ? */
