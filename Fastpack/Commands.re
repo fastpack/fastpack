@@ -117,6 +117,14 @@ module Serve = {
               (),
             );
 
+          let%lwt () =
+            FastpackServe.CopyPublic.copy(
+              ~source="./public",
+              ~output=options.outputDir,
+              ~port=3000,
+              (),
+            );
+
           let report_ok =
               (
                 ~message,
