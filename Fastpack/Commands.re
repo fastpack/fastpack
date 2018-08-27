@@ -119,7 +119,7 @@ module Serve = {
             FastpackServe.CopyPublic.copy(
               ~sourceDir="./public",
               ~outputDir=options.outputDir,
-              ~outputFilename=options.outputFilename
+              ~outputFilename=options.outputFilename,
               ~port=3000,
               (),
             );
