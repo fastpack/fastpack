@@ -24,7 +24,8 @@ let copy = (~source, ~output, ~port, ()) =>
           Str.replace_first(
             Str.regexp("</body>"),
             Printf.sprintf(
-              {|  <script>
+              {|<script type="text/javascript" src="/index.js"></script>
+  <script>
     const ws = new WebSocket("ws://localhost:%d/ws");
 
     ws.addEventListener("open", event => {
