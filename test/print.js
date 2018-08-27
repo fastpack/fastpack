@@ -199,3 +199,6 @@ export const fff1 = x => ({"x": 1}[x]);
 export const fff2 = x => ({"x": x}.x);
 export const fff3 = x => ({} + {});
 export const fff4 = x => ({} ? 1 : x);
+
+var x, y;
+var styles = {some: (x = 1, y = 2, {paddingLeft: 1 + 2})};

@@ -719,7 +719,15 @@ let print =
     ctx |> pop_parent_stmt((loc, statement));
   }
   and emit_expression = (~parens=true, (loc, expression), ctx) => {
-    let parens = parens && Parens.is_required((loc, expression), ctx);
+    let parens =
+      parens ?
+        Parens.is_required((loc, expression), ctx) :
+        (
+          switch (expression) {
+          | E.Sequence(_) => true
+          | _ => false
+          }
+        );
     let ctx =
       ctx
       |> emit_if(parens, emit("("))
@@ -932,7 +940,7 @@ let print =
           | E.Member.PropertyPrivateName(name) => emit_private_name(name)
           | E.Member.PropertyIdentifier((_, name)) => emit(name)
           | E.Member.PropertyExpression(expression) =>
-            emit_expression(~parens=false, expression)
+            emit_expression(expression)
           };
 
         ctx
