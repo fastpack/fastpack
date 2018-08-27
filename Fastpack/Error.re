@@ -128,10 +128,17 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
               loc.start.column,
               loc._end.column - loc.start.column,
             );
-          let colored_error = print_with_color(error_substring, Red);
-          let colored_line =
-            String.replace(~sub=error_substring, ~by=colored_error, line);
-          print_with_color(lineNo, Red) ++ " │ " ++ colored_line;
+          if (String.length(error_substring) > 0) {
+            let colored_error = print_with_color(error_substring, Red);
+            Logs.debug(x =>
+              x("e: %s ... colo: %s", error_substring, colored_error)
+            );
+            let colored_line =
+              String.replace(~sub=error_substring, ~by=colored_error, line);
+            print_with_color(lineNo, Red) ++ " │ " ++ colored_line;
+          } else {
+            line;
+          };
         };
       },
       codeframe,

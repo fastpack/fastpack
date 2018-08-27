@@ -92,7 +92,7 @@ let read_module =
       ~cache: Cache.t,
       location: Module.location,
     ) => {
-  /* debug(x => x("READING: %s", Module.location_to_string(location))); */
+  Logs.debug(x => x("READING: %s", Module.location_to_string(location)));
   let make_module = (location, source) => {
     let%lwt package =
       switch (location) {
@@ -997,32 +997,40 @@ let build = (ctx: Context.t) => {
 
           DependencyGraph.add_module_files(graph, m);
 
-          let updateGraph = (~kind, dependencies) =>
-            Lwt_list.iter_p(
-              ((req, resolved)) => {
-                let%lwt () =
-                  switch (DependencyGraph.lookup_module(ctx.graph, resolved)) {
-                  | None =>
-                    let%lwt _ =
-                      process(
-                        ~seen,
-                        {...ctx, stack: [req, ...ctx.stack]},
-                        resolved,
-                      );
-                    Lwt.return_unit;
-                  | Some(_) => Lwt.return_unit
-                  };
-
+          let updateGraph = (~kind, dependencies) => {
+            let%lwt () =
+              Lwt_list.iter_s(
+                ((req, resolved)) => {
+                  let%lwt () =
+                    switch (
+                      DependencyGraph.lookup_module(ctx.graph, resolved)
+                    ) {
+                    | None =>
+                      let%lwt _ =
+                        process(
+                          ~seen,
+                          {...ctx, stack: [req, ...ctx.stack]},
+                          resolved,
+                        );
+                      Lwt.return_unit;
+                    | Some(_) => Lwt.return_unit
+                    };
+                  Lwt.return_unit;
+                },
+                dependencies,
+              );
+            List.iter(
+              ((req, resolved)) =>
                 DependencyGraph.add_dependency(
                   ~kind,
                   graph,
                   m,
                   (req, resolved),
-                );
-                Lwt.return_unit;
-              },
+                ),
               dependencies,
             );
+            Lwt.return_unit;
+          };
 
           let%lwt () = updateGraph(~kind=`Static, m.static_dependencies);
           let%lwt () = updateGraph(~kind=`Dynamic, m.dynamic_dependencies);

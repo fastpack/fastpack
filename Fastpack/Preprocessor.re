@@ -22,7 +22,6 @@ type t = {
   finalize: unit => Lwt.t(unit),
 };
 
-
 let of_string = s => {
   let (pattern_s, processors) =
     switch (String.(s |> trim |> split_on_char(':'))) {
@@ -77,11 +76,11 @@ let builtin = source =>
   | None => Lwt.fail(Error("Builtin transpiler always expects source"))
   | Some(source) =>
     try (
-      Lwt.return((
-        FastpackTranspiler.transpile_source(all_transpilers, source),
-        [],
-        [],
-      ))
+      {
+        let ret = FastpackTranspiler.transpile_source(all_transpilers, source);
+        Logs.debug(x => x("SOURCE: %s", ret));
+        Lwt.return((ret, [], []));
+      }
     ) {
     | FastpackTranspiler.Error.TranspilerError(err) =>
       Lwt.fail(Error(FastpackTranspiler.Error.error_to_string(err)))
@@ -109,7 +108,7 @@ module NodeServer = {
 
   let pool =
     Lwt_pool.create(
-      3,
+      4,
       ~dispose=
         ((p, _, _)) => {
           p#terminate;
@@ -216,7 +215,7 @@ module NodeServer = {
             member("error", data) |> member("message") |> to_string;
           Lwt.fail(Error(error));
         | Some(source) =>
-          /* debug(x => x("SOURCE: %s", source)); */
+          Logs.debug(x => x("SOURCE: %s", source));
           Lwt.return((source, dependencies, files));
         };
       },
