@@ -19,10 +19,9 @@ type t = {
     (Module.location, option(string)) =>
     Lwt.t((string, list(string), list(string))),
   configs: list(config),
-  finalize: unit => unit,
+  finalize: unit => Lwt.t(unit),
 };
 
-let debug = Logs.debug;
 
 let of_string = s => {
   let (pattern_s, processors) =
@@ -94,76 +93,80 @@ let empty = {
   get_processors: _ => [],
   process: (_, s) => Lwt.return((CCOpt.get_or(~default="", s), [], [])),
   configs: [],
-  finalize: () => (),
+  finalize: () => Lwt.return_unit,
 };
 
 let transpile_all = {
   get_processors: _ => ["builtin"],
   process: (_, s) => builtin(s),
   configs: [],
-  finalize: () => (),
+  finalize: () => Lwt.return_unit,
 };
 
 module NodeServer = {
-  let processes = ref([]);
-  let fp_in_ch = ref(Lwt_io.zero);
-  let fp_out_ch = ref(Lwt_io.null);
+  let node_project_root = ref("");
+  let node_output_dir = ref("");
 
-  let start = (project_root, output_dir) => {
-    module FS = FastpackUtil.FS;
-    let fpack_binary_path =
-      /* TODO: handle on Windows? */
-      (
-        switch (Sys.argv[0].[0]) {
-        | '/'
-        | '.' => Sys.argv[0]
-        | _ => FileUtil.which(Sys.argv[0])
-        }
-      )
-      |> FileUtil.readlink
-      |> FS.abs_path(Unix.getcwd());
+  let pool =
+    Lwt_pool.create(
+      3,
+      ~dispose=
+        ((p, _, _)) => {
+          p#terminate;
+          p#close |> ignore |> Lwt.return;
+        },
+      () => {
+        Logs.debug(x => x("process created"));
+        module FS = FastpackUtil.FS;
+        let fpack_binary_path =
+          /* TODO: handle on Windows? */
+          (
+            switch (Sys.argv[0].[0]) {
+            | '/'
+            | '.' => Sys.argv[0]
+            | _ => FileUtil.which(Sys.argv[0])
+            }
+          )
+          |> FileUtil.readlink
+          |> FS.abs_path(Unix.getcwd());
 
-    let rec find_fpack_root = dir =>
-      if (dir == "/") {
-        Error.ie("Cannot find fastpack package directory");
-      } else {
-        if%lwt (Lwt_unix.file_exists @@ FilePath.concat(dir, "package.json")) {
-          Lwt.return(dir);
-        } else {
-          find_fpack_root(FilePath.dirname(dir));
-        };
-      };
+        let rec find_fpack_root = dir =>
+          if (dir == "/") {
+            Error.ie("Cannot find fastpack package directory");
+          } else {
+            if%lwt (Lwt_unix.file_exists @@
+                    FilePath.concat(dir, "package.json")) {
+              Lwt.return(dir);
+            } else {
+              find_fpack_root(FilePath.dirname(dir));
+            };
+          };
 
-    let%lwt fpack_root =
-      find_fpack_root @@ FilePath.dirname(fpack_binary_path);
+        let%lwt fpack_root =
+          find_fpack_root @@ FilePath.dirname(fpack_binary_path);
 
-    let cmd =
-      Printf.sprintf(
-        "node %s %s %s",
-        List.fold_left(
-          FilePath.concat,
-          fpack_root,
-          ["node-service", "index.js"],
-        ),
-        output_dir,
-        project_root,
-      );
+        let cmd =
+          Printf.sprintf(
+            "node %s %s %s",
+            List.fold_left(
+              FilePath.concat,
+              fpack_root,
+              ["node-service", "index.js"],
+            ),
+            node_output_dir^,
+            node_project_root^,
+          );
 
-    let%lwt (process, ch_in, ch_out) = FS.open_process(cmd);
-    fp_in_ch := ch_in;
-    fp_out_ch := ch_out;
-    processes := [process];
-    Lwt.return_unit;
-  };
+        FS.open_process(cmd);
+      },
+    );
 
   let process =
       (~project_root, ~current_dir, ~output_dir, ~loaders, ~filename, source) => {
-    let%lwt () =
-      if (List.length(processes^) == 0) {
-        start(project_root, output_dir);
-      } else {
-        Lwt.return_unit;
-      };
+    if (node_project_root^ == "") {
+      node_project_root := project_root;
+      node_output_dir := output_dir;
+    };
 
     /* Do not pass binary data through the channel */
     let source =
@@ -186,41 +189,41 @@ module NodeServer = {
         ("source", CCOpt.map_or(~default=`Null, to_json_string, source)),
       ]);
 
-    let%lwt () = Lwt_io.write(fp_out_ch^, Yojson.to_string(message) ++ "\n");
-    let%lwt line = Lwt_io.read_line(fp_in_ch^);
-    open Yojson.Safe.Util;
-    let data = Yojson.Safe.from_string(line);
-    let source = member("source", data) |> to_string_option;
-    let dependencies =
-      member("dependencies", data)
-      |> to_list
-      |> List.map(to_string_option)
-      |> List.filter_map(item => item);
+    Lwt_pool.use(
+      pool,
+      ((_, fp_in_ch, fp_out_ch)) => {
+        let%lwt () =
+          Lwt_io.write(fp_out_ch, Yojson.to_string(message) ++ "\n");
+        let%lwt line = Lwt_io.read_line(fp_in_ch);
+        open Yojson.Safe.Util;
+        let data = Yojson.Safe.from_string(line);
+        let source = member("source", data) |> to_string_option;
+        let dependencies =
+          member("dependencies", data)
+          |> to_list
+          |> List.map(to_string_option)
+          |> List.filter_map(item => item);
 
-    let files =
-      member("files", data)
-      |> to_list
-      |> List.map(to_string_option)
-      |> List.filter_map(item => item);
+        let files =
+          member("files", data)
+          |> to_list
+          |> List.map(to_string_option)
+          |> List.filter_map(item => item);
 
-    switch (source) {
-    | None =>
-      let error = member("error", data) |> member("message") |> to_string;
-      Lwt.fail(Error(error));
-    | Some(source) =>
-      debug(x => x("SOURCE: %s", source));
-      Lwt.return((source, dependencies, files));
-    };
+        switch (source) {
+        | None =>
+          let error =
+            member("error", data) |> member("message") |> to_string;
+          Lwt.fail(Error(error));
+        | Some(source) =>
+          /* debug(x => x("SOURCE: %s", source)); */
+          Lwt.return((source, dependencies, files));
+        };
+      },
+    );
   };
 
-  let finalize = () =>
-    List.iter(
-      p => {
-        p#terminate;
-        p#close |> ignore;
-      },
-      processes^,
-    );
+  let finalize = () => Lwt_pool.clear(pool);
 };
 
 let make = (~configs, ~project_root, ~current_dir, ~output_dir) => {

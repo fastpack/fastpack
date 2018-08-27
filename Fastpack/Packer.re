@@ -72,6 +72,7 @@ let make = (options: CommonOptions.t) => {
   let%lwt (cache, cache_report) =
     switch (options.cache) {
     | Cache.Use =>
+      /* TODO: consider add the --mock & --extension to the cache filename calculation */
       let filename =
         String.concat(
           "-",
@@ -211,7 +212,7 @@ let make = (options: CommonOptions.t) => {
   };
   let finalize = () => {
     let%lwt () = cache.dump();
-    let () = preprocessor.Preprocessor.finalize();
+    let%lwt() = preprocessor.Preprocessor.finalize();
     Lwt.return_unit;
   };
   Lwt.return({pack, finalize});

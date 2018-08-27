@@ -92,7 +92,7 @@ let read_module =
       ~cache: Cache.t,
       location: Module.location,
     ) => {
-  debug(x => x("READING: %s", Module.location_to_string(location)));
+  /* debug(x => x("READING: %s", Module.location_to_string(location))); */
   let make_module = (location, source) => {
     let%lwt package =
       switch (location) {
@@ -256,8 +256,6 @@ let build = (ctx: Context.t) => {
     } else {
       Lwt.return_unit;
     };
-
-  let cache = ctx.cache;
 
   let analyze = (_id, location, source) => {
     let ((_, stmts, _) as program, _) = Parser.parse_source(source);
@@ -875,144 +873,167 @@ let build = (ctx: Context.t) => {
   };
 
   /* Gather dependencies */
-  let rec process = (ctx: Context.t, graph, m: Module.t) => {
-    let ctx = {...ctx, current_location: m.location};
+  let rec process =
+          (~seen=MLSet.empty, ctx: Context.t, location: Module.location) =>
+    switch (DependencyGraph.lookup_module(ctx.graph, location)) {
+    | Some(mPromise) => mPromise
+    | None =>
+      DependencyGraph.add_module(
+        ctx.graph,
+        location,
+        {
+          let ctx = {...ctx, current_location: location};
+          let cache = ctx.cache;
+          let%lwt m = read_module(~ctx, ~cache, ~from_module=None, location);
+          let seen = MLSet.add(location, seen);
+          let graph = ctx.graph;
 
-    /* find module static & dynamic module dependencies
-     * both come empty if modules was cached */
-    let (m, static_dependencies, dynamic_dependencies) =
-      if (m.state != Module.Analyzed) {
-        let source = m.Module.workspace.Workspace.value;
-        let (
-          workspace,
-          static_dependencies,
-          dynamic_dependencies,
-          scope,
-          exports,
-          module_type,
-        ) =
-          is_json(m.location) ?
-            {
-              let workspace =
-                Printf.sprintf("module.exports = %s;", source)
-                |> Workspace.of_string;
+          /* find module static & dynamic module dependencies
+           * both come empty if modules was cached */
+          let (m, static_dependencies, dynamic_dependencies) =
+            if (m.state != Module.Analyzed) {
+              let source = m.Module.workspace.Workspace.value;
+              let (
+                workspace,
+                static_dependencies,
+                dynamic_dependencies,
+                scope,
+                exports,
+                module_type,
+              ) =
+                is_json(m.location) ?
+                  {
+                    let workspace =
+                      Printf.sprintf("module.exports = %s;", source)
+                      |> Workspace.of_string;
+
+                    (
+                      workspace,
+                      [],
+                      [],
+                      Scope.empty,
+                      Scope.empty_exports,
+                      Module.CJS,
+                    );
+                  } :
+                  (
+                    try (analyze(m.id, m.location, source)) {
+                    | FlowParser.Parse_error.Error(args) =>
+                      let location_str =
+                        Module.location_to_string(m.location);
+                      raise(
+                        Context.PackError(
+                          ctx,
+                          CannotParseFile((location_str, args, source)),
+                        ),
+                      );
+                    | Scope.ScopeError(reason) =>
+                      raise(Context.PackError(ctx, ScopeError(reason)))
+                    }
+                  );
 
               (
-                workspace,
-                [],
-                [],
-                Scope.empty,
-                Scope.empty_exports,
-                Module.CJS,
+                {...m, workspace, scope, exports, module_type},
+                static_dependencies,
+                dynamic_dependencies,
               );
-            } :
-            (
-              try (analyze(m.id, m.location, source)) {
-              | FlowParser.Parse_error.Error(args) =>
-                let location_str = Module.location_to_string(m.location);
-                raise(
-                  Context.PackError(
-                    ctx,
-                    CannotParseFile((location_str, args, source)),
-                  ),
-                );
-              | Scope.ScopeError(reason) =>
-                raise(Context.PackError(ctx, ScopeError(reason)))
-              }
-            );
-
-        (
-          {...m, workspace, scope, exports, module_type},
-          static_dependencies,
-          dynamic_dependencies,
-        );
-      } else {
-        (m, [], []);
-      };
-
-    let%lwt m =
-      if (m.state != Module.Analyzed) {
-        let resolve_dependencies =
-          Lwt_list.map_p(req => {
-            let%lwt (resolved, build_dependencies) = resolve(ctx, req);
-
-            Lwt.return(((req, resolved), build_dependencies));
-          });
-
-        let%lwt static_dependencies =
-          resolve_dependencies(static_dependencies);
-        let%lwt dynamic_dependencies =
-          resolve_dependencies(dynamic_dependencies);
-
-        let collect_dependencies = (dependencies, build_dependencies) =>
-          Lwt_list.fold_left_s(
-            ((resolved, build), (r, b)) => {
-              let%lwt build =
-                Lwt_list.fold_left_s(
-                  (build, filename) => {
-                    let%lwt ({digest, _}, _) = cache.get_file(filename);
-                    Lwt.return(M.add(filename, digest, build));
-                  },
-                  build,
-                  b,
-                );
-
-              Lwt.return(([r, ...resolved], build));
-            },
-            ([], build_dependencies),
-            dependencies,
-          );
-
-        let build_dependencies = m.build_dependencies;
-        let%lwt (static_dependencies, build_dependencies) =
-          collect_dependencies(static_dependencies, build_dependencies);
-
-        let%lwt (dynamic_dependencies, build_dependencies) =
-          collect_dependencies(dynamic_dependencies, build_dependencies);
-
-        Lwt.return({
-          ...m,
-          static_dependencies: List.rev(static_dependencies),
-          dynamic_dependencies: List.rev(dynamic_dependencies),
-          build_dependencies,
-        });
-      } else {
-        Lwt.return(m);
-      };
-
-    DependencyGraph.add_module(graph, m);
-
-    let update_graph = (~kind, dependencies) =>
-      Lwt_list.iter_s(
-        ((req, resolved)) => {
-          let%lwt dep_module =
-            switch (DependencyGraph.lookup_module(graph, resolved)) {
-            | None =>
-              let ctx = {...ctx, stack: [req, ...ctx.stack]};
-              let%lwt m =
-                read_module(~ctx, ~cache, ~from_module=Some(m), resolved);
-              process(ctx, graph, m);
-            | Some(m) => Lwt.return(m)
+            } else {
+              (m, [], []);
             };
 
-          DependencyGraph.add_dependency(
-            ~kind,
-            graph,
-            m,
-            (req, dep_module.location),
-          );
-          Lwt.return_unit;
-        },
-        dependencies,
-      );
+          let%lwt m =
+            if (m.state != Module.Analyzed) {
+              let resolve_dependencies =
+                Lwt_list.map_s(req => {
+                  let%lwt (resolved, build_dependencies) = resolve(ctx, req);
 
-    let%lwt () = update_graph(~kind=`Static, m.static_dependencies);
-    let%lwt () = update_graph(~kind=`Dynamic, m.dynamic_dependencies);
-    Lwt.return(m);
-  };
+                  Lwt.return(((req, resolved), build_dependencies));
+                });
+
+              let%lwt static_dependencies =
+                resolve_dependencies(static_dependencies);
+              let%lwt dynamic_dependencies =
+                resolve_dependencies(dynamic_dependencies);
+
+              let collect_dependencies = (dependencies, build_dependencies) =>
+                Lwt_list.fold_left_s(
+                  ((resolved, build), (r, b)) => {
+                    let%lwt build =
+                      Lwt_list.fold_left_s(
+                        (build, filename) => {
+                          let%lwt ({digest, _}, _) =
+                            cache.get_file(filename);
+                          Lwt.return(M.add(filename, digest, build));
+                        },
+                        build,
+                        b,
+                      );
+
+                    Lwt.return(([r, ...resolved], build));
+                  },
+                  ([], build_dependencies),
+                  dependencies,
+                );
+
+              let build_dependencies = m.build_dependencies;
+              let%lwt (static_dependencies, build_dependencies) =
+                collect_dependencies(static_dependencies, build_dependencies);
+
+              let%lwt (dynamic_dependencies, build_dependencies) =
+                collect_dependencies(
+                  dynamic_dependencies,
+                  build_dependencies,
+                );
+
+              Lwt.return({
+                ...m,
+                static_dependencies: List.rev(static_dependencies),
+                dynamic_dependencies: List.rev(dynamic_dependencies),
+                build_dependencies,
+              });
+            } else {
+              Lwt.return(m);
+            };
+
+          DependencyGraph.add_module_files(graph, m);
+
+          let updateGraph = (~kind, dependencies) =>
+            Lwt_list.iter_p(
+              ((req, resolved)) => {
+                let%lwt () =
+                  switch (DependencyGraph.lookup_module(ctx.graph, resolved)) {
+                  | None =>
+                    let%lwt _ =
+                      process(
+                        ~seen,
+                        {...ctx, stack: [req, ...ctx.stack]},
+                        resolved,
+                      );
+                    Lwt.return_unit;
+                  | Some(_) => Lwt.return_unit
+                  };
+
+                DependencyGraph.add_dependency(
+                  ~kind,
+                  graph,
+                  m,
+                  (req, resolved),
+                );
+                Lwt.return_unit;
+              },
+              dependencies,
+            );
+
+          let%lwt () = updateGraph(~kind=`Static, m.static_dependencies);
+          let%lwt () = updateGraph(~kind=`Dynamic, m.dynamic_dependencies);
+          Lwt.return(m);
+        },
+      )
+    };
 
   let {Context.current_location, _} = ctx;
-  let%lwt entry = read_module(~ctx, ~cache, current_location);
-  let%lwt _ = process(ctx, ctx.graph, entry);
+  debug(x => x("BEFORE PROCESS"));
+  let _ = process(ctx, current_location);
+  debug(x => x("AFTER PROCESS"));
   Lwt.return_unit;
 };

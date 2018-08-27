@@ -39,7 +39,7 @@ let run = (ctx: Context.t, output_channel) => {
   let emitted_modules = ref(MLSet.empty);
   let emit = (graph, entry) => {
     let emit = bytes => Lwt_io.write(output_channel, bytes);
-    let dep_map = DependencyGraph.to_dependency_map(graph);
+    let%lwt dep_map = DependencyGraph.to_dependency_map(graph);
     let rec emit_module = (m: Module.t) =>
       if (MLSet.mem(m.location, emitted_modules^)) {
         Lwt.return_unit;
@@ -54,7 +54,7 @@ let run = (ctx: Context.t, output_channel) => {
             ((_, m)) =>
               switch (m) {
               | None => Lwt.return_unit
-              | Some(m) => emit_module(m)
+              | Some(m) => let%lwt m = m; emit_module(m)
               },
             dependencies,
           );
@@ -95,10 +95,11 @@ let run = (ctx: Context.t, output_channel) => {
           | _ => ()
           };
 
-        let () =
+        let _ =
           DependencyGraph.add_module(
             graph,
-            {...m, workspace: Workspace.of_string(content)},
+            m.location,
+            Lwt.return({...m, workspace: Workspace.of_string(content)}),
           );
 
         let%lwt () = emit("\n},\n");
@@ -119,7 +120,7 @@ let run = (ctx: Context.t, output_channel) => {
   };
 
   let {Context.entry_location, graph, _} = ctx;
-  let entry =
+  let%lwt entry =
     switch (DependencyGraph.lookup_module(graph, entry_location)) {
     | Some(m) => m
     | None =>
@@ -128,6 +129,7 @@ let run = (ctx: Context.t, output_channel) => {
       )
     };
 
+  Logs.debug(x => x("BEFORE EMIT: %s", Module.location_to_string(entry.location)));
   let%lwt _ = emit(graph, entry);
   Lwt.return((
     emitted_modules^,
