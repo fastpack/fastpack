@@ -36,9 +36,7 @@ let copy = (~sourceDir, ~outputDir, ~outputFilename, ~port, ()) =>
       console.log(event.data);
       if (event.data !== "hello") {
         const data = JSON.parse(event.data);
-        console.log(data);
         if (data.error) {
-          console.log(data.error);
           const errorElement = document.createElement("pre");
           errorElement.innerText = `${data.error}`;
           document.body.appendChild(errorElement);
