@@ -16,11 +16,11 @@ let createCallback =
   };
 };
 
-let start = (~port=3000, ~outputDir, ()) => {
+let start = (~port=3000, ~outputDir, ~debug, ()) => {
   Printf.sprintf("Listening on port %d...", port) |> print_endline;
 
   let (broadcastToWebsocket, websocketHandler) =
-    WebsocketHandler.makeHandler(~debug=true, ());
+    WebsocketHandler.makeHandler(~debug, ());
 
   let server =
     Cohttp_lwt_unix.Server.create(
