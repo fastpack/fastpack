@@ -3,7 +3,7 @@ module StringSet = Set.Make(String);
 exception Cycle(list(string));
 
 type t = {
-  modules: Hashtbl.t(Module.location, Module.t),
+  modules: Hashtbl.t(Module.location, Lwt.t(Module.t)),
   static_dependencies:
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
   dynamic_dependencies:
@@ -47,27 +47,33 @@ let to_dependency_map = graph => {
       }
     );
 
-  List.fold_left(
-    (dep_map, (dep, m)) => Module.DependencyMap.add(dep, m, dep_map),
+  Lwt_list.fold_left_s(
+    (dep_map, (dep, m)) => {
+      let%lwt m = m;
+      Module.DependencyMap.add(dep, m, dep_map) |> Lwt.return;
+    },
     Module.DependencyMap.empty,
     to_pairs(graph.static_dependencies)
     @ to_pairs(graph.dynamic_dependencies),
   );
 };
 
-let add_module = (graph, m: Module.t) =>
-  switch (Hashtbl.find_all(graph.modules, m.location)) {
-  | [] =>
-    Hashtbl.add(graph.modules, m.location, m);
-    List.iter(
-      filename => Hashtbl.add(graph.files, filename, m),
-      M.bindings(m.build_dependencies) |> List.map(((k, _)) => k),
-    );
+let add_module = (graph, location, m: Lwt.t(Module.t)) => {
+  switch (Hashtbl.find_all(graph.modules, location)) {
+  | [] => Hashtbl.add(graph.modules, location, m)
   | [_] =>
-    Hashtbl.remove(graph.modules, m.location);
-    Hashtbl.add(graph.modules, m.location, m);
+    Hashtbl.remove(graph.modules, location);
+    Hashtbl.add(graph.modules, location, m);
   | _ => failwith("DependencyGraph: cannot add more modules")
   };
+  m;
+};
+
+let add_module_files = (graph, m: Module.t) =>
+  List.iter(
+    filename => Hashtbl.add(graph.files, filename, m),
+    M.bindings(m.build_dependencies) |> List.map(((k, _)) => k),
+  );
 
 let add_dependency =
     (~kind, graph, m: Module.t, dep: (Module.Dependency.t, Module.location)) => {
@@ -139,50 +145,50 @@ let length = graph => Hashtbl.length(graph.modules);
 
 let modules = graph => Hashtbl.to_seq(graph.modules);
 
-let get_static_chain = (graph, entry) => {
-  let modules = ref([]);
-  let seen_globally = ref(StringSet.empty);
-  let add_module = (m: Module.t) => {
-    let location_str = Module.location_to_string(m.location);
-    modules := [m, ...modules^];
-    seen_globally := StringSet.add(location_str, seen_globally^);
-  };
+/* let get_static_chain = (graph, entry) => { */
+/*   let modules = ref([]); */
+/*   let seen_globally = ref(StringSet.empty); */
+/*   let add_module = (m: Module.t) => { */
+/*     let location_str = Module.location_to_string(m.location); */
+/*     modules := [m, ...modules^]; */
+/*     seen_globally := StringSet.add(location_str, seen_globally^); */
+/*   }; */
 
-  let check_module = (m: Module.t) => {
-    let location_str = Module.location_to_string(m.location);
-    StringSet.mem(location_str, seen_globally^);
-  };
+/*   let check_module = (m: Module.t) => { */
+/*     let location_str = Module.location_to_string(m.location); */
+/*     StringSet.mem(location_str, seen_globally^); */
+/*   }; */
 
-  let rec sort = (seen, m: Module.t) => {
-    let location_str = Module.location_to_string(m.location);
-    List.mem(location_str, seen) ?
-      /* let prev_m = */
-      /*   match lookup_module graph (List.hd seen) with */
-      /*   | Some prev_m -> prev_m */
-      /*   | None -> Error.ie "DependencyGraph.sort - imporssible state" */
-      /* in */
-      switch (m.module_type) {
-      | Module.ESM
-      | Module.CJS_esModule => ()
-      | Module.CJS => raise(Cycle([location_str, ...seen]))
-      } :
-      check_module(m) ?
-        () :
-        {
-          let sort' = sort([location_str, ...seen]);
-          let () =
-            List.iter(
-              sort',
-              List.filter_map(
-                ((_, m)) => m,
-                lookup_dependencies(~kind=`Static, graph, m),
-              ),
-            );
+/*   let rec sort = (seen, m: Module.t) => { */
+/*     let location_str = Module.location_to_string(m.location); */
+/*     List.mem(location_str, seen) ? */
+/*       /1* let prev_m = *1/ */
+/*       /1*   match lookup_module graph (List.hd seen) with *1/ */
+/*       /1*   | Some prev_m -> prev_m *1/ */
+/*       /1*   | None -> Error.ie "DependencyGraph.sort - imporssible state" *1/ */
+/*       /1* in *1/ */
+/*       switch (m.module_type) { */
+/*       | Module.ESM */
+/*       | Module.CJS_esModule => () */
+/*       | Module.CJS => raise(Cycle([location_str, ...seen])) */
+/*       } : */
+/*       check_module(m) ? */
+/*         () : */
+/*         { */
+/*           let sort' = sort([location_str, ...seen]); */
+/*           let () = */
+/*             List.iter( */
+/*               sort', */
+/*               List.filter_map( */
+/*                 ((_, m)) => m, */
+/*                 lookup_dependencies(~kind=`Static, graph, m), */
+/*               ), */
+/*             ); */
 
-          add_module(m);
-        };
-  };
+/*           add_module(m); */
+/*         }; */
+/*   }; */
 
-  sort([], entry);
-  List.rev(modules^);
-};
+/*   sort([], entry); */
+/*   List.rev(modules^); */
+/* }; */

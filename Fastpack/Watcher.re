@@ -180,7 +180,7 @@ let watch = (~pack, ~ctx: Context.t) => {
           switch (result) {
           | Ok(ctx) => Lwt.return(ctx.Context.graph)
           | Error(_) =>
-            DependencyGraph.add_module(graph, m);
+            let _ = DependencyGraph.add_module(graph, m.location, Lwt.return(m));
             Lwt.return(graph);
           };
         | _ =>
