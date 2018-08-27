@@ -1,20 +1,20 @@
 open FastpackUtil;
 
-let copy = (~source, ~output, ~port, ()) =>
+let copy = (~sourceDir, ~outputDir, ~outputFilename, ~port, ()) =>
   Lwt.(
-    FS.makedirs(output)
+    FS.makedirs(outputDir)
     >>= (
       _ =>
         FS.copy_file(
-          ~source=source ++ "/index.html",
-          ~target=output ++ "/index.html",
+          ~source=sourceDir ++ "/index.html",
+          ~target=outputDir ++ "/index.html",
           (),
         )
     )
     >>= (
       _ => {
         let%lwt sourceFile =
-          Lwt_io.open_file(~mode=Lwt_io.Input, output ++ "/index.html");
+          Lwt_io.open_file(~mode=Lwt_io.Input, outputDir ++ "/index.html");
 
         let%lwt indexHtml = Lwt_io.read(sourceFile);
 
@@ -24,7 +24,7 @@ let copy = (~source, ~output, ~port, ()) =>
           Str.replace_first(
             Str.regexp("</body>"),
             Printf.sprintf(
-              {|<script type="text/javascript" src="/index.js"></script>
+              {|<script type="text/javascript" src="/%s"></script>
   <script>
     const ws = new WebSocket("ws://localhost:%d/ws");
 
@@ -49,13 +49,14 @@ let copy = (~source, ~output, ~port, ()) =>
     });
   </script>
 </body>|},
+              outputFilename,
               port,
             ),
             indexHtml,
           );
 
         let%lwt targetFile =
-          Lwt_io.open_file(~mode=Lwt_io.Output, output ++ "/index.html");
+          Lwt_io.open_file(~mode=Lwt_io.Output, outputDir ++ "/index.html");
 
         Lwt_io.write(targetFile, indexHtml)
         >>= (() => Lwt_io.close(targetFile));

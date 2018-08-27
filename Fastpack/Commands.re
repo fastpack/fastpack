@@ -110,14 +110,15 @@ module Serve = {
           let (broadcastToWebsocket, devserver) =
             FastpackServe.Devserver.start(
               ~port=3000,
-              ~output=options.outputDir,
+              ~outputDir=options.outputDir,
               (),
             );
 
           let%lwt () =
             FastpackServe.CopyPublic.copy(
-              ~source="./public",
-              ~output=options.outputDir,
+              ~sourceDir="./public",
+              ~outputDir=options.outputDir,
+              ~outputFilename=options.outputFilename
               ~port=3000,
               (),
             );

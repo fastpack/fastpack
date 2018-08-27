@@ -1,5 +1,5 @@
 let createCallback =
-    (~output, ~websocketHandler, conn, req: Cohttp.Request.t, body) => {
+    (~outputDir, ~websocketHandler, conn, req: Cohttp.Request.t, body) => {
   let req_path = Cohttp.Request.uri(req) |> Uri.path;
   let path_parts = Str.(split(regexp("/"), req_path));
 
@@ -10,13 +10,13 @@ let createCallback =
    */
   switch (req.meth, path_parts) {
   | (`GET, ["ws"]) => websocketHandler(conn, req, body)
-  | (`GET, _) => StaticHandler.serveStatic(output, req_path)
+  | (`GET, _) => StaticHandler.serveStatic(outputDir, req_path)
   | _ =>
     Cohttp_lwt_unix.Server.respond_string(~status=`Not_found, ~body="", ())
   };
 };
 
-let start = (~port=3000, ~output, ()) => {
+let start = (~port=3000, ~outputDir, ()) => {
   Printf.sprintf("Listening on port %d...", port) |> print_endline;
 
   let (broadcastToWebsocket, websocketHandler) =
@@ -26,7 +26,7 @@ let start = (~port=3000, ~output, ()) => {
     Cohttp_lwt_unix.Server.create(
       ~mode=`TCP(`Port(port)),
       Cohttp_lwt_unix.Server.make(
-        ~callback=createCallback(~output, ~websocketHandler),
+        ~callback=createCallback(~outputDir, ~websocketHandler),
         (),
       ),
     );
