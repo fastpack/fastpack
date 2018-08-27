@@ -7,7 +7,7 @@ Pack JS code into a single bundle fast & easy.
 ## Motivation
 
 The goal for fastpack is to provide fast and robust development time bundling
-for JavaScript applications which scales up to tens of thounsands of modules
+for JavaScript applications which scales up to tens of thousands of modules
 without sacrificing development experience.
 
 We want sub-1000ms bundle time and sub-100ms incremental rebundle time for
