@@ -111,9 +111,6 @@ module Serve = {
             FastpackServe.Devserver.start(
               ~port=3000,
               ~output=options.outputDir,
-              ~proxyTarget=None,
-              ~proxyPath="/api",
-              ~proxyPathRewrite=None,
               (),
             );
 
