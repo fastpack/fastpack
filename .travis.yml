@@ -10,7 +10,7 @@ os:
 node_js:
   - "8"
 install:
-  - npm install -g esy@0.1.31
+  - npm install -g esy@0.2.28
   - make fetch install
   - make build-dev
   - make setup-test
