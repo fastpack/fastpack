@@ -1,30 +1,3 @@
-module C = Cohttp_lwt_unix;
-module CServer = Cohttp_lwt_unix.Server;
-
-let serveStatic = (base, path) => {
-  let fname = Filename.concat(base, path);
-  if (Sys.file_exists(fname)) {
-    if (Sys.is_directory(fname)) {
-      if (Sys.file_exists(Filename.concat(fname, "index.html"))) {
-        CServer.respond_file(
-          ~fname=Filename.concat(fname, "index.html"),
-          (),
-        );
-      } else {
-        C.Server.respond_string(~status=`Not_found, ~body="", ());
-      };
-    } else {
-      CServer.respond_file(~fname, ());
-    };
-  } else if (Sys.file_exists(fname ++ ".html")) {
-    CServer.respond_file(~fname=fname ++ ".html", ());
-  } else if (Sys.file_exists(base ++ "index.html")) {
-    C.Server.respond_file(~fname=Filename.concat(base, "index.html"), ());
-  } else {
-    C.Server.respond_string(~status=`Not_found, ~body="", ());
-  };
-};
-
 let createCallback =
     (
       ~output,
@@ -58,8 +31,9 @@ let createCallback =
   | (_, [apiPath, ...path], true) when apiPath == proxyPath =>
     proxyHandler(String.concat("/", [proxyPathRewrite, ...path]), req, body)
   | (`GET, ["ws"], _) => websocketHandler(conn, req, body)
-  | (`GET, _, _) => serveStatic(output, req_path)
-  | _ => C.Server.respond_string(~status=`Not_found, ~body="", ())
+  | (`GET, _, _) => StaticHandler.serveStatic(output, req_path)
+  | _ =>
+    Cohttp_lwt_unix.Server.respond_string(~status=`Not_found, ~body="", ())
   };
 };
 
@@ -79,9 +53,9 @@ let start =
     WebsocketHandler.makeHandler(~debug=true, ());
 
   let server =
-    C.Server.create(
+    Cohttp_lwt_unix.Server.create(
       ~mode=`TCP(`Port(port)),
-      C.Server.make(
+      Cohttp_lwt_unix.Server.make(
         ~callback=
           createCallback(
             ~output,
