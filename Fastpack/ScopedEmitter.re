@@ -39,14 +39,12 @@ let run = (start_time, ctx: Context.t, output_channel) => {
   let emitted_modules = ref(MLSet.empty);
   let emit = (graph, entry) => {
     let emit = bytes => Lwt_io.write(output_channel, bytes);
-    let%lwt dep_map = DependencyGraph.to_dependency_map(graph);
     let rec emit_module = (m: Module.t) =>
       if (MLSet.mem(m.location, emitted_modules^)) {
         Lwt.return_unit;
       } else {
         emitted_modules := MLSet.add(m.location, emitted_modules^);
         let%lwt () = emit_module_files(ctx, m);
-        let workspace = m.Module.workspace;
         let dependencies =
           DependencyGraph.lookup_dependencies(~kind=`All, graph, m);
         let%lwt () =
@@ -67,19 +65,9 @@ let run = (start_time, ctx: Context.t, output_channel) => {
           |> emit;
 
         let%lwt () = emit("eval(\"");
-        let modify =
-          switch (m.state) {
-          | Module.Analyzed => (s => s)
-          | _ => to_eval
-          };
+        let%lwt () = emit(m.Module.source);
+        let%lwt () = emit("\");");
 
-        let%lwt content =
-          Workspace.write(
-            ~modify,
-            ~output_channel,
-            ~workspace,
-            ~ctx=(m, dep_map),
-          );
         let%lwt () =
           Module.location_to_string(
             ~base_dir=Some(ctx.project_root),
@@ -88,19 +76,6 @@ let run = (start_time, ctx: Context.t, output_channel) => {
           |> Printf.sprintf("\\n//# sourceURL=fpack:///%s\");")
           |> emit;
 
-        let m = {...m, state: Module.Analyzed};
-        let () =
-          switch (m.location) {
-          | Module.File(_) => ctx.cache.modify_content(m, content)
-          | _ => ()
-          };
-
-        let _ =
-          DependencyGraph.add_module(
-            graph,
-            m.location,
-            Lwt.return({...m, workspace: Workspace.of_string(content)}),
-          );
 
         let%lwt () = emit("\n},\n");
         Lwt.return_unit;
