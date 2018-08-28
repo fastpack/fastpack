@@ -68,6 +68,8 @@ let make = (options: CommonOptions.t) => {
       ~output_dir,
     );
 
+  let%lwt reader = ParsingServer.Reader.make(~project_root, ~output_dir);
+
   /* cache & cache reporting */
   let%lwt (cache, cache_report) =
     switch (options.cache) {
@@ -165,6 +167,7 @@ let make = (options: CommonOptions.t) => {
       target: options.target,
       resolver,
       preprocessor,
+      reader,
       export_finder: ExportFinder.make(),
       graph: CCOpt.get_or(~default=DependencyGraph.empty(), graph),
       cache,
@@ -187,7 +190,8 @@ let make = (options: CommonOptions.t) => {
               ),
             )
           | Mode.Test
-          | Mode.Development => ScopedEmitter.emit(ctx)
+          | Mode.Development =>
+            ScopedEmitter.emit(ctx, start_time)
           };
 
         let ctx = {
@@ -213,6 +217,7 @@ let make = (options: CommonOptions.t) => {
   let finalize = () => {
     let%lwt () = cache.dump();
     let%lwt() = preprocessor.Preprocessor.finalize();
+    let%lwt() = reader.ParsingServer.Reader.finalize();
     Lwt.return_unit;
   };
   Lwt.return({pack, finalize});

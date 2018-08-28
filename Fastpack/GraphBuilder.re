@@ -86,13 +86,8 @@ let get_module_type = stmts => {
 };
 
 let read_module =
-    (
-      ~from_module=None,
-      ~ctx: Context.t,
-      ~cache: Cache.t,
-      location: Module.location,
-    ) => {
-  Logs.debug(x => x("READING: %s", Module.location_to_string(location)));
+    (~from_module=None, ~ctx: Context.t, location: Module.location) => {
+  /* Logs.debug(x => x("READING: %s", Module.location_to_string(location))); */
   let make_module = (location, source) => {
     let%lwt package =
       switch (location) {
@@ -101,7 +96,7 @@ let read_module =
       | Module.Main(_) => Lwt.return(ctx.project_package)
       | Module.File({filename: Some(filename), _}) =>
         let%lwt (package, _) =
-          cache.find_package_for_filename(ctx.current_dir, filename);
+          ctx.cache.find_package_for_filename(ctx.current_dir, filename);
 
         Lwt.return(package);
       | Module.File({filename: None, _}) =>
@@ -128,6 +123,12 @@ let read_module =
     |> Lwt.return;
   };
 
+  let parse = (location, source) => {
+    let%lwt m = make_module(location, source);
+    let program = FastpackUtil.Parser.parse_source(source) |> fst;
+    Lwt.return((m, Some(program)));
+  };
+
   switch (location) {
   | Module.Main(entry_points) =>
     let source =
@@ -135,15 +136,15 @@ let read_module =
       |> List.map(req => Printf.sprintf("import '%s';\n", req))
       |> String.concat("");
 
-    make_module(location, source);
+    parse(location, source);
 
-  | Module.EmptyModule => make_module(location, "module.exports = {};")
+  | Module.EmptyModule => parse(location, "module.exports = {};")
 
-  | Module.Runtime => make_module(location, FastpackTranspiler.runtime)
+  | Module.Runtime => parse(location, FastpackTranspiler.runtime)
 
   | Module.File({filename, _}) =>
-    switch%lwt (cache.get_module(location)) {
-    | Some(m) => Lwt.return(m)
+    switch%lwt (ctx.cache.get_module(location)) {
+    | Some(m) => Lwt.return((m, None))
     | None =>
       /* filename is Some (abs path) or None at this point */
       let%lwt (source, self_dependency) =
@@ -160,7 +161,7 @@ let read_module =
 
           let%lwt ({content, _}, _) =
             Lwt.catch(
-              () => cache.get_file(filename),
+              () => ctx.cache.get_file(filename),
               fun
               | Cache.FileDoesNotExist(filename) =>
                 Lwt.fail(Context.PackError(ctx, CannotReadModule(filename)))
@@ -185,56 +186,92 @@ let read_module =
         | None => Lwt.return((None, []))
         };
 
-      let {Preprocessor.process, _} = ctx.preprocessor;
-      let%lwt (source, build_dependencies, files) =
-        Lwt.catch(
-          () => process(location, source),
-          fun
-          | FlowParser.Parse_error.Error(args) => {
-              let location_str = Module.location_to_string(location);
-              let src =
-                switch (source) {
-                | Some(src) => src
-                | None => ""
-                };
-              Lwt.fail(
-                Context.PackError(
-                  ctx,
-                  CannotParseFile((location_str, args, src)),
-                ),
-              );
-            }
-          | Preprocessor.Error(message) =>
-            Lwt.fail(Context.PackError(ctx, PreprocessorError(message)))
-          | FastpackUtil.Error.UnhandledCondition(message) =>
+      switch (is_json(location), source) {
+      | (true, Some(source)) =>
+        let%lwt m = make_module(location, source);
+        Lwt.return((m, None));
+      | (true, None) => failwith("impossible")
+      | (false, _) =>
+        let {ParsingServer.Reader.read, _} = ctx.reader;
+        let%lwt (source, program, build_dependencies, files) =
+          switch%lwt (read(~location, ~source)) {
+          | ParsedOK(
+              source,
+              program,
+              {ParsingServer.build_dependencies, files},
+            ) =>
+            /* Logs.debug(x => x("success!")); */
+            Lwt.return((source, program, build_dependencies, files));
+          | ParseError(args) =>
+            let location_str = Module.location_to_string(location);
+            let src =
+              switch (source) {
+              | Some(src) => src
+              | None => ""
+              };
+            Lwt.fail(
+              Context.PackError(
+                ctx,
+                CannotParseFile((location_str, args, src)),
+              ),
+            );
+          | UnhandledCondition(message)
+          | PreprocessorError(message)
+          | Traceback(message) =>
             Lwt.fail(Context.PackError(ctx, UnhandledCondition(message)))
-          | exn => Lwt.fail(exn),
-        );
+          };
 
-      let%lwt files =
-        Lwt_list.map_s(
-          filename => {
-            let%lwt ({content, _}, _) = cache.get_file(filename);
-            Lwt.return((filename, content));
-          },
-          files,
-        );
+        /* let {Preprocessor.process, _} = ctx.preprocessor; */
+        /* let%lwt (source, build_dependencies, files) = */
+        /*   Lwt.catch( */
+        /*     () => process(location, source), */
+        /*     fun */
+        /*     | FlowParser.Parse_error.Error(args) => { */
+        /*         let location_str = Module.location_to_string(location); */
+        /*         let src = */
+        /*           switch (source) { */
+        /*           | Some(src) => src */
+        /*           | None => "" */
+        /*           }; */
+        /*         Lwt.fail( */
+        /*           Context.PackError( */
+        /*             ctx, */
+        /*             CannotParseFile((location_str, args, src)), */
+        /*           ), */
+        /*         ); */
+        /*       } */
+        /*     | Preprocessor.Error(message) => */
+        /*       Lwt.fail(Context.PackError(ctx, PreprocessorError(message))) */
+        /*     | FastpackUtil.Error.UnhandledCondition(message) => */
+        /*       Lwt.fail(Context.PackError(ctx, UnhandledCondition(message))) */
+        /*     | exn => Lwt.fail(exn), */
+        /*   ); */
 
-      let%lwt m = make_module(location, source);
-      let%lwt build_dependencies =
-        Lwt_list.fold_left_s(
-          (build_dependencies, filename) => {
-            let%lwt ({digest, _}, _) = cache.get_file(filename);
-            Lwt.return(M.add(filename, digest, build_dependencies));
-          },
-          M.empty,
-          self_dependency @ build_dependencies,
-        );
+        let%lwt files =
+          Lwt_list.map_s(
+            filename => {
+              let%lwt ({content, _}, _) = ctx.cache.get_file(filename);
+              Lwt.return((filename, content));
+            },
+            files,
+          );
 
-      let m = {...m, state: Module.Preprocessed, files, build_dependencies};
+        let%lwt m = make_module(location, source);
+        let%lwt build_dependencies =
+          Lwt_list.fold_left_s(
+            (build_dependencies, filename) => {
+              let%lwt ({digest, _}, _) = ctx.cache.get_file(filename);
+              Lwt.return(M.add(filename, digest, build_dependencies));
+            },
+            M.empty,
+            self_dependency @ build_dependencies,
+          );
 
-      let () = cache.modify_content(m, source);
-      Lwt.return(m);
+        let m = {...m, state: Module.Preprocessed, files, build_dependencies};
+
+        let () = ctx.cache.modify_content(m, source);
+        Lwt.return((m, Some(program)));
+      };
     }
   };
 };
@@ -257,8 +294,14 @@ let build = (ctx: Context.t) => {
       Lwt.return_unit;
     };
 
-  let analyze = (_id, location, source) => {
-    let ((_, stmts, _) as program, _) = Parser.parse_source(source);
+  let analyze = (_id, location, source, program) => {
+    let program =
+      switch (program) {
+      | Some(program) => program
+      | None => failwith("no parsed input")
+      };
+    let (_, stmts, _) = program;
+    /* let ((_, stmts, _) as program, _) = Parser.parse_source(source); */
 
     module Ast = FlowParser.Ast;
     module Loc = FlowParser.Loc;
@@ -883,8 +926,8 @@ let build = (ctx: Context.t) => {
         location,
         {
           let ctx = {...ctx, current_location: location};
-          let cache = ctx.cache;
-          let%lwt m = read_module(~ctx, ~cache, ~from_module=None, location);
+          let%lwt (m, program) =
+            read_module(~ctx, ~from_module=None, location);
           let seen = MLSet.add(location, seen);
           let graph = ctx.graph;
 
@@ -917,7 +960,7 @@ let build = (ctx: Context.t) => {
                     );
                   } :
                   (
-                    try (analyze(m.id, m.location, source)) {
+                    try (analyze(m.id, m.location, source, program)) {
                     | FlowParser.Parse_error.Error(args) =>
                       let location_str =
                         Module.location_to_string(m.location);
@@ -962,7 +1005,7 @@ let build = (ctx: Context.t) => {
                       Lwt_list.fold_left_s(
                         (build, filename) => {
                           let%lwt ({digest, _}, _) =
-                            cache.get_file(filename);
+                            ctx.cache.get_file(filename);
                           Lwt.return(M.add(filename, digest, build));
                         },
                         build,
@@ -999,7 +1042,7 @@ let build = (ctx: Context.t) => {
 
           let updateGraph = (~kind, dependencies) => {
             let%lwt () =
-              Lwt_list.iter_s(
+              Lwt_list.iter_p(
                 ((req, resolved)) => {
                   let%lwt () =
                     switch (

@@ -11,11 +11,11 @@ type t = {
   target: Target.t,
   resolver: Resolver.t,
   preprocessor: Preprocessor.t,
+  reader: ParsingServer.Reader.t,
   export_finder: ExportFinder.t,
   cache: Cache.t,
   graph: DependencyGraph.t,
 };
-
 
 exception PackError(t, Error.reason);
 exception ExitError(string);

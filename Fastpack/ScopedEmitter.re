@@ -26,7 +26,7 @@ let to_eval = s => {
   String.(sub(json, 1, length(json) - 2));
 };
 
-let run = (ctx: Context.t, output_channel) => {
+let run = (start_time, ctx: Context.t, output_channel) => {
   /* emit required runtime */
   let emit_runtime = (out, prefix, entry_id) =>
     Lwt_io.write(out) @@
@@ -129,6 +129,7 @@ let run = (ctx: Context.t, output_channel) => {
       )
     };
 
+        Logs.debug(x => x("GTIME: %f", (Unix.gettimeofday() -. start_time)));
   Logs.debug(x => x("BEFORE EMIT: %s", Module.location_to_string(entry.location)));
   let%lwt _ = emit(graph, entry);
   Lwt.return((
@@ -139,7 +140,7 @@ let run = (ctx: Context.t, output_channel) => {
 /* DependencyGraph.cleanup ctx.graph emitted_modules; */
 /* Lwt_io.position output_channel |> Int64.to_int |> Lwt.return */
 
-let emit = (ctx: Context.t) => {
+let emit = (ctx: Context.t, start_time) => {
   let temp_file =
     Filename.temp_file(~temp_dir=ctx.output_dir, ".fpack", ".bundle.js");
 
@@ -151,7 +152,7 @@ let emit = (ctx: Context.t) => {
           ~perm=0o640,
           ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
           temp_file,
-          run(ctx),
+          run(start_time, ctx),
         );
 
       let%lwt () = Lwt_unix.rename(temp_file, ctx.output_file);
@@ -168,6 +169,6 @@ let emit = (ctx: Context.t) => {
 };
 
 let update_graph = (ctx: Context.t) => {
-  let%lwt _ = run(ctx, Lwt_io.null);
+  let%lwt _ = run(0.0, ctx, Lwt_io.null);
   Lwt.return_unit;
 };
