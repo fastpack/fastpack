@@ -205,14 +205,12 @@ type t = {
   dynamic_dependencies: list((Dependency.t, location)),
   /*** Mapping of filename to digest */
   build_dependencies: M.t(string),
-  /*** If module is analyzed when packing */
-  state,
   /*** CJS / CSJ with __esModule flag / EcmaScript */
   module_type,
   /*** "side-effect" files to be emitted alongside with module */
   files: list((string, string)),
   /*** Module source along with transformations applied */
-  workspace: Workspace.t((t, DependencyMap.t(t))),
+  source: string,
   /*** Module scope */
   scope: FastpackUtil.Scope.t,
   /*** Module exports */

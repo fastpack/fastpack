@@ -8,11 +8,10 @@ let debug = Logs.debug;
 module ModuleEntry = {
   type t = {
     id: string,
-    state: Module.state,
     package: Package.t,
     module_type: Module.module_type,
     files: list((string, string)),
-    content: string,
+    source: string,
     build_dependencies: M.t(string),
     static_dependencies: list((Module.Dependency.t, Module.location)),
     dynamic_dependencies: list((Module.Dependency.t, Module.location)),
@@ -44,7 +43,7 @@ type t = {
   get_package: string => Lwt.t((Package.t, bool)),
   find_package_for_filename: (string, string) => Lwt.t((Package.t, bool)),
   get_module: Module.location => Lwt.t(option(Module.t)),
-  modify_content: (Module.t, string) => unit,
+  modify_content: (Module.t) => unit,
   /* add_build_dependencies: Module.t -> string list -> unit Lwt.t; */
   /* get_invalidated_modules : string -> string list; */
   /* setup_build_dependencies : StringSet.t -> unit; */
@@ -349,11 +348,10 @@ let create = (init: init) => {
     | None => Lwt.return_none
     | Some({
         id,
-        state,
         package,
         module_type,
         files,
-        content,
+        source,
         build_dependencies,
         static_dependencies,
         dynamic_dependencies,
@@ -368,14 +366,13 @@ let create = (init: init) => {
         Lwt.return_some({
           Module.id,
           location,
-          state,
           package,
           static_dependencies,
           dynamic_dependencies,
           build_dependencies,
           module_type,
           files,
-          workspace: Workspace.of_string(content),
+          source,
           scope,
           exports,
         })
@@ -383,7 +380,7 @@ let create = (init: init) => {
     };
   };
 
-  let modify_content = (m: Module.t, content) =>
+  let modify_content = (m: Module.t) =>
     switch (m.location) {
     | Module.EmptyModule
     | Module.Runtime => ()
@@ -391,7 +388,6 @@ let create = (init: init) => {
       let location_str = Module.location_to_string(m.location);
       let module_entry = {
         ModuleEntry.id: m.id,
-        state: m.state,
         package: m.package,
         build_dependencies: m.build_dependencies,
         static_dependencies: m.static_dependencies,
@@ -400,7 +396,7 @@ let create = (init: init) => {
         files: m.files,
         scope: m.scope,
         exports: m.exports,
-        content,
+        source: m.source,
       };
 
       modules := M.add(location_str, module_entry, modules^);
