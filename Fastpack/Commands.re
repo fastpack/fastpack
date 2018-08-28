@@ -164,6 +164,21 @@ module Serve = {
   );
 };
 
+module ParsingServer = {
+  let run = (options: CommonOptions.t) => {
+    let {CommonOptions.projectRootDir: project_root, outputDir: output_dir, _} = options;
+    let current_dir = Unix.getcwd();
+    Lwt_main.run(
+      ParsingServer.start(~project_root, ~current_dir, ~output_dir),
+    );
+  };
+  let doc = "parsing service";
+  let command = (
+    Term.(ret(const(run) $ CommonOptions.term)),
+    Term.info("parsing-server", ~doc, ~sdocs, ~exits),
+  );
+};
+
 module Help = {
   let run = () => `Help((`Auto, None));
   let command = (
@@ -191,5 +206,11 @@ module Default = {
   );
 };
 
-let all = [Build.command, Watch.command, Serve.command, Help.command];
+let all = [
+  Build.command,
+  Watch.command,
+  Serve.command,
+  Help.command,
+  ParsingServer.command,
+];
 let default = Default.command;

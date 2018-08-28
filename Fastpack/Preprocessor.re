@@ -78,7 +78,7 @@ let builtin = source =>
     try (
       {
         let ret = FastpackTranspiler.transpile_source(all_transpilers, source);
-        Logs.debug(x => x("SOURCE: %s", ret));
+        /* Logs.debug(x => x("SOURCE: %s", ret)); */
         Lwt.return((ret, [], []));
       }
     ) {
@@ -108,14 +108,13 @@ module NodeServer = {
 
   let pool =
     Lwt_pool.create(
-      4,
+      1,
       ~dispose=
         ((p, _, _)) => {
           p#terminate;
           p#close |> ignore |> Lwt.return;
         },
       () => {
-        Logs.debug(x => x("process created"));
         module FS = FastpackUtil.FS;
         let fpack_binary_path =
           /* TODO: handle on Windows? */
@@ -144,6 +143,7 @@ module NodeServer = {
         let%lwt fpack_root =
           find_fpack_root @@ FilePath.dirname(fpack_binary_path);
 
+        Logs.debug(x => x("process created: %s %s ", fpack_binary_path, fpack_root));
         let cmd =
           Printf.sprintf(
             "node %s %s %s",
@@ -215,7 +215,7 @@ module NodeServer = {
             member("error", data) |> member("message") |> to_string;
           Lwt.fail(Error(error));
         | Some(source) =>
-          Logs.debug(x => x("SOURCE: %s", source));
+          /* Logs.debug(x => x("SOURCE: %s", source)); */
           Lwt.return((source, dependencies, files));
         };
       },
