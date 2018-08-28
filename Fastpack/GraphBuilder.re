@@ -1042,6 +1042,9 @@ let build = (ctx: Context.t) => {
   let {Context.current_location, _} = ctx;
   debug(x => x("BEFORE PROCESS"));
   let _ = process(ctx, current_location);
+  /* This is needed to make sure all module promises are resolved
+     TODO: make it more consistent */
+  let%lwt _ = DependencyGraph.to_dependency_map(ctx.graph);
   debug(x => x("AFTER PROCESS"));
   Lwt.return_unit;
 };
