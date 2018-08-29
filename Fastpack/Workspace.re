@@ -8,13 +8,13 @@
 module Loc = FlowParser.Loc;
 module UTF8 = FastpackUtil.UTF8;
 
-type t('ctx) = {
+type t = {
   /* Original string value */
   value: string,
   /* List of patches sorted in desceding order */
-  patches: list(patch('ctx)),
+  patches: list(patch),
 }
-and patch('ctx) = {
+and patch = {
   /* Start offset into an original value */
   offset_start: int,
   /* End offset into an original value */
@@ -22,14 +22,12 @@ and patch('ctx) = {
   /* Order of appearance, important for zero-length patches */
   order: int,
   /* Patch to apply */
-  patch: 'ctx => string,
+  patch: string,
 };
 
-type patcher('ctx) = {
-  patch_with: (int, int, 'ctx => string) => unit,
+type patcher = {
   patch: (int, int, string) => unit,
   remove: (int, int) => unit,
-  patch_loc_with: (Loc.t, 'ctx => string) => unit,
   patch_loc: (Loc.t, string) => unit,
   remove_loc: Loc.t => unit,
   sub: (int, int) => string,
@@ -54,8 +52,7 @@ let write =
     (
       ~modify=s => s,
       ~output_channel: Lwt_io.output_channel,
-      ~workspace: t('a),
-      ~ctx: 'a,
+      ~workspace: t,
     ) =>
   switch (workspace.patches) {
   | [] =>
@@ -133,7 +130,7 @@ let write =
         let b_length = String.length(chunk);
         let%lwt () = Lwt_io.write(output_channel, modified_chunk);
         /* let%lwt () = Lwt_io.write_from_string_exactly output_channel value b_offset b_length in */
-        let patch_content = patch.patch(ctx) |> modify;
+        let patch_content = patch.patch |> modify;
         let%lwt () = Lwt_io.write(output_channel, patch_content);
         let patched_chunk =
           UTF8.sub(
@@ -153,7 +150,7 @@ let write =
     write_patch(0, 0, workspace.value, patches, "");
   };
 
-let to_string = (w, ctx) => {
+let to_string = (w) => {
   let patches = List.rev(w.patches);
   let rec print = (offset, value, patches) =>
     switch (patches) {
@@ -161,7 +158,7 @@ let to_string = (w, ctx) => {
     | [patch, ...patches] =>
       let patch_pre = String.sub(value, offset, patch.offset_start - offset);
       patch_pre
-      ++ patch.patch(ctx)
+      ++ patch.patch
       ++ print(patch.offset_end, value, patches);
     };
 
@@ -170,7 +167,7 @@ let to_string = (w, ctx) => {
 
 let make_patcher = workspace => {
   let order = ref(0);
-  let patch_with = (start, offset, f) => {
+  let patch_with = (start, offset, s) => {
     let _end = start + offset;
 
     order := order^ + 1;
@@ -178,7 +175,7 @@ let make_patcher = workspace => {
       patch(
         workspace^,
         {
-          patch: f,
+          patch: s,
           offset_start: min(start, _end),
           offset_end: max(start, _end),
           order: order^,
@@ -186,10 +183,8 @@ let make_patcher = workspace => {
       );
   };
 
-  let patch = (start, offset, s) => patch_with(start, offset, _ => s);
+  let patch = (start, offset, s) => patch_with(start, offset, s);
   let remove = (start, offset) => patch(start, offset, "");
-  let patch_loc_with = (loc: Loc.t) =>
-    patch_with(loc.start.offset, loc._end.offset - loc.start.offset);
 
   let patch_loc = (loc: Loc.t) =>
     patch(loc.start.offset, loc._end.offset - loc.start.offset);
@@ -202,10 +197,8 @@ let make_patcher = workspace => {
   let sub_loc = (loc: Loc.t) =>
     sub(loc.start.offset, loc._end.offset - loc.start.offset);
   {
-    patch_with,
     patch,
     remove,
-    patch_loc_with,
     patch_loc,
     remove_loc,
     sub,

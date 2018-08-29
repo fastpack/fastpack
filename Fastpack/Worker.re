@@ -44,9 +44,14 @@ and complete = {
   build_dependencies: list(string),
 };
 
-let start = (~project_root, ~current_dir, ~output_dir) => {
+let start = (~project_root, ~output_dir) => {
   let%lwt {Preprocessor.process, finalize, _} =
-    Preprocessor.make(~configs=[], ~project_root, ~current_dir, ~output_dir);
+    Preprocessor.make(
+      ~configs=[],
+      ~project_root,
+      ~current_dir=Unix.getcwd(),
+      ~output_dir,
+    );
 
   let get_module_type = stmts => {
     /* TODO: what if module has only import() expression? */
@@ -90,8 +95,6 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
   };
 
   let analyze = (location, source) => {
-    let location_str =
-      Module.location_to_string(~base_dir=Some(project_root), location);
     let ((_, stmts, _) as program, _) =
       FastpackUtil.Parser.parse_source(source);
 
@@ -102,15 +105,7 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
     module L = Ast.Literal;
 
     let workspace = ref(Workspace.of_string(source));
-    let {
-          Workspace.patch,
-          patch_with,
-          patch_loc,
-          patch_loc_with,
-          remove,
-          remove_loc,
-          _,
-        } as patcher =
+    let {Workspace.patch, patch_loc, remove, remove_loc, _} as patcher =
       Workspace.make_patcher(workspace);
 
     let (program_scope, exports) = Scope.of_program(stmts);
@@ -127,18 +122,10 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
     let define_var = Printf.sprintf("const %s = %s;");
 
     let fastpack_require = request =>
-      Printf.sprintf(
-        "__fastpack_require__(\"%s:%s\")",
-        location_str,
-        request,
-      );
+      Printf.sprintf("__fastpack_require__(\"%s\")", request);
 
     let fastpack_import = request =>
-      Printf.sprintf(
-        "__fastpack_import__(/* \"%s:%s\")",
-        location_str,
-        request,
-      );
+      Printf.sprintf("__fastpack_import__(/* \"%s\")", request);
 
     let rec avoid_name_collision = (~n=0, name) => {
       let name =
@@ -328,10 +315,10 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
               _,
             }) =>
             let dep = add_dependency(~kind=`Static, request);
-            patch_with(
+            patch(
               0,
               0,
-              () => {
+              {
                 let namespace =
                   switch (specifiers) {
                   | Some(
@@ -384,9 +371,7 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
               loc.start.offset,
               stmt_loc.start.offset - loc.start.offset,
             );
-            patch_with(loc._end.offset, 0, () =>
-              ";" ++ define_local_exports(exports)
-            );
+            patch(loc._end.offset, 0, ";" ++ define_local_exports(exports));
 
           | S.ExportNamedDeclaration({
               exportKind: S.ExportValue,
@@ -395,8 +380,9 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
                 Some(S.ExportNamedDeclaration.ExportSpecifiers(specifiers)),
               source: None,
             }) =>
-            patch_loc_with(loc, () =>
-              specifiers |> export_from_specifiers |> define_local_exports
+            patch_loc(
+              loc,
+              specifiers |> export_from_specifiers |> define_local_exports,
             )
 
           | S.ExportNamedDeclaration({
@@ -407,10 +393,11 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
               source: Some((_, {value: request, _})),
             }) =>
             let _ = add_dependency(~kind=`Static, request);
-            patch_loc_with(loc, () =>
+            patch_loc(
+              loc,
               specifiers
               |> export_from_specifiers
-              |> define_remote_exports(~request)
+              |> define_remote_exports(~request),
             );
 
           | S.ExportNamedDeclaration({
@@ -426,9 +413,9 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
               source: Some((_, {value: request, _})),
             }) =>
             let dep = add_dependency(~kind=`Static, request);
-            patch_loc_with(
+            patch_loc(
               loc,
-              () => {
+              {
                 let (module_var, module_var_definition) =
                   ensure_module_var(dep.request);
 
@@ -444,9 +431,9 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
               source: Some((_, {value: request, _})),
             }) =>
             let dep = add_dependency(~kind=`Static, request);
-            patch_loc_with(
+            patch_loc(
               loc,
-              () => {
+              {
                 let (module_var, module_var_definition) =
                   ensure_module_var(dep.request);
                 let updated_exports =
@@ -551,7 +538,7 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
 
         | E.Import((_, E.Literal({value: L.String(request), _}))) =>
           let dep = add_dependency(~kind=`Dynamic, request);
-          patch_loc_with(loc, () => fastpack_import(dep.request));
+          patch_loc(loc, fastpack_import(dep.request));
           Visit.Break;
 
         | E.Call({
@@ -563,7 +550,7 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
           }) =>
           if (!has_binding("require")) {
             let dep = add_dependency(~kind=`Static, request);
-            patch_loc_with(loc, () => fastpack_require(dep.request));
+            patch_loc(loc, fastpack_require(dep.request));
           };
           Visit.Break;
 
@@ -581,12 +568,13 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
           let () =
             switch (get_binding(name)) {
             | Some({typ: Scope.Import({source, remote: Some(remote)}), _}) =>
-              patch_loc_with(loc, () =>
+              patch_loc(
+                loc,
                 patch_imported_name(
                   ~from_request=source,
                   (loc, name),
                   remote,
-                )
+                ),
               )
             | _ => ()
             };
@@ -656,7 +644,6 @@ let start = (~project_root, ~current_dir, ~output_dir) => {
               ~modify=to_eval,
               ~output_channel=Lwt_io.null,
               ~workspace,
-              ~ctx=(),
             );
           Lwt.return(
             Complete({
@@ -700,8 +687,8 @@ module Reader = {
     finalize: unit => Lwt.t(unit),
   };
 
-  let ps_project_root = ref("");
-  let ps_output_dir = ref("");
+  let worker_project_root = ref("");
+  let worker_output_dir = ref("");
   let pool =
     Lwt_pool.create(
       4,
@@ -712,33 +699,21 @@ module Reader = {
         },
       () => {
         Logs.debug(x => x("reader created"));
-        module FS = FastpackUtil.FS;
-        let fpack_binary_path =
-          /* TODO: handle on Windows? */
-          (
-            switch (Sys.argv[0].[0]) {
-            | '/'
-            | '.' => Sys.argv[0]
-            | _ => FileUtil.which(Sys.argv[0])
-            }
-          )
-          |> FileUtil.readlink
-          |> FS.abs_path(Unix.getcwd());
 
         let cmd =
           Printf.sprintf(
-            "%s parsing-server --project-root='%s' --output='%s'",
-            fpack_binary_path,
-            ps_project_root^,
-            ps_output_dir^,
+            "%s worker --project-root='%s' --output='%s'",
+            Sys.argv[0],
+            worker_project_root^,
+            worker_output_dir^,
           );
-        FS.open_process(cmd);
+        FastpackUtil.FS.open_process(cmd);
       },
     );
 
   let make = (~project_root, ~output_dir) => {
-    ps_project_root := project_root;
-    ps_output_dir := output_dir;
+    worker_project_root := project_root;
+    worker_output_dir := output_dir;
 
     let read = (~location, ~source) =>
       Lwt_pool.use(

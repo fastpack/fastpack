@@ -210,7 +210,7 @@ let patch_expression =
         computed: false,
         _,
       }) =>
-      patch_loc(expr_loc) @@ "\"" ++ to_string(mode) ++ "\"";
+      patch_loc(expr_loc, "\"" ++ to_string(mode) ++ "\"");
       Visit.Break;
     | _ => Visit.Continue(visit_ctx)
     }
