@@ -32,6 +32,14 @@ let run = (debug, f) => {
   };
 };
 
+/* TODO: StringSet */
+let cmds = ref([]);
+let all = () => cmds^;
+let register = cmd => {
+  cmds := [cmd, ...cmds^];
+  cmd;
+};
+
 module Build = {
   let run = (options: CommonOptions.t) =>
     run(options.debug, () =>
@@ -59,10 +67,11 @@ module Build = {
       )
     );
   let doc = "rebuild the bundle on a file change";
-  let command = (
-    Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("build", ~doc, ~sdocs, ~exits),
-  );
+  let command =
+    register((
+      Term.(ret(const(run) $ CommonOptions.term)),
+      Term.info("build", ~doc, ~sdocs, ~exits),
+    ));
 };
 
 module Watch = {
@@ -94,10 +103,11 @@ module Watch = {
       )
     );
   let doc = "build the bundle";
-  let command = (
-    Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("watch", ~doc, ~sdocs, ~exits),
-  );
+  let command =
+    register((
+      Term.(ret(const(run) $ CommonOptions.term)),
+      Term.info("watch", ~doc, ~sdocs, ~exits),
+    ));
 };
 
 module Serve = {
@@ -185,40 +195,40 @@ module Serve = {
       )
     );
   let doc = "watch for file changes, rebuild bundle & serve";
-  let command = (
-    /* TODO: add options here */
-    Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("serve", ~doc, ~sdocs, ~exits),
-  );
+  let command =
+    register((
+      /* TODO: add options here */
+      Term.(ret(const(run) $ CommonOptions.term)),
+      Term.info("serve", ~doc, ~sdocs, ~exits),
+    ));
 };
 
-module ParsingServer = {
+module Worker = {
   let run = (options: CommonOptions.t) => {
     let {CommonOptions.projectRootDir: project_root, outputDir: output_dir, _} = options;
-    let current_dir = Unix.getcwd();
-    Lwt_main.run(
-      ParsingServer.start(~project_root, ~current_dir, ~output_dir),
-    );
+    Lwt_main.run(Worker.start(~project_root, ~output_dir));
   };
-  let doc = "parsing service";
-  let command = (
-    Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("parsing-server", ~doc, ~sdocs, ~exits),
-  );
+  let doc = "worker subprocess (don't use directly)";
+  let command =
+    register((
+      Term.(ret(const(run) $ CommonOptions.term)),
+      Term.info("worker", ~doc, ~sdocs, ~exits),
+    ));
 };
 
 module Help = {
   let run = () => `Help((`Auto, None));
-  let command = (
-    Term.(ret(const(run) $ const())),
-    Term.info(
-      "help",
-      ~version,
-      ~doc="Show this message and exit",
-      ~sdocs,
-      ~exits,
-    ),
-  );
+  let command =
+    register((
+      Term.(ret(const(run) $ const())),
+      Term.info(
+        "help",
+        ~version,
+        ~doc="Show this message and exit",
+        ~sdocs,
+        ~exits,
+      ),
+    ));
 };
 
 module Default = {
@@ -234,11 +244,4 @@ module Default = {
   );
 };
 
-let all = [
-  Build.command,
-  Watch.command,
-  Serve.command,
-  Help.command,
-  ParsingServer.command,
-];
 let default = Default.command;

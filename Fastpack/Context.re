@@ -11,7 +11,7 @@ type t = {
   target: Target.t,
   resolver: Resolver.t,
   preprocessor: Preprocessor.t,
-  reader: ParsingServer.Reader.t,
+  reader: Worker.Reader.t,
   export_finder: ExportFinder.t,
   cache: Cache.t,
   graph: DependencyGraph.t,

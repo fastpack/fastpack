@@ -191,9 +191,9 @@ let read_module =
       make_module(location, "module.exports = " ++ source ++ ";")
     | (true, None) => failwith("impossible: *.json file without source")
     | (false, _) =>
-      let {ParsingServer.Reader.read, _} = ctx.reader;
+      let {Worker.Reader.read, _} = ctx.reader;
       let%lwt {
-        ParsingServer.source,
+        Worker.source,
         static_dependencies,
         dynamic_dependencies,
         module_type,
@@ -297,7 +297,7 @@ let build = (ctx: Context.t) => {
             | NoDependendencies => Lwt.return(m)
             | Dependencies(static_dependencies, dynamic_dependencies) =>
               let resolve_dependencies =
-                Lwt_list.map_s(req => {
+                Lwt_list.map_p(req => {
                   let%lwt (resolved, build_dependencies) = resolve(ctx, req);
 
                   Lwt.return(((req, resolved), build_dependencies));
