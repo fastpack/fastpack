@@ -108,7 +108,7 @@ module Serve = {
           let start_time = Unix.gettimeofday();
 
           let (broadcastToWebsocket, devserver) =
-            FastpackServe.Devserver.start(
+            FastpackServer.Devserver.start(
               ~port=3000,
               ~outputDir=options.outputDir,
               ~debug=options.debug,
@@ -116,7 +116,7 @@ module Serve = {
             );
 
           let%lwt () =
-            FastpackServe.CopyPublic.copy(
+            FastpackServer.CopyPublic.copy(
               ~sourceDir="./public",
               ~outputDir=options.outputDir,
               ~outputFilename=options.outputFilename,

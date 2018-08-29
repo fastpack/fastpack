@@ -1,7 +1,7 @@
 (jbuild_version 1)
 
 (library
-  ((name FastpackServe)
-  (public_name FastpackServe)
+  ((name FastpackServer)
+  (public_name FastpackServer)
   (libraries (FastpackUtil lwt cohttp cohttp-lwt-unix websocket-lwt websocket-lwt.cohttp))
   (preprocess (pps (lwt.ppx)))))
