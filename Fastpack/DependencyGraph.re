@@ -82,7 +82,6 @@ let add_dependency =
     | `Static => graph.static_dependencies
     | `Dynamic => graph.dynamic_dependencies
     };
-
   Hashtbl.add(dependencies, m.location, dep);
 };
 
