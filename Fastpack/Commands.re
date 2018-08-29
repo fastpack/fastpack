@@ -106,6 +106,24 @@ module Serve = {
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
+
+          let (broadcastToWebsocket, devserver) =
+            FastpackServer.Devserver.start(
+              ~port=3000,
+              ~outputDir=options.outputDir,
+              ~debug=options.debug,
+              (),
+            );
+
+          let%lwt () =
+            FastpackServer.CopyPublic.copy(
+              ~sourceDir="./public",
+              ~outputDir=options.outputDir,
+              ~outputFilename=options.outputFilename,
+              ~port=3000,
+              (),
+            );
+
           let report_ok =
               (
                 ~message as _message,
@@ -113,17 +131,27 @@ module Serve = {
                 ~ctx as _ctx,
                 ~files as _file,
               ) => {
-            /* TODO: this function is invoked when bundle is built successfully */
             print_endline("built successfully!");
-            print_endline("It is good idea to ask clients to reload");
-            Lwt.return_unit;
+
+            Yojson.Basic.(
+              `Assoc([("build", `String("OK"))])
+              |> to_string(~std=true)
+              |> (s => s ++ "\n")
+              |> broadcastToWebsocket
+            );
           };
 
-          let report_error = (~ctx as _ctx, ~error as _error) => {
-            /* TODO: this function is invoked when an error occured */
+          let report_error = (~ctx, ~error) => {
             print_endline("error occured!");
-            print_endline("Maybe display an error?");
-            Lwt.return_unit;
+
+            Yojson.Basic.(
+              `Assoc([
+                ("error", `String(Context.stringOfError(ctx, error))),
+              ])
+              |> to_string(~std=true)
+              |> (s => s ++ "\n")
+              |> broadcastToWebsocket
+            );
           };
 
           /* TODO: maybe decouple mode from the CommonOptions ? */
@@ -147,7 +175,7 @@ module Serve = {
               | Error(_) => raise(Context.ExitError(""))
               | Ok(ctx) =>
                 /* super-functional web-server :) */
-                let server = Lwt_unix.sleep(600.);
+                let server = devserver;
                 let watcher = Watcher.watch(~ctx, ~pack);
                 Lwt.join([server, watcher]);
               },

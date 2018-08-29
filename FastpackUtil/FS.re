@@ -85,3 +85,16 @@ let isatty = channel => {
 
   forceTTY || Unix.isatty(channel);
 };
+
+let copy_file = (~source, ~target, ()): Lwt.t(unit) => {
+  let%lwt sourceFile = Lwt_io.open_file(~mode=Lwt_io.Input, source);
+  let%lwt targetFile = Lwt_io.open_file(~mode=Lwt_io.Output, target);
+
+  let%lwt file = Lwt_io.read(sourceFile);
+  let%lwt () = Lwt_io.write(targetFile, file);
+
+  let%lwt () = Lwt_io.close(sourceFile);
+  let%lwt () = Lwt_io.close(targetFile);
+
+  Lwt.return();
+};
