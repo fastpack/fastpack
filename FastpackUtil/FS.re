@@ -87,7 +87,6 @@ let isatty = channel => {
 };
 
 let copy_file = (~source, ~target, ()): Lwt.t(unit) => {
-  open Lwt;
   let%lwt sourceFile = Lwt_io.open_file(~mode=Lwt_io.Input, source);
   let%lwt targetFile = Lwt_io.open_file(~mode=Lwt_io.Output, target);
 
