@@ -7,7 +7,8 @@ process = { env: {} };
   var installedModules = {};
 
   // The require function
-  function __fastpack_require__(moduleId) {
+  function __fastpack_require__(fromModule, request) {
+    var moduleId = fromModule === null ? request : modules[fromModule].d[request];
 
     // Check if module is in cache
     if(installedModules[moduleId]) {
@@ -21,12 +22,12 @@ process = { env: {} };
     };
 
     // Execute the module function
-    modules[moduleId].call(
+    modules[moduleId].m.call(
       module.exports,
       module,
       module.exports,
-      __fastpack_require__,
-      __fastpack_import__
+      __fastpack_require__.bind(null, moduleId),
+      __fastpack_import__.bind(null, moduleId)
     );
 
     // Flag the module as loaded
@@ -36,13 +37,13 @@ process = { env: {} };
     return module.exports;
   }
 
-  function __fastpack_import__(moduleId) {
+  function __fastpack_import__(fromModule, request) {
     if (!window.Promise) {
       throw 'window.Promise is undefined, consider using a polyfill';
     }
     return new Promise(function(resolve, reject) {
       try {
-        resolve(__fastpack_require__(moduleId));
+        resolve(__fastpack_require__(fromModule, request));
       } catch (e) {
         reject(e);
       }
@@ -62,17 +63,23 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
+  return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-({
-"dep": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nexports.default = \"dep.js\";\n\n//# sourceURL=fpack:///dep.js");
+    ({
+"dep":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nexports.default = \"dep.js\";\n\n//# sourceURL=fpack:///dep.js\n//# sourceURL=fpack:///dep.js");
 },
-"index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("var dep = __fastpack_require__(/* \"./dep\" */ \"dep\");\n\nfunction f(require) {\n  return require(\"./dep\");\n}\n\nfunction g() {\n  var s = f(x => x);\n  var dep2 = __fastpack_require__(/* \"./dep\" */ \"dep\");\n  document.body.innerHTML = `Imported: ${dep.default} Imported: ${\n    dep2.default\n  } Untouched: ${s}`;\n}\n\ng();\n\n//# sourceURL=fpack:///index.js");
+d: {}
 },
-"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("var dep = __fastpack_require__(\"./dep\");\n\nfunction f(require) {\n  return require(\"./dep\");\n}\n\nfunction g() {\n  var s = f(x => x);\n  var dep2 = __fastpack_require__(\"./dep\");\n  document.body.innerHTML = `Imported: ${dep.default} Imported: ${\n    dep2.default\n  } Untouched: ${s}`;\n}\n\ng();\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"./dep":"dep","./dep":"dep"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
 },
 
 });

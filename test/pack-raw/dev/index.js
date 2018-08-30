@@ -7,7 +7,8 @@ process = { env: {} };
   var installedModules = {};
 
   // The require function
-  function __fastpack_require__(moduleId) {
+  function __fastpack_require__(fromModule, request) {
+    var moduleId = fromModule === null ? request : modules[fromModule].d[request];
 
     // Check if module is in cache
     if(installedModules[moduleId]) {
@@ -21,12 +22,12 @@ process = { env: {} };
     };
 
     // Execute the module function
-    modules[moduleId].call(
+    modules[moduleId].m.call(
       module.exports,
       module,
       module.exports,
-      __fastpack_require__,
-      __fastpack_import__
+      __fastpack_require__.bind(null, moduleId),
+      __fastpack_import__.bind(null, moduleId)
     );
 
     // Flag the module as loaded
@@ -36,13 +37,13 @@ process = { env: {} };
     return module.exports;
   }
 
-  function __fastpack_import__(moduleId) {
+  function __fastpack_import__(fromModule, request) {
     if (!window.Promise) {
       throw 'window.Promise is undefined, consider using a polyfill';
     }
     return new Promise(function(resolve, reject) {
       try {
-        resolve(__fastpack_require__(moduleId));
+        resolve(__fastpack_require__(fromModule, request));
       } catch (e) {
         reject(e);
       }
@@ -62,17 +63,23 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
+  return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-({
-"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports = \"Hello, world!\\n\\nLorem Ipsum is simply dummy text of the printing and typesetting industry.\\nLorem Ipsum has been the industry's standard dummy text ever since the 1500s,\\nwhen an unknown printer took a galley of type and scrambled it to make a type\\nspecimen book. It has survived not only five centuries, but also the leap into\\nelectronic typesetting, remaining essentially unchanged. It was popularised in\\nthe 1960s with the release of Letraset sheets containing Lorem Ipsum passages,\\nand more recently with desktop publishing software like Aldus PageMaker\\nincluding versions of Lorem Ipsum.\\n\"\n//# sourceURL=fpack:///node_modules/raw-loader/index.js!test.txt");
+    ({
+"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports = \"Hello, world!\\n\\nLorem Ipsum is simply dummy text of the printing and typesetting industry.\\nLorem Ipsum has been the industry's standard dummy text ever since the 1500s,\\nwhen an unknown printer took a galley of type and scrambled it to make a type\\nspecimen book. It has survived not only five centuries, but also the leap into\\nelectronic typesetting, remaining essentially unchanged. It was popularised in\\nthe 1960s with the release of Letraset sheets containing Lorem Ipsum passages,\\nand more recently with desktop publishing software like Aldus PageMaker\\nincluding versions of Lorem Ipsum.\\n\"\n//# sourceURL=fpack:///node_modules/raw-loader/index.js!test.txt\n//# sourceURL=fpack:///node_modules/raw-loader/index.js!test.txt");
 },
-"index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1_raw_loader_test_txt = __fastpack_require__(/* \"raw-loader!./test.txt\" */ \"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt\");const _1_raw_loader_test_txt__default = _1_raw_loader_test_txt.__esModule ? _1_raw_loader_test_txt.default : _1_raw_loader_test_txt;\n\n\ndocument.body.innerHTML = `\n<h1>test.txt</h1>\n<pre>${_1_raw_loader_test_txt__default}</pre>\n`;\n\n//# sourceURL=fpack:///index.js");
+d: {}
 },
-"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst _1_raw_loader_test_txt = __fastpack_require__(\"raw-loader!./test.txt\");const _1_raw_loader_test_txt__default = _1_raw_loader_test_txt.__esModule ? _1_raw_loader_test_txt.default : _1_raw_loader_test_txt;\n\n\ndocument.body.innerHTML = `\n<h1>test.txt</h1>\n<pre>${_1_raw_loader_test_txt__default}</pre>\n`;\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"raw-loader!./test.txt":"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
 },
 
 });
