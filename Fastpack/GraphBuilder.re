@@ -219,8 +219,11 @@ let read_module =
               CannotParseFile((location_str, args, src)),
             ),
           );
+        | ScopeError(reason) =>
+          Lwt.fail(Context.PackError(ctx, ScopeError(reason)))
+        | PreprocessorError(message) =>
+          Lwt.fail(Context.PackError(ctx, PreprocessorError(message)))
         | UnhandledCondition(message)
-        | PreprocessorError(message)
         | Traceback(message) =>
           Lwt.fail(Context.PackError(ctx, UnhandledCondition(message)))
         };

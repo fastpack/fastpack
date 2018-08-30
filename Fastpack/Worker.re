@@ -30,6 +30,7 @@ type input = {
 type output =
   | Complete(complete)
   | ParseError(list((Loc.t, FlowParser.Parse_error.t)))
+  | ScopeError(Scope.reason)
   | PreprocessorError(string)
   | UnhandledCondition(string)
   | Traceback(string)
@@ -105,7 +106,15 @@ let start = (~project_root, ~output_dir) => {
     module L = Ast.Literal;
 
     let workspace = ref(Workspace.of_string(source));
-    let {Workspace.patch, patch_loc, remove, remove_loc, _} as patcher =
+    let {
+          Workspace.patch,
+          patch_with,
+          patch_loc,
+          patch_loc_with,
+          remove,
+          remove_loc,
+          _,
+        } as patcher =
       Workspace.make_patcher(workspace);
 
     let (program_scope, exports) = Scope.of_program(stmts);
@@ -315,10 +324,10 @@ let start = (~project_root, ~output_dir) => {
               _,
             }) =>
             let dep = add_dependency(~kind=`Static, request);
-            patch(
+            patch_with(
               0,
               0,
-              {
+              () => {
                 let namespace =
                   switch (specifiers) {
                   | Some(
@@ -371,7 +380,9 @@ let start = (~project_root, ~output_dir) => {
               loc.start.offset,
               stmt_loc.start.offset - loc.start.offset,
             );
-            patch(loc._end.offset, 0, ";" ++ define_local_exports(exports));
+            patch_with(loc._end.offset, 0, () =>
+              ";" ++ define_local_exports(exports)
+            );
 
           | S.ExportNamedDeclaration({
               exportKind: S.ExportValue,
@@ -380,9 +391,8 @@ let start = (~project_root, ~output_dir) => {
                 Some(S.ExportNamedDeclaration.ExportSpecifiers(specifiers)),
               source: None,
             }) =>
-            patch_loc(
-              loc,
-              specifiers |> export_from_specifiers |> define_local_exports,
+            patch_loc_with(loc, () =>
+              specifiers |> export_from_specifiers |> define_local_exports
             )
 
           | S.ExportNamedDeclaration({
@@ -393,11 +403,10 @@ let start = (~project_root, ~output_dir) => {
               source: Some((_, {value: request, _})),
             }) =>
             let _ = add_dependency(~kind=`Static, request);
-            patch_loc(
-              loc,
+            patch_loc_with(loc, () =>
               specifiers
               |> export_from_specifiers
-              |> define_remote_exports(~request),
+              |> define_remote_exports(~request)
             );
 
           | S.ExportNamedDeclaration({
@@ -413,9 +422,9 @@ let start = (~project_root, ~output_dir) => {
               source: Some((_, {value: request, _})),
             }) =>
             let dep = add_dependency(~kind=`Static, request);
-            patch_loc(
+            patch_loc_with(
               loc,
-              {
+              () => {
                 let (module_var, module_var_definition) =
                   ensure_module_var(dep.request);
 
@@ -431,9 +440,9 @@ let start = (~project_root, ~output_dir) => {
               source: Some((_, {value: request, _})),
             }) =>
             let dep = add_dependency(~kind=`Static, request);
-            patch_loc(
+            patch_loc_with(
               loc,
-              {
+              () => {
                 let (module_var, module_var_definition) =
                   ensure_module_var(dep.request);
                 let updated_exports =
@@ -538,7 +547,7 @@ let start = (~project_root, ~output_dir) => {
 
         | E.Import((_, E.Literal({value: L.String(request), _}))) =>
           let dep = add_dependency(~kind=`Dynamic, request);
-          patch_loc(loc, fastpack_import(dep.request));
+          patch_loc_with(loc, () => fastpack_import(dep.request));
           Visit.Break;
 
         | E.Call({
@@ -550,7 +559,7 @@ let start = (~project_root, ~output_dir) => {
           }) =>
           if (!has_binding("require")) {
             let dep = add_dependency(~kind=`Static, request);
-            patch_loc(loc, fastpack_require(dep.request));
+            patch_loc_with(loc, () => fastpack_require(dep.request));
           };
           Visit.Break;
 
@@ -568,13 +577,12 @@ let start = (~project_root, ~output_dir) => {
           let () =
             switch (get_binding(name)) {
             | Some({typ: Scope.Import({source, remote: Some(remote)}), _}) =>
-              patch_loc(
-                loc,
+              patch_loc_with(loc, () =>
                 patch_imported_name(
                   ~from_request=source,
                   (loc, name),
                   remote,
-                ),
+                )
               )
             | _ => ()
             };
@@ -644,6 +652,7 @@ let start = (~project_root, ~output_dir) => {
               ~modify=to_eval,
               ~output_channel=Lwt_io.null,
               ~workspace,
+              ~ctx=(),
             );
           Lwt.return(
             Complete({
@@ -665,6 +674,7 @@ let start = (~project_root, ~output_dir) => {
         },
         fun
         | FlowParser.Parse_error.Error(args) => Lwt.return(ParseError(args))
+        | Scope.ScopeError(reason) => Lwt.return(ScopeError(reason))
         | Preprocessor.Error(message) =>
           Lwt.return(PreprocessorError(message))
         | FastpackUtil.Error.UnhandledCondition(message) =>
