@@ -204,11 +204,7 @@ let make = (options: CommonOptions.t) => {
       fun
       | Context.PackError(ctx, error) => {
           let%lwt () = report_error(~ctx, ~error);
-          if (initial) {
-            raise(Context.ExitError(""));
-          } else {
-            Lwt.return_error(ctx);
-          };
+          Lwt.return_error(ctx);
         }
       | exn => raise(exn),
     );
