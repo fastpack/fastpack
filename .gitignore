@@ -16,4 +16,6 @@ test/tmp_stdout.txt
 test/tmp_stdout.txt.backup
 test/tmp_stderr.txt
 test/tmp_stderr.txt.backup
+test/watch/*.js
+test/watch/bundle
 *.install
