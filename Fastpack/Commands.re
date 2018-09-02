@@ -59,7 +59,7 @@ module Build = {
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(_) => Lwt.return_unit
+              | Ok(ctx) => ctx.cache.dump()
               },
             finalize,
           );

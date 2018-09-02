@@ -248,15 +248,20 @@ process = { env: {} };
 /* Lwt_io.position output_channel |> Int64.to_int |> Lwt.return */
 
 let emit = (ctx: Context.t, start_time) => {
-  let temp_file =
-    Filename.temp_file(~temp_dir=ctx.output_dir, ".fpack", ".bundle.js");
+  let (temp_file, _) =
+    Filename.open_temp_file(
+      ~perms=0o644,
+      ~temp_dir=ctx.output_dir,
+      ".fpack",
+      ".bundle.js",
+    );
 
   Lwt.finalize(
     () => {
       let%lwt (emitted_modules, size) =
         Lwt_io.with_file(
           ~mode=Lwt_io.Output,
-          ~perm=0o640,
+          ~perm=0o644,
           ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
           temp_file,
           run(start_time, ctx),

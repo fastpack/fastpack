@@ -1,8 +1,6 @@
 module FS = FastpackUtil.FS;
 module M = Map.Make(String);
 
-
-
 type t = {
   resolve:
     (~basedir: string, string) => Lwt.t((Module.location, list(string))),
@@ -27,6 +25,12 @@ module RequestSet =
     type t = request;
     let compare = compare_request;
   });
+
+let mock_to_string = mock =>
+  switch (mock) {
+  | Config.Mock.Empty => ""
+  | Config.Mock.Mock(mock) => mock
+  };
 
 let request_to_string = req =>
   switch (req) {
@@ -103,7 +107,8 @@ let make =
               let%bind normalized_value =
                 switch (v) {
                 | Config.Mock.Empty => return(InternalRequest("$fp$empty"))
-                | Config.Mock.Mock(v) => normalize_request(~basedir=current_dir, v)
+                | Config.Mock.Mock(v) =>
+                  normalize_request(~basedir=current_dir, v)
                 };
 
               switch (normalized_key, normalized_value) {
@@ -116,7 +121,7 @@ let make =
                   "File could be only mocked with another file, not package: "
                   ++ k
                   ++ ":"
-                  ++ Config.Mock.to_string(v),
+                  ++ mock_to_string(v),
                 )
               | _ =>
                 return(RequestMap.add(normalized_key, normalized_value, acc))
@@ -236,7 +241,6 @@ let make =
            }
          )
       |> List.concat;
-
     open RunAsync.Syntax;
     let rec exists' = paths =>
       switch (paths) {

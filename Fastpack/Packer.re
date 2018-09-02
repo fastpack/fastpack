@@ -204,7 +204,6 @@ let make = (~report=None, options: Config.t) => {
     );
   };
   let finalize = () => {
-    let%lwt () = cache.dump();
     let%lwt () = preprocessor.Preprocessor.finalize();
     let%lwt () = reader.Worker.Reader.finalize();
     Lwt.return_unit;
