@@ -166,11 +166,10 @@ module Serve = {
 
           /* TODO: maybe decouple mode from the CommonOptions ? */
           let%lwt {Packer.pack, finalize} =
-            Packer.make({
-              ...options,
-              mode: Mode.Development,
-              report: Reporter.Internal(report_ok, report_error),
-            });
+            Packer.make(
+              ~report=Some(Reporter.Internal(report_ok, report_error)),
+              {...options, mode: Mode.Development},
+            );
 
           Lwt.finalize(
             () =>
@@ -205,7 +204,7 @@ module Serve = {
 
 module Worker = {
   let run = (options: Config.t) => {
-    let {Config. projectRootDir: project_root, outputDir: output_dir, _} = options;
+    let {Config.projectRootDir: project_root, outputDir: output_dir, _} = options;
     Lwt_main.run(Worker.start(~project_root, ~output_dir));
   };
   let doc = "worker subprocess (don't use directly)";

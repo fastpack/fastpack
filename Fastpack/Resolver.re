@@ -1,38 +1,7 @@
 module FS = FastpackUtil.FS;
 module M = Map.Make(String);
 
-module Mock = {
-  type t =
-    | Empty
-    | Mock(string);
 
-  let to_string = mock =>
-    switch (mock) {
-    | Empty => ""
-    | Mock(mock) => mock
-    };
-
-  let parse = s =>
-    switch (String.(s |> trim |> split_on_char(':'))) {
-    | []
-    | [""] => Result.Error(`Msg("Empty config"))
-    | [request]
-    | [request, ""] => Result.Ok((false, (request, Empty)))
-    | [request, ...rest] =>
-      let mock = String.concat(":", rest);
-      Result.Ok((false, (request, Mock(mock))));
-    };
-
-  let print = (ppf, (_, mock)) => {
-    let value =
-      switch (mock) {
-      | (request, Empty) => request
-      | (request, Mock(mock)) => request ++ ":" ++ mock
-      };
-
-    Format.fprintf(ppf, "%s", value);
-  };
-};
 
 type t = {
   resolve:
@@ -77,7 +46,7 @@ let make =
     (
       ~project_root: string,
       ~current_dir: string,
-      ~mock: list((string, Mock.t)),
+      ~mock: list((string, Config.Mock.t)),
       ~node_modules_paths: list(string),
       ~extensions: list(string),
       ~preprocessor: Preprocessor.t,
@@ -133,8 +102,8 @@ let make =
                 normalize_request(~basedir=current_dir, k);
               let%bind normalized_value =
                 switch (v) {
-                | Mock.Empty => return(InternalRequest("$fp$empty"))
-                | Mock.Mock(v) => normalize_request(~basedir=current_dir, v)
+                | Config.Mock.Empty => return(InternalRequest("$fp$empty"))
+                | Config.Mock.Mock(v) => normalize_request(~basedir=current_dir, v)
                 };
 
               switch (normalized_key, normalized_value) {
@@ -147,7 +116,7 @@ let make =
                   "File could be only mocked with another file, not package: "
                   ++ k
                   ++ ":"
-                  ++ Mock.to_string(v),
+                  ++ Config.Mock.to_string(v),
                 )
               | _ =>
                 return(RequestMap.add(normalized_key, normalized_value, acc))

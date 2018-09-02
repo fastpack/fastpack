@@ -12,7 +12,7 @@ type t = {
   finalize: unit => Lwt.t(unit),
 };
 
-let make = (options: Config.t) => {
+let make = (~report=None, options: Config.t) => {
   let%lwt current_dir = Lwt_unix.getcwd();
 
   /* entry points */
@@ -71,44 +71,12 @@ let make = (options: Config.t) => {
   let%lwt reader = Worker.Reader.make(~project_root, ~output_dir);
 
   /* cache & cache reporting */
-  let%lwt (cache, cache_report) =
-    switch (options.cache) {
-    | Cache.Use =>
-      /* TODO: consider add the --mock & --extension to the cache filename calculation */
-      let filename =
-        String.concat(
-          "-",
-          [
-            current_dir |> Digest.string |> Digest.to_hex,
-            Version.github_commit,
-          ],
-        );
-
-      let node_modules = FilePath.concat(current_dir, "node_modules");
-      let%lwt dir =
-        switch%lwt (FS.try_dir(node_modules)) {
-        | Some(dir) =>
-          FilePath.concat(FilePath.concat(dir, ".cache"), "fpack")
-          |> Lwt.return
-        | None =>
-          FilePath.concat(FilePath.concat(current_dir, ".cache"), "fpack")
-          |> Lwt.return
-        };
-
-      let%lwt () = FS.makedirs(dir);
-      let cache_filename = FilePath.concat(dir, filename);
-      let%lwt cache = Cache.(create(Persistent(cache_filename)));
-      Lwt.return((
-        cache,
-        if (cache.starts_empty) {
-          "empty";
-        } else {
-          "used";
-        },
-      ));
-    | Cache.Disable =>
-      let%lwt cache = Cache.(create(Memory));
-      Lwt.return((cache, "disabled"));
+  let%lwt cache = Cache.create(options.cache);
+  let cache_report =
+    switch (options.cache, cache.starts_empty) {
+    | (Config.Cache.Disable, _) => "disabled"
+    | (Config.Cache.Use, true) => "empty"
+    | (Config.Cache.Use, false) => "used"
     };
 
   /* main package.json */
@@ -129,7 +97,17 @@ let make = (options: Config.t) => {
          }
        );
 
-  let {Reporter.report_ok, report_error} = Reporter.make(options.report);
+  let {Reporter.report_ok, report_error} =
+    Reporter.make(
+      switch (report) {
+      | Some(report) => report
+      | None =>
+        switch (options.report) {
+        | Config.Reporter.JSON => Reporter.JSON
+        | Config.Reporter.Text => Reporter.Text
+        }
+      },
+    );
   let pack = (~current_location, ~graph, ~initial, ~start_time) => {
     let message =
       if (initial) {

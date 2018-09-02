@@ -1,21 +1,100 @@
-/* TODO: document */
 open Cmdliner;
+
+module Cache = {
+  type t =
+    | Use
+    | Disable;
+};
+
+module Mock = {
+  type t =
+    | Empty
+    | Mock(string);
+
+  let to_string = mock =>
+    switch (mock) {
+    | Empty => ""
+    | Mock(mock) => mock
+    };
+
+  let parse = s =>
+    switch (String.(s |> trim |> split_on_char(':'))) {
+    | []
+    | [""] => Result.Error(`Msg("Empty config"))
+    | [request]
+    | [request, ""] => Result.Ok((false, (request, Empty)))
+    | [request, ...rest] =>
+      let mock = String.concat(":", rest);
+      Result.Ok((false, (request, Mock(mock))));
+    };
+
+  let print = (ppf, (_, mock)) => {
+    let value =
+      switch (mock) {
+      | (request, Empty) => request
+      | (request, Mock(mock)) => request ++ ":" ++ mock
+      };
+
+    Format.fprintf(ppf, "%s", value);
+  };
+};
+
+module Reporter = {
+  type t =
+    | JSON
+    | Text;
+};
+
 type t = {
   entryPoints: list(string),
   outputDir: string,
   outputFilename: string,
   mode: Mode.t,
-  mock: list((string, Resolver.Mock.t)),
+  mock: list((string, Mock.t)),
   nodeModulesPaths: list(string),
   projectRootDir: string,
   resolveExtension: list(string),
   target: Target.t,
-  cache: Cache.strategy,
+  cache: Cache.t,
   preprocess: list(Preprocessor.config),
   postprocess: list(string),
-  report: Reporter.report,
+  report: Reporter.t,
   debug: bool,
 };
+
+let create =
+    (
+      ~entryPoints,
+      ~outputDir,
+      ~outputFilename,
+      ~mode,
+      ~mock,
+      ~nodeModulesPaths,
+      ~projectRootDir,
+      ~resolveExtension,
+      ~target,
+      ~cache,
+      ~preprocess,
+      ~postprocess,
+      ~report,
+      ~debug,
+    ) => {
+  entryPoints,
+  outputDir,
+  outputFilename,
+  mode,
+  mock,
+  nodeModulesPaths,
+  projectRootDir,
+  resolveExtension,
+  target,
+  cache,
+  preprocess,
+  postprocess,
+  report,
+  debug,
+};
+
 let term = {
   let run =
       (
@@ -33,22 +112,23 @@ let term = {
         postprocess,
         report,
         debug,
-      ) => {
-    entryPoints,
-    outputDir,
-    outputFilename,
-    mode,
-    mock: List.map(snd, mock),
-    nodeModulesPaths,
-    projectRootDir,
-    resolveExtension,
-    target,
-    cache,
-    preprocess: List.map(snd, preprocess),
-    postprocess,
-    report,
-    debug,
-  };
+      ) =>
+    create(
+      ~entryPoints,
+      ~outputDir,
+      ~outputFilename,
+      ~mode,
+      ~mock=List.map(snd, mock),
+      ~nodeModulesPaths,
+      ~projectRootDir,
+      ~resolveExtension,
+      ~target,
+      ~cache,
+      ~preprocess=List.map(snd, preprocess),
+      ~postprocess,
+      ~report,
+      ~debug,
+    );
 
   let entryPointsT = {
     let doc = "Entry points. Default: ['.']";
@@ -106,7 +186,7 @@ let term = {
   };
 
   let mockT = {
-    let mock = Arg.conv(Resolver.Mock.(parse, print));
+    let mock = Arg.conv(Mock.(parse, print));
 
     let doc =
       "Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is omitted"
@@ -142,11 +222,10 @@ let term = {
   };
 
   let cacheT = {
-    open Cache;
     let doc = "Do not use cache at all (effective in development mode only)";
 
-    let disable = (Disable, Arg.info(["no-cache"], ~doc));
-    Arg.(value & vflag(Use, [disable]));
+    let disable = (Cache.Disable, Arg.info(["no-cache"], ~doc));
+    Arg.(value & vflag(Cache.Use, [disable]));
   };
 
   let preprocessT = {

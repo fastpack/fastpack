@@ -43,7 +43,7 @@ type t = {
   get_package: string => Lwt.t((Package.t, bool)),
   find_package_for_filename: (string, string) => Lwt.t((Package.t, bool)),
   get_module: Module.location => Lwt.t(option(Module.t)),
-  modify_content: (Module.t) => unit,
+  modify_content: Module.t => unit,
   /* add_build_dependencies: Module.t -> string list -> unit Lwt.t; */
   /* get_invalidated_modules : string -> string list; */
   /* setup_build_dependencies : StringSet.t -> unit; */
@@ -54,17 +54,13 @@ type t = {
 
 exception FileDoesNotExist(string);
 
-type strategy =
-  | Use
-  | Disable;
-
 type init =
   | Persistent(string)
   | Memory;
 
 let empty = {files: M.empty, modules: M.empty};
 
-let create = (init: init) => {
+let create = (config: Config.Cache.t) => {
   let no_file = {
     exists: false,
     st_mtime: 0.0,
@@ -74,21 +70,46 @@ let create = (init: init) => {
     package: None,
   };
 
+  let filename = ref("");
+
   let%lwt loaded =
-    switch (init) {
-    | Memory => Lwt.return(empty)
-    | Persistent(filename) =>
-      switch%lwt (Lwt_unix.file_exists(filename)) {
+    switch (config) {
+    | Config.Cache.Disable => Lwt.return(empty)
+    | Config.Cache.Use =>
+      let%lwt current_dir = Lwt_unix.getcwd();
+      let node_modules = FilePath.concat(current_dir, "node_modules");
+      let%lwt dir =
+        switch%lwt (FS.try_dir(node_modules)) {
+        | Some(dir) =>
+          FilePath.concat(FilePath.concat(dir, ".cache"), "fpack")
+          |> Lwt.return
+        | None =>
+          FilePath.concat(FilePath.concat(current_dir, ".cache"), "fpack")
+          |> Lwt.return
+        };
+      let%lwt () = FS.makedirs(dir);
+      filename :=
+        FilePath.concat(
+          dir,
+          String.concat(
+            "-",
+            [
+              current_dir |> Digest.string |> Digest.to_hex,
+              Version.github_commit,
+            ],
+          ),
+        );
+      switch%lwt (Lwt_unix.file_exists(filename^)) {
       | true =>
         let%lwt loaded =
           Lwt_io.with_file(
-            ~mode=Lwt_io.Input, ~flags=Unix.[O_RDONLY], filename, ch =>
+            ~mode=Lwt_io.Input, ~flags=Unix.[O_RDONLY], filename^, ch =>
             (Lwt_io.read_value(ch): Lwt.t(cache))
           );
 
         Lwt.return(loaded);
       | false => Lwt.return(empty)
-      }
+      };
     };
 
   let trusted = ref(StringSet.empty);
@@ -405,14 +426,14 @@ let create = (init: init) => {
   let remove = filename => trusted := StringSet.remove(filename, trusted^);
 
   let dump = () =>
-    switch (init) {
-    | Memory => Lwt.return_unit
-    | Persistent(filename) =>
+    switch (config) {
+    | Config.Cache.Disable => Lwt.return_unit
+    | Config.Cache.Use =>
       Lwt_io.with_file(
         ~mode=Lwt_io.Output,
         ~perm=0o640,
         ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
-        filename,
+        filename^,
         ch =>
         Lwt_io.write_value(ch, ~flags=[], {files: files^, modules: modules^})
       )
