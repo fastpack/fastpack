@@ -3,7 +3,17 @@ module M = Map.Make(String);
 module FS = FastpackUtil.FS;
 module Scope = FastpackUtil.Scope;
 
-let debug = Logs.debug;
+type strategy =
+  | Memory
+  | Persistent(invalidate)
+and invalidate = {
+  currentDir: string,
+  projectRootDir: string,
+  mock: list((string, Config.Mock.t)),
+  nodeModulesPaths: list(string),
+  resolveExtension: list(string),
+  preprocess: list(Preprocessor.config),
+};
 
 module ModuleEntry = {
   type t = {
@@ -60,7 +70,7 @@ type init =
 
 let empty = {files: M.empty, modules: M.empty};
 
-let create = (config: Config.Cache.t) => {
+let create = (strategy: strategy) => {
   let no_file = {
     exists: false,
     st_mtime: 0.0,
@@ -73,18 +83,24 @@ let create = (config: Config.Cache.t) => {
   let filename = ref("");
 
   let%lwt loaded =
-    switch (config) {
-    | Config.Cache.Disable => Lwt.return(empty)
-    | Config.Cache.Use =>
-      let%lwt current_dir = Lwt_unix.getcwd();
-      let node_modules = FilePath.concat(current_dir, "node_modules");
+    switch (strategy) {
+    | Memory => Lwt.return(empty)
+    | Persistent({
+        currentDir,_
+        /* projectRootDir, */
+        /* mock, */
+        /* nodeModulesPaths, */
+        /* resolveExtension, */
+        /* preprocess, */
+      }) =>
+      let node_modules = FilePath.concat(currentDir, "node_modules");
       let%lwt dir =
         switch%lwt (FS.try_dir(node_modules)) {
         | Some(dir) =>
           FilePath.concat(FilePath.concat(dir, ".cache"), "fpack")
           |> Lwt.return
         | None =>
-          FilePath.concat(FilePath.concat(current_dir, ".cache"), "fpack")
+          FilePath.concat(FilePath.concat(currentDir, ".cache"), "fpack")
           |> Lwt.return
         };
       let%lwt () = FS.makedirs(dir);
@@ -94,7 +110,7 @@ let create = (config: Config.Cache.t) => {
           String.concat(
             "-",
             [
-              current_dir |> Digest.string |> Digest.to_hex,
+              currentDir |> Digest.string |> Digest.to_hex,
               Version.github_commit,
             ],
           ),
@@ -426,9 +442,9 @@ let create = (config: Config.Cache.t) => {
   let remove = filename => trusted := StringSet.remove(filename, trusted^);
 
   let dump = () =>
-    switch (config) {
-    | Config.Cache.Disable => Lwt.return_unit
-    | Config.Cache.Use =>
+    switch (strategy) {
+    | Memory => Lwt.return_unit
+    | Persistent(_) =>
       Lwt_io.with_file(
         ~mode=Lwt_io.Output,
         ~perm=0o640,

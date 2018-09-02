@@ -71,7 +71,23 @@ let make = (~report=None, options: Config.t) => {
   let%lwt reader = Worker.Reader.make(~project_root, ~output_dir);
 
   /* cache & cache reporting */
-  let%lwt cache = Cache.create(options.cache);
+  let%lwt cache =
+    Cache.create(
+      switch (options.cache) {
+      | Config.Cache.Disable => Cache.Memory
+      | Config.Cache.Use =>
+        Cache.(
+          Persistent({
+            currentDir: current_dir,
+            projectRootDir: options.projectRootDir,
+            mock: options.mock,
+            nodeModulesPaths: options.nodeModulesPaths,
+            resolveExtension: options.resolveExtension,
+            preprocess: options.preprocess,
+          })
+        )
+      },
+    );
   let cache_report =
     switch (options.cache, cache.starts_empty) {
     | (Config.Cache.Disable, _) => "disabled"
