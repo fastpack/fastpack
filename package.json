@@ -32,6 +32,9 @@
     "url": "https://github.com/fastpack/fastpack/issues"
   },
   "homepage": "https://github.com/fastpack/fastpack#readme",
+  "resolutions": {
+    "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323"
+  },
   "dependencies": {
     "@esy-ocaml/esy-installer": "*",
     "@esy-ocaml/reason": "*",

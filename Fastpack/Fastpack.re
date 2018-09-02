@@ -10,7 +10,7 @@ module Preprocessor = Preprocessor;
 module Reporter = Reporter;
 module Watcher = Watcher;
 module Watcher2 = Watcher2;
-module CommonOptions = CommonOptions;
+module Config = Config
 module Commands = Commands
 module Packer = Packer
 
