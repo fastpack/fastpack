@@ -1,3 +1,4 @@
+open Fastpack
 let re_modules = Re_posix.compile_pat "^.+\\$fp\\$main'\\);.+\\(\\{"
 let run_with ~test_name ~cmd ~files f =
   let argv =
@@ -7,7 +8,7 @@ let run_with ~test_name ~cmd ~files f =
     |> Array.of_list
   in
   let opts = Cmdliner.Term.eval
-      ~argv (Fastpack.CommonOptions.term, Cmdliner.Term.info "y")
+      ~argv (Config.term, Cmdliner.Term.info "y")
   in
   let test_path = Test.get_test_path test_name in
   match opts with
@@ -58,21 +59,21 @@ let run_with ~test_name ~cmd ~files f =
               ~start_time:_start_time
               ~ctx:_ctx
               ~files  =
-            let {Fastpack.Reporter. name; _} = List.hd files in
+            let {Reporter. name; _} = List.hd files in
             let%lwt content = Lwt_io.(with_file ~mode:Input name read) in
             messages := (Re.replace ~f:(fun _ -> "\n({") re_modules content) :: !messages;
             Lwt.return_unit
           in
           let report_error ~ctx ~error =
-            let error_text = Fastpack.Context.stringOfError ctx error in
+            let error_text = Context.stringOfError ctx error in
             messages := error_text :: !messages;
             Lwt.return_unit
           in
           let opts = {
             opts with
-            report = Fastpack.Reporter.Internal(report_ok, report_error)
+            report = Reporter.Internal(report_ok, report_error)
           } in
-          let%lwt {Fastpack.Packer.pack; finalize} = Fastpack.Packer.make opts in
+          let%lwt {Packer.pack; finalize} = Packer.make opts in
           Lwt.finalize (fun () ->
               let%lwt result =
                 pack
@@ -107,7 +108,7 @@ let%expect_test "watch: successful initial build" =
        let open Lwt.Infix in
        let change_and_rebuild ~actions r =
          let%lwt changed_files = change_files actions in
-         Fastpack.Watcher2.rebuild ~changed_files ~pack r
+         Watcher2.rebuild ~changed_files ~pack r
        in
        prev_result
        |> change_and_rebuild (* one file change *)

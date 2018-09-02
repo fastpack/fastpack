@@ -12,7 +12,7 @@ type t = {
   finalize: unit => Lwt.t(unit),
 };
 
-let make = (options: CommonOptions.t) => {
+let make = (options: Config.t) => {
   let%lwt current_dir = Lwt_unix.getcwd();
 
   /* entry points */

@@ -41,7 +41,7 @@ let register = cmd => {
 };
 
 module Build = {
-  let run = (options: CommonOptions.t) =>
+  let run = (options: Config.t) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
@@ -69,13 +69,13 @@ module Build = {
   let doc = "rebuild the bundle on a file change";
   let command =
     register((
-      Term.(ret(const(run) $ CommonOptions.term)),
+      Term.(ret(const(run) $ Config.term)),
       Term.info("build", ~doc, ~sdocs, ~exits),
     ));
 };
 
 module Watch = {
-  let run = (options: CommonOptions.t) =>
+  let run = (options: Config.t) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
@@ -105,13 +105,13 @@ module Watch = {
   let doc = "build the bundle";
   let command =
     register((
-      Term.(ret(const(run) $ CommonOptions.term)),
+      Term.(ret(const(run) $ Config.term)),
       Term.info("watch", ~doc, ~sdocs, ~exits),
     ));
 };
 
 module Serve = {
-  let run = (options: CommonOptions.t) =>
+  let run = (options: Config.t) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
@@ -170,20 +170,20 @@ module Serve = {
   let command =
     register((
       /* TODO: add options here */
-      Term.(ret(const(run) $ CommonOptions.term)),
+      Term.(ret(const(run) $ Config.term)),
       Term.info("serve", ~doc, ~sdocs, ~exits),
     ));
 };
 
 module Worker = {
-  let run = (options: CommonOptions.t) => {
-    let {CommonOptions.projectRootDir: project_root, outputDir: output_dir, _} = options;
+  let run = (options: Config.t) => {
+    let {Config. projectRootDir: project_root, outputDir: output_dir, _} = options;
     Lwt_main.run(Worker.start(~project_root, ~output_dir));
   };
   let doc = "worker subprocess (don't use directly)";
   let command =
     register((
-      Term.(ret(const(run) $ CommonOptions.term)),
+      Term.(ret(const(run) $ Config.term)),
       Term.info("worker", ~doc, ~sdocs, ~exits),
     ));
 };
