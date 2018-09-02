@@ -69,11 +69,11 @@ let run_with ~test_name ~cmd ~files f =
             messages := error_text :: !messages;
             Lwt.return_unit
           in
-          let opts = {
-            opts with
-            report = Reporter.Internal(report_ok, report_error)
-          } in
-          let%lwt {Packer.pack; finalize} = Packer.make opts in
+          let%lwt {Packer.pack; finalize} =
+            Packer.make
+              ~report:(Some(Reporter.Internal(report_ok, report_error)))
+              opts
+          in
           Lwt.finalize (fun () ->
               let%lwt result =
                 pack
