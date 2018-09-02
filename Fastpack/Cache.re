@@ -80,21 +80,62 @@ let create = (strategy: strategy) => {
     package: None,
   };
 
-  let filename = ref("");
+  let cacheId = ref("");
+  let cacheFilename = ref("");
+  let setCacheFilename =
+      (
+        ~cacheDir,
+        ~currentDir,
+        ~projectRootDir,
+        ~mock,
+        ~nodeModulesPaths,
+        ~resolveExtension,
+        ~preprocess,
+      ) => {
+    cacheId :=
+      Printf.sprintf(
+        {|
+    Current Directory: %s
+    Project Root Directory: %s
+    Mocks: %s
+    Node Modules Paths: %s
+    Extensions: %s
+    Preprocessors: %s
+    |},
+        currentDir,
+        projectRootDir,
+        String.concat(",", List.map(Config.Mock.to_string, mock)),
+        String.concat(",", nodeModulesPaths),
+        String.concat(",", resolveExtension),
+        String.concat(",", List.map(Preprocessor.to_string, preprocess)),
+      );
+    cacheFilename :=
+      FilePath.concat(
+        cacheDir,
+        String.concat(
+          "-",
+          [
+            "cache",
+            cacheId^ |> Digest.string |> Digest.to_hex,
+            Version.github_commit,
+          ],
+        ),
+      );
+  };
 
   let%lwt loaded =
     switch (strategy) {
     | Memory => Lwt.return(empty)
     | Persistent({
-        currentDir,_
-        /* projectRootDir, */
-        /* mock, */
-        /* nodeModulesPaths, */
-        /* resolveExtension, */
-        /* preprocess, */
+        currentDir,
+        projectRootDir,
+        mock,
+        nodeModulesPaths,
+        resolveExtension,
+        preprocess,
       }) =>
       let node_modules = FilePath.concat(currentDir, "node_modules");
-      let%lwt dir =
+      let%lwt cacheDir =
         switch%lwt (FS.try_dir(node_modules)) {
         | Some(dir) =>
           FilePath.concat(FilePath.concat(dir, ".cache"), "fpack")
@@ -103,27 +144,22 @@ let create = (strategy: strategy) => {
           FilePath.concat(FilePath.concat(currentDir, ".cache"), "fpack")
           |> Lwt.return
         };
-      let%lwt () = FS.makedirs(dir);
-      filename :=
-        FilePath.concat(
-          dir,
-          String.concat(
-            "-",
-            [
-              currentDir |> Digest.string |> Digest.to_hex,
-              Version.github_commit,
-            ],
-          ),
-        );
-      switch%lwt (Lwt_unix.file_exists(filename^)) {
+      let%lwt () = FS.makedirs(cacheDir);
+      setCacheFilename(
+        ~cacheDir,
+        ~currentDir,
+        ~projectRootDir,
+        ~mock,
+        ~nodeModulesPaths,
+        ~resolveExtension,
+        ~preprocess,
+      );
+      switch%lwt (Lwt_unix.file_exists(cacheFilename^)) {
       | true =>
-        let%lwt loaded =
-          Lwt_io.with_file(
-            ~mode=Lwt_io.Input, ~flags=Unix.[O_RDONLY], filename^, ch =>
-            (Lwt_io.read_value(ch): Lwt.t(cache))
-          );
-
-        Lwt.return(loaded);
+        Lwt_io.with_file(
+          ~mode=Lwt_io.Input, ~flags=Unix.[O_RDONLY], cacheFilename^, ch =>
+          (Lwt_io.read_value(ch): Lwt.t(cache))
+        )
       | false => Lwt.return(empty)
       };
     };
@@ -442,17 +478,40 @@ let create = (strategy: strategy) => {
   let remove = filename => trusted := StringSet.remove(filename, trusted^);
 
   let dump = () =>
-    switch (strategy) {
-    | Memory => Lwt.return_unit
-    | Persistent(_) =>
-      Lwt_io.with_file(
-        ~mode=Lwt_io.Output,
-        ~perm=0o640,
-        ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
-        filename^,
-        ch =>
-        Lwt_io.write_value(ch, ~flags=[], {files: files^, modules: modules^})
-      )
+    if (cacheFilename^ != "") {
+      let tempDir = FilePath.dirname(cacheFilename^);
+      let suffix = FilePath.basename(cacheFilename^);
+      let (tempFile, _) =
+        Filename.open_temp_file(
+          ~perms=0o644,
+          ~temp_dir=tempDir,
+          ".fpack",
+          suffix,
+        );
+
+      let%lwt () =
+        Lwt_io.with_file(
+          ~mode=Lwt_io.Output,
+          ~perm=0o644,
+          ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
+          tempFile,
+          ch =>
+          Lwt_io.write_value(
+            ch,
+            ~flags=[],
+            {files: files^, modules: modules^},
+          )
+        );
+
+      Lwt.finalize(
+        () => Lwt_unix.rename(tempFile, cacheFilename^),
+        () =>
+          if%lwt (Lwt_unix.file_exists(tempFile)) {
+            Lwt_unix.unlink(tempFile);
+          },
+      );
+    } else {
+      Lwt.return_unit;
     };
 
   Lwt.return({

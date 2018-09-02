@@ -11,11 +11,10 @@ module Mock = {
     | Empty
     | Mock(string);
 
-  let to_string = mock =>
-    switch (mock) {
-    | Empty => ""
-    | Mock(mock) => mock
-    };
+  let to_string = ((request, mock)) => switch (mock) {
+      | Empty => request
+      | Mock(mock) => request ++ ":" ++ mock
+      };
 
   let parse = s =>
     switch (String.(s |> trim |> split_on_char(':'))) {
@@ -29,13 +28,7 @@ module Mock = {
     };
 
   let print = (ppf, (_, mock)) => {
-    let value =
-      switch (mock) {
-      | (request, Empty) => request
-      | (request, Mock(mock)) => request ++ ":" ++ mock
-      };
-
-    Format.fprintf(ppf, "%s", value);
+    Format.fprintf(ppf, "%s", to_string(mock));
   };
 };
 
