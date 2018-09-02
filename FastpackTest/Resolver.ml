@@ -44,7 +44,7 @@ let resolve
   =
     let basedir = FS.abs_path current_dir basedir in
     let resolve' () =
-      let%lwt cache = Fastpack.(Cache.create Config.Cache.Disable)  in
+      let%lwt cache = Fastpack.Cache.(create Memory)  in
       let { resolve } =
         make
           ~project_root:current_dir
