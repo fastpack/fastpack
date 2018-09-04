@@ -95,7 +95,7 @@ module Watch = {
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(ctx) => Watcher.watch(~ctx, ~pack)
+              | Ok(_ctx) => failwith("not implemented") /*Watcher.watch(~ctx, ~pack)*/
               },
             finalize,
           );
@@ -154,10 +154,10 @@ module Serve = {
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(ctx) =>
+              | Ok(_ctx) =>
                 /* super-functional web-server :) */
                 let server = Lwt_unix.sleep(600.);
-                let watcher = Watcher.watch(~ctx, ~pack);
+                let watcher = Lwt_unix.sleep(600.); /*Watcher.watch(~ctx, ~pack);*/
                 Lwt.join([server, watcher]);
               },
             finalize,

@@ -186,6 +186,13 @@ let read_module =
       | _ => []
       };
 
+    /* Make sure module depends on the source file */
+    DependencyGraph.add_build_dependencies(
+      ctx.graph,
+      self_dependency,
+      location,
+    );
+
     switch (is_json(location), source) {
     | (true, Some(source)) =>
       make_module(location, "module.exports = " ++ source ++ ";")
@@ -227,6 +234,13 @@ let read_module =
         | Traceback(message) =>
           Lwt.fail(Context.PackError(ctx, UnhandledCondition(message)))
         };
+
+      /* module also depends on the filenames used to transpile it*/
+      DependencyGraph.add_build_dependencies(
+        ctx.graph,
+        build_dependencies,
+        location,
+      );
 
       let%lwt files =
         Lwt_list.map_s(
@@ -348,8 +362,11 @@ let build = (ctx: Context.t) => {
                 build_dependencies,
               });
             };
+
+          /* TODO: re-evaluate if we want to modify cache at this point
+                   maybe it should go after module is successfully emitted
+           */
           ctx.cache.modify_content(m);
-          DependencyGraph.add_module_files(graph, m);
 
           let updateGraph = (~kind, dependencies) => {
             let%lwt () =

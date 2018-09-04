@@ -3,7 +3,7 @@
 (library
  ((name        Fastpack)
   (public_name Fastpack)
-  (modules (:standard \ (FlatPacker FlatEmitter)))
+  (modules (:standard \ (FlatPacker FlatEmitter Watcher)))
   (library_flags (-linkall))
   (libraries (sequence FastpackUtil FastpackTranspiler lwt.unix logs logs.lwt fileutils yojson containers str FlowParser re re.posix logs.fmt))
   (flags (:standard "-open" "Containers"))
