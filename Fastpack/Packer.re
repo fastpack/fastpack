@@ -124,7 +124,7 @@ let make = (~report=None, options: Config.t) => {
         }
       },
     );
-  let pack = (~current_location, ~graph, ~initial, ~start_time) => {
+  let rec pack = (~current_location, ~graph, ~initial, ~start_time) => {
     let message =
       if (initial) {
         Printf.sprintf(
@@ -196,6 +196,8 @@ let make = (~report=None, options: Config.t) => {
         Lwt.return_ok(ctx);
       },
       fun
+      | GraphBuilder.Rebuild =>
+        pack(~current_location=None, ~graph=None, ~initial, ~start_time)
       | Context.PackError(ctx, error) => {
           let%lwt () = report_error(~ctx, ~error);
           Lwt.return_error(ctx);

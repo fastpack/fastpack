@@ -146,7 +146,7 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
   String.concat("\n", formatted);
 };
 type reason =
-  | CannotReadModule(string)
+  | CannotReadModule(string, Module.LocationSet.t)
   | CannotLeavePackageDir(string)
   | CannotResolveModule(string, Module.Dependency.t)
   | CannotParseFile(
@@ -176,7 +176,7 @@ let to_string = (package_dir, error) =>
 
   | CliArgumentError(message) => "CLI argument error: " ++ message
 
-  | CannotReadModule(filename) => "Cannot read file: " ++ filename
+  | CannotReadModule(filename, _) => "Cannot read file: " ++ filename
 
   | CannotLeavePackageDir(filename) =>
     Printf.sprintf("%s is out of the working directory\n", filename)

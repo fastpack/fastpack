@@ -53,7 +53,8 @@ type t = {
   get_package: string => Lwt.t((Package.t, bool)),
   find_package_for_filename: (string, string) => Lwt.t((Package.t, bool)),
   get_module: Module.location => Lwt.t(option(Module.t)),
-  modify_content: Module.t => unit,
+  add_module: Module.t => unit,
+  remove_module: Module.location => unit,
   /* add_build_dependencies: Module.t -> string list -> unit Lwt.t; */
   /* get_invalidated_modules : string -> string list; */
   /* setup_build_dependencies : StringSet.t -> unit; */
@@ -413,7 +414,7 @@ let create = (strategy: strategy) => {
       build_dependencies
       |> M.bindings
       |> Lwt_list.exists_s(((filename, known_digest)) => {
-           let%lwt ({digest, _}, _) = get_file(filename);
+           let%lwt ({digest, _}, _) = get_file_no_raise(filename);
            Lwt.return(digest != known_digest);
          });
 
@@ -453,7 +454,12 @@ let create = (strategy: strategy) => {
     };
   };
 
-  let modify_content = (m: Module.t) =>
+  let remove_module = (location: Module.location) => {
+      let location_str = Module.location_to_string(location);
+      modules := M.remove(location_str, modules^);
+  };
+
+  let add_module = (m: Module.t) =>
     switch (m.location) {
     | Module.EmptyModule
     | Module.Runtime => ()
@@ -523,7 +529,8 @@ let create = (strategy: strategy) => {
     get_package,
     find_package_for_filename,
     get_module,
-    modify_content,
+    add_module,
+    remove_module,
     remove,
     dump,
     starts_empty: files^ == M.empty,
