@@ -24,7 +24,7 @@ let resolve = (ctx: Context.t, request: Module.Dependency.t) => {
     | Module.File({filename: Some(filename), _}) =>
       FilePath.dirname(filename)
     | Module.File({filename: None, _})
-    | Module.Runtime
+    | Module.Runtime(_)
     | Module.EmptyModule
     | Module.Main(_) => ctx.current_dir
     };
@@ -97,7 +97,7 @@ let read_module =
     let%lwt package =
       switch (location) {
       | Module.EmptyModule
-      | Module.Runtime => Lwt.return(Package.empty)
+      | Module.Runtime(_) => Lwt.return(Package.empty)
       | Module.Main(_) => Lwt.return(ctx.project_package)
       | Module.File({filename: Some(filename), _}) =>
         let%lwt (package, _) =
@@ -139,7 +139,8 @@ let read_module =
 
   | Module.EmptyModule => make_module(location, "module.exports = {};")
 
-  | Module.Runtime => make_module(location, FastpackTranspiler.runtime)
+  | Module.Runtime(name) =>
+    make_module(location, FastpackTranspiler.TranspilerRuntimeHelpers.get(name))
 
   | Module.File({filename, _}) =>
     switch%lwt (cache.get_module(location)) {

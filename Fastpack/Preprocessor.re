@@ -255,7 +255,7 @@ let make = (~configs, ~project_root, ~current_dir, ~output_dir) => {
     switch (location) {
     | Module.Main(_)
     | Module.EmptyModule
-    | Module.Runtime =>
+    | Module.Runtime(_) =>
       switch (source) {
       | None =>
         Error.ie(

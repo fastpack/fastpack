@@ -16,7 +16,7 @@ type file_location = {
 [@deriving (show({with_path: false}), eq, ord)]
 type location =
   | Main(list(string))
-  | Runtime
+  | Runtime(string)
   | EmptyModule
   | File(file_location);
 
@@ -53,7 +53,7 @@ let location_to_string = (~base_dir=None, location) => {
   switch (location) {
   | Main(_) => "$fp$main"
   | EmptyModule => "$fp$empty"
-  | Runtime => "$fp$runtime"
+  | Runtime(name) => "$fp$runtime__" ++ name
   | File({filename, preprocessors, _}) =>
     let preprocessors =
       preprocessors
@@ -98,7 +98,7 @@ let make_id = (base_dir, location) =>
   switch (location) {
   | Main(_) => "$fp$main"
   | EmptyModule => "$fp$empty"
-  | Runtime => "$fp$runtime"
+  | Runtime(name) => "$fp$runtime__" ++ name
   | File(_) =>
     let fix_chars = s => {
       let fix_char = c => {
@@ -149,15 +149,32 @@ let make_id = (base_dir, location) =>
     location_to_string(~base_dir=Some(base_dir), location) |> to_var_name;
   };
 
-let is_internal = request =>
-  request == "$fp$empty" || request == "$fp$runtime" || request == "$fp$main";
+let is_internal = request => {
+  let internal_prefix = "$fp$";
+  String.length(request) > String.length(internal_prefix)
+  && String.sub(request, 0, String.length(internal_prefix))
+  == internal_prefix;
+};
 
-let resolved_file2 = (~preprocessors=[], filename) =>
+let resolved_file2 = (~preprocessors=[], filename) => {
+  let runtime_prefix = "$fp$runtime__";
   switch (filename) {
   | Some("$fp$empty") => EmptyModule
-  | Some("$fp$runtime") => Runtime
+  | Some(name)
+      when
+        String.length(name) > String.length(runtime_prefix)
+        && String.sub(name, 0, String.length(runtime_prefix))
+        == runtime_prefix =>
+    Runtime(
+      String.sub(
+        name,
+        String.length(runtime_prefix),
+        String.length(name) - String.length(runtime_prefix),
+      ),
+    )
   | _ => File({filename, preprocessors})
   };
+};
 
 let resolved_file = filename =>
   File({filename: Some(filename), preprocessors: []});

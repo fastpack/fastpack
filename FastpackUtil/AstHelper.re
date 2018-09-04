@@ -110,12 +110,12 @@ let to_array = (convertor, list) => (
 
 let fpack_define_class = (cls, statics, classDecorators, decorators) =>
   call(
-    member(e_identifier("$__fpack__"), "defineClass"),
+    e_identifier("$fp$runtime__defineClass"),
     [(Loc.none, E.Class(cls)), statics, classDecorators, decorators],
   );
 
 let fpack_omit_props = (target, props) =>
-  call(member(e_identifier("$__fpack__"), "omitProps"), [target, props]);
+  call(e_identifier("$fp$runtime__omitProps"), [target, props]);
 
 let variable_declaration = (loc, kind, name, value) => (
   loc,
@@ -146,9 +146,9 @@ let let_stmt = (~loc=Loc.none) =>
 let const_stmt = (~loc=Loc.none) =>
   variable_declaration(loc, S.VariableDeclaration.Const);
 
-let require_runtime =
-  const_stmt("$__fpack__") @@
+let require_runtime = name =>
+  const_stmt("$fp$runtime__" ++ name) @@
   call(
     (Loc.none, E.Identifier((Loc.none, "require"))),
-    [(Loc.none, E.Literal(literal_str("$fp$runtime")))],
+    [(Loc.none, E.Literal(literal_str("$fp$runtime__" ++ name)))],
   );

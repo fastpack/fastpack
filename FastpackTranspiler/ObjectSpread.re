@@ -12,6 +12,26 @@ module S = Ast.Statement;
 module P = Ast.Pattern;
 module L = Ast.Literal;
 
+let helperName = "omitProps";
+TranspilerRuntimeHelpers.register(
+  helperName,
+  {|
+    var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+    function omitProps(target, props) {
+      var ret = {};
+      for (var prop in target) {
+        if (hasOwnProperty.call(target, prop) && props.indexOf(prop) === -1) {
+          ret[prop] = target[prop];
+        }
+      }
+      return ret;
+    }
+
+    module.exports = omitProps;
+  |},
+);
+
 /**
  * Folds over Ast.
  *
@@ -878,13 +898,13 @@ module TranspileObjectSpreadRest = {
   };
 };
 
-let transpile = ({Context.require_runtime, _} as context, program) => {
+let transpile = ({Context.require_runtime_helper, _} as context, program) => {
   let map_statement = ({AstMapper.scope, _}, (loc, node): S.t(Loc.t)) => {
     module T = TranspileObjectSpreadRest;
     let node =
       switch (node) {
       | S.VariableDeclaration(d) when T.VariableDeclaration.test(d) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         S.VariableDeclaration(
           T.VariableDeclaration.transpile(context, scope, d),
         );
@@ -893,7 +913,7 @@ let transpile = ({Context.require_runtime, _} as context, program) => {
        * expression is handled in `map_expression`*/
       | S.For({init: Some(S.For.InitDeclaration((_, decl))), _} as node)
           when T.VariableDeclaration.test(decl) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         S.For({
           ...node,
           init:
@@ -906,15 +926,15 @@ let transpile = ({Context.require_runtime, _} as context, program) => {
         });
 
       | S.ForIn(for_) when T.ForIn.test(for_) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         T.ForIn.transpile(context, scope, for_);
 
       | S.ForOf(for_) when T.ForOf.test(for_) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         T.ForOf.transpile(context, scope, for_);
 
       | S.Try({handler: Some(handler), _} as stmt) when T.Try.test(handler) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         S.Try({
           ...stmt,
           handler: Some(T.Try.transpile(context, scope, handler)),
@@ -930,11 +950,11 @@ let transpile = ({Context.require_runtime, _} as context, program) => {
     let node =
       switch (node) {
       | E.Object(obj) when TranspileObjectSpread.test(obj) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         snd(TranspileObjectSpread.transpile(obj));
       | E.Assignment({operator: E.Assignment.Assign, _} as obj)
           when TranspileObjectSpreadRest.Assignment.test(obj) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         snd(
           TranspileObjectSpreadRest.Assignment.transpile(context, scope, obj),
         );
@@ -946,7 +966,7 @@ let transpile = ({Context.require_runtime, _} as context, program) => {
 
   let map_function = ({AstMapper.scope, _}, (loc, func)) =>
     if (TranspileObjectSpreadRest.Function.test(func)) {
-      require_runtime();
+      require_runtime_helper(helperName);
       (
         loc,
         TranspileObjectSpreadRest.Function.transpile(context, scope, func),

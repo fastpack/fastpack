@@ -2,7 +2,7 @@ open Test
 
 let%expect_test "transpile-strip-flow.js" =
   test transpile "transpile-strip-flow.js";
-  [%expect_exact {|const $__fpack__ = require("$fp$runtime");
+  [%expect_exact {|const $fp$runtime__defineClass = require("$fp$runtime__defineClass");
 /* Babel: default parameters */
 function foo(numVal) {
   
@@ -229,7 +229,7 @@ class Foo44 {
 }
 class Foo9 {
   
-}let Foo10 = $__fpack__.defineClass(class Foo10 {
+}let Foo10 = $fp$runtime__defineClass(class Foo10 {
     
   }, [{"name": "prop1", "value": void 0}], [], []);
 var x = 4;

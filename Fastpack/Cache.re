@@ -386,7 +386,7 @@ let create = (init: init) => {
   let modify_content = (m: Module.t, content) =>
     switch (m.location) {
     | Module.EmptyModule
-    | Module.Runtime => ()
+    | Module.Runtime(_) => ()
     | _ =>
       let location_str = Module.location_to_string(m.location);
       let module_entry = {

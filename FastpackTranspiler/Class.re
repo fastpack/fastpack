@@ -11,6 +11,64 @@ module AstHelper = FastpackUtil.AstHelper;
 module APS = FastpackUtil.AstParentStack;
 open FastpackUtil.AstHelper;
 
+let helperName = "defineClass";
+TranspilerRuntimeHelpers.register(
+  helperName,
+  {|
+  function applyDecorator(decorator, proto, property, descriptor) {
+    var ret = decorator(proto, property, descriptor);
+    // TODO: assert all descriptor properties;
+    return ret;
+  }
+
+  function decorateProperty(cls, property, decorators) {
+    var proto = cls.prototype;
+    var descriptor = Object.assign(
+      {},
+      Object.getOwnPropertyDescriptor(proto, property)
+    );
+
+    for (
+      var i = 0, reversed = decorators.reverse(), l = reversed.length;
+      i < l;
+      i++
+    ) {
+      descriptor = applyDecorator(reversed[i], proto, property, descriptor);
+    }
+
+    Object.defineProperty(proto, property, descriptor);
+  }
+
+  function defineClass(cls, statics, classDecorators, propertyDecorators) {
+    for (var i = 0, l = propertyDecorators.length; i < l; i++) {
+      decorateProperty(
+        cls,
+        propertyDecorators[i].method,
+        propertyDecorators[i].decorators
+      );
+    }
+
+    for (var i = 0, l = statics.length; i < l; i++) {
+      Object.defineProperty(cls, statics[i].name, {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: statics[i].value
+      });
+    }
+
+    var _cls = cls;
+    classDecorators = classDecorators.reverse();
+    for (var i = 0; i < classDecorators.length; i++) {
+      _cls = classDecorators[i](_cls);
+    }
+    return _cls;
+  }
+
+  module.exports = defineClass;
+|},
+);
+
 module Helper = {
   let op_key_to_literal = key =>
     switch (key) {
@@ -312,14 +370,14 @@ module Transform = {
   };
 };
 
-let transpile = ({Context.require_runtime, _}, program) => {
+let transpile = ({Context.require_runtime_helper, _}, program) => {
   let map_expression = (_, (loc, node): E.t(Loc.t)) =>
     switch (node) {
     | E.Class(cls) =>
       switch (Transform.transform_class(cls)) {
       | (cls, _, [], [], []) => (loc, E.Class(cls))
       | (cls, _, statics, classDecorators, decorators) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         Transform.wrap_class(cls, statics, classDecorators, decorators);
       }
     | _ => (loc, node)
@@ -352,7 +410,7 @@ let transpile = ({Context.require_runtime, _}, program) => {
           ),
         ]
       | (cls, _, statics, classDecorators, decorators) =>
-        require_runtime();
+        require_runtime_helper(helperName);
         [
           Transform.wrap_class(cls, statics, classDecorators, decorators)
           |> let_stmt(~loc=Loc.none, name),
@@ -388,7 +446,7 @@ let transpile = ({Context.require_runtime, _}, program) => {
         switch (Transform.transform_class(cls)) {
         | (cls, _, [], [], []) => [(loc, S.ClassDeclaration(cls))]
         | (cls, name, statics, classDecorators, decorators) =>
-          require_runtime();
+          require_runtime_helper(helperName);
           let transformed =
             Transform.wrap_class(cls, statics, classDecorators, decorators);
 

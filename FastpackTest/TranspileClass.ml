@@ -2,7 +2,7 @@ open Test
 
 let%expect_test "transpile-class.js" =
   test transpile "transpile-class.js";
-  [%expect_exact {|const $__fpack__ = require("$fp$runtime");
+  [%expect_exact {|const $fp$runtime__defineClass = require("$fp$runtime__defineClass");
 /* nothing to transform */
 class CC {
   method1() {
@@ -58,11 +58,11 @@ class C2 extends C1 {
   }
   
 }/* class decorators */
-let C3 = $__fpack__.defineClass(class C3 {
+let C3 = $fp$runtime__defineClass(class C3 {
     
   }, [], [c => c, dec], []);
 /* method decorators */
-let C4 = $__fpack__.defineClass(class C4 {
+let C4 = $fp$runtime__defineClass(class C4 {
     method1() {
       
     }
@@ -80,7 +80,7 @@ let C4 = $__fpack__.defineClass(class C4 {
   }
   
 });
-let C5 = $__fpack__.defineClass(class  {
+let C5 = $fp$runtime__defineClass(class  {
     constructor( ...args) {
       Object.defineProperty(this, "prop1", {"configurable": true, "enumerable": true, "writable": true, "value": void 0});
       
@@ -88,7 +88,7 @@ let C5 = $__fpack__.defineClass(class  {
     
   }, [{"name": "prop2", "value": void 0}], [], []);
 /* all of the above */
-let C6 = $__fpack__.defineClass(class C6 extends C5 {
+let C6 = $fp$runtime__defineClass(class C6 extends C5 {
     method1() {
       
     }

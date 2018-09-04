@@ -1012,7 +1012,7 @@ let pack = (cache: Cache.t, ctx: Context.t, result_channel) => {
         Lwt_list.fold_left_s(
           (seen, (ctx, resolved)) =>
             switch (resolved) {
-            | Module.Runtime
+            | Module.Runtime(_)
             | Module.EmptyModule => Error.ie("Unexpected dynamic dependency")
             | location =>
               let location_str = Module.location_to_string(location);
