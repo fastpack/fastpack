@@ -476,3 +476,249 @@ d: {"./index.js":"index"}
 Number of rebuilds: 3
 
 |}]
+
+let%expect_test "start with parse error, than fix" =
+  run_with
+    ~test_name:"watch"
+    ~cmd:"fpack --no-cache --dev index.js"
+    ~files:[
+      "index.js", {|console.log("hello, "world!"");|};
+    ]
+    (fun initial_result change_and_rebuild ->
+       initial_result
+       |> change_and_rebuild (* delete 2 files *)
+         ~actions:["index.js", `Content {|console.log("hello, \"world!\"");|};]
+        >>= (fun _ -> Lwt.return_unit)
+    );
+  [%expect_exact {|
+Parse error 
+/Users/zindel/ocaml/fastpack/test/watch/index.js
+
+--------------------
+Unexpected identifier at (1:21) - (1:26):
+
+1 │ console.log("hello, "world!"");
+  │                      ^^^^^
+2 │ 
+
+
+---------------------------------------------
+
+({
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("console.log(\"hello, \\\"world!\\\"\");\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
+
+});
+---------------------------------------------
+Number of rebuilds: 1
+
+|}]
+
+let%expect_test "start ok, remove all files, restore a, restore b" =
+  run_with
+    ~test_name:"watch"
+    ~cmd:"fpack --no-cache --dev index.js"
+    ~files:[
+      "index.js", {|import a from './a'; import b from './b'; console.log(a,b);|};
+      "a.js", {|export default "a";|};
+      "b.js", {|export default "b";|};
+    ]
+    (fun initial_result change_and_rebuild ->
+       initial_result
+       |> change_and_rebuild
+         ~actions:["index.js", `Delete;
+                   "a.js", `Delete;
+                   "b.js", `Delete]
+       >>= change_and_rebuild
+         ~actions:["a.js", `Content {|export default "a restored";|}]
+       >>= change_and_rebuild
+         ~actions:["b.js", `Content {|export default "b restored";|}]
+        >>= (fun _ -> Lwt.return_unit)
+    );
+  [%expect_exact {|
+({
+"a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nexports.default = \"a\";\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");
+},
+d: {}
+},
+"b":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nexports.default = \"b\";\n\n//# sourceURL=fpack:///b.js\n//# sourceURL=fpack:///b.js");
+},
+d: {}
+},
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");const _1__a__default = _1__a.__esModule ? _1__a.default : _1__a;\nconst _2__b = __fastpack_require__(\"./b\");const _2__b__default = _2__b.__esModule ? _2__b.default : _2__b;\n  console.log(_1__a__default,_2__b__default);\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"./a":"a","./b":"b"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
+
+});
+---------------------------------------------
+
+Module resolution error: cannot resolve './index.js'
+$fp$main
+Cannot resolve module
+  Resolving './index.js'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
+  Resolving '/Users/zindel/ocaml/fastpack/test/watch/index.js'.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  ...no.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.js'
+  ...no.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.json'
+  ...no.
+  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  ...no.
+---------------------------------------------
+
+Module resolution error: cannot resolve './index.js'
+$fp$main
+Cannot resolve module
+  Resolving './index.js'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
+  Resolving '/Users/zindel/ocaml/fastpack/test/watch/index.js'.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  ...no.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.js'
+  ...no.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.json'
+  ...no.
+  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  ...no.
+---------------------------------------------
+
+Module resolution error: cannot resolve './index.js'
+$fp$main
+Cannot resolve module
+  Resolving './index.js'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
+  Resolving '/Users/zindel/ocaml/fastpack/test/watch/index.js'.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  ...no.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.js'
+  ...no.
+  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.json'
+  ...no.
+  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  ...no.
+---------------------------------------------
+Number of rebuilds: 3
+
+|}]
+
+let%expect_test "start ok, break import, fix export" =
+  run_with
+    ~test_name:"watch"
+    ~cmd:"fpack --no-cache --dev index.js"
+    ~files:[
+      "index.js", {|import {a} from './a'; console.log(a);|};
+      "a.js", {|export const a = "exported from a";|};
+    ]
+    (fun initial_result change_and_rebuild ->
+       initial_result
+       |> change_and_rebuild
+         ~actions:["index.js", `Content {|import {aa} from './a'; console.log(aa);|}]
+       >>= change_and_rebuild
+         ~actions:["a.js", `Content {|export const aa = "exported from a"|}]
+        >>= (fun _ -> Lwt.return_unit)
+    );
+  [%expect_exact {|
+({
+"a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst a = \"exported from a\";;Object.defineProperty(exports, \"a\", {enumerable: true, get: function() {return a;}});\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");
+},
+d: {}
+},
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\n console.log(_1__a.a);\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"./a":"a"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
+
+});
+---------------------------------------------
+
+Cannot find exported name 'aa' in module 'a.js'
+
+---------------------------------------------
+
+({
+"a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst aa = \"exported from a\";Object.defineProperty(exports, \"aa\", {enumerable: true, get: function() {return aa;}});\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");
+},
+d: {}
+},
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\n console.log(_1__a.aa);\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"./a":"a"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
+
+});
+---------------------------------------------
+Number of rebuilds: 2
+
+|}]
+
+let%expect_test "start with failing import, fix import" =
+  run_with
+    ~test_name:"watch"
+    ~cmd:"fpack --no-cache --dev index.js"
+    ~files:[
+      "index.js", {|import {aa} from './a'; console.log(a);|};
+      "a.js", {|export const a = "exported from a";|};
+    ]
+    (fun initial_result change_and_rebuild ->
+       initial_result
+       |> change_and_rebuild
+         ~actions:["index.js", `Content {|import {a as aa} from './a'; console.log(aa);|}]
+       >>= (fun _ -> Lwt.return_unit)
+    );
+  [%expect_exact {|
+Cannot find exported name 'aa' in module 'a.js'
+
+---------------------------------------------
+
+({
+"a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst a = \"exported from a\";;Object.defineProperty(exports, \"a\", {enumerable: true, get: function() {return a;}});\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");
+},
+d: {}
+},
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\n console.log(_1__a.a);\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"./a":"a"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
+
+});
+---------------------------------------------
+Number of rebuilds: 1
+
+|}]
