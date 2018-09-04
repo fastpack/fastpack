@@ -163,7 +163,10 @@ let watch = (~pack, ~ctx: Context.t) => {
 
       List.iter(ctx.cache.remove, filenames);
       let%lwt graph =
-        switch (DependencyGraph.get_modules_by_filenames(graph, filenames)) {
+        switch (
+          DependencyGraph.get_changed_module_locations(graph, filenames)
+          |> Module.LocationSet.elements
+        ) {
         /* Something is changed in the dir, but we don't care */
         | [] => Lwt.return(graph)
         /* Exactly one module is changed */
@@ -180,7 +183,8 @@ let watch = (~pack, ~ctx: Context.t) => {
           switch (result) {
           | Ok(ctx) => Lwt.return(ctx.Context.graph)
           | Error(_) =>
-            let _ = DependencyGraph.add_module(graph, m.location, Lwt.return(m));
+            let _ =
+              DependencyGraph.add_module(graph, m.location, Lwt.return(m));
             Lwt.return(graph);
           };
         | _ =>

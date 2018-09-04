@@ -244,8 +244,6 @@ process = { env: {} };
     Lwt_io.position(output_channel) |> Int64.to_int,
   ));
 };
-/* DependencyGraph.cleanup ctx.graph emitted_modules; */
-/* Lwt_io.position output_channel |> Int64.to_int |> Lwt.return */
 
 let emit = (ctx: Context.t, start_time) => {
   let (temp_file, _) =

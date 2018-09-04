@@ -1,4 +1,6 @@
 open Fastpack
+module StringSet = Set.Make(String)
+
 let re_modules = Re_posix.compile_pat "^.+\\$fp\\$main'\\);.+\\(\\{"
 let run_with ~test_name ~cmd ~files f =
   let argv =
@@ -27,7 +29,7 @@ let run_with ~test_name ~cmd ~files f =
               files
           in
           let change_files =
-            Lwt_list.map_s (fun (name, action) ->
+            Lwt_list.fold_left_s (fun acc (name, action) ->
                 let%lwt () =
                   match action with
                   | `Content content ->
@@ -50,8 +52,9 @@ let run_with ~test_name ~cmd ~files f =
                       name
                       (fun ch -> Lwt_io.write ch content)
                 in
-                Lwt.return (FastpackUtil.FS.abs_path test_path name)
+                Lwt.return (FastpackUtil.FS.abs_path test_path name |> (fun f -> StringSet.add f acc))
               )
+              StringSet.empty
           in
           let messages = ref [] in
           let report_ok
@@ -107,8 +110,13 @@ let%expect_test "watch: successful initial build" =
     (fun prev_result pack change_files ->
        let open Lwt.Infix in
        let change_and_rebuild ~actions r =
-         let%lwt changed_files = change_files actions in
-         Watcher2.rebuild ~changed_files ~pack r
+         let%lwt filesChanged = change_files actions in
+         Watcher2.rebuild ~filesChanged ~pack r
+       in
+       let prev_result =
+         match prev_result with
+         | Error (ctx: Context.t) -> Error (ctx, DependencyGraph.get_files ctx.graph)
+         | Ok (ctx: Context.t) -> Ok (ctx, DependencyGraph.get_files ctx.graph)
        in
        prev_result
        |> change_and_rebuild (* one file change *)

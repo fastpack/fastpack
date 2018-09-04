@@ -8,11 +8,12 @@ module Module = Module;
 module Resolver = Resolver;
 module Preprocessor = Preprocessor;
 module Reporter = Reporter;
-module Watcher = Watcher;
+/* module Watcher = Watcher; */
 module Watcher2 = Watcher2;
 module Config = Config
 module Commands = Commands
 module Packer = Packer
+module DependencyGraph = DependencyGraph
 
 exception PackError = Context.PackError;
 exception ExitError = Context.ExitError;

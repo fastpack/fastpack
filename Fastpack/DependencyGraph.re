@@ -8,14 +8,14 @@ type t = {
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
   dynamic_dependencies:
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
-  files: Hashtbl.t(string, Module.t),
+  build_dependencies: Hashtbl.t(string, Module.location),
 };
 
 let empty = (~size=5000, ()) => {
   modules: Hashtbl.create(size),
   static_dependencies: Hashtbl.create(size * 20),
   dynamic_dependencies: Hashtbl.create(size * 20),
-  files: Hashtbl.create(size * 5),
+  build_dependencies: Hashtbl.create(size * 5),
 };
 
 let lookup = (table, key) => Hashtbl.find_opt(table, key);
@@ -69,10 +69,10 @@ let add_module = (graph, location, m: Lwt.t(Module.t)) => {
   m;
 };
 
-let add_module_files = (graph, m: Module.t) =>
+let add_build_dependencies = (graph, filenames, location) =>
   List.iter(
-    filename => Hashtbl.add(graph.files, filename, m),
-    M.bindings(m.build_dependencies) |> List.map(((k, _)) => k),
+    filename => Hashtbl.add(graph.build_dependencies, filename, location),
+    filenames,
   );
 
 let add_dependency =
@@ -85,40 +85,45 @@ let add_dependency =
   Hashtbl.add(dependencies, m.location, dep);
 };
 
-let remove_module = (graph, m: Module.t) => {
+let remove_module = (graph, location: Module.location) => {
   let remove = (k, v) =>
-    if (Module.equal_location(k, m.location)) {
+    if (Module.equal_location(k, location)) {
       None;
     } else {
       Some(v);
     };
 
-  let remove_files = (_, m') =>
-    if (Module.equal_location(m.location, m'.Module.location)) {
+  let remove_files = (_, location') =>
+    if (Module.equal_location(location, location')) {
       None;
     } else {
-      Some(m);
+      Some(location');
     };
 
   Hashtbl.filter_map_inplace(remove, graph.modules);
   Hashtbl.filter_map_inplace(remove, graph.static_dependencies);
   Hashtbl.filter_map_inplace(remove, graph.dynamic_dependencies);
-  Hashtbl.filter_map_inplace(remove_files, graph.files);
+  Hashtbl.filter_map_inplace(remove_files, graph.build_dependencies);
 };
 
-let get_modules_by_filenames = (graph, filenames) =>
+let get_files = graph =>
+  Hashtbl.fold(
+    (filename, _, set) => StringSet.add(filename, set),
+    graph.build_dependencies,
+    StringSet.empty,
+  );
+
+let get_changed_module_locations = (graph, filenames) =>
   List.fold_left(
-    (modules, filename) =>
+    (locations, filename) =>
       List.fold_left(
-        (modules, m) => M.add(m.Module.id, m, modules),
-        modules,
-        Hashtbl.find_all(graph.files, filename),
+        (locations, location) => Module.LocationSet.add(location, locations),
+        locations,
+        Hashtbl.find_all(graph.build_dependencies, filename),
       ),
-    M.empty,
+    Module.LocationSet.empty,
     filenames,
   )
-  |> M.bindings
-  |> List.map(snd);
 
 /* TODO: make emitted_modules be LocationSet */
 let cleanup = (graph, emitted_modules) => {
@@ -134,8 +139,8 @@ let cleanup = (graph, emitted_modules) => {
   let () = Hashtbl.filter_map_inplace(keep, graph.dynamic_dependencies);
   let () =
     Hashtbl.filter_map_inplace(
-      (_, m) => keep(m.Module.location, m),
-      graph.files,
+      (_, location) => keep(location, location),
+      graph.build_dependencies,
     );
   graph;
 };
