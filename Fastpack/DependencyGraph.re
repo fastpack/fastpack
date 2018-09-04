@@ -1,4 +1,3 @@
-module M = Map.Make(String);
 module StringSet = Set.Make(String);
 exception Cycle(list(string));
 
@@ -9,6 +8,7 @@ type t = {
   dynamic_dependencies:
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
   build_dependencies: Hashtbl.t(string, Module.location),
+  parents: Hashtbl.t(Module.location, Module.LocationSet.t),
 };
 
 let empty = (~size=5000, ()) => {
@@ -16,6 +16,7 @@ let empty = (~size=5000, ()) => {
   static_dependencies: Hashtbl.create(size * 20),
   dynamic_dependencies: Hashtbl.create(size * 20),
   build_dependencies: Hashtbl.create(size * 5),
+  parents: Hashtbl.create(size * 20),
 };
 
 let lookup = (table, key) => Hashtbl.find_opt(table, key);
@@ -69,6 +70,16 @@ let add_module = (graph, location, m: Lwt.t(Module.t)) => {
   m;
 };
 
+let add_module_parents = (graph, location, parents: Module.LocationSet.t) =>
+  Hashtbl.add(graph.parents, location, parents);
+
+let get_module_parents = (graph, location) =>
+  Hashtbl.find_all(graph.parents, location)
+  |> List.fold_left(
+       (acc, parents) => Module.LocationSet.union(acc, parents),
+       Module.LocationSet.empty,
+     );
+
 let add_build_dependencies = (graph, filenames, location) =>
   List.iter(
     filename => Hashtbl.add(graph.build_dependencies, filename, location),
@@ -101,6 +112,7 @@ let remove_module = (graph, location: Module.location) => {
     };
 
   Hashtbl.filter_map_inplace(remove, graph.modules);
+  Hashtbl.filter_map_inplace(remove, graph.parents);
   Hashtbl.filter_map_inplace(remove, graph.static_dependencies);
   Hashtbl.filter_map_inplace(remove, graph.dynamic_dependencies);
   Hashtbl.filter_map_inplace(remove_files, graph.build_dependencies);
@@ -123,7 +135,7 @@ let get_changed_module_locations = (graph, filenames) =>
       ),
     Module.LocationSet.empty,
     filenames,
-  )
+  );
 
 /* TODO: make emitted_modules be LocationSet */
 let cleanup = (graph, emitted_modules) => {
@@ -135,6 +147,7 @@ let cleanup = (graph, emitted_modules) => {
     };
 
   let () = Hashtbl.filter_map_inplace(keep, graph.modules);
+  let () = Hashtbl.filter_map_inplace(keep, graph.parents);
   let () = Hashtbl.filter_map_inplace(keep, graph.static_dependencies);
   let () = Hashtbl.filter_map_inplace(keep, graph.dynamic_dependencies);
   let () =

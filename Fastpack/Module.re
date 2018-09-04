@@ -193,6 +193,11 @@ module LocationSet =
     type t = location;
   });
 
+module LocationMap = Map.Make({
+  let compare = compare_location
+  type t = location
+})
+
 type t = {
   /*** Opaque module id */
   id: string,

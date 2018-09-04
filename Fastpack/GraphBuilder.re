@@ -15,6 +15,8 @@ module Parser = FastpackUtil.Parser;
 module Scope = FastpackUtil.Scope;
 module Visit = FastpackUtil.Visit;
 
+exception Rebuild;
+
 let debug = Logs.debug;
 let re_name = Re_posix.compile_pat("[^A-Za-z0-9_]+");
 
@@ -89,8 +91,7 @@ let get_module_type = stmts => {
   List.fold_left(import_or_export, Module.CJS, stmts);
 };
 
-let read_module =
-    (~from_module=None, ~ctx: Context.t, location: Module.location) => {
+let read_module = (~ctx: Context.t, location: Module.location) => {
   /* Logs.debug(x => x("READING: %s", Module.location_to_string(location))); */
   let make_module = (location, source) => {
     let%lwt package =
@@ -103,11 +104,11 @@ let read_module =
           ctx.cache.find_package_for_filename(ctx.current_dir, filename);
 
         Lwt.return(package);
-      | Module.File({filename: None, _}) =>
-        switch (from_module) {
-        | None => Lwt.return(ctx.project_package)
-        | Some((m: Module.t)) => Lwt.return(m.package)
-        }
+      | Module.File({filename: None, _}) => Lwt.return(ctx.project_package)
+      /* switch (from_module) { */
+      /* | None => Lwt.return(ctx.project_package) */
+      /* | Some((m: Module.t)) => Lwt.return(m.package) */
+      /* } */
       };
 
     let m =
@@ -156,8 +157,14 @@ let read_module =
             Lwt.catch(
               () => ctx.cache.get_file(filename),
               fun
-              | Cache.FileDoesNotExist(filename) =>
-                Lwt.fail(Context.PackError(ctx, CannotReadModule(filename)))
+              | Cache.FileDoesNotExist(filename) => {
+                  ctx.cache.remove(filename);
+                  Module.LocationSet.iter(
+                    location => ctx.cache.remove_module(location),
+                    DependencyGraph.get_module_parents(ctx.graph, location),
+                  );
+                  Lwt.fail(Rebuild);
+                }
               | exn => raise(exn),
             );
 
@@ -298,7 +305,13 @@ let build = (ctx: Context.t) => {
     };
 
   /* Gather dependencies */
-  let rec process = (ctx: Context.t, location: Module.location) =>
+  let rec process =
+          (
+            ~seen: Module.LocationSet.t,
+            ctx: Context.t,
+            location: Module.location,
+          ) => {
+    DependencyGraph.add_module_parents(ctx.graph, location, seen);
     switch (DependencyGraph.lookup_module(ctx.graph, location)) {
     | Some(mPromise) => mPromise
     | None =>
@@ -307,7 +320,7 @@ let build = (ctx: Context.t) => {
         location,
         {
           let ctx = {...ctx, current_location: location};
-          let%lwt (m, deps) = read_module(~ctx, ~from_module=None, location);
+          let%lwt (m, deps) = read_module(~ctx, location);
           let graph = ctx.graph;
           let%lwt m =
             switch (deps) {
@@ -363,11 +376,6 @@ let build = (ctx: Context.t) => {
               });
             };
 
-          /* TODO: re-evaluate if we want to modify cache at this point
-                   maybe it should go after module is successfully emitted
-           */
-          ctx.cache.modify_content(m);
-
           let updateGraph = (~kind, dependencies) => {
             let%lwt () =
               Lwt_list.iter_p(
@@ -379,6 +387,7 @@ let build = (ctx: Context.t) => {
                     | None =>
                       let%lwt _ =
                         process(
+                          ~seen=Module.LocationSet.add(location, seen),
                           {...ctx, stack: [req, ...ctx.stack]},
                           resolved,
                         );
@@ -409,8 +418,15 @@ let build = (ctx: Context.t) => {
         },
       )
     };
+  };
 
-  let {Context.current_location, _} = ctx;
-  let%lwt _ = process(ctx, current_location);
+  let {Context.current_location, entry_location, graph, _} = ctx;
+  let seen =
+    if (current_location != entry_location) {
+      DependencyGraph.get_module_parents(graph, current_location);
+    } else {
+      Module.LocationSet.empty;
+    };
+  let%lwt _ = process(~seen, ctx, current_location);
   Lwt.return_unit;
 };

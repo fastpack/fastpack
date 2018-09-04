@@ -20,7 +20,10 @@ let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
       | `Error => (true, None, None)
       | `Ok =>
         switch (
-          DependencyGraph.get_changed_module_locations(ctx.graph, filesChanged)
+          DependencyGraph.get_changed_module_locations(
+            ctx.graph,
+            filesChanged,
+          )
           |> Module.LocationSet.elements
         ) {
         | [] => (false, None, None)
@@ -34,11 +37,14 @@ let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
       if (runPack) {
         pack(~current_location, ~graph, ~initial=false, ~start_time);
       } else {
-        Lwt.return_ok(ctx);
+        switch (result) {
+        | `Ok => Lwt.return_ok(ctx)
+        | `Error => Lwt.return_error(ctx)
+        };
       };
     switch (newResult) {
     | Ok(ctx) => Lwt.return_ok((ctx, DependencyGraph.get_files(ctx.graph)))
-    | Error(ctx: Context.t) =>
+    | Error((ctx: Context.t)) =>
       Lwt.return_error((
         ctx,
         StringSet.union(DependencyGraph.get_files(ctx.graph), filesWatched),
