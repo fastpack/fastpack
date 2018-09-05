@@ -1,4 +1,7 @@
 open Cmdliner;
+module FS = FastpackUtil.FS;
+
+exception ExitError(string);
 
 module Cache = {
   type t =
@@ -11,10 +14,11 @@ module Mock = {
     | Empty
     | Mock(string);
 
-  let to_string = ((request, mock)) => switch (mock) {
-      | Empty => request
-      | Mock(mock) => request ++ ":" ++ mock
-      };
+  let to_string = ((request, mock)) =>
+    switch (mock) {
+    | Empty => request
+    | Mock(mock) => request ++ ":" ++ mock
+    };
 
   let parse = s =>
     switch (String.(s |> trim |> split_on_char(':'))) {
@@ -27,9 +31,8 @@ module Mock = {
       Result.Ok((false, (request, Mock(mock))));
     };
 
-  let print = (ppf, (_, mock)) => {
+  let print = (ppf, (_, mock)) =>
     Format.fprintf(ppf, "%s", to_string(mock));
-  };
 };
 
 module Reporter = {
@@ -72,20 +75,46 @@ let create =
       ~report,
       ~debug,
     ) => {
-  entryPoints,
-  outputDir,
-  outputFilename,
-  mode,
-  mock,
-  nodeModulesPaths,
-  projectRootDir,
-  resolveExtension,
-  target,
-  cache,
-  preprocess,
-  postprocess,
-  report,
-  debug,
+  let currentDir = Unix.getcwd();
+
+  /* output directory & output filename */
+  let (outputDir, outputFilename) = {
+    let outputDir = FS.abs_path(currentDir, outputDir);
+    let outputFilename = FS.abs_path(outputDir, outputFilename);
+    let outputFilenameParent = FilePath.dirname(outputFilename);
+    if (outputDir == outputFilenameParent
+        || FilePath.is_updir(outputDir, outputFilenameParent)) {
+      (outputDir, outputFilename);
+    } else {
+      let error =
+        "Output filename must be a subpath of output directory.\n"
+        ++ "Output directory:\n  "
+        ++ outputDir
+        ++ "\n"
+        ++ "Output filename:\n  "
+        ++ outputFilename
+        ++ "\n";
+
+      raise(ExitError(error));
+    };
+  };
+  let projectRootDir = FastpackUtil.FS.abs_path(currentDir, projectRootDir);
+  {
+    entryPoints,
+    outputDir,
+    outputFilename,
+    mode,
+    mock,
+    nodeModulesPaths,
+    projectRootDir,
+    resolveExtension,
+    target,
+    cache,
+    preprocess,
+    postprocess,
+    report,
+    debug,
+  };
 };
 
 let term = {

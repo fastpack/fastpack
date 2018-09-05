@@ -727,13 +727,19 @@ module Reader = {
     worker_output_dir := output_dir;
 
     let read = (~location, ~source) =>
-      Lwt_pool.use(
-        pool,
-        ((_, fp_in_ch, fp_out_ch)) => {
-          let%lwt () = Lwt_io.write_value(fp_out_ch, {location, source});
-          let%lwt output: Lwt.t(output) = Lwt_io.read_value(fp_in_ch);
-          Lwt.return(output);
-        },
+      Lwt_pool.use(pool, ((_, fp_in_ch, fp_out_ch)) =>
+        Lwt_io.atomic(
+          out_ch =>
+            Lwt_io.atomic(
+              in_ch => {
+                let%lwt () = Lwt_io.write_value(out_ch, {location, source});
+                let%lwt output: Lwt.t(output) = Lwt_io.read_value(in_ch);
+                Lwt.return(output);
+              },
+              fp_in_ch,
+            ),
+          fp_out_ch,
+        )
       );
 
     Lwt.return({read, finalize: () => Lwt_pool.clear(pool)});

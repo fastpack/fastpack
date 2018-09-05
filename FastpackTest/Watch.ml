@@ -4,6 +4,8 @@ module StringSet = Set.Make(String)
 
 let re_modules = Re_posix.compile_pat "^.+\\$fp\\$main'\\);.+\\(\\{"
 let run_with ~test_name ~cmd ~files f =
+  let test_path = Test.get_test_path test_name in
+  Unix.chdir test_path;
   let argv =
     cmd
     |> String.split_on_char ' '
@@ -13,11 +15,9 @@ let run_with ~test_name ~cmd ~files f =
   let opts = Cmdliner.Term.eval
       ~argv (Config.term, Cmdliner.Term.info "y")
   in
-  let test_path = Test.get_test_path test_name in
   match opts with
   | `Ok opts ->
     Lwt_main.run(
-      let%lwt () = Lwt_unix.chdir test_path in
       Lwt.catch (fun () ->
           let%lwt () = Lwt_list.iter_s (fun (name, content) ->
               Lwt_io.with_file
@@ -53,7 +53,10 @@ let run_with ~test_name ~cmd ~files f =
                       name
                       (fun ch -> Lwt_io.write ch content)
                 in
-                Lwt.return (FastpackUtil.FS.abs_path test_path name |> (fun f -> StringSet.add f acc))
+                Lwt.return (
+                  FastpackUtil.FS.abs_path test_path name
+                  |> (fun f -> StringSet.add f acc)
+                )
               )
               StringSet.empty
           in
@@ -79,21 +82,10 @@ let run_with ~test_name ~cmd ~files f =
               opts
           in
           Lwt.finalize (fun () ->
-              let%lwt initial_result =
-                pack
-                  ~graph:None
-                  ~current_location:None
-                  ~initial:true
-                  ~start_time:(Unix.gettimeofday ())
-              in
+              let%lwt initial_result = Watcher2.build ~pack in
               let change_and_rebuild ~actions r =
                 let%lwt filesChanged = change_files actions in
                 Watcher2.rebuild ~filesChanged ~pack r
-              in
-              let initial_result =
-                match initial_result with
-                | Error (ctx: Context.t) -> Error (ctx, DependencyGraph.get_files ctx.graph)
-                | Ok (ctx: Context.t) -> Ok (ctx, DependencyGraph.get_files ctx.graph)
               in
               let%lwt () = f initial_result change_and_rebuild in
               (Printf.sprintf "Number of rebuilds: %d\n" (List.length !messages - 1) :: !messages)

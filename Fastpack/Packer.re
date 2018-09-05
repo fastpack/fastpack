@@ -1,16 +1,17 @@
 module FS = FastpackUtil.FS;
 
 type t = {
-  pack:
-    (
-      ~current_location: option(Module.location),
-      ~graph: option(DependencyGraph.t),
-      ~initial: bool,
-      ~start_time: float
-    ) =>
-    Lwt.t(result(Context.t, Context.t)),
+  pack: packFunction,
   finalize: unit => Lwt.t(unit),
-};
+}
+and packFunction =
+  (
+    ~current_location: option(Module.location),
+    ~graph: option(DependencyGraph.t),
+    ~initial: bool,
+    ~start_time: float
+  ) =>
+  Lwt.t(result(Context.t, Context.t));
 
 let make = (~report=None, options: Config.t) => {
   let%lwt current_dir = Lwt_unix.getcwd();
@@ -29,35 +30,16 @@ let make = (~report=None, options: Config.t) => {
 
   let entry_location = Module.Main(entry_points);
 
-  /* output directory & output filename */
-  let (output_dir, output_file) = {
-    let output_dir = FS.abs_path(current_dir, options.outputDir);
-    let output_file = FS.abs_path(output_dir, options.outputFilename);
-    let output_file_parent_dir = FilePath.dirname(output_file);
-    if (output_dir == output_file_parent_dir
-        || FilePath.is_updir(output_dir, output_file_parent_dir)) {
-      (output_dir, output_file);
-    } else {
-      let error =
-        "Output filename must be a subpath of output directory.\n"
-        ++ "Output directory:\n  "
-        ++ output_dir
-        ++ "\n"
-        ++ "Output filename:\n  "
-        ++ output_file
-        ++ "\n";
-
-      raise(Context.ExitError(error));
-    };
-  };
-
   /* TODO: the next line may not belong here */
   /* TODO: also cleanup the directory before emitting, maybe? */
-  let%lwt () = FS.makedirs(output_dir);
+  let%lwt () = FS.makedirs(options.outputDir);
 
-  /* project_root */
-  let project_root =
-    FastpackUtil.FS.abs_path(current_dir, options.projectRootDir);
+  /* TODO: verify is project_root exists */
+
+  /* FIXME: rename later */
+  let output_dir = options.outputDir;
+  let project_root = options.projectRootDir;
+  let output_file = options.outputFilename;
 
   /* preprocessor */
   let%lwt preprocessor =
@@ -124,6 +106,7 @@ let make = (~report=None, options: Config.t) => {
         }
       },
     );
+
   let rec pack = (~current_location, ~graph, ~initial, ~start_time) => {
     let message =
       if (initial) {
@@ -169,7 +152,11 @@ let make = (~report=None, options: Config.t) => {
 
     Lwt.catch(
       () => {
+        Logs.debug(x =>
+          x("before build. Graph: %d", DependencyGraph.length(ctx.graph))
+        );
         let%lwt () = GraphBuilder.build(ctx);
+        Logs.debug(x => x("after build"));
         let%lwt (emitted_modules, files) =
           switch (options.mode) {
           | Mode.Production =>
@@ -186,23 +173,25 @@ let make = (~report=None, options: Config.t) => {
           | Mode.Test
           | Mode.Development => ScopedEmitter.emit(ctx, start_time)
           };
-
-        let ctx = {
-          ...ctx,
-          graph: DependencyGraph.cleanup(ctx.graph, emitted_modules),
-        };
+        DependencyGraph.cleanup(ctx.graph, emitted_modules);
         let%lwt () =
           report_ok(~message=Some(message), ~start_time, ~ctx, ~files);
         Lwt.return_ok(ctx);
       },
       fun
-      | GraphBuilder.Rebuild =>
-        pack(~current_location=None, ~graph=None, ~initial, ~start_time)
+      | GraphBuilder.Rebuild(filename, location) => {
+          ctx.cache.remove(filename);
+          Module.LocationSet.iter(
+            location => ctx.cache.remove_module(location),
+            DependencyGraph.get_module_parents(ctx.graph, location),
+          );
+          pack(~current_location=None, ~graph=None, ~initial, ~start_time);
+        }
       | Context.PackError(ctx, error) => {
           let%lwt () = report_error(~ctx, ~error);
           Lwt.return_error(ctx);
         }
-      | exn => raise(exn),
+      | exn => Lwt.fail(exn),
     );
   };
   let finalize = () => {

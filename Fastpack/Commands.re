@@ -11,6 +11,7 @@ let run = (debug, f) => {
     Logs.set_reporter(Logs_fmt.reporter());
   };
   try (`Ok(f())) {
+  | Config.ExitError(message)
   | Context.ExitError(message) =>
     Lwt_main.run(Lwt_io.(write(stderr, message)));
     /* supress the default behaviour of the cmdliner, since it does a lot
@@ -32,7 +33,6 @@ let run = (debug, f) => {
   };
 };
 
-/* TODO: StringSet */
 let cmds = ref([]);
 let all = () => cmds^;
 let register = cmd => {
@@ -79,30 +79,12 @@ module Watch = {
     run(options.debug, () =>
       Lwt_main.run(
         {
-          let start_time = Unix.gettimeofday();
-          /* TODO: maybe decouple mode from the CommonOptions ? */
-          let%lwt {Packer.pack, finalize} =
-            Packer.make({...options, mode: Mode.Development});
-
-          Lwt.finalize(
-            () =>
-              switch%lwt (
-                pack(
-                  ~graph=None,
-                  ~current_location=None,
-                  ~initial=true,
-                  ~start_time,
-                )
-              ) {
-              | Error(_) => raise(Context.ExitError(""))
-              | Ok(_ctx) => failwith("not implemented") /*Watcher.watch(~ctx, ~pack)*/
-              },
-            finalize,
-          );
+          let%lwt {Watcher2.watch, finalize} = Watcher2.make(options);
+          Lwt.finalize(watch, finalize);
         },
       )
     );
-  let doc = "build the bundle";
+  let doc = "watch for file changes and rebuild the bundle";
   let command =
     register((
       Term.(ret(const(run) $ Config.term)),
