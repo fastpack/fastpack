@@ -15,7 +15,7 @@ module Parser = FastpackUtil.Parser;
 module Scope = FastpackUtil.Scope;
 module Visit = FastpackUtil.Visit;
 
-exception Rebuild;
+exception Rebuild(string, Module.location);
 
 let debug = Logs.debug;
 let re_name = Re_posix.compile_pat("[^A-Za-z0-9_]+");
@@ -157,14 +157,8 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
             Lwt.catch(
               () => ctx.cache.get_file(filename),
               fun
-              | Cache.FileDoesNotExist(filename) => {
-                  ctx.cache.remove(filename);
-                  Module.LocationSet.iter(
-                    location => ctx.cache.remove_module(location),
-                    DependencyGraph.get_module_parents(ctx.graph, location),
-                  );
-                  Lwt.fail(Rebuild);
-                }
+              | Cache.FileDoesNotExist(filename) =>
+                Lwt.fail(Rebuild(filename, location))
               | exn => raise(exn),
             );
 

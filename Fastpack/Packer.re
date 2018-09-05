@@ -173,7 +173,7 @@ let make = (~report=None, options: Config.t) => {
           | Mode.Test
           | Mode.Development => ScopedEmitter.emit(ctx, start_time)
           };
-        DependencyGraph.cleanup(ctx.graph, emitted_modules);
+        let _ = DependencyGraph.cleanup(ctx.graph, emitted_modules);
         let%lwt () =
           report_ok(~message=Some(message), ~start_time, ~ctx, ~files);
         Lwt.return_ok(ctx);
