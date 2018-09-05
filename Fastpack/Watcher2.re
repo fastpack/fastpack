@@ -32,15 +32,7 @@ let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
     | Error((ctx, filesWatched)) => (`Error, ctx, filesWatched)
     | Ok((ctx, filesWatched)) => (`Ok, ctx, filesWatched)
     };
-  Logs.debug(x => x("removing cache-----"));
-  StringSet.iter(
-    f => {
-      ctx.cache.remove(f);
-      Logs.debug(x => x("s: %s", f));
-    },
-    filesChanged,
-  );
-  Logs.debug(x => x("-----done"));
+  StringSet.iter(f => ctx.cache.remove(f), filesChanged);
   switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
   | [] => Lwt.return(prev_result)
   | filesChanged =>
@@ -62,7 +54,6 @@ let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
         | _ => (true, None, None)
         }
       };
-    Logs.debug(x => x("before pack"));
     let%lwt newResult =
       if (runPack) {
         pack(~current_location, ~graph, ~initial=false, ~start_time);
@@ -72,7 +63,6 @@ let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
         | `Error => Lwt.return_error(ctx)
         };
       };
-    Logs.debug(x => x("after pack"));
     switch (newResult) {
     | Ok(ctx) => Lwt.return_ok((ctx, DependencyGraph.get_files(ctx.graph)))
     | Error((ctx: Context.t)) =>
@@ -255,11 +245,6 @@ let make = (config: Config.t) => {
     && filename != config.outputDir;
 
   let rec tryRebuilding = (filenames, prevResult) => {
-    Logs.debug(x => x("tryRebuilding start"));
-    StringSet.iter(
-      fn => Logs.debug(x => x("tryRebuilding: %s", fn)),
-      filenames,
-    );
     let%lwt nextResult =
       Lwt.pick([
         switch%lwt (ask_watchman(ch_in, link_map, link_paths, ignoreFilename)) {
@@ -267,7 +252,7 @@ let make = (config: Config.t) => {
         | Some(filenames) => `FilesChanged(filenames) |> Lwt.return
         },
         {
-          /* let%lwt () = Lwt_unix.sleep(0.100); */
+          let%lwt () = Lwt_unix.sleep(0.100);
           let%lwt result =
             rebuild(~filesChanged=filenames, ~pack, prevResult);
           `Rebuilt(result) |> Lwt.return;
@@ -281,7 +266,6 @@ let make = (config: Config.t) => {
   };
 
   let rec watch = result => {
-    Logs.debug(x => x("watch start"));
     switch%lwt (ask_watchman(ch_in, link_map, link_paths, ignoreFilename)) {
     | None => Lwt.return_unit
     | Some(filenames) => tryRebuilding(filenames, result) >>= watch

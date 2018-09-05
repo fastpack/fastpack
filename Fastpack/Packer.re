@@ -1,4 +1,5 @@
 module FS = FastpackUtil.FS;
+module StringSet = Set.Make(String);
 
 type t = {
   pack: packFunction,
@@ -179,7 +180,9 @@ let make = (~report=None, options: Config.t) => {
           x("before build. Graph: %d", DependencyGraph.length(ctx.graph))
         );
         let%lwt () = GraphBuilder.build(ctx);
-        Logs.debug(x => x("after build"));
+        Logs.debug(x =>
+          x("after build. Graph: %d", DependencyGraph.length(ctx.graph))
+        );
         let%lwt (emitted_modules, files) =
           switch (options.mode) {
           | Mode.Production =>
@@ -196,7 +199,20 @@ let make = (~report=None, options: Config.t) => {
           | Mode.Test
           | Mode.Development => ScopedEmitter.emit(ctx, start_time)
           };
-        let _ = DependencyGraph.cleanup(ctx.graph, emitted_modules);
+        let ctx = {
+          ...ctx,
+          graph: DependencyGraph.cleanup(ctx.graph, emitted_modules),
+        };
+        Logs.debug(x =>
+          x("after cleanup. Graph: %d", DependencyGraph.length(ctx.graph))
+        );
+        Logs.debug(x =>
+          x(
+            "after-cleanup-files: %d",
+            StringSet.elements(DependencyGraph.get_files(ctx.graph))
+            |> List.length,
+          )
+        );
         let%lwt () =
           report_ok(~message=Some(message), ~start_time, ~ctx, ~files);
         Lwt.return_ok(ctx);

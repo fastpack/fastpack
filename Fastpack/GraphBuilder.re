@@ -216,7 +216,11 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
 
     switch (is_json(location), source) {
     | (true, Some(source)) =>
-      make_module(location, "module.exports = " ++ source ++ ";")
+      let json = Yojson.to_string(`String("module.exports = " ++ source ++ ";"));
+      make_module(
+        location,
+        String.(sub(json, 1, length(json) - 2)),
+      )
     | (true, None) => failwith("impossible: *.json file without source")
     | (false, _) =>
       let {Worker.Reader.read, _} = ctx.reader;
@@ -293,7 +297,13 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
   switch (location) {
   | Module.File(_) =>
     switch%lwt (ctx.cache.get_module(location)) {
-    | Some(m) => Lwt.return((m, NoDependendencies))
+    | Some((m: Module.t)) =>
+      DependencyGraph.add_build_dependencies(
+        ctx.graph,
+        m.build_dependencies |> M.bindings |> List.map(fst),
+        m.location,
+      );
+      Lwt.return((m, NoDependendencies));
     | None => process_source()
     }
   | _ => process_source()
@@ -319,28 +329,21 @@ let build = (ctx: Context.t) => {
     };
 
   /* Gather dependencies */
-  let rec process =
-          (
-            ~seen: Module.LocationSet.t,
-            ctx: Context.t,
-            location: Module.location,
-          ) => {
+  let rec process = (~seen: Module.LocationSet.t, location: Module.location) => {
     DependencyGraph.add_module_parents(ctx.graph, location, seen);
     DependencyGraph.ensureModule(
       ctx.graph,
       location,
       () => {
-        let ctx = {...ctx, current_location: location};
-        let%lwt (m, deps) = read_module(~ctx, location);
+        let%lwt (m, deps) = Lwt.no_cancel(read_module(~ctx, location));
         let graph = ctx.graph;
         let%lwt m =
           switch (deps) {
           | NoDependendencies => Lwt.return(m)
           | Dependencies(static_dependencies, dynamic_dependencies) =>
             let resolve_dependencies =
-              Lwt_list.map_p(req => {
+              Lwt_list.map_s(req => {
                 let%lwt (resolved, build_dependencies) = resolve(ctx, req);
-
                 Lwt.return(((req, resolved), build_dependencies));
               });
 
@@ -387,14 +390,13 @@ let build = (ctx: Context.t) => {
         let updateGraph = (~kind, dependencies) => {
           let%lwt () =
             Lwt_list.iter_p(
-              ((req, resolved)) => {
+              ((_, resolved)) => {
                 let%lwt () =
                   switch (DependencyGraph.hasModule(ctx.graph, resolved)) {
                   | false =>
                     let%lwt _ =
                       process(
                         ~seen=Module.LocationSet.add(location, seen),
-                        {...ctx, stack: [req, ...ctx.stack]},
                         resolved,
                       );
                     Lwt.return_unit;
@@ -425,7 +427,6 @@ let build = (ctx: Context.t) => {
     );
   };
 
-  let%lwt _ =
-    process(~seen=Module.LocationSet.empty, ctx, ctx.current_location);
+  let%lwt _ = process(~seen=Module.LocationSet.empty, ctx.current_location);
   Lwt.return_unit;
 };
