@@ -36,7 +36,6 @@ type entry = {
   st_kind: Unix.file_kind,
   digest: string,
   content: string,
-  package: option(Package.t),
 };
 
 type cache = {
@@ -78,7 +77,6 @@ let create = (strategy: strategy) => {
     st_kind: Unix.S_REG,
     digest: "",
     content: "",
-    package: None,
   };
 
   let cacheId = ref("");
@@ -184,6 +182,8 @@ let create = (strategy: strategy) => {
         Lwt.return((no_file, false));
       | Some({st_mtime, st_kind, _}) =>
         if (st_mtime == entry.st_mtime) {
+          let entry = {...entry, st_mtime, st_kind};
+          update(filename, entry);
           add_trusted(filename);
           Lwt.return((entry, true));
         } else {
@@ -202,16 +202,6 @@ let create = (strategy: strategy) => {
       };
 
     switch (entry) {
-    | {package: Some(_), _} =>
-      let%lwt (entry, cached) = validate_file();
-      if (cached) {
-        Lwt.return((entry, true));
-      } else {
-        let package = Package.of_json(filename, entry.content);
-        let entry = {...entry, package: Some(package)};
-        update(filename, entry);
-        Lwt.return((entry, false));
-      };
     | {digest, st_mtime, _} =>
       if (digest != "") {
         validate_file();
@@ -222,6 +212,8 @@ let create = (strategy: strategy) => {
           Lwt.return((no_file, false));
         | Some({st_mtime, st_kind, _}) =>
           if (st_mtime == entry.st_mtime) {
+            let entry = {...entry, st_mtime, st_kind};
+            update(filename, entry);
             add_trusted(filename);
             Lwt.return((entry, true));
           } else {
@@ -231,8 +223,10 @@ let create = (strategy: strategy) => {
           }
         };
       } else {
-        let%lwt exists = Lwt_unix.file_exists(filename);
-        let entry = {...no_file, exists};
+        let%lwt entry = switch%lwt(FS.stat_option(filename)){
+          | None => Lwt.return(no_file)
+          | Some({st_mtime, st_kind, _}) => Lwt.return({...no_file, exists: true, st_mtime, st_kind})
+        };
         update(filename, entry);
         Lwt.return((entry, false));
       }
@@ -366,7 +360,6 @@ let create = (strategy: strategy) => {
               st_kind: Unix.S_REG,
               content: "",
               digest: "",
-              package: None,
             };
             update(filename, entry);
             Lwt.return((entry, false));
@@ -376,37 +369,6 @@ let create = (strategy: strategy) => {
 
     Lwt.return((entry, cached));
   };
-
-  /* let get_package = filename => */
-  /*   switch (StringSet.mem(filename, trusted^), M.get(filename, files^)) { */
-  /*   | (true, Some({package: Some(package), _})) => */
-  /*     Lwt.return((package, true)) */
-  /*   | _ => */
-  /*     let%lwt (entry, cached) = get_file(filename); */
-  /*     let package = Package.of_json(filename, entry.content); */
-  /*     update(filename, {...entry, package: Some(package)}); */
-  /*     Lwt.return((package, cached)); */
-  /*   }; */
-
-  /* let find_package_for_filename = (root_dir, filename) => { */
-  /*   let rec find_package_json_for_filename = filename => */
-  /*     if (!FilePath.is_subdir(filename, root_dir)) { */
-  /*       Lwt.return_none; */
-  /*     } else { */
-  /*       let dirname = FilePath.dirname(filename); */
-  /*       let package_json = FilePath.concat(dirname, "package.json"); */
-  /*       if%lwt (file_exists(package_json)) { */
-  /*         Lwt.return_some(package_json); */
-  /*       } else { */
-  /*         find_package_json_for_filename(dirname); */
-  /*       }; */
-  /*     }; */
-
-  /*   switch%lwt (find_package_json_for_filename(filename)) { */
-  /*   | Some(package_json) => get_package(package_json) */
-  /*   | None => Lwt.return((Package.empty, false)) */
-  /*   }; */
-  /* }; */
 
   let get_module = location => {
     let location_str = Module.location_to_string(location);
@@ -455,8 +417,8 @@ let create = (strategy: strategy) => {
   };
 
   let remove_module = (location: Module.location) => {
-      let location_str = Module.location_to_string(location);
-      modules := M.remove(location_str, modules^);
+    let location_str = Module.location_to_string(location);
+    modules := M.remove(location_str, modules^);
   };
 
   let add_module = (m: Module.t) =>
