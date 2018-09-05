@@ -77,9 +77,32 @@ let make = (~report=None, options: Config.t) => {
     | (Config.Cache.Use, false) => "used"
     };
 
+  let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
+    let rec find_package_json_for_filename = filename =>
+      if (!FilePath.is_subdir(filename, root_dir)) {
+        Lwt.return_none;
+      } else {
+        let dirname = FilePath.dirname(filename);
+        let package_json = FilePath.concat(dirname, "package.json");
+        if%lwt (cache.file_exists(package_json)) {
+          Lwt.return_some(package_json);
+        } else {
+          find_package_json_for_filename(dirname);
+        };
+      };
+
+    switch%lwt (find_package_json_for_filename(filename)) {
+    | Some(package_json) =>
+      let%lwt (entry, _) = cache.get_file(package_json);
+      Lwt.return(Package.of_json(package_json, entry.Cache.content));
+    | None => Lwt.return(Package.empty)
+    };
+  };
+
   /* main package.json */
-  let%lwt (project_package, _) =
-    cache.find_package_for_filename(
+  let%lwt project_package =
+    find_package_for_filename(
+      cache,
       current_dir,
       FilePath.concat(current_dir, "package.json"),
     );

@@ -91,6 +91,28 @@ let get_module_type = stmts => {
   List.fold_left(import_or_export, Module.CJS, stmts);
 };
 
+let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
+  let rec find_package_json_for_filename = filename =>
+    if (!FilePath.is_subdir(filename, root_dir)) {
+      Lwt.return_none;
+    } else {
+      let dirname = FilePath.dirname(filename);
+      let package_json = FilePath.concat(dirname, "package.json");
+      if%lwt (cache.file_exists(package_json)) {
+        Lwt.return_some(package_json);
+      } else {
+        find_package_json_for_filename(dirname);
+      };
+    };
+
+  switch%lwt (find_package_json_for_filename(filename)) {
+  | Some(package_json) =>
+    let%lwt (entry, _) = cache.get_file(package_json);
+    Lwt.return(Package.of_json(package_json, entry.Cache.content));
+  | None => Lwt.return(Package.empty)
+  };
+};
+
 let read_module = (~ctx: Context.t, location: Module.location) => {
   /* Logs.debug(x => x("READING: %s", Module.location_to_string(location))); */
   let make_module = (location, source) => {
@@ -100,10 +122,8 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
       | Module.Runtime => Lwt.return(Package.empty)
       | Module.Main(_) => Lwt.return(ctx.project_package)
       | Module.File({filename: Some(filename), _}) =>
-        let%lwt (package, _) =
-          ctx.cache.find_package_for_filename(ctx.current_dir, filename);
+        find_package_for_filename(ctx.cache, ctx.current_dir, filename)
 
-        Lwt.return(package);
       | Module.File({filename: None, _}) => Lwt.return(ctx.project_package)
       /* switch (from_module) { */
       /* | None => Lwt.return(ctx.project_package) */
@@ -306,121 +326,106 @@ let build = (ctx: Context.t) => {
             location: Module.location,
           ) => {
     DependencyGraph.add_module_parents(ctx.graph, location, seen);
-    switch (DependencyGraph.lookup_module(ctx.graph, location)) {
-    | Some(mPromise) => mPromise
-    | None =>
-      DependencyGraph.add_module(
-        ctx.graph,
-        location,
-        {
-          let ctx = {...ctx, current_location: location};
-          let%lwt (m, deps) = read_module(~ctx, location);
-          let graph = ctx.graph;
-          let%lwt m =
-            switch (deps) {
-            | NoDependendencies => Lwt.return(m)
-            | Dependencies(static_dependencies, dynamic_dependencies) =>
-              let resolve_dependencies =
-                Lwt_list.map_p(req => {
-                  let%lwt (resolved, build_dependencies) = resolve(ctx, req);
+    DependencyGraph.ensureModule(
+      ctx.graph,
+      location,
+      () => {
+        let ctx = {...ctx, current_location: location};
+        let%lwt (m, deps) = read_module(~ctx, location);
+        let graph = ctx.graph;
+        let%lwt m =
+          switch (deps) {
+          | NoDependendencies => Lwt.return(m)
+          | Dependencies(static_dependencies, dynamic_dependencies) =>
+            let resolve_dependencies =
+              Lwt_list.map_p(req => {
+                let%lwt (resolved, build_dependencies) = resolve(ctx, req);
 
-                  Lwt.return(((req, resolved), build_dependencies));
-                });
-
-              let%lwt static_dependencies =
-                resolve_dependencies(static_dependencies);
-              let%lwt dynamic_dependencies =
-                resolve_dependencies(dynamic_dependencies);
-
-              let collect_dependencies = (dependencies, build_dependencies) =>
-                Lwt_list.fold_left_s(
-                  ((resolved, build), (r, b)) => {
-                    let%lwt build =
-                      Lwt_list.fold_left_s(
-                        (build, filename) => {
-                          let%lwt ({digest, _}, _) =
-                            ctx.cache.get_file(filename);
-                          Lwt.return(M.add(filename, digest, build));
-                        },
-                        build,
-                        b,
-                      );
-
-                    Lwt.return(([r, ...resolved], build));
-                  },
-                  ([], build_dependencies),
-                  dependencies,
-                );
-
-              let build_dependencies = m.build_dependencies;
-              let%lwt (static_dependencies, build_dependencies) =
-                collect_dependencies(static_dependencies, build_dependencies);
-
-              let%lwt (dynamic_dependencies, build_dependencies) =
-                collect_dependencies(
-                  dynamic_dependencies,
-                  build_dependencies,
-                );
-
-              Lwt.return({
-                ...m,
-                static_dependencies: List.rev(static_dependencies),
-                dynamic_dependencies: List.rev(dynamic_dependencies),
-                build_dependencies,
+                Lwt.return(((req, resolved), build_dependencies));
               });
-            };
 
-          let updateGraph = (~kind, dependencies) => {
-            let%lwt () =
-              Lwt_list.iter_p(
-                ((req, resolved)) => {
-                  let%lwt () =
-                    switch (
-                      DependencyGraph.lookup_module(ctx.graph, resolved)
-                    ) {
-                    | None =>
-                      let%lwt _ =
-                        process(
-                          ~seen=Module.LocationSet.add(location, seen),
-                          {...ctx, stack: [req, ...ctx.stack]},
-                          resolved,
-                        );
-                      Lwt.return_unit;
-                    | Some(_) => Lwt.return_unit
-                    };
-                  Lwt.return_unit;
+            let%lwt static_dependencies =
+              resolve_dependencies(static_dependencies);
+            let%lwt dynamic_dependencies =
+              resolve_dependencies(dynamic_dependencies);
+
+            let collect_dependencies = (dependencies, build_dependencies) =>
+              Lwt_list.fold_left_s(
+                ((resolved, build), (r, b)) => {
+                  let%lwt build =
+                    Lwt_list.fold_left_s(
+                      (build, filename) => {
+                        let%lwt ({digest, _}, _) =
+                          ctx.cache.get_file(filename);
+                        Lwt.return(M.add(filename, digest, build));
+                      },
+                      build,
+                      b,
+                    );
+
+                  Lwt.return(([r, ...resolved], build));
                 },
+                ([], build_dependencies),
                 dependencies,
               );
 
-            List.iter(
-              ((req, resolved)) =>
-                DependencyGraph.add_dependency(
-                  ~kind,
-                  graph,
-                  m,
-                  (req, resolved),
-                ),
-              dependencies,
-            );
-            Lwt.return_unit;
+            let build_dependencies = m.build_dependencies;
+            let%lwt (static_dependencies, build_dependencies) =
+              collect_dependencies(static_dependencies, build_dependencies);
+
+            let%lwt (dynamic_dependencies, build_dependencies) =
+              collect_dependencies(dynamic_dependencies, build_dependencies);
+
+            Lwt.return({
+              ...m,
+              static_dependencies: List.rev(static_dependencies),
+              dynamic_dependencies: List.rev(dynamic_dependencies),
+              build_dependencies,
+            });
           };
 
-          let%lwt () = updateGraph(~kind=`Static, m.static_dependencies);
-          let%lwt () = updateGraph(~kind=`Dynamic, m.dynamic_dependencies);
-          Lwt.return(m);
-        },
-      )
-    };
+        let updateGraph = (~kind, dependencies) => {
+          let%lwt () =
+            Lwt_list.iter_p(
+              ((req, resolved)) => {
+                let%lwt () =
+                  switch (DependencyGraph.hasModule(ctx.graph, resolved)) {
+                  | false =>
+                    let%lwt _ =
+                      process(
+                        ~seen=Module.LocationSet.add(location, seen),
+                        {...ctx, stack: [req, ...ctx.stack]},
+                        resolved,
+                      );
+                    Lwt.return_unit;
+                  | true => Lwt.return_unit
+                  };
+                Lwt.return_unit;
+              },
+              dependencies,
+            );
+
+          List.iter(
+            ((req, resolved)) =>
+              DependencyGraph.add_dependency(
+                ~kind,
+                graph,
+                m,
+                (req, resolved),
+              ),
+            dependencies,
+          );
+          Lwt.return_unit;
+        };
+
+        let%lwt () = updateGraph(~kind=`Static, m.static_dependencies);
+        let%lwt () = updateGraph(~kind=`Dynamic, m.dynamic_dependencies);
+        Lwt.return(m);
+      },
+    );
   };
 
-  let {Context.current_location, entry_location, graph, _} = ctx;
-  let seen =
-    if (current_location != entry_location) {
-      DependencyGraph.get_module_parents(graph, current_location);
-    } else {
-      Module.LocationSet.empty;
-    };
-  let%lwt _ = process(~seen, ctx, current_location);
+  let%lwt _ =
+    process(~seen=Module.LocationSet.empty, ctx, ctx.current_location);
   Lwt.return_unit;
 };
