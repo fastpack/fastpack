@@ -2,7 +2,7 @@ module StringSet = Set.Make(String);
 exception Cycle(list(string));
 
 type t = {
-  modules: Hashtbl.t(Module.location, Lwt.t(Module.t)),
+  modules: Hashtbl.t(Module.location, Lazy.t(Lwt.t(Module.t))),
   static_dependencies:
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
   dynamic_dependencies:
@@ -21,7 +21,11 @@ let empty = (~size=5000, ()) => {
 
 let lookup = (table, key) => Hashtbl.find_opt(table, key);
 
-let lookup_module = (graph, location) => lookup(graph.modules, location);
+let lookup_module = (graph, location) =>
+  switch (lookup(graph.modules, location)) {
+  | None => None
+  | Some(v) => Some(Lazy.force(v))
+  };
 
 let lookup_dependencies = (~kind, graph, m: Module.t) => {
   let dependencies =
@@ -59,16 +63,8 @@ let to_dependency_map = graph => {
   );
 };
 
-let add_module = (graph, location, m: Lwt.t(Module.t)) => {
-  switch (Hashtbl.find_all(graph.modules, location)) {
-  | [] => Hashtbl.add(graph.modules, location, m)
-  | [_] =>
-    Hashtbl.remove(graph.modules, location);
-    Hashtbl.add(graph.modules, location, m);
-  | _ => failwith("DependencyGraph: cannot add more modules")
-  };
-  m;
-};
+let add_module = (graph, location, m: Lazy.t(Lwt.t(Module.t))) =>
+  Hashtbl.replace(graph.modules, location, m);
 
 let add_module_parents = (graph, location, parents: Module.LocationSet.t) =>
   Hashtbl.add(graph.parents, location, parents);
@@ -160,52 +156,21 @@ let cleanup = (graph, emitted_modules) => {
 
 let length = graph => Hashtbl.length(graph.modules);
 
-let modules = graph => Hashtbl.to_seq(graph.modules);
+let modules = graph =>
+  Hashtbl.to_seq(graph.modules)
+  |> Sequence.map(((k, m)) => (k, Lazy.force(m)));
 
-/* let get_static_chain = (graph, entry) => { */
-/*   let modules = ref([]); */
-/*   let seen_globally = ref(StringSet.empty); */
-/*   let add_module = (m: Module.t) => { */
-/*     let location_str = Module.location_to_string(m.location); */
-/*     modules := [m, ...modules^]; */
-/*     seen_globally := StringSet.add(location_str, seen_globally^); */
-/*   }; */
+let ensureModule = (graph, location, makeModule) =>
+  switch (lookup_module(graph, location)) {
+  | Some(mPromise) => mPromise
+  | None =>
+    let lazyMakeModule = Lazy.from_fun(makeModule);
+    add_module(graph, location, lazyMakeModule);
+    Lazy.force(lazyMakeModule);
+  };
 
-/*   let check_module = (m: Module.t) => { */
-/*     let location_str = Module.location_to_string(m.location); */
-/*     StringSet.mem(location_str, seen_globally^); */
-/*   }; */
-
-/*   let rec sort = (seen, m: Module.t) => { */
-/*     let location_str = Module.location_to_string(m.location); */
-/*     List.mem(location_str, seen) ? */
-/*       /1* let prev_m = *1/ */
-/*       /1*   match lookup_module graph (List.hd seen) with *1/ */
-/*       /1*   | Some prev_m -> prev_m *1/ */
-/*       /1*   | None -> Error.ie "DependencyGraph.sort - imporssible state" *1/ */
-/*       /1* in *1/ */
-/*       switch (m.module_type) { */
-/*       | Module.ESM */
-/*       | Module.CJS_esModule => () */
-/*       | Module.CJS => raise(Cycle([location_str, ...seen])) */
-/*       } : */
-/*       check_module(m) ? */
-/*         () : */
-/*         { */
-/*           let sort' = sort([location_str, ...seen]); */
-/*           let () = */
-/*             List.iter( */
-/*               sort', */
-/*               List.filter_map( */
-/*                 ((_, m)) => m, */
-/*                 lookup_dependencies(~kind=`Static, graph, m), */
-/*               ), */
-/*             ); */
-
-/*           add_module(m); */
-/*         }; */
-/*   }; */
-
-/*   sort([], entry); */
-/*   List.rev(modules^); */
-/* }; */
+let hasModule = (graph, location) =>
+  switch (Hashtbl.find_opt(graph.modules, location)) {
+  | Some(_) => true
+  | None => false
+  };

@@ -50,8 +50,8 @@ type t = {
   file_stat_opt: string => Lwt.t(option((entry, bool))),
   get_file: string => Lwt.t((entry, bool)),
   get_file_no_raise: string => Lwt.t((entry, bool)),
-  get_package: string => Lwt.t((Package.t, bool)),
-  find_package_for_filename: (string, string) => Lwt.t((Package.t, bool)),
+  /* get_package: string => Lwt.t((Package.t, bool)), */
+  /* find_package_for_filename: (string, string) => Lwt.t((Package.t, bool)), */
   get_module: Module.location => Lwt.t(option(Module.t)),
   add_module: Module.t => unit,
   remove_module: Module.location => unit,
@@ -377,36 +377,36 @@ let create = (strategy: strategy) => {
     Lwt.return((entry, cached));
   };
 
-  let get_package = filename =>
-    switch (StringSet.mem(filename, trusted^), M.get(filename, files^)) {
-    | (true, Some({package: Some(package), _})) =>
-      Lwt.return((package, true))
-    | _ =>
-      let%lwt (entry, cached) = get_file(filename);
-      let package = Package.of_json(filename, entry.content);
-      update(filename, {...entry, package: Some(package)});
-      Lwt.return((package, cached));
-    };
+  /* let get_package = filename => */
+  /*   switch (StringSet.mem(filename, trusted^), M.get(filename, files^)) { */
+  /*   | (true, Some({package: Some(package), _})) => */
+  /*     Lwt.return((package, true)) */
+  /*   | _ => */
+  /*     let%lwt (entry, cached) = get_file(filename); */
+  /*     let package = Package.of_json(filename, entry.content); */
+  /*     update(filename, {...entry, package: Some(package)}); */
+  /*     Lwt.return((package, cached)); */
+  /*   }; */
 
-  let find_package_for_filename = (root_dir, filename) => {
-    let rec find_package_json_for_filename = filename =>
-      if (!FilePath.is_subdir(filename, root_dir)) {
-        Lwt.return_none;
-      } else {
-        let dirname = FilePath.dirname(filename);
-        let package_json = FilePath.concat(dirname, "package.json");
-        if%lwt (file_exists(package_json)) {
-          Lwt.return_some(package_json);
-        } else {
-          find_package_json_for_filename(dirname);
-        };
-      };
+  /* let find_package_for_filename = (root_dir, filename) => { */
+  /*   let rec find_package_json_for_filename = filename => */
+  /*     if (!FilePath.is_subdir(filename, root_dir)) { */
+  /*       Lwt.return_none; */
+  /*     } else { */
+  /*       let dirname = FilePath.dirname(filename); */
+  /*       let package_json = FilePath.concat(dirname, "package.json"); */
+  /*       if%lwt (file_exists(package_json)) { */
+  /*         Lwt.return_some(package_json); */
+  /*       } else { */
+  /*         find_package_json_for_filename(dirname); */
+  /*       }; */
+  /*     }; */
 
-    switch%lwt (find_package_json_for_filename(filename)) {
-    | Some(package_json) => get_package(package_json)
-    | None => Lwt.return((Package.empty, false))
-    };
-  };
+  /*   switch%lwt (find_package_json_for_filename(filename)) { */
+  /*   | Some(package_json) => get_package(package_json) */
+  /*   | None => Lwt.return((Package.empty, false)) */
+  /*   }; */
+  /* }; */
 
   let get_module = location => {
     let location_str = Module.location_to_string(location);
@@ -526,8 +526,7 @@ let create = (strategy: strategy) => {
     file_stat_opt,
     get_file,
     get_file_no_raise,
-    get_package,
-    find_package_for_filename,
+    /* find_package_for_filename, */
     get_module,
     add_module,
     remove_module,

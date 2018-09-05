@@ -16,9 +16,10 @@ let empty: (~size: int=?, unit) => t;
 
 /** Add module to the depgraph. */
 
-let add_module: (t, Module.location, Lwt.t(Module.t)) => Lwt.t(Module.t);
+/* let add_module: (t, Module.location, Lazy.t(Lwt.t(Module.t)) => unit; */
 let add_module_parents: (t, Module.location, Module.LocationSet.t) => unit;
 let get_module_parents: (t, Module.location) => Module.LocationSet.t;
+let ensureModule: (t, Module.location, unit => Lwt.t(Module.t)) => Lwt.t(Module.t)
 
 let add_build_dependencies: (t, list(string), Module.location) => unit;
 
@@ -50,6 +51,7 @@ let modules: t => Sequence.t((Module.location, Lwt.t(Module.t)));
 /** Lookup module in the depgraph by id. */
 
 let lookup_module: (t, Module.location) => option(Lwt.t(Module.t));
+let hasModule: (t, Module.location) => bool;
 
 /** Lookup a list of dependencies for the specified module in the depgraph. */
 

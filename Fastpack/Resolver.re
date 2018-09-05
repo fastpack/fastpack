@@ -149,7 +149,8 @@ let make =
       let filename = FilePath.concat(dir, "package.json");
       switch%lwt (cache.file_exists(filename)) {
       | true =>
-        let%lwt (package, _) = cache.get_package(filename);
+        let%lwt (entry, _) = cache.get_file(filename);
+        let package = Package.of_json(filename, entry.Cache.content);
         package_json_cache := M.add(dir, package, package_json_cache^);
         Lwt.return(package);
       | false =>
@@ -201,12 +202,15 @@ let make =
             "...yes.",
             {
               let package_json = FilePath.concat(path, "package.json");
-              switch%lwt (cache.file_stat_opt(package_json)) {
-              | Some(({st_kind: Lwt_unix.S_REG, _}, _)) =>
-                let%lwt ({Package.entry_point, _}, _) =
-                  cache.get_package(package_json);
+              switch%lwt (
+                cache.file_exists(package_json)
+              ) {
+              | true =>
+                let%lwt (entry, _) = cache.get_file(package_json);
+                let {Package.entry_point, _} =
+                  Package.of_json(package_json, entry.Cache.content);
                 resolve_file(FS.abs_path(path, entry_point));
-              | _ => resolve_file(~try_directory=false, path ++ "/index")
+              | false => resolve_file(~try_directory=false, path ++ "/index")
               };
             },
           )

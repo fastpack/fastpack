@@ -32,9 +32,15 @@ let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
     | Error((ctx, filesWatched)) => (`Error, ctx, filesWatched)
     | Ok((ctx, filesWatched)) => (`Ok, ctx, filesWatched)
     };
-  Logs.debug(x => x("removing cache"));
-  StringSet.iter(ctx.cache.remove, filesChanged);
-  Logs.debug(x => x("done"));
+  Logs.debug(x => x("removing cache-----"));
+  StringSet.iter(
+    f => {
+      ctx.cache.remove(f);
+      Logs.debug(x => x("s: %s", f));
+    },
+    filesChanged,
+  );
+  Logs.debug(x => x("-----done"));
   switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
   | [] => Lwt.return(prev_result)
   | filesChanged =>
@@ -261,8 +267,9 @@ let make = (config: Config.t) => {
         | Some(filenames) => `FilesChanged(filenames) |> Lwt.return
         },
         {
-          let%lwt () = Lwt_unix.sleep(0.100);
-          let%lwt result = rebuild(~filesChanged=filenames, ~pack, prevResult);
+          /* let%lwt () = Lwt_unix.sleep(0.100); */
+          let%lwt result =
+            rebuild(~filesChanged=filenames, ~pack, prevResult);
           `Rebuilt(result) |> Lwt.return;
         },
       ]);
@@ -276,12 +283,8 @@ let make = (config: Config.t) => {
   let rec watch = result => {
     Logs.debug(x => x("watch start"));
     switch%lwt (ask_watchman(ch_in, link_map, link_paths, ignoreFilename)) {
-    | None =>
-      Logs.debug(x => x("None"));
-      Lwt.return_unit;
-    | Some(filenames) =>
-      Logs.debug(x => x("Some"));
-      tryRebuilding(filenames, result) >>= watch;
+    | None => Lwt.return_unit
+    | Some(filenames) => tryRebuilding(filenames, result) >>= watch
     };
   };
 
