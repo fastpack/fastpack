@@ -32,12 +32,8 @@ let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
     | Error((ctx, filesWatched)) => (`Error, ctx, filesWatched)
     | Ok((ctx, filesWatched)) => (`Ok, ctx, filesWatched)
     };
-  if(List.length(StringSet.elements(filesChanged)) > 100) {
-    ctx.cache.cleanup();
-  }
-  else {
-    StringSet.iter(f => ctx.cache.remove(f), filesChanged);
-  }
+
+  StringSet.iter(f => FSCache.invalidate(f, ctx.cache.files), filesChanged);
   switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
   | [] => Lwt.return(prev_result)
   | filesChanged =>
@@ -250,19 +246,6 @@ let make = (config: Config.t) => {
     && filename != config.outputDir;
 
   let rec tryRebuilding = (filenames, prevResult) => {
-    /* Logs.debug(x => */
-    /*   x("Changed Files: %d\n", StringSet.elements(filenames) |> List.length) */
-    /* ); */
-    let%lwt () =
-      Lwt_io.(
-        write(
-          stdout,
-          Printf.sprintf(
-            "Changed Files: %d\n",
-            StringSet.elements(filenames) |> List.length,
-          ),
-        )
-      );
     let%lwt nextResult =
       Lwt.pick([
         switch%lwt (ask_watchman(ch_in, link_map, link_paths, ignoreFilename)) {
@@ -270,9 +253,7 @@ let make = (config: Config.t) => {
         | Some(filenames) => `FilesChanged(filenames) |> Lwt.return
         },
         {
-          let%lwt () = Lwt_unix.sleep(0.30);
-          let%lwt result =
-            rebuild(~filesChanged=filenames, ~pack, prevResult);
+          let%lwt result = rebuild(~filesChanged=filenames, ~pack, prevResult);
           `Rebuilt(result) |> Lwt.return;
         },
       ]);

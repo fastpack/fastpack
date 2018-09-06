@@ -85,7 +85,7 @@ let make = (~report=None, options: Config.t) => {
       } else {
         let dirname = FilePath.dirname(filename);
         let package_json = FilePath.concat(dirname, "package.json");
-        if%lwt (cache.file_exists(package_json)) {
+        if%lwt (FSCache.exists(package_json, cache.files)) {
           Lwt.return_some(package_json);
         } else {
           find_package_json_for_filename(dirname);
@@ -94,8 +94,8 @@ let make = (~report=None, options: Config.t) => {
 
     switch%lwt (find_package_json_for_filename(filename)) {
     | Some(package_json) =>
-      let%lwt (entry, _) = cache.get_file(package_json);
-      Lwt.return(Package.of_json(package_json, entry.Cache.content));
+      let%lwt content = FSCache.readExisting(package_json, cache.files);
+      Lwt.return(Package.of_json(package_json, content));
     | None => Lwt.return(Package.empty)
     };
   };
@@ -219,7 +219,7 @@ let make = (~report=None, options: Config.t) => {
       },
       fun
       | GraphBuilder.Rebuild(filename, location) => {
-          ctx.cache.remove(filename);
+          FSCache.invalidate(filename, ctx.cache.files);
           Module.LocationSet.iter(
             location => ctx.cache.remove_module(location),
             DependencyGraph.get_module_parents(ctx.graph, location),

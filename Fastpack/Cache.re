@@ -22,7 +22,7 @@ module ModuleEntry = {
     module_type: Module.module_type,
     files: list((string, string)),
     source: string,
-    build_dependencies: M.t(string),
+    build_dependencies: M.t(float),
     static_dependencies: list((Module.Dependency.t, Module.location)),
     dynamic_dependencies: list((Module.Dependency.t, Module.location)),
     scope: Scope.t,
@@ -39,18 +39,19 @@ type entry = {
 };
 
 type cache = {
-  files: M.t(entry),
+  files: FSCache.persistent,
   modules: M.t(ModuleEntry.t),
 };
 
 type t = {
-  file_exists: string => Lwt.t(bool),
-  file_stat: string => Lwt.t((entry, bool)),
-  file_stat_opt: string => Lwt.t(option((entry, bool))),
-  get_file: string => Lwt.t((entry, bool)),
-  get_file_no_raise: string => Lwt.t((entry, bool)),
+  /* file_exists: string => Lwt.t(bool), */
+  /* file_stat: string => Lwt.t(Unix.stats), */
+  /* file_stat_opt: string => Lwt.t(option(Unix.stats)), */
+  /* get_file: string => Lwt.t(string), */
+  /* get_file_no_raise: string => Lwt.t((entry, bool)), */
   /* get_package: string => Lwt.t((Package.t, bool)), */
   /* find_package_for_filename: (string, string) => Lwt.t((Package.t, bool)), */
+  files: FSCache.t,
   get_module: Module.location => Lwt.t(option(Module.t)),
   add_module: Module.t => unit,
   remove_module: Module.location => unit,
@@ -58,7 +59,6 @@ type t = {
   /* add_build_dependencies: Module.t -> string list -> unit Lwt.t; */
   /* get_invalidated_modules : string -> string list; */
   /* setup_build_dependencies : StringSet.t -> unit; */
-  remove: string => unit,
   dump: unit => Lwt.t(unit),
   starts_empty: bool,
 };
@@ -69,17 +69,9 @@ type init =
   | Persistent(string)
   | Memory;
 
-let empty = {files: M.empty, modules: M.empty};
+let empty = {files: FSCache.(make() |> toPersistent), modules: M.empty};
 
 let create = (strategy: strategy) => {
-  let no_file = {
-    exists: false,
-    st_mtime: 0.0,
-    st_kind: Unix.S_REG,
-    digest: "",
-    content: "",
-  };
-
   let cacheId = ref("");
   let cacheFilename = ref("");
   let setCacheFilename =
@@ -164,222 +156,20 @@ let create = (strategy: strategy) => {
       };
     };
 
-  let trusted = ref(StringSet.empty);
-  let add_trusted = filename => trusted := StringSet.add(filename, trusted^);
-
-  let files = ref(loaded.files);
-  let update = (filename, entry) => {
-    files := M.add(filename, entry, files^);
-    add_trusted(filename);
-  };
-
+  let files = FSCache.ofPersistent(loaded.files);
   let modules = ref(loaded.modules);
-
-  let validate = (filename, entry) => {
-    let validate_file = () =>
-      switch%lwt (FS.stat_option(filename)) {
-      | None =>
-        update(filename, no_file);
-        Lwt.return((no_file, false));
-      | Some({st_mtime, st_kind, _}) =>
-        if (st_mtime == entry.st_mtime) {
-          let entry = {...entry, st_mtime, st_kind};
-          update(filename, entry);
-          add_trusted(filename);
-          Lwt.return((entry, true));
-        } else {
-          let%lwt content = Lwt_io.(with_file(~mode=Input, filename, read));
-          let digest = Digest.string(content);
-          if (digest == entry.digest) {
-            let entry = {...entry, st_mtime, st_kind};
-            update(filename, entry);
-            Lwt.return((entry, true));
-          } else {
-            let entry = {...entry, st_mtime, st_kind, digest, content};
-            update(filename, entry);
-            Lwt.return((entry, false));
-          };
-        }
-      };
-
-    switch (entry) {
-    | {digest, st_mtime, _} =>
-      if (digest != "") {
-        validate_file();
-      } else if (st_mtime != 0.0) {
-        switch%lwt (FS.stat_option(filename)) {
-        | None =>
-          update(filename, no_file);
-          Lwt.return((no_file, false));
-        | Some({st_mtime, st_kind, _}) =>
-          if (st_mtime == entry.st_mtime) {
-            let entry = {...entry, st_mtime, st_kind};
-            update(filename, entry);
-            add_trusted(filename);
-            Lwt.return((entry, true));
-          } else {
-            let entry = {...entry, st_mtime, st_kind};
-            update(filename, entry);
-            Lwt.return((entry, false));
-          }
-        };
-      } else {
-        let%lwt entry = switch%lwt(FS.stat_option(filename)){
-          | None => Lwt.return(no_file)
-          | Some({st_mtime, st_kind, _}) => Lwt.return({...no_file, exists: true, st_mtime, st_kind})
-        };
-        update(filename, entry);
-        Lwt.return((entry, false));
-      }
-    };
-  };
-
-  let file_exists = filename =>
-    switch (StringSet.mem(filename, trusted^), M.get(filename, files^)) {
-    | (true, Some({exists, _})) => Lwt.return(exists)
-    | (_, None) =>
-      let%lwt exists = Lwt_unix.file_exists(filename);
-      update(filename, {...no_file, exists});
-      Lwt.return(exists);
-    | (false, Some(entry)) =>
-      let%lwt ({exists, _}, _) = validate(filename, entry);
-      Lwt.return(exists);
-    };
-
-  let file_stat = path => {
-    let read_stats = () =>
-      switch%lwt (FS.stat_option(path)) {
-      | None =>
-        update(path, no_file);
-        Lwt.fail(FileDoesNotExist(path));
-      | Some({st_mtime, st_kind, _}) =>
-        let entry = {...no_file, exists: true, st_mtime, st_kind};
-        update(path, entry);
-        Lwt.return((entry, false));
-      };
-
-    switch (StringSet.mem(path, trusted^), M.get(path, files^)) {
-    | (true, Some({exists: false, _})) => Lwt.fail(FileDoesNotExist(path))
-    | (true, Some(entry)) =>
-      if (entry.st_mtime != 0.0) {
-        Lwt.return((entry, true));
-      } else {
-        read_stats();
-      }
-    | (_, None) => read_stats()
-    | (false, Some(entry)) =>
-      let%lwt ({exists, _} as entry, cached) = validate(path, entry);
-      if (exists) {
-        Lwt.return((entry, cached));
-      } else {
-        Lwt.fail(FileDoesNotExist(path));
-      };
-    };
-  };
-
-  let file_stat_opt = path => {
-    let read_stats = () =>
-      switch%lwt (FS.stat_option(path)) {
-      | None =>
-        update(path, no_file);
-        Lwt.return_none;
-      | Some({st_mtime, st_kind, _}) =>
-        let entry = {...no_file, exists: true, st_mtime, st_kind};
-        update(path, entry);
-        Lwt.return_some((entry, false));
-      };
-
-    switch (StringSet.mem(path, trusted^), M.get(path, files^)) {
-    | (true, Some({exists: false, _})) => Lwt.return_none
-    | (true, Some(entry)) =>
-      if (entry.st_mtime != 0.0) {
-        Lwt.return_some((entry, true));
-      } else {
-        read_stats();
-      }
-    | (_, None) => read_stats()
-    | (false, Some(entry)) =>
-      let%lwt ({exists, _} as entry, cached) = validate(path, entry);
-      if (exists) {
-        Lwt.return_some((entry, cached));
-      } else {
-        Lwt.return_none;
-      };
-    };
-  };
-
-  let get_file = filename => {
-    let read_file = () => {
-      let%lwt stats = file_stat_opt(filename);
-      switch (stats) {
-      | Some((entry, _)) =>
-        let%lwt entry =
-          switch (entry.st_kind) {
-          | Unix.S_REG =>
-            let%lwt content = Lwt_io.(with_file(~mode=Input, filename, read));
-            let digest = Digest.string(content);
-            let entry = {...entry, content, digest};
-            update(filename, entry);
-            Lwt.return(entry);
-          | _ => Lwt.return(entry)
-          };
-
-        Lwt.return((entry, false));
-      | None => Lwt.fail(FileDoesNotExist(filename))
-      };
-    };
-
-    switch (StringSet.mem(filename, trusted^), M.get(filename, files^)) {
-    | (true, Some({exists: false, _})) =>
-      Lwt.fail(FileDoesNotExist(filename))
-    | (true, Some(entry)) =>
-      if (entry.digest != "") {
-        Lwt.return((entry, true));
-      } else {
-        read_file();
-      }
-    | (_, None) => read_file()
-    | (false, Some(entry)) =>
-      let%lwt ({exists, _} as entry, cached) = validate(filename, entry);
-      if (exists) {
-        Lwt.return((entry, cached));
-      } else {
-        Lwt.fail(FileDoesNotExist(filename));
-      };
-    };
-  };
-
-  let get_file_no_raise = filename => {
-    let%lwt (entry, cached) =
-      Lwt.catch(
-        () => get_file(filename),
-        fun
-        | FileDoesNotExist(_) => {
-            let entry = {
-              exists: false,
-              st_mtime: 0.0,
-              st_kind: Unix.S_REG,
-              content: "",
-              digest: "",
-            };
-            update(filename, entry);
-            Lwt.return((entry, false));
-          }
-        | exn => raise(exn),
-      );
-
-    Lwt.return((entry, cached));
-  };
 
   let get_module = location => {
     let location_str = Module.location_to_string(location);
     let build_dependencies_changed = build_dependencies =>
       build_dependencies
       |> M.bindings
-      |> Lwt_list.exists_s(((filename, known_digest)) => {
-           let%lwt ({digest, _}, _) = get_file_no_raise(filename);
-           Lwt.return(digest != known_digest);
-         });
+      |> Lwt_list.exists_s(((filename, known_st_mtime)) =>
+           switch%lwt (FSCache.stat(filename, files)) {
+           | None => Lwt.return(true)
+           | Some({Unix.st_mtime, _}) => Lwt.return(known_st_mtime != st_mtime)
+           }
+         );
 
     switch (M.get(location_str, modules^)) {
     | None => Lwt.return_none
@@ -423,8 +213,7 @@ let create = (strategy: strategy) => {
   };
 
   let cleanup = () => {
-    trusted := StringSet.empty;
-    files := M.empty;
+    FSCache.clear(files);
     /* modules := M.empty; */
   };
 
@@ -450,8 +239,6 @@ let create = (strategy: strategy) => {
       modules := M.add(location_str, module_entry, modules^);
     };
 
-  let remove = filename => trusted := StringSet.remove(filename, trusted^);
-
   let dump = () =>
     if (cacheFilename^ != "") {
       let tempDir = FilePath.dirname(cacheFilename^);
@@ -471,11 +258,7 @@ let create = (strategy: strategy) => {
           ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
           tempFile,
           ch =>
-          Lwt_io.write_value(
-            ch,
-            ~flags=[],
-            {files: files^, modules: modules^},
-          )
+          Lwt_io.write_value(ch, ~flags=[], {files: FSCache.toPersistent(files), modules: modules^})
         );
 
       Lwt.finalize(
@@ -490,18 +273,12 @@ let create = (strategy: strategy) => {
     };
 
   Lwt.return({
-    file_exists,
-    file_stat,
-    file_stat_opt,
-    get_file,
-    get_file_no_raise,
-    /* find_package_for_filename, */
+    files,
     get_module,
     add_module,
     remove_module,
     cleanup,
-    remove,
     dump,
-    starts_empty: files^ == M.empty,
+    starts_empty: FSCache.isEmpty(files),
   });
 };
