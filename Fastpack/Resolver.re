@@ -147,10 +147,10 @@ let make =
     | Some(package) => Lwt.return(package)
     | None =>
       let filename = FilePath.concat(dir, "package.json");
-      switch%lwt (cache.file_exists(filename)) {
+      switch%lwt (FSCache.exists(filename, cache.files)) {
       | true =>
-        let%lwt (entry, _) = cache.get_file(filename);
-        let package = Package.of_json(filename, entry.Cache.content);
+        let%lwt content = FSCache.readExisting(filename, cache.files);
+        let package = Package.of_json(filename, content);
         package_json_cache := M.add(dir, package, package_json_cache^);
         Lwt.return(package);
       | false =>
@@ -180,8 +180,8 @@ let make =
         RunAsync.(
           withContext(
             context,
-            switch%lwt (cache.file_stat_opt(filename)) {
-            | Some(({st_kind: Lwt_unix.S_REG, _}, _)) => return(filename)
+            switch%lwt (FSCache.stat(filename, cache.files)) {
+            | Some({Unix.st_kind: Lwt_unix.S_REG, _}) => return(filename)
             | _ => withContext("...no.", resolve'(rest))
             },
           )
@@ -196,19 +196,18 @@ let make =
     RunAsync.(
       withContext(
         context,
-        switch%lwt (cache.file_stat_opt(path)) {
-        | Some(({st_kind: Lwt_unix.S_DIR, _}, _)) =>
+        switch%lwt (FSCache.stat(path, cache.files)) {
+        | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) =>
           withContext(
             "...yes.",
             {
               let package_json = FilePath.concat(path, "package.json");
-              switch%lwt (
-                cache.file_exists(package_json)
-              ) {
+              switch%lwt (FSCache.exists(package_json, cache.files)) {
               | true =>
-                let%lwt (entry, _) = cache.get_file(package_json);
+                let%lwt content =
+                  FSCache.readExisting(package_json, cache.files);
                 let {Package.entry_point, _} =
-                  Package.of_json(package_json, entry.Cache.content);
+                  Package.of_json(package_json, content);
                 resolve_file(FS.abs_path(path, entry_point));
               | false => resolve_file(~try_directory=false, path ++ "/index")
               };
@@ -254,8 +253,8 @@ let make =
         RunAsync.(
           withContext(
             context,
-            switch%lwt (cache.file_stat_opt(path)) {
-            | Some(({st_kind: Lwt_unix.S_DIR, _}, _)) => return(path)
+            switch%lwt (FSCache.stat(path, cache.files)) {
+            | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) => return(path)
             | _ => withContext("...no.", exists'(rest))
             },
           )
@@ -331,8 +330,8 @@ let make =
                         | Some(PathRequest(path)) =>
                           withContext(
                             Printf.sprintf("...yes. '%s'", path),
-                            switch%lwt (cache.file_stat_opt(path)) {
-                            | Some(({st_kind: Lwt_unix.S_REG, _}, _)) =>
+                            switch%lwt (FSCache.stat(path, cache.files)) {
+                            | Some({Unix.st_kind: Lwt_unix.S_REG, _}) =>
                               return((path, []))
                             | _ => error("File not found: " ++ path)
                             },

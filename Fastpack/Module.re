@@ -209,7 +209,7 @@ type t = {
   /*** List of resolved dynamic dependencies, populated for cached modules */
   dynamic_dependencies: list((Dependency.t, location)),
   /*** Mapping of filename to digest */
-  build_dependencies: M.t(string),
+  build_dependencies: M.t(float),
   /*** CJS / CSJ with __esModule flag / EcmaScript */
   module_type,
   /*** "side-effect" files to be emitted alongside with module */

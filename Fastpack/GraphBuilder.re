@@ -98,7 +98,7 @@ let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
     } else {
       let dirname = FilePath.dirname(filename);
       let package_json = FilePath.concat(dirname, "package.json");
-      if%lwt (cache.file_exists(package_json)) {
+      if%lwt (FSCache.exists(package_json, cache.files)) {
         Lwt.return_some(package_json);
       } else {
         find_package_json_for_filename(dirname);
@@ -107,8 +107,8 @@ let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
 
   switch%lwt (find_package_json_for_filename(filename)) {
   | Some(package_json) =>
-    let%lwt (entry, _) = cache.get_file(package_json);
-    Lwt.return(Package.of_json(package_json, entry.Cache.content));
+    let%lwt content = FSCache.readExisting(package_json, cache.files);
+    Lwt.return(Package.of_json(package_json, content));
   | None => Lwt.return(Package.empty)
   };
 };
@@ -173,14 +173,11 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
               Lwt.return_unit;
             };
 
-          let%lwt ({content, _}, _) =
-            Lwt.catch(
-              () => ctx.cache.get_file(filename),
-              fun
-              | Cache.FileDoesNotExist(filename) =>
-                Lwt.fail(Rebuild(filename, location))
-              | exn => raise(exn),
-            );
+          let%lwt content =
+            switch%lwt (FSCache.read(filename, ctx.cache.files)) {
+            | Some(content) => Lwt.return(content)
+            | None => Lwt.fail(Rebuild(filename, location))
+            };
 
           /* strip #! from the very beginning */
           let content_length = String.length(content);
@@ -216,11 +213,9 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
 
     switch (is_json(location), source) {
     | (true, Some(source)) =>
-      let json = Yojson.to_string(`String("module.exports = " ++ source ++ ";"));
-      make_module(
-        location,
-        String.(sub(json, 1, length(json) - 2)),
-      )
+      let json =
+        Yojson.to_string(`String("module.exports = " ++ source ++ ";"));
+      make_module(location, String.(sub(json, 1, length(json) - 2)));
     | (true, None) => failwith("impossible: *.json file without source")
     | (false, _) =>
       let {Worker.Reader.read, _} = ctx.reader;
@@ -270,7 +265,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
       let%lwt files =
         Lwt_list.map_s(
           filename => {
-            let%lwt ({content, _}, _) = ctx.cache.get_file(filename);
+            let%lwt content = FSCache.readExisting(filename, ctx.cache.files);
             Lwt.return((filename, content));
           },
           files,
@@ -279,10 +274,12 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
       let%lwt (m, _) = make_module(location, source);
       let%lwt build_dependencies =
         Lwt_list.fold_left_s(
-          (build_dependencies, filename) => {
-            let%lwt ({digest, _}, _) = ctx.cache.get_file(filename);
-            Lwt.return(M.add(filename, digest, build_dependencies));
-          },
+          (build_dependencies, filename) =>
+            switch%lwt (FSCache.stat(filename, ctx.cache.files)) {
+            | Some({Unix.st_mtime, _}) =>
+              Lwt.return(M.add(filename, st_mtime, build_dependencies))
+            | None => Lwt.fail(Failure(filename ++ " does not exist"))
+            },
           M.empty,
           self_dependency @ build_dependencies,
         );
@@ -358,11 +355,13 @@ let build = (ctx: Context.t) => {
                 ((resolved, build), (r, b)) => {
                   let%lwt build =
                     Lwt_list.fold_left_s(
-                      (build, filename) => {
-                        let%lwt ({digest, _}, _) =
-                          ctx.cache.get_file(filename);
-                        Lwt.return(M.add(filename, digest, build));
-                      },
+                      (build, filename) =>
+                        switch%lwt (FSCache.stat(filename, ctx.cache.files)) {
+                        | Some({Unix.st_mtime, _}) =>
+                          Lwt.return(M.add(filename, st_mtime, build))
+                        | None =>
+                          Lwt.fail(Failure(filename ++ " does not exist"))
+                        },
                       build,
                       b,
                     );
