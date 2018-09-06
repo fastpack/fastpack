@@ -54,6 +54,7 @@ type t = {
   get_module: Module.location => Lwt.t(option(Module.t)),
   add_module: Module.t => unit,
   remove_module: Module.location => unit,
+  cleanup: unit => unit,
   /* add_build_dependencies: Module.t -> string list -> unit Lwt.t; */
   /* get_invalidated_modules : string -> string list; */
   /* setup_build_dependencies : StringSet.t -> unit; */
@@ -421,6 +422,12 @@ let create = (strategy: strategy) => {
     modules := M.remove(location_str, modules^);
   };
 
+  let cleanup = () => {
+    trusted := StringSet.empty;
+    files := M.empty;
+    /* modules := M.empty; */
+  };
+
   let add_module = (m: Module.t) =>
     switch (m.location) {
     | Module.EmptyModule
@@ -492,6 +499,7 @@ let create = (strategy: strategy) => {
     get_module,
     add_module,
     remove_module,
+    cleanup,
     remove,
     dump,
     starts_empty: files^ == M.empty,

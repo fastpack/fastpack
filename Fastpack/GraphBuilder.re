@@ -335,6 +335,7 @@ let build = (ctx: Context.t) => {
       ctx.graph,
       location,
       () => {
+        /* let%lwt (m, deps) = read_module(~ctx, location); */
         let%lwt (m, deps) = Lwt.no_cancel(read_module(~ctx, location));
         let graph = ctx.graph;
         let%lwt m =
