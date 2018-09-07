@@ -87,6 +87,7 @@ let run_with ~test_name ~cmd ~files f =
               let change_and_rebuild ~actions r =
                 let%lwt filesChanged = change_files actions in
                 let%lwt () = Lwt_io.flush_all () in
+                let%lwt () = Lwt_unix.sleep 0.2 in
                 Watcher2.rebuild ~filesChanged ~packer r
               in
               let%lwt () = f initial_result change_and_rebuild in
