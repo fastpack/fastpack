@@ -2,18 +2,17 @@ module FS = FastpackUtil.FS;
 module StringSet = Set.Make(String);
 
 type t = {
-  pack: packFunction,
-  finalize: unit => Lwt.t(unit),
-}
-and packFunction =
-  (
-    ~current_location: option(Module.location),
-    ~graph: option(DependencyGraph.t),
-    ~initial: bool,
-    ~start_time: float
-  ) =>
-  Lwt.t(packResult)
-and packResult = result(Context.t, Context.t);
+  current_dir: string,
+  config: Config.t,
+  entry_location: Module.location,
+  reader: Worker.Reader.t,
+  cache: Cache.t,
+  cache_report: string,
+  project_package: Package.t,
+  reporter: Reporter.t,
+  preprocessor: Preprocessor.t,
+};
+type packResult = result(Context.t, Context.t);
 
 let make = (~report=None, config: Config.t) => {
   let%lwt current_dir = Lwt_unix.getcwd();
@@ -36,23 +35,20 @@ let make = (~report=None, config: Config.t) => {
   /* TODO: also cleanup the directory before emitting, maybe? */
   let%lwt () = FS.makedirs(config.outputDir);
 
-  /* TODO: verify is project_root exists */
-
-  /* FIXME: rename later */
-  let output_dir = config.outputDir;
-  let project_root = config.projectRootDir;
-  let output_file = config.outputFilename;
-
   /* preprocessor */
   let%lwt preprocessor =
     Preprocessor.make(
       ~configs=config.preprocess,
-      ~project_root,
+      ~project_root=config.projectRootDir,
       ~current_dir,
-      ~output_dir,
+      ~output_dir=config.outputDir,
     );
 
-  let%lwt reader = Worker.Reader.make(~project_root, ~output_dir);
+  let%lwt reader =
+    Worker.Reader.make(
+      ~project_root=config.projectRootDir,
+      ~output_dir=config.outputDir,
+    );
 
   /* cache & cache reporting */
   let%lwt cache =
@@ -109,18 +105,7 @@ let make = (~report=None, config: Config.t) => {
       FilePath.concat(current_dir, "package.json"),
     );
 
-  /* make sure resolve extensions all start with '.'*/
-  let extensions =
-    config.resolveExtension
-    |> List.filter(ext => String.trim(ext) != "")
-    |> List.map(ext =>
-         switch (ext.[0]) {
-         | '.' => ext
-         | _ => "." ++ ext
-         }
-       );
-
-  let {Reporter.report_ok, report_error} =
+  let reporter =
     Reporter.make(
       switch (report) {
       | Some(report) => report
@@ -131,115 +116,139 @@ let make = (~report=None, config: Config.t) => {
         }
       },
     );
+  Lwt.return({
+    current_dir,
+    config,
+    entry_location,
+    reader,
+    cache,
+    cache_report,
+    project_package,
+    reporter,
+    preprocessor,
+  });
+};
 
-  let rec pack = (~current_location, ~graph, ~initial, ~start_time) => {
-    let message =
-      if (initial) {
-        Printf.sprintf(
-          " Cache: %s. Mode: %s.",
-          cache_report,
-          Mode.to_string(config.mode),
-        );
-      } else {
-        "";
-      };
-
-    let resolver =
-      Resolver.make(
-        ~project_root,
-        ~current_dir,
-        ~mock=config.mock,
-        ~node_modules_paths=config.nodeModulesPaths,
-        ~extensions,
-        ~preprocessor,
-        ~cache,
+let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
+  let {current_dir, config, cache, _} = packer;
+  let message =
+    if (initial) {
+      Printf.sprintf(
+        " Cache: %s. Mode: %s.",
+        packer.cache_report,
+        Mode.to_string(packer.config.mode),
       );
-
-    let ctx = {
-      Context.project_root,
-      current_dir,
-      project_package,
-      output_dir,
-      output_file,
-      entry_location,
-      current_location:
-        CCOpt.get_or(~default=entry_location, current_location),
-      stack: [],
-      mode: config.mode,
-      target: config.target,
-      resolver,
-      preprocessor,
-      reader,
-      export_finder: ExportFinder.make(),
-      graph: CCOpt.get_or(~default=DependencyGraph.empty(), graph),
-      cache,
+    } else {
+      "";
     };
 
-    Lwt.catch(
-      () => {
-        Logs.debug(x =>
-          x("before build. Graph: %d", DependencyGraph.length(ctx.graph))
-        );
-        let%lwt () = GraphBuilder.build(ctx);
-        Logs.debug(x =>
-          x("after build. Graph: %d", DependencyGraph.length(ctx.graph))
-        );
-        let%lwt (emitted_modules, files) =
-          switch (config.mode) {
-          | Mode.Production =>
-            raise(
-              Context.PackError(
-                ctx,
-                NotImplemented(
-                  None,
-                  "Production build is not implemented yet"
-                  ++ "\nUse `--development` for now",
-                ),
-              ),
-            )
-          | Mode.Test
-          | Mode.Development => ScopedEmitter.emit(ctx, start_time)
-          };
-        let ctx = {
-          ...ctx,
-          graph: DependencyGraph.cleanup(ctx.graph, emitted_modules),
-        };
-        Logs.debug(x =>
-          x("after cleanup. Graph: %d", DependencyGraph.length(ctx.graph))
-        );
-        Logs.debug(x =>
-          x(
-            "after-cleanup-files: %d",
-            StringSet.elements(DependencyGraph.get_files(ctx.graph))
-            |> List.length,
-          )
-        );
-        let%lwt () =
-          report_ok(~message=Some(message), ~start_time, ~ctx, ~files);
-        Lwt.return_ok(ctx);
-      },
-      fun
-      | GraphBuilder.Rebuild(filename, location) => {
-          FSCache.invalidate(filename, ctx.cache.files);
-          Module.LocationSet.iter(
-            location => ctx.cache.remove_module(location),
-            DependencyGraph.get_module_parents(ctx.graph, location),
-          );
-          pack(~current_location=None, ~graph=None, ~initial, ~start_time);
-        }
-      | Context.PackError(ctx, error) => {
-          let%lwt () = report_error(~ctx, ~error);
-          Lwt.return_error(ctx);
-        }
-      | exn => Lwt.fail(exn),
+  let resolver =
+    Resolver.make(
+      ~project_root=config.projectRootDir,
+      ~current_dir,
+      ~mock=config.mock,
+      ~node_modules_paths=config.nodeModulesPaths,
+      ~extensions=config.resolveExtension,
+      ~preprocessor=packer.preprocessor,
+      ~cache,
     );
+
+  let ctx = {
+    Context.project_root: config.projectRootDir,
+    current_dir,
+    project_package: packer.project_package,
+    output_dir: config.outputDir,
+    output_file: config.outputFilename,
+    entry_location: packer.entry_location,
+    current_location:
+      CCOpt.get_or(~default=packer.entry_location, current_location),
+    stack: [],
+    mode: config.mode,
+    target: config.target,
+    resolver,
+    preprocessor: packer.preprocessor,
+    reader: packer.reader,
+    export_finder: ExportFinder.make(),
+    graph:
+      switch (graph) {
+      | None => DependencyGraph.empty()
+      | Some(graph) => graph
+      },
+    cache,
   };
-  let finalize = () => {
-    let%lwt () = preprocessor.Preprocessor.finalize();
-    let%lwt () = reader.Worker.Reader.finalize();
-    Lwt.return_unit;
-  };
-  Lwt.return({pack, finalize});
+
+  let {Reporter.report_ok, report_error} = packer.reporter;
+
+  Lwt.catch(
+    () => {
+      Logs.debug(x =>
+        x("before build. Graph: %d", DependencyGraph.length(ctx.graph))
+      );
+      let%lwt () = GraphBuilder.build(ctx);
+      Logs.debug(x =>
+        x("after build. Graph: %d", DependencyGraph.length(ctx.graph))
+      );
+      let%lwt (emitted_modules, files) =
+        switch (config.mode) {
+        | Mode.Production =>
+          raise(
+            Context.PackError(
+              ctx,
+              NotImplemented(
+                None,
+                "Production build is not implemented yet"
+                ++ "\nUse `--development` for now",
+              ),
+            ),
+          )
+        | Mode.Test
+        | Mode.Development => ScopedEmitter.emit(ctx, start_time)
+        };
+      let ctx = {
+        ...ctx,
+        graph: DependencyGraph.cleanup(ctx.graph, emitted_modules),
+      };
+      Logs.debug(x =>
+        x("after cleanup. Graph: %d", DependencyGraph.length(ctx.graph))
+      );
+      Logs.debug(x =>
+        x(
+          "after-cleanup-files: %d",
+          StringSet.elements(DependencyGraph.get_files(ctx.graph))
+          |> List.length,
+        )
+      );
+      let%lwt () =
+        report_ok(~message=Some(message), ~start_time, ~ctx, ~files);
+      Lwt.return_ok(ctx);
+    },
+    fun
+    | GraphBuilder.Rebuild(filename, location) => {
+        FSCache.invalidate(filename, ctx.cache.files);
+        Module.LocationSet.iter(
+          location => ctx.cache.remove_module(location),
+          DependencyGraph.get_module_parents(ctx.graph, location),
+        );
+        pack(
+          ~current_location=None,
+          ~graph=None,
+          ~initial,
+          ~start_time,
+          packer,
+        );
+      }
+    | Context.PackError(ctx, error) => {
+        let%lwt () = report_error(~ctx, ~error);
+        Lwt.return_error(ctx);
+      }
+    | exn => Lwt.fail(exn),
+  );
+};
+let finalize = packer => {
+  let {preprocessor, reader, _} = packer;
+  let%lwt () = preprocessor.Preprocessor.finalize();
+  let%lwt () = reader.Worker.Reader.finalize();
+  Lwt.return_unit;
 };
 
 let getContext = result =>

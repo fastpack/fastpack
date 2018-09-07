@@ -99,6 +99,15 @@ let create =
     };
   };
   let projectRootDir = FastpackUtil.FS.abs_path(currentDir, projectRootDir);
+  let resolveExtension =
+    resolveExtension
+    |> List.filter(ext => String.trim(ext) != "")
+    |> List.map(ext =>
+         switch (ext.[0]) {
+         | '.' => ext
+         | _ => "." ++ ext
+         }
+       );
   {
     entryPoints,
     outputDir,

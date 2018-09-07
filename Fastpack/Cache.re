@@ -245,9 +245,7 @@ let create = (strategy: strategy) => {
     if (cacheFilename^ != "") {
       let tempDir = FilePath.dirname(cacheFilename^);
       let suffix = FilePath.basename(cacheFilename^);
-      let%lwt () = Lwt_io.(write(stdout, "Creating dir\n"));
       let%lwt () = FS.makedirs(tempDir);
-      let%lwt () = Lwt_io.(write(stdout, "------------Done\n"));
       let (tempFile, _) =
         Filename.open_temp_file(
           ~perms=0o644,
