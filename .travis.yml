@@ -7,6 +7,10 @@ sudo: false
 # try to fix fs issues
 osx_image: xcode9.2
 
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install libev; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then apt-get install libev; fi
+
 os:
   - linux
   - osx
