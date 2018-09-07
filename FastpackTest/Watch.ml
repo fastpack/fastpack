@@ -1,10 +1,11 @@
+open Test
 open Fastpack
 open Lwt.Infix
 module StringSet = Set.Make(String)
 
 let re_modules = Re_posix.compile_pat "^.+\\$fp\\$main'\\);.+\\(\\{"
 let run_with ~test_name ~cmd ~files f =
-  let test_path = Test.get_test_path test_name in
+  let test_path = get_test_path test_name in
   Unix.chdir test_path;
   let argv =
     cmd

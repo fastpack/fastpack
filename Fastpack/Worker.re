@@ -713,8 +713,7 @@ module Reader = {
         let cmd =
           Printf.sprintf(
             "%s worker --project-root='%s' --output='%s'",
-            /* Sys.argv[0], */
-            "/Users/zindel/ocaml/fastpack/_build/default/bin/fpack.exe",
+            Environment.getExecutable(),
             worker_project_root^,
             worker_output_dir^,
           );
