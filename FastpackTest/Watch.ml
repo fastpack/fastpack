@@ -24,13 +24,14 @@ let run_with ~test_name ~cmd ~files f =
               Lwt_io.with_file
                 ~mode:Lwt_io.Output
                 ~perm:0o640
-                ~flags:Unix.[O_CREAT; O_TRUNC; O_WRONLY; O_SYNC; O_DSYNC]
+                ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
                 name
                 (fun ch -> Lwt_io.write ch (content ^ "\n"))
               )
               files
           in
           let%lwt () = Lwt_io.flush_all () in
+          let%lwt () = Lwt_unix.sleep 0.05 in
           let change_files =
             Lwt_list.fold_left_s (fun acc (name, action) ->
                 let%lwt () =
@@ -39,7 +40,7 @@ let run_with ~test_name ~cmd ~files f =
                     Lwt_io.with_file
                       ~mode:Lwt_io.Output
                       ~perm:0o640
-                      ~flags:Unix.[O_CREAT; O_TRUNC; O_WRONLY; O_SYNC; O_DSYNC]
+                      ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
                       name
                       (fun ch -> Lwt_io.write ch (content ^ "\n"))
                   | `Delete ->
@@ -51,7 +52,7 @@ let run_with ~test_name ~cmd ~files f =
                     Lwt_io.with_file
                       ~mode:Lwt_io.Output
                       ~perm:0o640
-                      ~flags:Unix.[O_CREAT; O_TRUNC; O_WRONLY; O_SYNC; O_DSYNC]
+                      ~flags:Unix.[O_CREAT; O_TRUNC; O_RDWR]
                       name
                       (fun ch -> Lwt_io.write ch content)
                 in
@@ -88,7 +89,7 @@ let run_with ~test_name ~cmd ~files f =
               let change_and_rebuild ~actions r =
                 let%lwt filesChanged = change_files actions in
                 let%lwt () = Lwt_io.flush_all () in
-                (* let%lwt () = Lwt_unix.sleep 1. in *)
+                let%lwt () = Lwt_unix.sleep 0.05 in
                 Watcher2.rebuild ~filesChanged ~packer r
               in
               let%lwt () = f initial_result change_and_rebuild in
