@@ -701,7 +701,7 @@ module Reader = {
   let worker_output_dir = ref("");
   let pool =
     Lwt_pool.create(
-      4,
+      Environment.getCPUCount(),
       ~dispose=
         ((p, _, _)) => {
           p#terminate;
