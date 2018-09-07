@@ -167,7 +167,8 @@ let create = (strategy: strategy) => {
       |> Lwt_list.exists_s(((filename, known_st_mtime)) =>
            switch%lwt (FSCache.stat(filename, files)) {
            | None => Lwt.return(true)
-           | Some({Unix.st_mtime, _}) => Lwt.return(known_st_mtime != st_mtime)
+           | Some({Unix.st_mtime, _}) =>
+             Lwt.return(known_st_mtime != st_mtime)
            }
          );
 
@@ -212,10 +213,11 @@ let create = (strategy: strategy) => {
     modules := M.remove(location_str, modules^);
   };
 
-  let cleanup = () => {
-    FSCache.clear(files);
-    /* modules := M.empty; */
-  };
+  let cleanup = () =>
+    FSCache.clear(
+      files,
+      /* modules := M.empty; */
+    );
 
   let add_module = (m: Module.t) =>
     switch (m.location) {
@@ -243,6 +245,9 @@ let create = (strategy: strategy) => {
     if (cacheFilename^ != "") {
       let tempDir = FilePath.dirname(cacheFilename^);
       let suffix = FilePath.basename(cacheFilename^);
+      let%lwt () = Lwt_io.(write(stdout, "Creating dir\n"));
+      let%lwt () = FS.makedirs(tempDir);
+      let%lwt () = Lwt_io.(write(stdout, "------------Done\n"));
       let (tempFile, _) =
         Filename.open_temp_file(
           ~perms=0o644,
@@ -258,11 +263,19 @@ let create = (strategy: strategy) => {
           ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
           tempFile,
           ch =>
-          Lwt_io.write_value(ch, ~flags=[], {files: FSCache.toPersistent(files), modules: modules^})
+          Lwt_io.write_value(
+            ch,
+            ~flags=[],
+            {files: FSCache.toPersistent(files), modules: modules^},
+          )
         );
 
       Lwt.finalize(
-        () => Lwt_unix.rename(tempFile, cacheFilename^),
+        () =>
+          switch%lwt (Lwt_unix.rename(tempFile, cacheFilename^)) {
+          | () => Lwt.return_unit
+          | exception (Sys_error(_)) => Lwt.return_unit
+          },
         () =>
           if%lwt (Lwt_unix.file_exists(tempFile)) {
             Lwt_unix.unlink(tempFile);

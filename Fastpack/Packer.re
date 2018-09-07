@@ -12,14 +12,15 @@ and packFunction =
     ~initial: bool,
     ~start_time: float
   ) =>
-  Lwt.t(result(Context.t, Context.t));
+  Lwt.t(packResult)
+and packResult = result(Context.t, Context.t);
 
-let make = (~report=None, options: Config.t) => {
+let make = (~report=None, config: Config.t) => {
   let%lwt current_dir = Lwt_unix.getcwd();
 
   /* entry points */
   let%lwt entry_points =
-    options.entryPoints
+    config.entryPoints
     |> Lwt_list.map_p(entry_point => {
          let abs_path = FS.abs_path(current_dir, entry_point);
          switch%lwt (FS.stat_option(abs_path)) {
@@ -33,19 +34,19 @@ let make = (~report=None, options: Config.t) => {
 
   /* TODO: the next line may not belong here */
   /* TODO: also cleanup the directory before emitting, maybe? */
-  let%lwt () = FS.makedirs(options.outputDir);
+  let%lwt () = FS.makedirs(config.outputDir);
 
   /* TODO: verify is project_root exists */
 
   /* FIXME: rename later */
-  let output_dir = options.outputDir;
-  let project_root = options.projectRootDir;
-  let output_file = options.outputFilename;
+  let output_dir = config.outputDir;
+  let project_root = config.projectRootDir;
+  let output_file = config.outputFilename;
 
   /* preprocessor */
   let%lwt preprocessor =
     Preprocessor.make(
-      ~configs=options.preprocess,
+      ~configs=config.preprocess,
       ~project_root,
       ~current_dir,
       ~output_dir,
@@ -56,23 +57,23 @@ let make = (~report=None, options: Config.t) => {
   /* cache & cache reporting */
   let%lwt cache =
     Cache.create(
-      switch (options.cache) {
+      switch (config.cache) {
       | Config.Cache.Disable => Cache.Memory
       | Config.Cache.Use =>
         Cache.(
           Persistent({
             currentDir: current_dir,
-            projectRootDir: options.projectRootDir,
-            mock: options.mock,
-            nodeModulesPaths: options.nodeModulesPaths,
-            resolveExtension: options.resolveExtension,
-            preprocess: options.preprocess,
+            projectRootDir: config.projectRootDir,
+            mock: config.mock,
+            nodeModulesPaths: config.nodeModulesPaths,
+            resolveExtension: config.resolveExtension,
+            preprocess: config.preprocess,
           })
         )
       },
     );
   let cache_report =
-    switch (options.cache, cache.starts_empty) {
+    switch (config.cache, cache.starts_empty) {
     | (Config.Cache.Disable, _) => "disabled"
     | (Config.Cache.Use, true) => "empty"
     | (Config.Cache.Use, false) => "used"
@@ -110,7 +111,7 @@ let make = (~report=None, options: Config.t) => {
 
   /* make sure resolve extensions all start with '.'*/
   let extensions =
-    options.resolveExtension
+    config.resolveExtension
     |> List.filter(ext => String.trim(ext) != "")
     |> List.map(ext =>
          switch (ext.[0]) {
@@ -124,7 +125,7 @@ let make = (~report=None, options: Config.t) => {
       switch (report) {
       | Some(report) => report
       | None =>
-        switch (options.report) {
+        switch (config.report) {
         | Config.Reporter.JSON => Reporter.JSON
         | Config.Reporter.Text => Reporter.Text
         }
@@ -137,7 +138,7 @@ let make = (~report=None, options: Config.t) => {
         Printf.sprintf(
           " Cache: %s. Mode: %s.",
           cache_report,
-          Mode.to_string(options.mode),
+          Mode.to_string(config.mode),
         );
       } else {
         "";
@@ -147,8 +148,8 @@ let make = (~report=None, options: Config.t) => {
       Resolver.make(
         ~project_root,
         ~current_dir,
-        ~mock=options.mock,
-        ~node_modules_paths=options.nodeModulesPaths,
+        ~mock=config.mock,
+        ~node_modules_paths=config.nodeModulesPaths,
         ~extensions,
         ~preprocessor,
         ~cache,
@@ -164,8 +165,8 @@ let make = (~report=None, options: Config.t) => {
       current_location:
         CCOpt.get_or(~default=entry_location, current_location),
       stack: [],
-      mode: options.mode,
-      target: options.target,
+      mode: config.mode,
+      target: config.target,
       resolver,
       preprocessor,
       reader,
@@ -184,7 +185,7 @@ let make = (~report=None, options: Config.t) => {
           x("after build. Graph: %d", DependencyGraph.length(ctx.graph))
         );
         let%lwt (emitted_modules, files) =
-          switch (options.mode) {
+          switch (config.mode) {
           | Mode.Production =>
             raise(
               Context.PackError(
@@ -240,3 +241,9 @@ let make = (~report=None, options: Config.t) => {
   };
   Lwt.return({pack, finalize});
 };
+
+let getContext = result =>
+  switch (result) {
+  | Ok(ctx) => ctx
+  | Error(ctx) => ctx
+  };
