@@ -243,17 +243,17 @@ d: {"./index.js":"index"}
 ---------------------------------------------
 
 Module resolution error: cannot resolve './a'
-/Users/zindel/ocaml/fastpack/test/watch/index.js
+/.../test/watch/index.js
 Cannot resolve module
-  Resolving './a'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
-  Resolving '/Users/zindel/ocaml/fastpack/test/watch/a'.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a'
+  Resolving './a'. Base directory: '/.../test/watch'
+  Resolving '/.../test/watch/a'.
+  File exists? '/.../test/watch/a'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a.js'
+  File exists? '/.../test/watch/a.js'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a.json'
+  File exists? '/.../test/watch/a.json'
   ...no.
-  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/a'
+  Is directory? '/.../test/watch/a'
   ...no.
 ---------------------------------------------
 
@@ -324,17 +324,17 @@ d: {"./index.js":"index"}
 ---------------------------------------------
 
 Module resolution error: cannot resolve './a'
-/Users/zindel/ocaml/fastpack/test/watch/index.js
+/.../test/watch/index.js
 Cannot resolve module
-  Resolving './a'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
-  Resolving '/Users/zindel/ocaml/fastpack/test/watch/a'.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a'
+  Resolving './a'. Base directory: '/.../test/watch'
+  Resolving '/.../test/watch/a'.
+  File exists? '/.../test/watch/a'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a.js'
+  File exists? '/.../test/watch/a.js'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a.json'
+  File exists? '/.../test/watch/a.json'
   ...no.
-  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/a'
+  Is directory? '/.../test/watch/a'
   ...no.
 ---------------------------------------------
 
@@ -413,32 +413,32 @@ d: {"./index.js":"index"}
 ---------------------------------------------
 
 Module resolution error: cannot resolve './b'
-/Users/zindel/ocaml/fastpack/test/watch/index.js
+/.../test/watch/index.js
 Cannot resolve module
-  Resolving './b'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
-  Resolving '/Users/zindel/ocaml/fastpack/test/watch/b'.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/b'
+  Resolving './b'. Base directory: '/.../test/watch'
+  Resolving '/.../test/watch/b'.
+  File exists? '/.../test/watch/b'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/b.js'
+  File exists? '/.../test/watch/b.js'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/b.json'
+  File exists? '/.../test/watch/b.json'
   ...no.
-  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/b'
+  Is directory? '/.../test/watch/b'
   ...no.
 ---------------------------------------------
 
 Module resolution error: cannot resolve './a'
-/Users/zindel/ocaml/fastpack/test/watch/index.js
+/.../test/watch/index.js
 Cannot resolve module
-  Resolving './a'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
-  Resolving '/Users/zindel/ocaml/fastpack/test/watch/a'.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a'
+  Resolving './a'. Base directory: '/.../test/watch'
+  Resolving '/.../test/watch/a'.
+  File exists? '/.../test/watch/a'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a.js'
+  File exists? '/.../test/watch/a.js'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/a.json'
+  File exists? '/.../test/watch/a.json'
   ...no.
-  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/a'
+  Is directory? '/.../test/watch/a'
   ...no.
 ---------------------------------------------
 
@@ -485,7 +485,7 @@ let%expect_test "start with parse error, than fix" =
     );
   [%expect_exact {|
 Parse error 
-/Users/zindel/ocaml/fastpack/test/watch/index.js
+/.../test/watch/index.js
 
 --------------------
 Unexpected identifier at (1:21) - (1:26):
@@ -565,45 +565,45 @@ d: {"./index.js":"index"}
 Module resolution error: cannot resolve './index.js'
 $fp$main
 Cannot resolve module
-  Resolving './index.js'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
-  Resolving '/Users/zindel/ocaml/fastpack/test/watch/index.js'.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  Resolving './index.js'. Base directory: '/.../test/watch'
+  Resolving '/.../test/watch/index.js'.
+  File exists? '/.../test/watch/index.js'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.js'
+  File exists? '/.../test/watch/index.js.js'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.json'
+  File exists? '/.../test/watch/index.js.json'
   ...no.
-  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
-  ...no.
----------------------------------------------
-
-Module resolution error: cannot resolve './index.js'
-$fp$main
-Cannot resolve module
-  Resolving './index.js'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
-  Resolving '/Users/zindel/ocaml/fastpack/test/watch/index.js'.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
-  ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.js'
-  ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.json'
-  ...no.
-  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  Is directory? '/.../test/watch/index.js'
   ...no.
 ---------------------------------------------
 
 Module resolution error: cannot resolve './index.js'
 $fp$main
 Cannot resolve module
-  Resolving './index.js'. Base directory: '/Users/zindel/ocaml/fastpack/test/watch'
-  Resolving '/Users/zindel/ocaml/fastpack/test/watch/index.js'.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  Resolving './index.js'. Base directory: '/.../test/watch'
+  Resolving '/.../test/watch/index.js'.
+  File exists? '/.../test/watch/index.js'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.js'
+  File exists? '/.../test/watch/index.js.js'
   ...no.
-  File exists? '/Users/zindel/ocaml/fastpack/test/watch/index.js.json'
+  File exists? '/.../test/watch/index.js.json'
   ...no.
-  Is directory? '/Users/zindel/ocaml/fastpack/test/watch/index.js'
+  Is directory? '/.../test/watch/index.js'
+  ...no.
+---------------------------------------------
+
+Module resolution error: cannot resolve './index.js'
+$fp$main
+Cannot resolve module
+  Resolving './index.js'. Base directory: '/.../test/watch'
+  Resolving '/.../test/watch/index.js'.
+  File exists? '/.../test/watch/index.js'
+  ...no.
+  File exists? '/.../test/watch/index.js.js'
+  ...no.
+  File exists? '/.../test/watch/index.js.json'
+  ...no.
+  Is directory? '/.../test/watch/index.js'
   ...no.
 ---------------------------------------------
 Number of rebuilds: 3
