@@ -1,5 +1,5 @@
 {
-  "hash": "9103e7ecd1e6c95a49e27df13889a02f",
+  "hash": "c94ea77d1b5f3dd7484cd94ff5f8ef89",
   "root": "fastpack@path:.",
   "node": {
     "refmterr@3.1.7": {
@@ -39,16 +39,16 @@
         "@esy-ocaml/esy-installer@0.0.0",
         "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
         "@esy-ocaml/rtop@3.3.0", "@opam/cmdliner@opam:1.0.2",
-        "@opam/conf-libev@opam:4-11", "@opam/containers@opam:1.3",
-        "@opam/fileutils@opam:0.5.3", "@opam/fmt@opam:0.8.5",
-        "@opam/jbuilder@opam:transition", "@opam/logs@opam:0.6.2",
-        "@opam/lwt@opam:3.3.0", "@opam/merlin@opam:3.1.0",
-        "@opam/ocp-indent@opam:1.6.1", "@opam/ppx_deriving@opam:4.2.1",
-        "@opam/ppx_expect@opam:v0.11.0", "@opam/ppx_let@opam:v0.11.0",
-        "@opam/ppx_tools_versioned@opam:5.2", "@opam/re@opam:1.7.1",
-        "@opam/sedlex@opam:1.99.4", "@opam/sequence@opam:1.1",
-        "@opam/utop@opam:2.2.0", "@opam/wtf8@opam:1.0.1",
-        "@opam/yojson@opam:1.4.0", "ocaml@4.6.5", "refmterr@3.1.7"
+        "@opam/containers@opam:1.3", "@opam/fileutils@opam:0.5.3",
+        "@opam/fmt@opam:0.8.5", "@opam/jbuilder@opam:transition",
+        "@opam/logs@opam:0.6.2", "@opam/lwt@opam:3.3.0",
+        "@opam/merlin@opam:3.1.0", "@opam/ocp-indent@opam:1.6.1",
+        "@opam/ppx_deriving@opam:4.2.1", "@opam/ppx_expect@opam:v0.11.0",
+        "@opam/ppx_let@opam:v0.11.0", "@opam/ppx_tools_versioned@opam:5.2",
+        "@opam/re@opam:1.7.1", "@opam/sedlex@opam:1.99.4",
+        "@opam/sequence@opam:1.1", "@opam/utop@opam:2.2.0",
+        "@opam/wtf8@opam:1.0.1", "@opam/yojson@opam:1.4.0", "ocaml@4.6.5",
+        "refmterr@3.1.7"
       ]
     },
     "@opam/zed@opam:1.6": {
@@ -1363,32 +1363,6 @@
           "version": "1",
           "opam":
             "opam-version: \"1.2\"\nname: \"conf-m4\"\nversion: \"1\"\nmaintainer: \"tim@gfxmonk.net\"\nlicense: \"GPL-3\"\nhomepage: \"http://www.gnu.org/software/m4/m4.html\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"sh\" \"-exc\" \"echo | m4\"]\ndepexts: [\n  [\"m4\"] {\"debian\"}\n  [\"m4\"] {\"ubuntu\"}\n  [\"m4\"] {\"fedora\"}\n  [\"m4\"] {\"rhel\"}\n  [\"m4\"] {\"centos\"}\n  [\"m4\"] {\"alpine\"}\n  [\"m4\"] {\"nixpkgs\"}\n  [\"m4\"] {\"opensuse\"}\n  [\"m4\"] {\"oraclelinux\"}\n  [\"m4\"] {\"archlinux\"}\n]",
-          "override": null
-        }
-      },
-      "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
-    },
-    "@opam/conf-libev@opam:4-11": {
-      "record": {
-        "name": "@opam/conf-libev",
-        "version": "opam:4-11",
-        "source": "no-source:",
-        "files": [
-          {
-            "name": "discover.ml",
-            "content":
-              "(* Lightweight thread library for Objective Caml\n * http://www.ocsigen.org/lwt\n * Program discover\n * Copyright (C) 2010 Jérémie Dimino\n *\n * This program is free software; you can redistribute it and/or modify\n * it under the terms of the GNU Lesser General Public License as\n * published by the Free Software Foundation, with linking exceptions;\n * either version 2.1 of the License, or (at your option) any later\n * version. See COPYING file for details.\n *\n * This program is distributed in the hope that it will be useful, but\n * WITHOUT ANY WARRANTY; without even the implied warranty of\n * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n * Lesser General Public License for more details.\n *\n * You should have received a copy of the GNU Lesser General Public\n * License along with this program; if not, write to the Free Software\n * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA\n * 02111-1307, USA.\n *)\n\n(* Discover available features *)\n\nlet cut_tail l = List.rev (List.tl (List.rev l))\n\nlet string_split sep source =\n  let copy_part index offset =\n    String.sub source index (offset - index)\n  in\n  let l = String.length source in\n  let rec loop prev current acc =\n    if current >= l then\n      List.rev acc\n    else\n      match (source.[current] = sep, current = prev, current = l - 1) with\n      | (true, true, _) -> loop (current + 1) (current + 1) acc\n      | (true, _, _) -> loop (current + 1) (current + 1) ((copy_part prev current)::acc)\n      | (false, _, true) -> loop (current + 1) (current + 1) ((copy_part prev (current + 1))::acc)\n      | _ -> loop prev (current + 1) acc\n  in loop 0 0 []\n\nlet uniq lst =\n  let unique_set = Hashtbl.create (List.length lst) in\n  List.iter (fun x -> Hashtbl.replace unique_set x ()) lst;\n  Hashtbl.fold (fun x () xs -> x :: xs) unique_set []\n\nlet get_paths env_name =\n  try\n    let paths = Sys.getenv env_name in\n    let dirs = string_split ':' paths in\n    List.map (fun dir ->\n      let components = string_split '/' dir in\n      \"/\" ^ (String.concat \"/\" (cut_tail components))\n    ) dirs\n  with Not_found -> []\n\nlet env_paths = List.append (get_paths \"LIBRARY_PATH\") (get_paths \"C_INCLUDE_PATH\")\n\n(* Keep that in sync with the list in myocamlbuild.ml *)\nlet search_paths = uniq (List.append [\n  \"/usr\";\n  \"/usr/local\";\n  \"/opt\";\n  \"/opt/local\";\n  \"/sw\";\n  \"/mingw\";] env_paths)\n\nopen Printf\n\n(* +-----------------------------------------------------------------+\n   | Test codes                                                      |\n   +-----------------------------------------------------------------+ *)\n\nlet caml_code = \"\nexternal test : unit -> unit = \\\"lwt_test\\\"\nlet () = test ()\n\"\n\n\nlet libev_code = \"\n#include <caml/mlvalues.h>\n#include <ev.h>\n\nCAMLprim value lwt_test()\n{\n  ev_default_loop(0);\n  return Val_unit;\n}\n\"\n(* +-----------------------------------------------------------------+\n   | Compilation                                                     |\n   +-----------------------------------------------------------------+ *)\n\nlet ocamlc = ref \"ocamlc\"\nlet ext_obj = ref \".o\"\nlet exec_name = ref \"a.out\"\n\nlet log_file = ref \"\"\nlet caml_file = ref \"\"\n\n(* Search for a header file in standard directories. *)\nlet search_header header =\n  let rec loop = function\n    | [] ->\n        None\n    | dir :: dirs ->\n        if Sys.file_exists (dir ^ \"/include/\" ^ header) then\n          Some dir\n        else\n          loop dirs\n  in\n  loop search_paths\n\nlet c_args =\n  let flags path = Printf.sprintf \"-ccopt -I%s/include -ccopt -L%s/lib\" path path in\n  match search_header \"ev.h\" with\n    | None -> \"\"\n    | Some path -> flags path\n\nlet compile args stub_file =\n  let cmd = sprintf \"%s -custom %s %s %s %s > %s 2>&1\"\n    !ocamlc\n    c_args\n    (Filename.quote stub_file)\n    args\n    (Filename.quote !caml_file)\n    (Filename.quote !log_file) in\n  Sys.command cmd = 0\n\nlet safe_remove file_name =\n  try\n    Sys.remove file_name\n  with exn ->\n    ()\n\nlet test_code args stub_code =\n  let stub_file, oc = Filename.open_temp_file \"lwt_stub\" \".c\" in\n  let cleanup () =\n    safe_remove stub_file;\n    safe_remove (Filename.chop_extension (Filename.basename stub_file) ^ !ext_obj)\n  in\n  try\n    output_string oc stub_code;\n    flush oc;\n    close_out oc;\n    let result = compile args stub_file in\n    cleanup ();\n    result\n  with exn ->\n    (try close_out oc with _ -> ());\n    cleanup ();\n    raise exn\n\nlet config = open_out \"lwt_config.h\"\nlet config_ml = open_out \"lwt_config.ml\"\n\nlet test_feature ?(do_check = true) name macro ?(args=\"\") code =\n  if do_check then begin\n    printf \"testing for %s:%!\" name;\n    if test_code args code then begin\n      fprintf config \"#define %s\\n\" macro;\n      fprintf config_ml \"#let %s = true\\n\" macro;\n      printf \" %s available\\n%!\" (String.make (34 - String.length name) '.');\n      true\n    end else begin\n      fprintf config \"//#define %s\\n\" macro;\n      fprintf config_ml \"#let %s = false\\n\" macro;\n      printf \" %s unavailable\\n%!\" (String.make (34 - String.length name) '.');\n      false\n    end\n  end else begin\n    printf \"not checking for %s\\n%!\" name;\n    fprintf config \"//#define %s\\n\" macro;\n    fprintf config_ml \"#let %s = false\\n\" macro;\n    true\n  end\n\n(* +-----------------------------------------------------------------+\n   | Entry point                                                     |\n   +-----------------------------------------------------------------+ *)\n\nlet () =\n  let args = [\n    \"-ocamlc\", Arg.Set_string ocamlc, \"<path> ocamlc\";\n    \"-ext-obj\", Arg.Set_string ext_obj, \"<ext> C object files extension\";\n    \"-exec-name\", Arg.Set_string exec_name, \"<name> name of the executable produced by ocamlc\";\n  ] in\n  Arg.parse args ignore \"check for external C libraries and available features\\noptions are:\";\n\n  (* Put the caml code into a temporary file. *)\n  let file, oc = Filename.open_temp_file \"lwt_caml\" \".ml\" in\n  caml_file := file;\n  output_string oc caml_code;\n  close_out oc;\n\n  log_file := Filename.temp_file \"lwt_output\" \".log\";\n\n  (* Cleanup things on exit. *)\n  at_exit (fun () ->\n             (try close_out config with _ -> ());\n             (try close_out config_ml with _ -> ());\n             safe_remove !log_file;\n             safe_remove !exec_name;\n             safe_remove !caml_file;\n             safe_remove (Filename.chop_extension !caml_file ^ \".cmi\");\n             safe_remove (Filename.chop_extension !caml_file ^ \".cmo\"));\n\n  let missing = [] in\n  let missing = if test_feature \"libev\" \"HAVE_LIBEV\" ~args:\"-cclib -lev\" libev_code then missing else \"libev\" :: missing in\n\n  if missing <> [] then begin\n    printf \"\n      The following recquired C libraries are missing: %s.\nPlease install them and retry. If they are installed in a non-standard location, set the environment variables C_INCLUDE_PATH and LIBRARY_PATH accordingly and retry.\n\nFor example, if they are installed in /opt/local, you can type:\n\nexport C_INCLUDE_PATH=/opt/local/include\nexport LIBRARY_PATH=/opt/local/lib\n\nTo compile without libev support, use ./configure --disable-libev ...\n\" (String.concat \", \" missing);\n    exit 1\n  end;\n\n(*\n  ignore (test_feature \"eventfd\" \"HAVE_EVENTFD\" eventfd_code);\n  ignore (test_feature \"fd passing\" \"HAVE_FD_PASSING\" fd_passing_code);\n  ignore (test_feature \"sched_getcpu\" \"HAVE_GETCPU\" getcpu_code);\n  ignore (test_feature \"affinity getting/setting\" \"HAVE_AFFINITY\" affinity_code);\n  ignore (test_feature \"credentials getting\" \"HAVE_GET_CREDENTIALS\" get_credentials_code);\n  ignore (test_feature \"fdatasync\" \"HAVE_FDATASYNC\" fdatasync_code)\n*)\n"
-          },
-          {
-            "name": "build.sh",
-            "content": "#!/bin/sh\n\nocaml discover.ml\n"
-          }
-        ],
-        "opam": {
-          "name": "conf-libev",
-          "version": "4-11",
-          "opam":
-            "opam-version: \"1.2\"\nname: \"conf-libev\"\nversion: \"4-11\"\nmaintainer: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"sh\" \"./build.sh\"]\ndepexts: [\n  [\"libev-dev\"] {\"debian\"}\n  [\"libev-dev\"] {\"ubuntu\"}\n  [\"libev\"] {\"osx\" & \"homebrew\"}\n  [\"libev-dev\"] {\"alpine\"}\n  [\"libev\"] {\"archlinux\"}\n  [\"libev-devel\"] {\"fedora\"}\n  [\"libev-devel\"] {\"rhel\"}\n  [\"libev-devel\"] {\"centos\"}\n  [\"libev-devel\"] {\"opensuse\"}\n  [\"libev\"] {\"freebsd\"}\n  [\"libev\"] {\"openbsd\"}\n  [\"libev\"] {\"archlinux\"}\n]",
           "override": null
         }
       },
