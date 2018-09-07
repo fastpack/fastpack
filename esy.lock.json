@@ -295,7 +295,7 @@
         "name": "@opam/sedlex",
         "version": "opam:1.99.4",
         "source": [
-          "archive:https://opam.ocaml.org/archives/sedlex.1.99.4+opam.tar.gz#md5:3e6ff1d62d981f8c2637b6ab332505ad",
+          "archive:https://opam.ocaml.org/archives/sedlex.1.99.4+opam.tar.gz#md5:2055b6183a0eacf404361fb058fcff9e",
           "archive:https://github.com/alainfrisch/sedlex/archive/v1.99.4.tar.gz#md5:f621d80e36cda2548528766f31b16b12"
         ],
         "files": [],
@@ -303,7 +303,7 @@
           "name": "sedlex",
           "version": "1.99.4",
           "opam":
-            "opam-version: \"1.2\"\nname: \"sedlex\"\nversion: \"1.99.4\"\nmaintainer: \"Alain Frisch <alain.frisch@lexifi.com>\"\nauthors: \"Alain Frisch <alain.frisch@lexifi.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/alainfrisch/sedlex\"\nbug-reports: \"https://github.com/alainfrisch/sedlex/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ppx_tools_versioned\"\n  \"ocaml-migrate-parsetree\"\n  \"gen\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [make \"all\"]\n  [make \"opt\"]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"sedlex\"]\ndev-repo: \"git+https://github.com/alainfrisch/sedlex.git\"",
+            "opam-version: \"1.2\"\nname: \"sedlex\"\nversion: \"1.99.4\"\nmaintainer: \"Alain Frisch <alain.frisch@lexifi.com>\"\nauthors: \"Alain Frisch <alain.frisch@lexifi.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/alainfrisch/sedlex\"\nbug-reports: \"https://github.com/alainfrisch/sedlex/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ppx_tools_versioned\" {< \"5.2.1\"}\n  \"ocaml-migrate-parsetree\"\n  \"gen\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [make \"all\"]\n  [make \"opt\"]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"sedlex\"]\ndev-repo: \"git+https://github.com/alainfrisch/sedlex.git\"",
           "override": null
         }
       },
@@ -820,7 +820,7 @@
               "bin: [\n  \"src/findlib/ocamlfind\" {\"ocamlfind\"}\n  \"?src/findlib/ocamlfind_opt\" {\"ocamlfind\"}\n  \"?tools/safe_camlp4\"\n]\ntoplevel: [\"src/findlib/topfind\"]\n"
           },
           {
-            "name": "_esy/build",
+            "name": "esy-build",
             "content":
               "#!/bin/bash\n\nset -euo pipefail\nset -x\n\n#\n# Shim OCAMLLIB so that we can write topfind there\n#\n\nREAL_OCAMLLIB=\"$1\"\n\nmkdir -p $cur__install/lib/ocaml\ncd $cur__install/lib/ocaml\n\nfor filename in `ls -1 $REAL_OCAMLLIB`; do\n  ln -s $REAL_OCAMLLIB/$filename $filename;\ndone\n\n#\n# Build\n#\n\ncd $cur__root\n\nexport OCAMLLIB=\"$cur__install/lib/ocaml\"\n\n./configure \\\n  -bindir $cur__install/bin \\\n  -sitelib $cur__install/lib \\\n  -mandir $cur__install/man \\\n  -config $cur__install/lib/findlib.conf \\\n  -no-custom \\\n  -no-camlp4\n\nmake all\nmake opt\nmake install\n\n(opam-installer --prefix=$cur__install || true)\n"
           }
@@ -831,7 +831,7 @@
           "opam":
             "opam-version: \"1.2\"\nname: \"ocamlfind\"\nversion: \"1.8.0\"\nmaintainer: \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\nauthors: \"Gerd Stolpmann <gerd@gerd-stolpmann.de>\"\nhomepage: \"http://projects.camlcity.org/projects/findlib.html\"\nbug-reports: \"https://gitlab.camlcity.org/gerd/lib-findlib/issues\"\ndepends: [\n  \"conf-m4\" {build}\n]\navailable: ocaml-version >= \"4.00.0\"\nbuild: [\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-custom\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"all\"]\n  [make \"opt\"] {ocaml-native}\n]\ninstall: [\n  [make \"install\"]\n  [\"install\" \"-m\" \"0755\" \"ocaml-stub\" \"%{bin}%/ocaml\"] {preinstalled}\n]\nremove: [\n  [\"ocamlfind\" \"remove\" \"bytes\"]\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"uninstall\"]\n  [\"rm\" \"-f\" \"%{bin}%/ocaml\"] {preinstalled}\n]\ndev-repo: \"git+https://gitlab.camlcity.org/gerd/lib-findlib.git\"",
           "override": {
-            "build": [ [ "bash", "./_esy/build", "#{ocaml.lib / 'ocaml'}" ] ],
+            "build": [ [ "bash", "./esy-build", "#{ocaml.lib / 'ocaml'}" ] ],
             "exportedEnv": {
               "OCAMLLIB": {
                 "val": "#{@opam/ocamlfind.install / 'lib' / 'ocaml'}",
