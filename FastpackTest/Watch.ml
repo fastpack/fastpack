@@ -85,7 +85,7 @@ let run_with ~test_name ~cmd ~files f =
           Lwt.finalize (fun () ->
               let%lwt initial_result = Watcher2.build packer in
               let change_and_rebuild ~actions r =
-                let%lwt () = Lwt_unix.sleep 0.02 in
+                let%lwt () = Lwt_unix.sleep 0.1 in
                 let%lwt filesChanged = change_files actions in
                 Watcher2.rebuild ~filesChanged ~packer r
               in
