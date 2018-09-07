@@ -10,9 +10,9 @@ let stat_option = path =>
 
 let rec setInterval = (ms, f) => {
   let%lwt () = Lwt_unix.sleep(ms);
-  let%lwt () = f ();
+  let%lwt () = f();
   setInterval(ms, f);
-}
+};
 
 let abs_path = (dir, filename) =>
   FilePath.reduce(~no_symlink=true) @@ FilePath.make_absolute(dir, filename);
@@ -45,8 +45,10 @@ let open_process = cmd => {
         shell(cmd),
       )
     );
-
-  Lwt.return((process, fp_in_ch, fp_out_ch));
+  switch (process#state) {
+  | Lwt_process.Running => Lwt.return((process, fp_in_ch, fp_out_ch))
+  | Lwt_process.Exited(_) => Error.ie("Cannot run process: " ++ cmd)
+  };
 };
 
 let rec makedirs = dir =>
