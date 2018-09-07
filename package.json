@@ -61,6 +61,7 @@
     "@opam/ppx_let": "*",
     "@opam/ppx_deriving": "^4.2.1",
     "@opam/ppx_tools_versioned": "5.2",
+    "@opam/conf-libev": "*",
     "ocaml": "~4.6.1"
   }
 }
