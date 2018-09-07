@@ -208,15 +208,6 @@ let make = (config: Config.t) => {
   let%lwt {Packer.pack, finalize} =
     Packer.make({...config, mode: Mode.Development});
 
-  /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
-   * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
-   * */
-  let (w, u) = Lwt.wait();
-  Lwt_unix.on_signal(Sys.sigint, _ => Lwt.wakeup_exn(u, Context.ExitOK))
-  |> ignore;
-  Lwt_unix.on_signal(Sys.sigterm, _ => Lwt.wakeup_exn(u, Context.ExitOK))
-  |> ignore;
-
   let%lwt currentDir = Lwt_unix.getcwd();
 
   let process = ref(None);
@@ -264,14 +255,47 @@ let make = (config: Config.t) => {
     };
   };
 
+  let lastResult = ref(prevResult);
+  let lastResultCachedDumped = ref(None);
+  let dumpCache = () =>
+    switch (lastResult^) {
+    | Ok((ctx: Context.t, _)) =>
+      let dump = (ctx: Context.t, result) => {
+        let%lwt () = ctx.cache.dump();
+        lastResultCachedDumped := Some(result);
+        Lwt.return_unit;
+      };
+      switch (lastResultCachedDumped^) {
+      | None => dump(ctx, lastResult^)
+      | Some(lastResultCachedDumped) =>
+        if (lastResult^ !== lastResultCachedDumped) {
+          dump(ctx, lastResult^);
+        } else {
+          Lwt.return_unit;
+        }
+      };
+    | Error(_) => Lwt.return_unit
+    };
+
   let rec watch = result =>
     switch%lwt (ask_watchman(ch_in, link_map, link_paths, ignoreFilename)) {
     | None => Lwt.return_unit
-    | Some(filenames) => tryRebuilding(filenames, result) >>= watch
+    | Some(filenames) =>
+      let%lwt result = tryRebuilding(filenames, result);
+      lastResult := result;
+      watch(result);
     };
 
+  /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
+   * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
+   * */
+  let (w, u) = Lwt.wait();
+  let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
+  Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
+  Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
+
   Lwt.return({
-    watch: () => watch(prevResult) <?> w,
+    watch: () => watch(prevResult) <&> FS.setInterval(5., dumpCache) <?> w,
     finalize: () => {
       let%lwt () = finalize();
       let () =

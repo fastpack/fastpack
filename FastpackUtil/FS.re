@@ -8,6 +8,12 @@ let stat_option = path =>
   | Unix.Unix_error(_) => Lwt.return_none
   };
 
+let rec setInterval = (ms, f) => {
+  let%lwt () = Lwt_unix.sleep(ms);
+  let%lwt () = f ();
+  setInterval(ms, f);
+}
+
 let abs_path = (dir, filename) =>
   FilePath.reduce(~no_symlink=true) @@ FilePath.make_absolute(dir, filename);
 
