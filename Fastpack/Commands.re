@@ -46,22 +46,23 @@ module Build = {
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let%lwt {Packer.pack, finalize} = Packer.make(options);
+          let%lwt packer = Packer.make(options);
 
           Lwt.finalize(
             () =>
               switch%lwt (
-                pack(
+                Packer.pack(
                   ~graph=None,
                   ~current_location=None,
                   ~initial=true,
                   ~start_time,
+                  packer,
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
               | Ok(ctx) => ctx.cache.dump()
               },
-            finalize,
+            () => Packer.finalize(packer),
           );
         },
       )
@@ -119,7 +120,7 @@ module Serve = {
           };
 
           /* TODO: maybe decouple mode from the CommonOptions ? */
-          let%lwt {Packer.pack, finalize} =
+          let%lwt packer =
             Packer.make(
               ~report=Some(Reporter.Internal(report_ok, report_error)),
               {...options, mode: Mode.Development},
@@ -128,11 +129,12 @@ module Serve = {
           Lwt.finalize(
             () =>
               switch%lwt (
-                pack(
+                Packer.pack(
                   ~graph=None,
                   ~current_location=None,
                   ~initial=true,
                   ~start_time,
+                  packer,
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
@@ -142,7 +144,7 @@ module Serve = {
                 let watcher = Lwt_unix.sleep(600.); /*Watcher.watch(~ctx, ~pack);*/
                 Lwt.join([server, watcher]);
               },
-            finalize,
+            () => Packer.finalize(packer),
           );
         },
       )

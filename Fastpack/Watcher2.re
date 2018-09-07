@@ -8,13 +8,14 @@ type t = {
   finalize: unit => Lwt.t(unit),
 };
 
-let build = (~pack: Packer.packFunction) => {
+let build = (packer: Packer.t) => {
   let%lwt initial_result =
-    pack(
+    Packer.pack(
       ~current_location=None,
       ~graph=None,
       ~initial=true,
       ~start_time=Unix.gettimeofday(),
+      packer,
     );
 
   switch (initial_result) {
@@ -25,7 +26,7 @@ let build = (~pack: Packer.packFunction) => {
   };
 };
 
-let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
+let rebuild = (~filesChanged: StringSet.t, ~packer, prev_result) => {
   let start_time = Unix.gettimeofday();
   let (result, ctx: Context.t, filesWatched: StringSet.t) =
     switch (prev_result) {
@@ -57,7 +58,7 @@ let rebuild = (~filesChanged: StringSet.t, ~pack, prev_result) => {
       };
     let%lwt newResult =
       if (runPack) {
-        pack(~current_location, ~graph, ~initial=false, ~start_time);
+        Packer.pack(~current_location, ~graph, ~initial=false, ~start_time, packer);
       } else {
         switch (result) {
         | `Ok => Lwt.return_ok(ctx)
@@ -205,8 +206,7 @@ let rec ask_watchman = (ch, link_map, link_paths, ignoreFilename) =>
   );
 
 let make = (config: Config.t) => {
-  let%lwt {Packer.pack, finalize} =
-    Packer.make({...config, mode: Mode.Development});
+  let%lwt packer = Packer.make({...config, mode: Mode.Development});
 
   let%lwt currentDir = Lwt_unix.getcwd();
 
@@ -221,7 +221,7 @@ let make = (config: Config.t) => {
        )
     |> List.rev;
 
-  let%lwt prevResult = build(~pack);
+  let%lwt prevResult = build(packer);
   let%lwt (started_process, ch_in) = start_watchman(config.projectRootDir);
   process := Some(started_process);
   let%lwt () =
@@ -244,7 +244,7 @@ let make = (config: Config.t) => {
         | Some(filenames) => `FilesChanged(filenames) |> Lwt.return
         },
         {
-          let%lwt result = rebuild(~filesChanged=filenames, ~pack, prevResult);
+          let%lwt result = rebuild(~filesChanged=filenames, ~packer, prevResult);
           `Rebuilt(result) |> Lwt.return;
         },
       ]);
@@ -297,7 +297,7 @@ let make = (config: Config.t) => {
   Lwt.return({
     watch: () => watch(prevResult) <&> FS.setInterval(5., dumpCache) <?> w,
     finalize: () => {
-      let%lwt () = finalize();
+      let%lwt () = Packer.finalize(packer);
       let () =
         switch (process^) {
         | None => ()

@@ -76,16 +76,16 @@ let run_with ~test_name ~cmd ~files f =
             messages := error_text :: !messages;
             Lwt.return_unit
           in
-          let%lwt {Packer.pack; finalize} =
+          let%lwt packer =
             Packer.make
               ~report:(Some(Reporter.Internal(report_ok, report_error)))
               opts
           in
           Lwt.finalize (fun () ->
-              let%lwt initial_result = Watcher2.build ~pack in
+              let%lwt initial_result = Watcher2.build packer in
               let change_and_rebuild ~actions r =
                 let%lwt filesChanged = change_files actions in
-                Watcher2.rebuild ~filesChanged ~pack r
+                Watcher2.rebuild ~filesChanged ~packer r
               in
               let%lwt () = f initial_result change_and_rebuild in
               (Printf.sprintf "Number of rebuilds: %d\n" (List.length !messages - 1) :: !messages)
@@ -93,7 +93,7 @@ let run_with ~test_name ~cmd ~files f =
               |> String.concat "---------------------------------------------\n"
               |> Lwt.return
             )
-          finalize
+          (fun () -> Packer.finalize(packer))
         )
         (fun exn -> Lwt.return Printexc.(to_string exn  ^ "\n" ^ get_backtrace ()))
     ) |> print_endline
