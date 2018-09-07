@@ -31,7 +31,7 @@ let run_with ~test_name ~cmd ~files f =
               files
           in
           let%lwt () = Lwt_io.flush_all () in
-          let%lwt () = Lwt_unix.sleep 1.5 in
+          let%lwt () = Lwt_unix.sleep 0.15 in
           let change_files =
             Lwt_list.fold_left_s (fun acc (name, action) ->
                 let%lwt () =
@@ -89,7 +89,7 @@ let run_with ~test_name ~cmd ~files f =
               let change_and_rebuild ~actions r =
                 let%lwt filesChanged = change_files actions in
                 let%lwt () = Lwt_io.flush_all () in
-                let%lwt () = Lwt_unix.sleep 1.5 in
+                let%lwt () = Lwt_unix.sleep 0.15 in
                 Watcher2.rebuild ~filesChanged ~packer r
               in
               let%lwt () = f initial_result change_and_rebuild in
