@@ -14,6 +14,7 @@ module Config = Config
 module Commands = Commands
 module Packer = Packer
 module DependencyGraph = DependencyGraph
+module Environment = Environment
 
 exception PackError = Context.PackError;
 exception ExitError = Context.ExitError;
