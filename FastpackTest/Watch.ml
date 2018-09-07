@@ -97,7 +97,7 @@ let run_with ~test_name ~cmd ~files f =
           (fun () -> Packer.finalize(packer))
         )
         (fun exn -> Lwt.return Printexc.(to_string exn  ^ "\n" ^ get_backtrace ()))
-    ) |> print_endline
+    ) |> cleanup_project_path |> print_endline
   | _ -> failwith "Parsing CLI failed"
 
 

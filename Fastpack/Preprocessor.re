@@ -116,13 +116,20 @@ module NodeServer = {
         },
       () => {
         module FS = FastpackUtil.FS;
+        let executable = Environment.getExecutable();
         let fpack_binary_path =
           /* TODO: handle on Windows? */
           (
-            switch (Sys.argv[0].[0]) {
+            switch (executable.[0]) {
             | '/'
-            | '.' => Sys.argv[0]
-            | _ => FileUtil.which(Sys.argv[0])
+            | '.' => executable
+            | _ =>
+              switch (
+                Re.exec_opt(Re_posix.compile_pat("/|\\\\"), executable)
+              ) {
+              | Some(_) => executable
+              | None => FileUtil.which(Sys.argv[0])
+              }
             }
           )
           |> FileUtil.readlink
@@ -143,7 +150,9 @@ module NodeServer = {
         let%lwt fpack_root =
           find_fpack_root @@ FilePath.dirname(fpack_binary_path);
 
-        Logs.debug(x => x("process created: %s %s ", fpack_binary_path, fpack_root));
+        Logs.debug(x =>
+          x("process created: %s %s ", fpack_binary_path, fpack_root)
+        );
         let cmd =
           Printf.sprintf(
             "node %s %s %s",
@@ -216,7 +225,7 @@ module NodeServer = {
           Lwt.fail(Error(error));
         | Some(source) =>
           /* Logs.debug(x => x("SOURCE: %s", source)); */
-          Lwt.return((source, dependencies, files));
+          Lwt.return((source, dependencies, files))
         };
       },
     );
