@@ -22,19 +22,19 @@ let to_eval = s => {
   String.(sub(json, 1, length(json) - 2));
 };
 
-type input = {
+type request = {
   location: Module.location,
   source: option(string),
 };
 
-type output =
-  | Complete(complete)
+type response =
+  | Complete(ok)
   | ParseError(list((Loc.t, FlowParser.Parse_error.t)))
   | ScopeError(Scope.reason)
   | PreprocessorError(string)
   | UnhandledCondition(string)
   | Traceback(string)
-and complete = {
+and ok = {
   source: string,
   static_dependencies: list(Module.Dependency.t),
   dynamic_dependencies: list(Module.Dependency.t),
@@ -45,13 +45,13 @@ and complete = {
   build_dependencies: list(string),
 };
 
-let start = (~project_root, ~output_dir) => {
+let start = (~project_root, ~output_dir, ()) => {
   let%lwt preprocessor =
     Preprocessor.make(
       ~project_root,
       ~current_dir=Unix.getcwd(),
       ~output_dir,
-      ()
+      (),
     );
 
   let get_module_type = stmts => {
@@ -625,8 +625,8 @@ let start = (~project_root, ~output_dir) => {
     );
   };
 
-  let rec parse = () => {
-    let%lwt input: Lwt.t(input) = Lwt_io.read_value(Lwt_io.stdin);
+  let rec process = () => {
+    let%lwt input: Lwt.t(request) = Lwt_io.read_value(Lwt_io.stdin);
     let {location, source} = input;
     let%lwt output =
       Lwt.catch(
@@ -684,55 +684,59 @@ let start = (~project_root, ~output_dir) => {
           |> Lwt.return,
       );
     let%lwt () = Lwt_io.write_value(Lwt_io.stdout, output);
-    parse();
+    process();
   };
 
-  Lwt.finalize(() => parse(), () => Preprocessor.finalize(preprocessor));
+  Lwt.finalize(() => process(), () => Preprocessor.finalize(preprocessor));
 };
 
 module Reader = {
   type t = {
-    read:
-      (~location: Module.location, ~source: option(string)) => Lwt.t(output),
-    finalize: unit => Lwt.t(unit),
+    workerPool:
+      Lwt_pool.t(
+        (
+          Lwt_process.process_none,
+          Lwt_io.channel(Lwt_io.input),
+          Lwt_io.channel(Lwt_io.output),
+        ),
+      ),
   };
 
-  let worker_project_root = ref("");
-  let worker_output_dir = ref("");
-  let pool =
-    Lwt_pool.create(
-      Environment.getCPUCount(),
-      ~dispose=
-        ((p, _, _)) => {
-          p#terminate;
-          p#close |> ignore |> Lwt.return;
+  let make = (~project_root, ~output_dir, ()) => {
+    workerPool:
+      Lwt_pool.create(
+        Environment.getCPUCount(),
+        ~dispose=
+          ((p, _, _)) => {
+            p#terminate;
+            p#close |> ignore |> Lwt.return;
+          },
+        () => {
+          Logs.debug(x => x("reader created"));
+
+          let cmd =
+            Printf.sprintf(
+              "%s worker --project-root='%s' --output='%s'",
+              Environment.getExecutable(),
+              project_root,
+              output_dir,
+            );
+          FastpackUtil.FS.open_process(cmd);
         },
-      () => {
-        Logs.debug(x => x("reader created"));
+      ),
+  };
 
-        let cmd =
-          Printf.sprintf(
-            "%s worker --project-root='%s' --output='%s'",
-            Environment.getExecutable(),
-            worker_project_root^,
-            worker_output_dir^,
-          );
-        FastpackUtil.FS.open_process(cmd);
-      },
-    );
+  let finalize = reader => Lwt_pool.clear(reader.workerPool);
 
-  let make = (~project_root, ~output_dir) => {
-    worker_project_root := project_root;
-    worker_output_dir := output_dir;
-
-    let read = (~location, ~source) =>
-      Lwt_pool.use(pool, ((_, fp_in_ch, fp_out_ch)) =>
+  let read = (~location, ~source, reader) => {
+    let%lwt response =
+      Lwt_pool.use(reader.workerPool, ((_, fp_in_ch, fp_out_ch)) =>
         Lwt_io.atomic(
           out_ch =>
             Lwt_io.atomic(
               in_ch => {
                 let%lwt () = Lwt_io.write_value(out_ch, {location, source});
-                let%lwt output: Lwt.t(output) = Lwt_io.read_value(in_ch);
+                let%lwt output: Lwt.t(response) = Lwt_io.read_value(in_ch);
                 Lwt.return(output);
               },
               fp_in_ch,
@@ -740,7 +744,21 @@ module Reader = {
           fp_out_ch,
         )
       );
-
-    Lwt.return({read, finalize: () => Lwt_pool.clear(pool)});
+    switch (response) {
+    | Complete(data) => Lwt.return_ok(data)
+    | ParseError(args) =>
+      let location_str = Module.location_to_string(location);
+      let src =
+        switch (source) {
+        | Some(src) => src
+        | None => ""
+        };
+      Lwt.return_error(Error.CannotParseFile((location_str, args, src)));
+    | ScopeError(reason) => Lwt.return_error(Error.ScopeError(reason))
+    | PreprocessorError(message) =>
+      Lwt.return_error(Error.PreprocessorError(message))
+    | UnhandledCondition(message)
+    | Traceback(message) => Lwt.return_error(Error.UnhandledCondition(message))
+    };
   };
 };
