@@ -44,10 +44,11 @@ let make = (~report=None, config: Config.t) => {
       ()
     );
 
-  let%lwt reader =
+  let reader =
     Worker.Reader.make(
       ~project_root=config.projectRootDir,
       ~output_dir=config.outputDir,
+      ()
     );
 
   /* cache & cache reporting */
@@ -248,7 +249,7 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
 let finalize = packer => {
   let {preprocessor, reader, _} = packer;
   let%lwt () = Preprocessor.finalize(preprocessor);
-  let%lwt () = reader.Worker.Reader.finalize();
+  let%lwt () = Worker.Reader.finalize(reader);
   Lwt.return_unit;
 };
 

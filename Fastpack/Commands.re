@@ -188,7 +188,7 @@ module Serve = {
 module Worker = {
   let run = (options: Config.t) => {
     let {Config.projectRootDir: project_root, outputDir: output_dir, _} = options;
-    Lwt_main.run(Worker.start(~project_root, ~output_dir));
+    Lwt_main.run(Worker.start(~project_root, ~output_dir, ()));
   };
   let doc = "worker subprocess (don't use directly)";
   let command =

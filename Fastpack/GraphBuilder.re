@@ -218,7 +218,6 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
       make_module(location, String.(sub(json, 1, length(json) - 2)));
     | (true, None) => failwith("impossible: *.json file without source")
     | (false, _) =>
-      let {Worker.Reader.read, _} = ctx.reader;
       let%lwt {
         Worker.source,
         static_dependencies,
@@ -229,30 +228,9 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
         build_dependencies,
         files,
       } =
-        switch%lwt (read(~location, ~source)) {
-        | Complete(data) =>
-          /* Logs.debug(x => x("success!")); */
-          Lwt.return(data)
-        | ParseError(args) =>
-          let location_str = Module.location_to_string(location);
-          let src =
-            switch (source) {
-            | Some(src) => src
-            | None => ""
-            };
-          Lwt.fail(
-            Context.PackError(
-              ctx,
-              CannotParseFile((location_str, args, src)),
-            ),
-          );
-        | ScopeError(reason) =>
-          Lwt.fail(Context.PackError(ctx, ScopeError(reason)))
-        | PreprocessorError(message) =>
-          Lwt.fail(Context.PackError(ctx, PreprocessorError(message)))
-        | UnhandledCondition(message)
-        | Traceback(message) =>
-          Lwt.fail(Context.PackError(ctx, UnhandledCondition(message)))
+        switch%lwt (Worker.Reader.read(~location, ~source, ctx.reader)) {
+        | Ok(data) => Lwt.return(data)
+        | Error(reason) => Lwt.fail(Context.PackError(ctx, reason))
         };
 
       /* module also depends on the filenames used to transpile it*/

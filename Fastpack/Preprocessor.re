@@ -3,10 +3,6 @@ module FS = FastpackUtil.FS;
 
 exception Error(string);
 
-/* type processor = */
-/*   | Builtin */
-/*   | Node(string); */
-
 type t = {
   project_root: string,
   current_dir: string,
@@ -37,16 +33,6 @@ let builtin = source =>
     | exn => Lwt.fail(exn)
     }
   };
-
-/* let empty = { */
-/*   process: (_, s) => Lwt.return((CCOpt.get_or(~default="", s), [], [])), */
-/*   finalize: () => Lwt.return_unit, */
-/* }; */
-
-/* let transpile_all = { */
-/*   process: (_, s) => builtin(s), */
-/*   finalize: () => Lwt.return_unit, */
-/* }; */
 
 module NodeServer = {
   let node_project_root = ref("");
