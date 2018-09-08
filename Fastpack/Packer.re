@@ -38,10 +38,10 @@ let make = (~report=None, config: Config.t) => {
   /* preprocessor */
   let%lwt preprocessor =
     Preprocessor.make(
-      ~configs=config.preprocess,
       ~project_root=config.projectRootDir,
       ~current_dir,
       ~output_dir=config.outputDir,
+      ()
     );
 
   let%lwt reader =
@@ -247,7 +247,7 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
 };
 let finalize = packer => {
   let {preprocessor, reader, _} = packer;
-  let%lwt () = preprocessor.Preprocessor.finalize();
+  let%lwt () = Preprocessor.finalize(preprocessor);
   let%lwt () = reader.Worker.Reader.finalize();
   Lwt.return_unit;
 };

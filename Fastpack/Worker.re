@@ -46,12 +46,12 @@ and complete = {
 };
 
 let start = (~project_root, ~output_dir) => {
-  let%lwt {Preprocessor.process, finalize, _} =
+  let%lwt preprocessor =
     Preprocessor.make(
-      ~configs=[],
       ~project_root,
       ~current_dir=Unix.getcwd(),
       ~output_dir,
+      ()
     );
 
   let get_module_type = stmts => {
@@ -637,7 +637,7 @@ let start = (~project_root, ~output_dir) => {
               location,
             );
           let%lwt (source, build_dependencies, files) =
-            process(location, source);
+            Preprocessor.run(location, source, preprocessor);
           let (
             workspace,
             static_dependencies,
@@ -687,7 +687,7 @@ let start = (~project_root, ~output_dir) => {
     parse();
   };
 
-  Lwt.finalize(() => parse(), finalize);
+  Lwt.finalize(() => parse(), () => Preprocessor.finalize(preprocessor));
 };
 
 module Reader = {

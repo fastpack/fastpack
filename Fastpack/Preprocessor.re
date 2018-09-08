@@ -3,17 +3,14 @@ module FS = FastpackUtil.FS;
 
 exception Error(string);
 
-type processor =
-  | Builtin
-  | Node(string);
-
+/* type processor = */
+/*   | Builtin */
+/*   | Node(string); */
 
 type t = {
-  process:
-    (Module.location, option(string)) =>
-    Lwt.t((string, list(string), list(string))),
-  configs: list(Config.Preprocessor.t),
-  finalize: unit => Lwt.t(unit),
+  project_root: string,
+  current_dir: string,
+  output_dir: string,
 };
 
 let all_transpilers =
@@ -41,17 +38,15 @@ let builtin = source =>
     }
   };
 
-let empty = {
-  process: (_, s) => Lwt.return((CCOpt.get_or(~default="", s), [], [])),
-  configs: [],
-  finalize: () => Lwt.return_unit,
-};
+/* let empty = { */
+/*   process: (_, s) => Lwt.return((CCOpt.get_or(~default="", s), [], [])), */
+/*   finalize: () => Lwt.return_unit, */
+/* }; */
 
-let transpile_all = {
-  process: (_, s) => builtin(s),
-  configs: [],
-  finalize: () => Lwt.return_unit,
-};
+/* let transpile_all = { */
+/*   process: (_, s) => builtin(s), */
+/*   finalize: () => Lwt.return_unit, */
+/* }; */
 
 module NodeServer = {
   let node_project_root = ref("");
@@ -185,79 +180,77 @@ module NodeServer = {
   let finalize = () => Lwt_pool.clear(pool);
 };
 
-let make = (~configs, ~project_root, ~current_dir, ~output_dir) => {
-  let process = (location, source) =>
-    switch (location) {
-    | Module.Main(_)
-    | Module.EmptyModule
-    | Module.Runtime =>
-      switch (source) {
-      | None =>
-        Error.ie(
-          "Unexpeceted absence of source for main / builtin / empty module",
-        )
-      | Some(source) => Lwt.return((source, [], []))
-      }
-    | Module.File({filename, preprocessors, _}) =>
-      let rec make_chain = (preprocessors, chain) =>
-        switch (preprocessors) {
-        | [] => chain
+let make = (~project_root, ~current_dir, ~output_dir, ()) =>
+  Lwt.return({project_root, current_dir, output_dir});
+
+let run = (location, source, preprocessor: t) =>
+  switch (location) {
+  | Module.Main(_)
+  | Module.EmptyModule
+  | Module.Runtime =>
+    switch (source) {
+    | None =>
+      Error.ie(
+        "Unexpeceted absence of source for main / builtin / empty module",
+      )
+    | Some(source) => Lwt.return((source, [], []))
+    }
+  | Module.File({filename, preprocessors, _}) =>
+    let rec make_chain = (preprocessors, chain) =>
+      switch (preprocessors) {
+      | [] => chain
+      | _ =>
+        let (loaders, rest) =
+          preprocessors |> List.take_drop_while(p => p != "builtin");
+
+        switch (loaders) {
+        | [] => make_chain(List.tl(rest), [builtin, ...chain])
         | _ =>
-          let (loaders, rest) =
-            preprocessors |> List.take_drop_while(p => p != "builtin");
-
-          switch (loaders) {
-          | [] => make_chain(List.tl(rest), [builtin, ...chain])
-          | _ =>
-            make_chain(
-              rest,
-              [
-                NodeServer.process(
-                  ~project_root,
-                  ~current_dir,
-                  ~output_dir,
-                  ~loaders,
-                  ~filename,
-                ),
-                ...chain,
-              ],
-            )
-          };
+          let {project_root, current_dir, output_dir} = preprocessor;
+          make_chain(
+            rest,
+            [
+              NodeServer.process(
+                ~project_root,
+                ~current_dir,
+                ~output_dir,
+                ~loaders,
+                ~filename,
+              ),
+              ...chain,
+            ],
+          );
         };
-
-      let preprocessors =
-        List.map(
-          ((p, opt)) =>
-            p
-            ++ (
-              if (opt != "") {
-                "?" ++ opt;
-              } else {
-                "";
-              }
-            ),
-          preprocessors,
-        );
-
-      let%lwt (source, deps, files) =
-        Lwt_list.fold_left_s(
-          ((source, deps, files), process) => {
-            let%lwt (source, more_deps, more_files) = process(source);
-            Lwt.return((Some(source), deps @ more_deps, files @ more_files));
-          },
-          (source, [], []),
-          make_chain(preprocessors, []),
-        );
-
-      switch (source) {
-      | None => Error.ie("Unexpected absence of source after processing")
-      | Some(source) => Lwt.return((source, deps, files))
       };
-    };
 
-  Lwt.return({
-    process,
-    configs,
-    finalize: NodeServer.finalize,
-  });
-};
+    let preprocessors =
+      List.map(
+        ((p, opt)) =>
+          p
+          ++ (
+            if (opt != "") {
+              "?" ++ opt;
+            } else {
+              "";
+            }
+          ),
+        preprocessors,
+      );
+
+    let%lwt (source, deps, files) =
+      Lwt_list.fold_left_s(
+        ((source, deps, files), process) => {
+          let%lwt (source, more_deps, more_files) = process(source);
+          Lwt.return((Some(source), deps @ more_deps, files @ more_files));
+        },
+        (source, [], []),
+        make_chain(preprocessors, []),
+      );
+
+    switch (source) {
+    | None => Error.ie("Unexpected absence of source after processing")
+    | Some(source) => Lwt.return((source, deps, files))
+    };
+  };
+
+let finalize = _ => NodeServer.finalize();
