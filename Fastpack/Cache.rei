@@ -8,7 +8,7 @@ and params = {
   mock: list((string, Config.Mock.t)),
   nodeModulesPaths: list(string),
   resolveExtension: list(string),
-  preprocess: list(Preprocessor.config),
+  preprocess: list(Config.Preprocessor.t),
 };
 
 let make: load => Lwt.t(t);

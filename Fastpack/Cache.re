@@ -12,7 +12,7 @@ and params = {
   mock: list((string, Config.Mock.t)),
   nodeModulesPaths: list(string),
   resolveExtension: list(string),
-  preprocess: list(Preprocessor.config),
+  preprocess: list(Config.Preprocessor.t),
 };
 
 type save =
@@ -77,7 +77,7 @@ let make = (load: load) =>
         String.concat(",", List.map(Config.Mock.to_string, mock)),
         String.concat(",", nodeModulesPaths),
         String.concat(",", resolveExtension),
-        String.concat(",", List.map(Preprocessor.to_string, preprocess)),
+        String.concat(",", List.map(Config.Preprocessor.toString, preprocess)),
       );
     let filename =
       FilePath.concat(

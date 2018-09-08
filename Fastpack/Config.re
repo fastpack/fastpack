@@ -41,6 +41,61 @@ module Reporter = {
     | Text;
 };
 
+module Preprocessor = {
+  type t = {
+    pattern_s: string,
+    pattern: Re.re,
+    processors: list(string),
+  };
+
+  let ofString = s => {
+    let (pattern_s, processors) =
+      switch (String.(s |> trim |> split_on_char(':'))) {
+      | []
+      | [""] => raise(Failure("Empty config"))
+      | [pattern_s]
+      | [pattern_s, ""] => (pattern_s, ["builtin"])
+      | [pattern_s, ...rest] =>
+        let processors =
+          String.(rest |> concat(":") |> split_on_char('!'))
+          |> List.filter_map(s => {
+               let s = String.trim(s);
+               s == "" ?
+                 None :
+                 (
+                   switch (String.split_on_char('?', s)) {
+                   | [] => raise(Failure("Empty processor"))
+                   | [processor] => Some(processor)
+                   | ["builtin", ""] => Some("builtin")
+                   | [processor, opts] when processor != "builtin" =>
+                     Some(processor ++ "?" ++ opts)
+                   | _ => raise(Failure("Incorrect preprocessor config"))
+                   }
+                 );
+             });
+
+        (pattern_s, processors);
+      };
+
+    let pattern =
+      try (Re_posix.compile_pat(pattern_s)) {
+      | Re_posix.Parse_error =>
+        raise(Failure("Pattern regexp parse error. Use POSIX syntax"))
+      };
+
+    {pattern_s, pattern, processors};
+  };
+
+  let toString = ({pattern_s, processors, _}) =>
+    Printf.sprintf("%s:%s", pattern_s, String.concat("!", processors));
+  let parse = s =>
+    try (Result.Ok((false, ofString(s)))) {
+    | Failure(msg) => Result.Error(`Msg(msg))
+    };
+
+  let print = (ppf, (_, opt)) => Format.fprintf(ppf, "%s", toString(opt));
+};
+
 type t = {
   entryPoints: list(string),
   outputDir: string,
@@ -52,7 +107,7 @@ type t = {
   resolveExtension: list(string),
   target: Target.t,
   cache: Cache.t,
-  preprocess: list(Preprocessor.config),
+  preprocess: list(Preprocessor.t),
   postprocess: list(string),
   report: Reporter.t,
   debug: bool,
@@ -260,18 +315,7 @@ let term = {
   };
 
   let preprocessT = {
-    module P = Preprocessor;
-    let preprocess = {
-      let parse = s =>
-        try (Result.Ok((false, P.of_string(s)))) {
-        | Failure(msg) => Result.Error(`Msg(msg))
-        };
-
-      let print = (ppf, (_, opt)) =>
-        Format.fprintf(ppf, "%s", P.to_string(opt));
-
-      Arg.conv((parse, print));
-    };
+    let preprocess = Arg.conv(Preprocessor.(parse, print));
 
     let doc =
       "Preprocess modules matching the PATTERN with the PROCESSOR. Optionally,"

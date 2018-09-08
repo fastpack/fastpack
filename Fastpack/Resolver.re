@@ -1,11 +1,6 @@
 module FS = FastpackUtil.FS;
 module M = Map.Make(String);
 
-type t = {
-  resolve:
-    (~basedir: string, string) => Lwt.t((Module.location, list(string))),
-};
-
 exception Error(string);
 
 [@deriving ord]
@@ -25,6 +20,19 @@ module RequestSet =
     type t = request;
     let compare = compare_request;
   });
+
+type t = {
+  current_dir: string,
+  project_root: string,
+  mock: list((string, Config.Mock.t)),
+  mock_map: RequestMap.t(request),
+  node_modules_paths: list(string),
+  extensions: list(string),
+  preprocessors: list(Config.Preprocessor.t),
+  cache: Cache.t,
+  preprocessorsCached: Hashtbl.t(string, list(string)),
+  packageJsonCached: Hashtbl.t(string, Package.t),
+};
 
 let mock_to_string = mock =>
   switch (mock) {
@@ -46,6 +54,46 @@ let request_to_string = req =>
     )
   };
 
+let normalize_request = (~basedir: string, request) =>
+  Run.Syntax.(
+    if (Module.is_internal(request)) {
+      return(InternalRequest(request));
+    } else {
+      switch (request) {
+      | "" => error("Empty request")
+      | _ =>
+        switch (request.[0]) {
+        | '.' => return(PathRequest(FS.abs_path(basedir, request)))
+        | '/' => return(PathRequest(request))
+        | '@' =>
+          switch (String.split_on_char('/', request)) {
+          | []
+          | [_] =>
+            error(Printf.sprintf("Bad scoped package name: %s", request))
+          | [scope, package] =>
+            return(PackageRequest((scope ++ "/" ++ package, None)))
+          | [scope, package, ...rest] =>
+            return(
+              PackageRequest((
+                scope ++ "/" ++ package,
+                Some(String.concat("/", rest)),
+              )),
+            )
+          }
+        | _ =>
+          switch (String.split_on_char('/', request)) {
+          | [] => error("Bad package request")
+          | [package] => return(PackageRequest((package, None)))
+          | [package, ...rest] =>
+            return(
+              PackageRequest((package, Some(String.concat("/", rest)))),
+            )
+          }
+        }
+      };
+    }
+  );
+
 let make =
     (
       ~project_root: string,
@@ -53,49 +101,10 @@ let make =
       ~mock: list((string, Config.Mock.t)),
       ~node_modules_paths: list(string),
       ~extensions: list(string),
-      ~preprocessor: Preprocessor.t,
+      ~preprocessors: list(Config.Preprocessor.t),
       ~cache: Cache.t,
+      (),
     ) => {
-  let normalize_request = (~basedir: string, request) =>
-    Run.Syntax.(
-      if (Module.is_internal(request)) {
-        return(InternalRequest(request));
-      } else {
-        switch (request) {
-        | "" => error("Empty request")
-        | _ =>
-          switch (request.[0]) {
-          | '.' => return(PathRequest(FS.abs_path(basedir, request)))
-          | '/' => return(PathRequest(request))
-          | '@' =>
-            switch (String.split_on_char('/', request)) {
-            | []
-            | [_] =>
-              error(Printf.sprintf("Bad scoped package name: %s", request))
-            | [scope, package] =>
-              return(PackageRequest((scope ++ "/" ++ package, None)))
-            | [scope, package, ...rest] =>
-              return(
-                PackageRequest((
-                  scope ++ "/" ++ package,
-                  Some(String.concat("/", rest)),
-                )),
-              )
-            }
-          | _ =>
-            switch (String.split_on_char('/', request)) {
-            | [] => error("Bad package request")
-            | [package] => return(PackageRequest((package, None)))
-            | [package, ...rest] =>
-              return(
-                PackageRequest((package, Some(String.concat("/", rest)))),
-              )
-            }
-          }
-        };
-      }
-    );
-
   let mock_map = {
     let build_mock_map = () =>
       Run.Syntax.(
@@ -137,28 +146,66 @@ let make =
     | Error(error) => raise(Error(Run.formatError(error)))
     };
   };
+  {
+    project_root,
+    current_dir,
+    mock,
+    mock_map,
+    node_modules_paths,
+    extensions,
+    preprocessors,
+    cache,
+    preprocessorsCached: Hashtbl.create(5000),
+    packageJsonCached: Hashtbl.create(500),
+  };
+};
+
+let resolve = (~basedir, request, resolver) => {
+  let get_preprocessors = filename =>
+    switch (Hashtbl.find_opt(resolver.preprocessorsCached, filename)) {
+    | Some(preprocessors) => preprocessors
+    | None =>
+      let relname = FS.relative_path(resolver.current_dir, filename);
+      let preprocessors =
+        resolver.preprocessors
+        |> List.fold_left(
+             (acc, {Config.Preprocessor.pattern, processors, _}) =>
+               switch (acc) {
+               | [] =>
+                 switch (Re.exec_opt(pattern, relname)) {
+                 | None => []
+                 | Some(_) => processors
+                 }
+               | _ => acc
+               },
+             [],
+           )
+        |> List.rev;
+
+      Hashtbl.replace(resolver.preprocessorsCached, filename, preprocessors);
+      preprocessors;
+    };
 
   let resolve_mock = normalized_request =>
-    RequestMap.get(normalized_request, mock_map);
+    RequestMap.get(normalized_request, resolver.mock_map);
 
-  let package_json_cache = ref(M.empty);
   let rec find_package = dir =>
-    switch (M.get(dir, package_json_cache^)) {
+    switch (Hashtbl.find_opt(resolver.packageJsonCached, dir)) {
     | Some(package) => Lwt.return(package)
     | None =>
       let filename = FilePath.concat(dir, "package.json");
-      switch%lwt (Cache.File.exists(filename, cache)) {
+      switch%lwt (Cache.File.exists(filename, resolver.cache)) {
       | true =>
-        let%lwt content = Cache.File.readExisting(filename, cache);
+        let%lwt content = Cache.File.readExisting(filename, resolver.cache);
         let package = Package.of_json(filename, content);
-        package_json_cache := M.add(dir, package, package_json_cache^);
+        Hashtbl.replace(resolver.packageJsonCached, dir, package);
         Lwt.return(package);
       | false =>
-        if (dir == current_dir) {
+        if (dir == resolver.current_dir) {
           Lwt.return(Package.empty);
         } else {
           let%lwt package = find_package(FilePath.dirname(dir));
-          package_json_cache := M.add(dir, package, package_json_cache^);
+          Hashtbl.replace(resolver.packageJsonCached, dir, package);
           Lwt.return(package);
         }
       };
@@ -180,7 +227,7 @@ let make =
         RunAsync.(
           withContext(
             context,
-            switch%lwt (Cache.File.stat(filename, cache)) {
+            switch%lwt (Cache.File.stat(filename, resolver.cache)) {
             | Some({Unix.st_kind: Lwt_unix.S_REG, _}) => return(filename)
             | _ => withContext("...no.", resolve'(rest))
             },
@@ -188,7 +235,7 @@ let make =
         );
       };
 
-    resolve'(["", ...extensions]);
+    resolve'(["", ...resolver.extensions]);
   }
   and resolve_directory = path => {
     let context = Printf.sprintf("Is directory? '%s'", path);
@@ -196,15 +243,16 @@ let make =
     RunAsync.(
       withContext(
         context,
-        switch%lwt (Cache.File.stat(path, cache)) {
+        switch%lwt (Cache.File.stat(path, resolver.cache)) {
         | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) =>
           withContext(
             "...yes.",
             {
               let package_json = FilePath.concat(path, "package.json");
-              switch%lwt (Cache.File.exists(package_json, cache)) {
+              switch%lwt (Cache.File.exists(package_json, resolver.cache)) {
               | true =>
-                let%lwt content = Cache.File.readExisting(package_json, cache);
+                let%lwt content =
+                  Cache.File.readExisting(package_json, resolver.cache);
                 let {Package.entry_point, _} =
                   Package.of_json(package_json, content);
                 resolve_file(FS.abs_path(path, entry_point));
@@ -220,7 +268,7 @@ let make =
 
   let find_package_path_in_node_modules = (~basedir, package_name) => {
     let try_paths =
-      node_modules_paths
+      resolver.node_modules_paths
       |> List.map(node_modules_path =>
            switch (node_modules_path.[0]) {
            | '/' => [FilePath.concat(node_modules_path, package_name)]
@@ -232,7 +280,7 @@ let make =
                    package_name,
                  );
 
-               if (dir == project_root) {
+               if (dir == resolver.project_root) {
                  [package_path];
                } else {
                  [package_path, ...FilePath.dirname(dir) |> gen_paths];
@@ -252,7 +300,7 @@ let make =
         RunAsync.(
           withContext(
             context,
-            switch%lwt (Cache.File.stat(path, cache)) {
+            switch%lwt (Cache.File.stat(path, resolver.cache)) {
             | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) => return(path)
             | _ => withContext("...no.", exists'(rest))
             },
@@ -275,7 +323,6 @@ let make =
     | None => resolved
     | Some(filename) => withDependencies([filename], resolved)
     };
-
   let rec resolve_simple_request = (~seen=RequestSet.empty, ~basedir, request) => {
     open RunAsync.Syntax;
     let%bind normalized_request =
@@ -329,7 +376,7 @@ let make =
                         | Some(PathRequest(path)) =>
                           withContext(
                             Printf.sprintf("...yes. '%s'", path),
-                            switch%lwt (Cache.File.stat(path, cache)) {
+                            switch%lwt (Cache.File.stat(path, resolver.cache)) {
                             | Some({Unix.st_kind: Lwt_unix.S_REG, _}) =>
                               return((path, []))
                             | _ => error("File not found: " ++ path)
@@ -485,94 +532,79 @@ let make =
         );
       }
     );
+  let resolve' = () => {
+    open RunAsync.Syntax;
+    let (parts, preprocess) = {
+      let rec to_parts = (~preprocess=true) =>
+        fun
+        | [] => ([], false)
+        | ["-", ...rest]
+        | ["", "", ...rest]
+        | ["", ...rest] => to_parts(~preprocess=false, rest)
+        | parts => (parts, preprocess);
 
-  let resolve = (~basedir, request) => {
-    let resolve' = () => {
-      open RunAsync.Syntax;
-      let (parts, preprocess) = {
-        let rec to_parts = (~preprocess=true) =>
-          fun
-          | [] => ([], false)
-          | ["-", ...rest]
-          | ["", "", ...rest]
-          | ["", ...rest] => to_parts(~preprocess=false, rest)
-          | parts => (parts, preprocess);
-
-        to_parts(String.split_on_char('!', request));
-      };
-
-      switch (List.rev(parts)) {
-      | [] => error("Empty request")
-      | [filename, ...preprocessors] =>
-        let resolve_preprocessors = preprocessors => {
-          let rec resolve_preprocessors' = (
-            fun
-            | [] => return(([], []))
-            | [request, ...rest] => {
-                let%bind (resolved, dependencies) =
-                  resolve_preprocessor(~basedir, request);
-
-                let%bind (all_resolved, dependencies) =
-                  withDependencies(
-                    dependencies,
-                    resolve_preprocessors'(rest),
-                  );
-
-                return(([resolved, ...all_resolved], dependencies));
-              }
-          );
-
-          let context =
-            Printf.sprintf(
-              "Resolving preprocessors '%s'",
-              String.concat("!", preprocessors),
-            );
-
-          RunAsync.withContext(
-            context,
-            resolve_preprocessors'(preprocessors),
-          );
-        };
-
-        switch (filename) {
-        | "" =>
-          let%bind (preprocessors, dependencies) =
-            resolve_preprocessors(preprocessors);
-          return((None, dependencies, List.rev(preprocessors)));
-        | _ =>
-          let%bind (resolved, dependencies) =
-            resolve_simple_request(~basedir, filename);
-
-          let configured_preprocessors =
-            preprocess ? preprocessor.get_processors(resolved) : [];
-
-          let%bind (preprocessors, dependencies) =
-            withDependencies(
-              dependencies,
-              resolve_preprocessors(
-                List.rev(configured_preprocessors) @ List.rev(preprocessors),
-              ),
-            );
-
-          return((Some(resolved), dependencies, preprocessors));
-        };
-      };
+      to_parts(String.split_on_char('!', request));
     };
 
-    let context =
-      Printf.sprintf(
-        "Resolving '%s'. Base directory: '%s'",
-        request,
-        basedir,
-      );
+    switch (List.rev(parts)) {
+    | [] => error("Empty request")
+    | [filename, ...preprocessors] =>
+      let resolve_preprocessors = preprocessors => {
+        let rec resolve_preprocessors' = (
+          fun
+          | [] => return(([], []))
+          | [request, ...rest] => {
+              let%bind (resolved, dependencies) =
+                resolve_preprocessor(~basedir, request);
 
-    switch%lwt (RunAsync.(withContext(context, resolve'()))) {
-    | Ok((filename, dependencies, preprocessors)) =>
-      let location = Module.resolved_file2(~preprocessors, filename);
-      Lwt.return((location, dependencies));
-    | Error(error) => Lwt.fail(Error(Run.formatError(error)))
+              let%bind (all_resolved, dependencies) =
+                withDependencies(dependencies, resolve_preprocessors'(rest));
+
+              return(([resolved, ...all_resolved], dependencies));
+            }
+        );
+
+        let context =
+          Printf.sprintf(
+            "Resolving preprocessors '%s'",
+            String.concat("!", preprocessors),
+          );
+
+        RunAsync.withContext(context, resolve_preprocessors'(preprocessors));
+      };
+
+      switch (filename) {
+      | "" =>
+        let%bind (preprocessors, dependencies) =
+          resolve_preprocessors(preprocessors);
+        return((None, dependencies, List.rev(preprocessors)));
+      | _ =>
+        let%bind (resolved, dependencies) =
+          resolve_simple_request(~basedir, filename);
+
+        let configured_preprocessors =
+          preprocess ? get_preprocessors(resolved) : [];
+
+        let%bind (preprocessors, dependencies) =
+          withDependencies(
+            dependencies,
+            resolve_preprocessors(
+              List.rev(configured_preprocessors) @ List.rev(preprocessors),
+            ),
+          );
+
+        return((Some(resolved), dependencies, preprocessors));
+      };
     };
   };
 
-  {resolve: resolve};
+  let context =
+    Printf.sprintf("Resolving '%s'. Base directory: '%s'", request, basedir);
+
+  switch%lwt (RunAsync.(withContext(context, resolve'()))) {
+  | Ok((filename, dependencies, preprocessors)) =>
+    let location = Module.resolved_file2(~preprocessors, filename);
+    Lwt.return((location, dependencies));
+  | Error(error) => Lwt.fail(Error(Run.formatError(error)))
+  };
 };
