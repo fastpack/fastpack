@@ -75,7 +75,7 @@
           "name": "zed",
           "version": "1.6",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opam-devel@lists.ocaml.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/diml/zed\"\nbug-reports: \"https://github.com/diml/zed/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"base-bytes\"\n  \"camomile\" {>= \"0.8\"}\n  \"react\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/diml/zed.git\"",
+            "opam-version: \"1.2\"\nname: \"zed\"\nversion: \"1.6\"\nmaintainer: \"opam-devel@lists.ocaml.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/diml/zed\"\nbug-reports: \"https://github.com/diml/zed/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"base-bytes\"\n  \"camomile\" {>= \"0.8\"}\n  \"react\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/diml/zed.git\"",
           "override": null
         }
       },
@@ -98,7 +98,7 @@
           "name": "yojson",
           "version": "1.4.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nhomepage: \"http://mjambon.com/yojson.html\"\nbug-reports: \"https://github.com/mjambon/yojson/issues\"\ndepends: [\n  \"jbuilder\" {build}\n  \"cppo\" {build}\n  \"easy-format\"\n  \"biniou\" {>= \"1.2.0\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/yojson.git\"",
+            "opam-version: \"1.2\"\nname: \"yojson\"\nversion: \"1.4.0\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nhomepage: \"http://mjambon.com/yojson.html\"\nbug-reports: \"https://github.com/mjambon/yojson/issues\"\ndepends: [\n  \"jbuilder\" {build}\n  \"cppo\" {build}\n  \"easy-format\"\n  \"biniou\" {>= \"1.2.0\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/yojson.git\"",
           "override": null
         }
       },
@@ -121,7 +121,7 @@
           "name": "wtf8",
           "version": "1.0.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Marshall Roch <mroch@fb.com>\"\nauthors: \"Marshall Roch <mroch@fb.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/flowtype/ocaml-wtf8\"\ndoc: \"https://github.com/flowtype/ocaml-wtf8\"\nbug-reports: \"https://github.com/flowtype/ocaml-wtf8/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/flowtype/ocaml-wtf8.git\"",
+            "opam-version: \"1.2\"\nname: \"wtf8\"\nversion: \"1.0.1\"\nmaintainer: \"Marshall Roch <mroch@fb.com>\"\nauthors: \"Marshall Roch <mroch@fb.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/flowtype/ocaml-wtf8\"\ndoc: \"https://github.com/flowtype/ocaml-wtf8\"\nbug-reports: \"https://github.com/flowtype/ocaml-wtf8/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/flowtype/ocaml-wtf8.git\"",
           "override": null
         }
       },
@@ -188,7 +188,7 @@
           "name": "variantslib",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/variantslib\"\nbug-reports: \"https://github.com/janestreet/variantslib/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/variantslib.git\"",
+            "opam-version: \"1.2\"\nname: \"variantslib\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/variantslib\"\nbug-reports: \"https://github.com/janestreet/variantslib/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/variantslib.git\"",
           "override": null
         }
       },
@@ -212,7 +212,7 @@
           "name": "uutf",
           "version": "1.0.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"unicode\" \"text\" \"utf-8\" \"utf-16\" \"codec\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/uutf\"\ndoc: \"http://erratique.ch/software/uutf/doc/Uutf\"\nbug-reports: \"https://github.com/dbuenzli/uutf/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"uchar\"\n]\ndepopts: [\"cmdliner\"]\nconflicts: [\n  \"cmdliner\" {< \"0.9.6\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\"\n  \"pkg/pkg.ml\"\n  \"build\"\n  \"--pinned\"\n  \"%{pinned}%\"\n  \"--with-cmdliner\"\n  \"%{cmdliner:installed}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/uutf.git\"",
+            "opam-version: \"1.2\"\nname: \"uutf\"\nversion: \"1.0.1\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"unicode\" \"text\" \"utf-8\" \"utf-16\" \"codec\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/uutf\"\ndoc: \"http://erratique.ch/software/uutf/doc/Uutf\"\nbug-reports: \"https://github.com/dbuenzli/uutf/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"uchar\"\n]\ndepopts: [\"cmdliner\"]\nconflicts: [\n  \"cmdliner\" {< \"0.9.6\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\"\n  \"pkg/pkg.ml\"\n  \"build\"\n  \"--pinned\"\n  \"%{pinned}%\"\n  \"--with-cmdliner\"\n  \"%{cmdliner:installed}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/uutf.git\"",
           "override": null
         }
       },
@@ -230,13 +230,27 @@
           "archive:https://opam.ocaml.org/archives/utop.2.2.0+opam.tar.gz#md5:0f638cca878347aaae983d79104c34d1",
           "archive:https://github.com/diml/utop/releases/download/2.2.0/utop-2.2.0.tbz#md5:c8e4805883ce27a2ef27b0e4322d6f04"
         ],
-        "files": [],
+        "files": [
+          {
+            "name": "_esy/utop-2.2.0.patch",
+            "content":
+              "--- ./src/lib/uTop_main.ml\n+++ ./src/lib/uTop_main.ml\n@@ -1308,6 +1308,9 @@\n   (* We lost the terminal. *)\n   catch Sys.sighup;\n   (* Termination request. *)\n+  if Sys.win32 && !emacs_mode then\n+    Sys.set_signal Sys.sigterm Sys.Signal_ignore\n+  else\n   catch Sys.sigterm\n \n let load_inputrc () =\n--- ./src/top/expunge/expunge.ml\n+++ ./src/top/expunge/expunge.ml\n@@ -3,7 +3,9 @@\n \n let run_and_read_lines args =\n   let cmd = String.concat ~sep:\" \" (List.map args ~f:Filename.quote) in\n+  let cmd = if Sys.win32 then \"\\\"\" ^ cmd ^ \"\\\"\" else cmd in\n   let ic = Unix.open_process_in cmd in\n+  set_binary_mode_in ic false;\n   let rec loop acc =\n     match input_line ic with\n     | exception End_of_file -> List.rev acc\n@@ -60,6 +62,7 @@\n       (Filename.quote dst)\n       (String.concat ~sep:\" \" (S.elements modules_to_keep))\n   in\n+  let cmdline = if Sys.win32 then \"\\\"\" ^ cmdline ^ \"\\\"\" else cmdline in\n   if verbose then prerr_endline cmdline;\n   exit (Sys.command cmdline)\n \n"
+          }
+        ],
         "opam": {
           "name": "utop",
           "version": "2.2.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"jeremie@dimino.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/diml/utop\"\nbug-reports: \"https://github.com/diml/utop/issues\"\ndepends: [\n  \"base-unix\"\n  \"base-threads\"\n  \"ocamlfind\" {>= \"1.7.2\"}\n  \"lambda-term\" {>= \"1.2\"}\n  \"lwt\"\n  \"lwt_react\"\n  \"camomile\"\n  \"react\" {>= \"1.0.0\"}\n  \"cppo\" {build & >= \"1.1.2\"}\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/diml/utop.git\"",
-          "override": null
+            "opam-version: \"1.2\"\nname: \"utop\"\nversion: \"2.2.0\"\nmaintainer: \"jeremie@dimino.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/diml/utop\"\nbug-reports: \"https://github.com/diml/utop/issues\"\ndepends: [\n  \"base-unix\"\n  \"base-threads\"\n  \"ocamlfind\" {>= \"1.7.2\"}\n  \"lambda-term\" {>= \"1.2\"}\n  \"lwt\"\n  \"lwt_react\"\n  \"camomile\"\n  \"react\" {>= \"1.0.0\"}\n  \"cppo\" {build & >= \"1.1.2\"}\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/diml/utop.git\"",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < _esy/utop-2.2.0.patch' : 'true' }"
+              ],
+              [ "jbuilder", "build", "-p", "utop", "-j", "4" ]
+            ]
+          }
         }
       },
       "dependencies": [
@@ -261,7 +275,7 @@
           "name": "uri",
           "version": "1.9.6",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"sheets@alum.mit.edu\"\nauthors: [\"Anil Madhavapeddy\" \"David Sheets\" \"Rudi Grinberg\"]\nlicense: \"ISC\"\ntags: [\"url\" \"uri\" \"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-uri\"\nbug-reports: \"https://github.com/mirage/ocaml-uri/issues\"\ndepends: [\n  \"base-bytes\"\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n  \"ounit\" {test & >= \"1.0.2\"}\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"re\"\n  \"sexplib\" {>= \"v0.9.0\"}\n  \"stringext\" {>= \"1.4.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/mirage/ocaml-uri.git\"",
+            "opam-version: \"1.2\"\nname: \"uri\"\nversion: \"1.9.6\"\nmaintainer: \"sheets@alum.mit.edu\"\nauthors: [\"Anil Madhavapeddy\" \"David Sheets\" \"Rudi Grinberg\"]\nlicense: \"ISC\"\ntags: [\"url\" \"uri\" \"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-uri\"\nbug-reports: \"https://github.com/mirage/ocaml-uri/issues\"\ndepends: [\n  \"base-bytes\"\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n  \"ounit\" {test & >= \"1.0.2\"}\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"re\"\n  \"sexplib\" {>= \"v0.9.0\"}\n  \"stringext\" {>= \"1.4.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/mirage/ocaml-uri.git\"",
           "override": null
         }
       },
@@ -285,7 +299,7 @@
           "name": "uchar",
           "version": "0.0.2",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"typeof OCaml system\"\ntags: [\"text\" \"character\" \"unicode\" \"compatibility\" \"org:ocaml.org\"]\nhomepage: \"http://ocaml.org\"\ndoc: \"https://ocaml.github.io/uchar/\"\nbug-reports: \"https://github.com/ocaml/uchar/issues\"\ndepends: [\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"3.12.0\"\nbuild: [\n  [\"ocaml\" \"pkg/git.ml\"]\n  [\n    \"ocaml\"\n    \"pkg/build.ml\"\n    \"native=%{ocaml-native}%\"\n    \"native-dynlink=%{ocaml-native-dynlink}%\"\n  ]\n]\ndev-repo: \"git+https://github.com/ocaml/uchar.git\"",
+            "opam-version: \"1.2\"\nname: \"uchar\"\nversion: \"0.0.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"typeof OCaml system\"\ntags: [\"text\" \"character\" \"unicode\" \"compatibility\" \"org:ocaml.org\"]\nhomepage: \"http://ocaml.org\"\ndoc: \"https://ocaml.github.io/uchar/\"\nbug-reports: \"https://github.com/ocaml/uchar/issues\"\ndepends: [\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"3.12.0\"\nbuild: [\n  [\"ocaml\" \"pkg/git.ml\"]\n  [\n    \"ocaml\"\n    \"pkg/build.ml\"\n    \"native=%{ocaml-native}%\"\n    \"native-dynlink=%{ocaml-native-dynlink}%\"\n  ]\n]\ndev-repo: \"git+https://github.com/ocaml/uchar.git\"",
           "override": null
         }
       },
@@ -306,7 +320,7 @@
           "name": "topkg",
           "version": "0.9.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"packaging\" \"ocamlbuild\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/topkg\"\ndoc: \"http://erratique.ch/software/topkg/doc\"\nbug-reports: \"https://github.com/dbuenzli/topkg/issues\"\ndepends: [\n  \"ocamlfind\" {build & >= \"1.6.1\"}\n  \"ocamlbuild\"\n  \"result\"\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pkg-name\" name \"--dev-pkg\" \"%{pinned}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/topkg.git\"",
+            "opam-version: \"1.2\"\nname: \"topkg\"\nversion: \"0.9.1\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"packaging\" \"ocamlbuild\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/topkg\"\ndoc: \"http://erratique.ch/software/topkg/doc\"\nbug-reports: \"https://github.com/dbuenzli/topkg/issues\"\ndepends: [\n  \"ocamlfind\" {build & >= \"1.6.1\"}\n  \"ocamlbuild\"\n  \"result\"\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pkg-name\" name \"--dev-pkg\" \"%{pinned}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/topkg.git\"",
           "override": null
         }
       },
@@ -328,7 +342,7 @@
           "name": "stringext",
           "version": "1.5.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"rudi.grinberg@gmail.com\"\nauthors: \"Rudi Grinberg\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/rgrinberg/stringext\"\nbug-reports: \"https://github.com/rgrinberg/stringext/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"ounit\" {test}\n  \"qtest\" {test & >= \"2.2\"}\n  \"base-bytes\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/rgrinberg/stringext.git\"",
+            "opam-version: \"1.2\"\nname: \"stringext\"\nversion: \"1.5.0\"\nmaintainer: \"rudi.grinberg@gmail.com\"\nauthors: \"Rudi Grinberg\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/rgrinberg/stringext\"\nbug-reports: \"https://github.com/rgrinberg/stringext/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"ounit\" {test}\n  \"qtest\" {test & >= \"2.2\"}\n  \"base-bytes\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/rgrinberg/stringext.git\"",
           "override": null
         }
       },
@@ -350,7 +364,7 @@
           "name": "stdio",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/stdio\"\nbug-reports: \"https://github.com/janestreet/stdio/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/stdio.git\"",
+            "opam-version: \"1.2\"\nname: \"stdio\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/stdio\"\nbug-reports: \"https://github.com/janestreet/stdio/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/stdio.git\"",
           "override": null
         }
       },
@@ -379,7 +393,7 @@
           "name": "ssl",
           "version": "0.5.5",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Christopher Zimmermann <christopher@gmerlin.de>\"\nauthors: \"Samuel Mimram <samuel.mimram@ens-lyon.org>\"\nhomepage: \"https://github.com/savonet/ocaml-ssl\"\nbug-reports: \"https://github.com/savonet/ocaml-ssl/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"conf-which\" {build}\n  \"conf-openssl\"\n  \"base-bytes\"\n]\nbuild: [\n  [\"./configure\" \"--prefix\" prefix] {os != \"darwin\"}\n  [\"./osx-configure.sh\" prefix] {os = \"darwin\"}\n  [make]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" name]\ndev-repo: \"git+https://github.com/savonet/ocaml-ssl.git\"",
+            "opam-version: \"1.2\"\nname: \"ssl\"\nversion: \"0.5.5\"\nmaintainer: \"Christopher Zimmermann <christopher@gmerlin.de>\"\nauthors: \"Samuel Mimram <samuel.mimram@ens-lyon.org>\"\nhomepage: \"https://github.com/savonet/ocaml-ssl\"\nbug-reports: \"https://github.com/savonet/ocaml-ssl/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"conf-which\" {build}\n  \"conf-openssl\"\n  \"base-bytes\"\n]\nbuild: [\n  [\"./configure\" \"--prefix\" prefix] {os != \"darwin\"}\n  [\"./osx-configure.sh\" prefix] {os = \"darwin\"}\n  [make]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" name]\ndev-repo: \"git+https://github.com/savonet/ocaml-ssl.git\"",
           "override": {
             "build": [
               "sed -i'' -e 's/OCAMLFIND_LDCONF=.*/OCAMLFIND_LDCONF=\"ignore\"/g' ./configure",
@@ -408,7 +422,7 @@
           "name": "sexplib0",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/sexplib0\"\nbug-reports: \"https://github.com/janestreet/sexplib0/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n]\nconflicts: [\n  \"sexplib\" {< \"v0.11\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/sexplib0.git\"",
+            "opam-version: \"1.2\"\nname: \"sexplib0\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/sexplib0\"\nbug-reports: \"https://github.com/janestreet/sexplib0/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n]\nconflicts: [\n  \"sexplib\" {< \"v0.11\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/sexplib0.git\"",
           "override": null
         }
       },
@@ -429,7 +443,7 @@
           "name": "sexplib",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/sexplib\"\nbug-reports: \"https://github.com/janestreet/sexplib/issues\"\ndepends: [\n  \"parsexp\" {>= \"v0.11\" & < \"v0.12\"}\n  \"sexplib0\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"num\"\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/sexplib.git\"",
+            "opam-version: \"1.2\"\nname: \"sexplib\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/sexplib\"\nbug-reports: \"https://github.com/janestreet/sexplib/issues\"\ndepends: [\n  \"parsexp\" {>= \"v0.11\" & < \"v0.12\"}\n  \"sexplib0\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"num\"\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/sexplib.git\"",
           "override": null
         }
       },
@@ -452,7 +466,7 @@
           "name": "sequence",
           "version": "1.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"simon.cruanes.2007@m4x.org\"\nauthors: \"Simon Cruanes\"\nlicense: \"BSD-2-clauses\"\ntags: [\"sequence\" \"iterator\" \"iter\" \"fold\"]\nhomepage: \"https://github.com/c-cube/sequence/\"\ndoc: \"https://c-cube.github.io/sequence/\"\nbug-reports: \"https://github.com/c-cube/sequence/issues\"\ndepends: [\n  \"base-bytes\"\n  \"result\"\n  \"jbuilder\" {build}\n  \"qcheck\" {test}\n  \"qtest\" {test}\n]\ndepopts: [\"base-bigarray\"]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/c-cube/sequence.git\"\nbuild-doc: [\"jbuilder\" \"build\" \"@doc\"]",
+            "opam-version: \"1.2\"\nname: \"sequence\"\nversion: \"1.1\"\nmaintainer: \"simon.cruanes.2007@m4x.org\"\nauthors: \"Simon Cruanes\"\nlicense: \"BSD-2-clauses\"\ntags: [\"sequence\" \"iterator\" \"iter\" \"fold\"]\nhomepage: \"https://github.com/c-cube/sequence/\"\ndoc: \"https://c-cube.github.io/sequence/\"\nbug-reports: \"https://github.com/c-cube/sequence/issues\"\ndepends: [\n  \"base-bytes\"\n  \"result\"\n  \"jbuilder\" {build}\n  \"qcheck\" {test}\n  \"qtest\" {test}\n]\ndepopts: [\"base-bigarray\"]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/c-cube/sequence.git\"\nbuild-doc: [\"jbuilder\" \"build\" \"@doc\"]",
           "override": null
         }
       },
@@ -466,7 +480,7 @@
         "name": "@opam/sedlex",
         "version": "opam:1.99.4",
         "source": [
-          "archive:https://opam.ocaml.org/archives/sedlex.1.99.4+opam.tar.gz#md5:3e6ff1d62d981f8c2637b6ab332505ad",
+          "archive:https://opam.ocaml.org/archives/sedlex.1.99.4+opam.tar.gz#md5:2055b6183a0eacf404361fb058fcff9e",
           "archive:https://github.com/alainfrisch/sedlex/archive/v1.99.4.tar.gz#md5:f621d80e36cda2548528766f31b16b12"
         ],
         "files": [],
@@ -474,14 +488,14 @@
           "name": "sedlex",
           "version": "1.99.4",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Alain Frisch <alain.frisch@lexifi.com>\"\nauthors: \"Alain Frisch <alain.frisch@lexifi.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/alainfrisch/sedlex\"\nbug-reports: \"https://github.com/alainfrisch/sedlex/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ppx_tools_versioned\"\n  \"ocaml-migrate-parsetree\"\n  \"gen\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [make \"all\"]\n  [make \"opt\"]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"sedlex\"]\ndev-repo: \"git+https://github.com/alainfrisch/sedlex.git\"",
+            "opam-version: \"1.2\"\nname: \"sedlex\"\nversion: \"1.99.4\"\nmaintainer: \"Alain Frisch <alain.frisch@lexifi.com>\"\nauthors: \"Alain Frisch <alain.frisch@lexifi.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/alainfrisch/sedlex\"\nbug-reports: \"https://github.com/alainfrisch/sedlex/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ppx_tools_versioned\" {< \"5.2.1\"}\n  \"ocaml-migrate-parsetree\"\n  \"gen\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [make \"all\"]\n  [make \"opt\"]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"sedlex\"]\ndev-repo: \"git+https://github.com/alainfrisch/sedlex.git\"",
           "override": null
         }
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/gen@opam:0.5.1",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
-        "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.2"
+        "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.1"
       ]
     },
     "@opam/result@opam:1.3": {
@@ -497,7 +511,7 @@
           "name": "result",
           "version": "1.3",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/janestreet/result\"\nbug-reports: \"https://github.com/janestreet/result/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta11\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/result.git\"",
+            "opam-version: \"1.2\"\nname: \"result\"\nversion: \"1.3\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/janestreet/result\"\nbug-reports: \"https://github.com/janestreet/result/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta11\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/result.git\"",
           "override": null
         }
       },
@@ -518,7 +532,7 @@
           "name": "react",
           "version": "1.2.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"reactive\" \"declarative\" \"signal\" \"event\" \"frp\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/react\"\ndoc: \"http://erratique.ch/software/react/doc/React\"\nbug-reports: \"https://github.com/dbuenzli/react/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build & >= \"0.9.0\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--dev-pkg\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/react.git\"",
+            "opam-version: \"1.2\"\nname: \"react\"\nversion: \"1.2.1\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"reactive\" \"declarative\" \"signal\" \"event\" \"frp\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/react\"\ndoc: \"http://erratique.ch/software/react/doc/React\"\nbug-reports: \"https://github.com/dbuenzli/react/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build & >= \"0.9.0\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--dev-pkg\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/react.git\"",
           "override": null
         }
       },
@@ -540,7 +554,7 @@
           "name": "re",
           "version": "1.7.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"jerome.vouillon@pps.univ-paris-diderot.fr\"\nauthors: [\"Jerome Vouillon\" \"Thomas Gazagnaire\" \"Anil Madhavapeddy\"]\nlicense: \"LGPL-2.0 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocaml-re\"\nbug-reports: \"https://github.com/ocaml/ocaml-re/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"base-bytes\"\n]\nbuild: [\n  [\"ocaml\" \"setup.ml\" \"-configure\" \"--prefix\" prefix]\n  [\"ocaml\" \"setup.ml\" \"-build\"]\n]\ninstall: [\"ocaml\" \"setup.ml\" \"-install\"]\nremove: [\"ocamlfind\" \"remove\" \"re\"]\ndev-repo: \"git+https://github.com/ocaml/ocaml-re.git\"\nbuild-doc: [\"ocaml\" \"setup.ml\" \"-doc\"]",
+            "opam-version: \"1.2\"\nname: \"re\"\nversion: \"1.7.1\"\nmaintainer: \"jerome.vouillon@pps.univ-paris-diderot.fr\"\nauthors: [\"Jerome Vouillon\" \"Thomas Gazagnaire\" \"Anil Madhavapeddy\"]\nlicense: \"LGPL-2.0 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocaml-re\"\nbug-reports: \"https://github.com/ocaml/ocaml-re/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"base-bytes\"\n]\nbuild: [\n  [\"ocaml\" \"setup.ml\" \"-configure\" \"--prefix\" prefix]\n  [\"ocaml\" \"setup.ml\" \"-build\"]\n]\ninstall: [\"ocaml\" \"setup.ml\" \"-install\"]\nremove: [\"ocamlfind\" \"remove\" \"re\"]\ndev-repo: \"git+https://github.com/ocaml/ocaml-re.git\"\nbuild-doc: [\"ocaml\" \"setup.ml\" \"-doc\"]",
           "override": null
         }
       },
@@ -562,7 +576,7 @@
           "name": "ppxlib",
           "version": "0.3.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/ocaml-ppx/ppxlib\"\nbug-reports: \"https://github.com/ocaml-ppx/ppxlib/issues\"\ndepends: [\n  \"base\" {>= \"v0.11.0\"}\n  \"dune\" {build}\n  \"ocaml-compiler-libs\" {>= \"v0.11.0\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0.9\"}\n  \"ppx_derivers\" {>= \"1.0\"}\n  \"stdio\" {>= \"v0.11.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/ocaml-ppx/ppxlib.git\"",
+            "opam-version: \"1.2\"\nname: \"ppxlib\"\nversion: \"0.3.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/ocaml-ppx/ppxlib\"\nbug-reports: \"https://github.com/ocaml-ppx/ppxlib/issues\"\ndepends: [\n  \"base\" {>= \"v0.11.0\"}\n  \"dune\" {build}\n  \"ocaml-compiler-libs\" {>= \"v0.11.0\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0.9\"}\n  \"ppx_derivers\" {>= \"1.0\"}\n  \"stdio\" {>= \"v0.11.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/ocaml-ppx/ppxlib.git\"",
           "override": null
         }
       },
@@ -586,7 +600,7 @@
           "name": "ppx_variants_conv",
           "version": "v0.11.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_variants_conv\"\nbug-reports: \"https://github.com/janestreet/ppx_variants_conv/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"variantslib\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.3.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_variants_conv.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_variants_conv\"\nversion: \"v0.11.1\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_variants_conv\"\nbug-reports: \"https://github.com/janestreet/ppx_variants_conv/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"variantslib\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.3.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_variants_conv.git\"",
           "override": null
         }
       },
@@ -597,26 +611,27 @@
         "@opam/ppxlib@opam:0.3.0", "@opam/variantslib@opam:v0.11.0"
       ]
     },
-    "@opam/ppx_tools_versioned@opam:5.2": {
+    "@opam/ppx_tools_versioned@opam:5.1": {
       "record": {
         "name": "@opam/ppx_tools_versioned",
-        "version": "opam:5.2",
+        "version": "opam:5.1",
         "source": [
-          "archive:https://opam.ocaml.org/archives/ppx_tools_versioned.5.2+opam.tar.gz#md5:8fd1b5ae4a846543df0b1ed6e008cfc8",
-          "archive:https://github.com/ocaml-ppx/ppx_tools_versioned/archive/5.2.tar.gz#md5:f2f1a1cd11aeb9f91a92ab691720a401"
+          "archive:https://opam.ocaml.org/archives/ppx_tools_versioned.5.1+opam.tar.gz#md5:d61ed69f49df0261430845510c11ec5f",
+          "archive:https://github.com/ocaml-ppx/ppx_tools_versioned/archive/5.1.tar.gz#md5:e48cc87d6da6c2f3020fd8dfe8fe50de"
         ],
         "files": [],
         "opam": {
           "name": "ppx_tools_versioned",
-          "version": "5.2",
+          "version": "5.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"frederic.bour@lakaban.net\"\nauthors: [\n  \"Frédéric Bour <frederic.bour@lakaban.net>\"\n  \"Alain Frisch <alain.frisch@lexifi.com>\"\n]\nlicense: \"MIT\"\ntags: \"syntax\"\nhomepage: \"https://github.com/let-def/ppx_tools_versioned\"\nbug-reports: \"https://github.com/let-def/ppx_tools_versioned/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta17\"}\n  \"ocaml-migrate-parsetree\" {>= \"0.5\"}\n]\navailable: ocaml-version >= \"4.02.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/let-def/ppx_tools_versioned.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_tools_versioned\"\nversion: \"5.1\"\nmaintainer: \"frederic.bour@lakaban.net\"\nauthors: [\n  \"Frédéric Bour <frederic.bour@lakaban.net>\"\n  \"Alain Frisch <alain.frisch@lexifi.com>\"\n]\nlicense: \"MIT\"\ntags: \"syntax\"\nhomepage: \"https://github.com/let-def/ppx_tools_versioned\"\nbug-reports: \"https://github.com/let-def/ppx_tools_versioned/issues\"\ndepends: [\n  \"ocamlfind\" {>= \"1.5.0\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0.7\"}\n]\navailable: ocaml-version >= \"4.02.0\"\nbuild: [make \"all\"]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"ppx_tools_versioned\"]\ndev-repo: \"git://github.com/let-def/ppx_tools_versioned.git\"",
           "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
-        "@opam/ocaml-migrate-parsetree@opam:1.0.11"
+        "@esy-ocaml/substs@0.0.1",
+        "@opam/ocaml-migrate-parsetree@opam:1.0.11",
+        "@opam/ocamlfind@opam:1.8.0"
       ]
     },
     "@opam/ppx_tools@opam:5.1+4.06.0": {
@@ -632,7 +647,7 @@
           "name": "ppx_tools",
           "version": "5.1+4.06.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"alain.frisch@lexifi.com\"\nauthors: \"Alain Frisch <alain.frisch@lexifi.com>\"\nlicense: \"MIT\"\ntags: \"syntax\"\nhomepage: \"https://github.com/ocaml-ppx/ppx_tools\"\nbug-reports: \"https://github.com/ocaml-ppx/ppx_tools/issues\"\ndepends: [\n  \"ocamlfind\" {>= \"1.5.0\"}\n]\navailable: ocaml-version >= \"4.06.0\" & ocaml-version < \"4.08\"\nbuild: [make \"all\"]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"ppx_tools\"]\ndev-repo: \"git://github.com/ocaml-ppx/ppx_tools.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_tools\"\nversion: \"5.1+4.06.0\"\nmaintainer: \"alain.frisch@lexifi.com\"\nauthors: \"Alain Frisch <alain.frisch@lexifi.com>\"\nlicense: \"MIT\"\ntags: \"syntax\"\nhomepage: \"https://github.com/ocaml-ppx/ppx_tools\"\nbug-reports: \"https://github.com/ocaml-ppx/ppx_tools/issues\"\ndepends: [\n  \"ocamlfind\" {>= \"1.5.0\"}\n]\navailable: ocaml-version >= \"4.06.0\" & ocaml-version < \"4.08\"\nbuild: [make \"all\"]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"ppx_tools\"]\ndev-repo: \"git://github.com/ocaml-ppx/ppx_tools.git\"",
           "override": null
         }
       },
@@ -653,7 +668,7 @@
           "name": "ppx_sexp_conv",
           "version": "v0.11.2",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_sexp_conv\"\nbug-reports: \"https://github.com/janestreet/ppx_sexp_conv/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.3.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_sexp_conv.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_sexp_conv\"\nversion: \"v0.11.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_sexp_conv\"\nbug-reports: \"https://github.com/janestreet/ppx_sexp_conv/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.3.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_sexp_conv.git\"",
           "override": null
         }
       },
@@ -677,7 +692,7 @@
           "name": "ppx_let",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_let\"\nbug-reports: \"https://github.com/janestreet/ppx_let/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_let.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_let\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_let\"\nbug-reports: \"https://github.com/janestreet/ppx_let/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_let.git\"",
           "override": null
         }
       },
@@ -701,7 +716,7 @@
           "name": "ppx_inline_test",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_inline_test\"\nbug-reports: \"https://github.com/janestreet/ppx_inline_test/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_inline_test.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_inline_test\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_inline_test\"\nbug-reports: \"https://github.com/janestreet/ppx_inline_test/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_inline_test.git\"",
           "override": null
         }
       },
@@ -725,7 +740,7 @@
           "name": "ppx_here",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_here\"\nbug-reports: \"https://github.com/janestreet/ppx_here/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_here.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_here\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_here\"\nbug-reports: \"https://github.com/janestreet/ppx_here/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_here.git\"",
           "override": null
         }
       },
@@ -749,7 +764,7 @@
           "name": "ppx_fields_conv",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_fields_conv\"\nbug-reports: \"https://github.com/janestreet/ppx_fields_conv/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"fieldslib\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_fields_conv.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_fields_conv\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_fields_conv\"\nbug-reports: \"https://github.com/janestreet/ppx_fields_conv/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"fieldslib\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_fields_conv.git\"",
           "override": null
         }
       },
@@ -773,7 +788,7 @@
           "name": "ppx_expect",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_expect\"\nbug-reports: \"https://github.com/janestreet/ppx_expect/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_assert\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_compare\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_custom_printf\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_fields_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_here\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_inline_test\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_sexp_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_variants_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"stdio\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n  \"re\" {>= \"1.5.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_expect.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_expect\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_expect\"\nbug-reports: \"https://github.com/janestreet/ppx_expect/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_assert\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_compare\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_custom_printf\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_fields_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_here\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_inline_test\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_sexp_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_variants_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"stdio\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n  \"re\" {>= \"1.5.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_expect.git\"",
           "override": null
         }
       },
@@ -798,13 +813,29 @@
           "archive:https://opam.ocaml.org/archives/ppx_deriving.4.2.1+opam.tar.gz#md5:17337ce91b5b1baa423e411a358a3de8",
           "archive:https://github.com/ocaml-ppx/ppx_deriving/archive/v4.2.1.tar.gz#md5:2195fccf2a527c3ff9ec5b4e36e2f0a8"
         ],
-        "files": [],
+        "files": [
+          {
+            "name": "_esy/ppx_deriving-4.2.1.patch",
+            "content":
+              "--- ./pkg/topkg.ml\n+++ ./pkg/topkg.ml\n@@ -152,7 +152,63 @@\n module Exts : Exts = struct\n   let interface = [\".mli\"; \".cmi\"; \".cmti\"]\n   let interface_opt = \".cmx\" :: interface\n-  let c_library = if Sys.win32 then [\".lib\"] else [\".a\"]\n+  let c_library =\n+    match Sys.win32 with\n+    | false -> [\".a\"]\n+    | true ->\n+      let input_line ch =\n+        try\n+          let s = input_line ch in\n+          let len = String.length s in\n+          if len > 0 && Sys.os_type = \"Win32\" && s.[len-1] = '\\r' then\n+            Some (String.sub s 0 (pred len))\n+          else\n+            Some s\n+        with\n+        | End_of_file -> None\n+      in\n+      let rec get_ext_lib ch =\n+        match input_line ch with\n+        | None -> \".a\"\n+        | Some s ->\n+          let len = String.length s in\n+          if len < 11 || s.[0] <> 'e' || String.sub s 0 9 <> \"ext_lib: \" then\n+            get_ext_lib ch\n+          else\n+            String.sub s 9 (len - 9)\n+      in\n+      let get_ext_lib fln =\n+        let ch = open_in fln in\n+        let ch_closed = ref false in\n+        try\n+          let res = get_ext_lib ch in\n+          ch_closed := true;\n+          close_in ch ;\n+          res\n+        with\n+        | x when !ch_closed = false ->\n+          close_in_noerr ch;\n+          raise x\n+      in\n+      let e_null = if Sys.win32 then \" 2>NUL\" else \" 2>/dev/null\" in\n+      let fln = Filename.temp_file \"get_ext\" \".txt\" in\n+      let cleanup = lazy (try Sys.remove fln with Sys_error _ -> ()) in\n+      try\n+        let qfln = Filename.quote fln in\n+        let cmd = \"ocamlfind ocamlc -config > \" ^ qfln ^ e_null in\n+        let ec = Sys.command cmd in\n+        if ec <> 0 then (\n+          let cmd = \"ocamlc -config > \" ^ qfln ^ e_null in\n+          let ec = Sys.command cmd in\n+          if ec <> 0 then\n+            failwith (Printf.sprintf \"couldn't call ocamlc -config\");\n+        );\n+        let res = get_ext_lib fln in\n+        Lazy.force cleanup;\n+        [res]\n+      with\n+      | x -> Lazy.force cleanup; raise x\n+\n   let c_dll_library = if Sys.win32 then [\".dll\"] else [\".so\"]\n   let library = [\".cma\"; \".cmxa\"; \".cmxs\"] @ c_library\n   let module_library = (interface_opt @ library)\n@@ -258,7 +314,9 @@\n     let src, dst =\n       if not auto then src, dst else\n       let dst = match dst with\n-      | None -> Some (Filename.basename src)\n+      | None ->\n+        let src = if Sys.os_type <> \"Win32\" then src else src ^ \".exe\" in\n+        Some (Filename.basename src)\n       | Some _ as dst -> dst\n       in\n       let src = if Env.native then src ^ \".native\" else src ^ \".byte\" in\n"
+          }
+        ],
         "opam": {
           "name": "ppx_deriving",
           "version": "4.2.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"whitequark <whitequark@whitequark.org>\"\nauthors: \"whitequark <whitequark@whitequark.org>\"\nlicense: \"MIT\"\ntags: \"syntax\"\nhomepage: \"https://github.com/whitequark/ppx_deriving\"\ndoc: \"https://whitequark.github.io/ppx_deriving\"\nbug-reports: \"https://github.com/whitequark/ppx_deriving/issues\"\ndepends: [\n  \"ocamlbuild\" {build}\n  \"ocamlfind\" {build & >= \"1.6.0\"}\n  \"cppo\" {build}\n  \"cppo_ocamlbuild\" {build}\n  \"ocaml-migrate-parsetree\"\n  \"ppx_derivers\"\n  \"ppx_tools\" {>= \"4.02.3\"}\n  \"result\"\n  \"ounit\" {test}\n]\navailable: ocaml-version > \"4.03.0\" & opam-version >= \"1.2\"\nbuild: [\n  \"ocaml\"\n  \"pkg/build.ml\"\n  \"native=%{ocaml-native-dynlink}%\"\n  \"native-dynlink=%{ocaml-native-dynlink}%\"\n]\nrun-test: [\n  \"ocamlbuild\"\n  \"-classic-display\"\n  \"-use-ocamlfind\"\n  \"src_test/test_ppx_deriving.byte\"\n  \"--\"\n]\nsubsts: \"pkg/META\"\ndev-repo: \"git+https://github.com/whitequark/ppx_deriving.git\"\nbuild-doc: [make \"doc\"]",
-          "override": null
+            "opam-version: \"1.2\"\nname: \"ppx_deriving\"\nversion: \"4.2.1\"\nmaintainer: \"whitequark <whitequark@whitequark.org>\"\nauthors: \"whitequark <whitequark@whitequark.org>\"\nlicense: \"MIT\"\ntags: \"syntax\"\nhomepage: \"https://github.com/whitequark/ppx_deriving\"\ndoc: \"https://whitequark.github.io/ppx_deriving\"\nbug-reports: \"https://github.com/whitequark/ppx_deriving/issues\"\ndepends: [\n  \"ocamlbuild\" {build}\n  \"ocamlfind\" {build & >= \"1.6.0\"}\n  \"cppo\" {build}\n  \"cppo_ocamlbuild\" {build}\n  \"ocaml-migrate-parsetree\"\n  \"ppx_derivers\"\n  \"ppx_tools\" {>= \"4.02.3\"}\n  \"result\"\n  \"ounit\" {test}\n]\navailable: ocaml-version > \"4.03.0\" & opam-version >= \"1.2\"\nbuild: [\n  \"ocaml\"\n  \"pkg/build.ml\"\n  \"native=%{ocaml-native-dynlink}%\"\n  \"native-dynlink=%{ocaml-native-dynlink}%\"\n]\nrun-test: [\n  \"ocamlbuild\"\n  \"-classic-display\"\n  \"-use-ocamlfind\"\n  \"src_test/test_ppx_deriving.byte\"\n  \"--\"\n]\nsubsts: \"pkg/META\"\ndev-repo: \"git+https://github.com/whitequark/ppx_deriving.git\"\nbuild-doc: [make \"doc\"]",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < _esy/ppx_deriving-4.2.1.patch' : 'true'}"
+              ],
+              [
+                "ocaml", "pkg/build.ml", "native=true", "native-dynlink=true"
+              ]
+            ]
+          }
         }
       },
       "dependencies": [
@@ -829,7 +860,7 @@
           "name": "ppx_derivers",
           "version": "1.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"jeremie@dimino.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/ocaml-ppx/ppx_derivers\"\nbug-reports: \"https://github.com/ocaml-ppx/ppx_derivers/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/ocaml-ppx/ppx_derivers.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_derivers\"\nversion: \"1.0\"\nmaintainer: \"jeremie@dimino.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/ocaml-ppx/ppx_derivers\"\nbug-reports: \"https://github.com/ocaml-ppx/ppx_derivers/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/ocaml-ppx/ppx_derivers.git\"",
           "override": null
         }
       },
@@ -850,7 +881,7 @@
           "name": "ppx_custom_printf",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_custom_printf\"\nbug-reports: \"https://github.com/janestreet/ppx_custom_printf/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_sexp_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_custom_printf.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_custom_printf\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_custom_printf\"\nbug-reports: \"https://github.com/janestreet/ppx_custom_printf/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_sexp_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_custom_printf.git\"",
           "override": null
         }
       },
@@ -874,7 +905,7 @@
           "name": "ppx_compare",
           "version": "v0.11.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_compare\"\nbug-reports: \"https://github.com/janestreet/ppx_compare/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.3.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_compare.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_compare\"\nversion: \"v0.11.1\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_compare\"\nbug-reports: \"https://github.com/janestreet/ppx_compare/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.3.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_compare.git\"",
           "override": null
         }
       },
@@ -898,7 +929,7 @@
           "name": "ppx_assert",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_assert\"\nbug-reports: \"https://github.com/janestreet/ppx_assert/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_compare\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_here\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_sexp_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_assert.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_assert\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_assert\"\nbug-reports: \"https://github.com/janestreet/ppx_assert/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_compare\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_here\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_sexp_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_assert.git\"",
           "override": null
         }
       },
@@ -923,7 +954,7 @@
           "name": "parsexp",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/parsexp\"\nbug-reports: \"https://github.com/janestreet/parsexp/issues\"\ndepends: [\n  \"sexplib0\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/parsexp.git\"",
+            "opam-version: \"1.2\"\nname: \"parsexp\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/parsexp\"\nbug-reports: \"https://github.com/janestreet/parsexp/issues\"\ndepends: [\n  \"sexplib0\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/parsexp.git\"",
           "override": null
         }
       },
@@ -945,7 +976,7 @@
           "name": "ocplib-endian",
           "version": "1.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"pierre.chambart@ocamlpro.com\"\nauthors: \"Pierre Chambart\"\nhomepage: \"https://github.com/OCamlPro/ocplib-endian\"\nbug-reports: \"https://github.com/OCamlPro/ocplib-endian/issues\"\ndepends: [\n  \"base-bytes\"\n  \"ocamlfind\"\n  \"cppo\" {>= \"1.1.0\"}\n  \"ocamlbuild\" {build}\n]\nbuild: [\n  [\"ocaml\" \"setup.ml\" \"-configure\" \"--disable-debug\" \"--prefix\" prefix]\n  [\"ocaml\" \"setup.ml\" \"-build\"]\n]\ninstall: [\"ocaml\" \"setup.ml\" \"-install\"]\nremove: [\"ocamlfind\" \"remove\" \"ocplib-endian\"]\ndev-repo: \"git+https://github.com/OCamlPro/ocplib-endian.git\"",
+            "opam-version: \"1.2\"\nname: \"ocplib-endian\"\nversion: \"1.0\"\nmaintainer: \"pierre.chambart@ocamlpro.com\"\nauthors: \"Pierre Chambart\"\nhomepage: \"https://github.com/OCamlPro/ocplib-endian\"\nbug-reports: \"https://github.com/OCamlPro/ocplib-endian/issues\"\ndepends: [\n  \"base-bytes\"\n  \"ocamlfind\"\n  \"cppo\" {>= \"1.1.0\"}\n  \"ocamlbuild\" {build}\n]\nbuild: [\n  [\"ocaml\" \"setup.ml\" \"-configure\" \"--disable-debug\" \"--prefix\" prefix]\n  [\"ocaml\" \"setup.ml\" \"-build\"]\n]\ninstall: [\"ocaml\" \"setup.ml\" \"-install\"]\nremove: [\"ocamlfind\" \"remove\" \"ocplib-endian\"]\ndev-repo: \"git+https://github.com/OCamlPro/ocplib-endian.git\"",
           "override": null
         }
       },
@@ -968,7 +999,7 @@
           "name": "ocp-indent",
           "version": "1.6.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"contact@ocamlpro.com\"\nauthors: [\n  \"Louis Gesbert <louis.gesbert@ocamlpro.com>\"\n  \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\n  \"Jun Furuse\"\n]\nlicense: \"LGPL\"\ntags: [\"org:ocamlpro\" \"org:typerex\"]\nhomepage: \"http://www.typerex.org/ocp-indent.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-indent/issues\"\ndepends: [\n  \"ocp-build\" {build & >= \"1.99.6-beta\"}\n  \"cmdliner\" {>= \"1.0.0\"}\n  \"base-bytes\"\n]\nbuild: [\n  [\"./configure\" \"--prefix\" prefix]\n  [make]\n]\npost-messages:\n  \"\"\"\nThis package requires additional configuration for use in editors. Install package 'user-setup', or manually:\n\n* for Emacs, add these lines to ~/.emacs:\n  (add-to-list 'load-path \"%{share}%/emacs/site-lisp\")\n  (require 'ocp-indent)\n\n* for Vim, add this line to ~/.vimrc:\n  set rtp^=\"%{share}%/ocp-indent/vim\\\"\"\"\"\n    {success & !user-setup:installed}\ndev-repo: \"git+https://github.com/OCamlPro/ocp-indent.git\"",
+            "opam-version: \"1.2\"\nname: \"ocp-indent\"\nversion: \"1.6.1\"\nmaintainer: \"contact@ocamlpro.com\"\nauthors: [\n  \"Louis Gesbert <louis.gesbert@ocamlpro.com>\"\n  \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\n  \"Jun Furuse\"\n]\nlicense: \"LGPL\"\ntags: [\"org:ocamlpro\" \"org:typerex\"]\nhomepage: \"http://www.typerex.org/ocp-indent.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-indent/issues\"\ndepends: [\n  \"ocp-build\" {build & >= \"1.99.6-beta\"}\n  \"cmdliner\" {>= \"1.0.0\"}\n  \"base-bytes\"\n]\nbuild: [\n  [\"./configure\" \"--prefix\" prefix]\n  [make]\n]\npost-messages:\n  \"\"\"\nThis package requires additional configuration for use in editors. Install package 'user-setup', or manually:\n\n* for Emacs, add these lines to ~/.emacs:\n  (add-to-list 'load-path \"%{share}%/emacs/site-lisp\")\n  (require 'ocp-indent)\n\n* for Vim, add this line to ~/.vimrc:\n  set rtp^=\"%{share}%/ocp-indent/vim\\\"\"\"\"\n    {success & !user-setup:installed}\ndev-repo: \"git+https://github.com/OCamlPro/ocp-indent.git\"",
           "override": null
         }
       },
@@ -990,7 +1021,7 @@
           "name": "ocp-build",
           "version": "1.99.20-beta",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nauthors: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nhomepage: \"http://www.typerex.org/ocp-build.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-build/issues\"\ndepends: [\n  \"ocamlfind\"\n  \"cmdliner\" {>= \"1.0\"}\n]\nconflicts: [\n  \"typerex\" {< \"1.99.7\"}\n  \"typerex-build\"\n]\navailable: ocaml-version >= \"4.02.1\"\nbuild: [\n  [\"./configure\" \"--prefix\" \"%{prefix}%\"]\n  [make]\n]\ninstall: [make \"install\"]\nremove: [\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-build\"]\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-pp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocp-build\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-compat\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-debug\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-lang\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-subcmd\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-system\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-unix\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/installed.ocp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/site-ocp2/ocp-build\"]\n  [\"sh\" \"-exc\" \"rmdir %{prefix}%/lib/ocaml/typerex || true\"]\n]\ndev-repo: \"git+https://github.com/OCamlPro/ocp-build.git\"",
+            "opam-version: \"1.2\"\nname: \"ocp-build\"\nversion: \"1.99.20-beta\"\nmaintainer: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nauthors: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nhomepage: \"http://www.typerex.org/ocp-build.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-build/issues\"\ndepends: [\n  \"ocamlfind\"\n  \"cmdliner\" {>= \"1.0\"}\n]\nconflicts: [\n  \"typerex\" {< \"1.99.7\"}\n  \"typerex-build\"\n]\navailable: ocaml-version >= \"4.02.1\"\nbuild: [\n  [\"./configure\" \"--prefix\" \"%{prefix}%\"]\n  [make]\n]\ninstall: [make \"install\"]\nremove: [\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-build\"]\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-pp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocp-build\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-compat\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-debug\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-lang\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-subcmd\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-system\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-unix\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/installed.ocp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/site-ocp2/ocp-build\"]\n  [\"sh\" \"-exc\" \"rmdir %{prefix}%/lib/ocaml/typerex || true\"]\n]\ndev-repo: \"git+https://github.com/OCamlPro/ocp-build.git\"",
           "override": null
         }
       },
@@ -1020,7 +1051,7 @@
               "bin: [\n  \"src/findlib/ocamlfind\" {\"ocamlfind\"}\n  \"?src/findlib/ocamlfind_opt\" {\"ocamlfind\"}\n  \"?tools/safe_camlp4\"\n]\ntoplevel: [\"src/findlib/topfind\"]\n"
           },
           {
-            "name": "_esy/build",
+            "name": "esy-build",
             "content":
               "#!/bin/bash\n\nset -euo pipefail\nset -x\n\n#\n# Shim OCAMLLIB so that we can write topfind there\n#\n\nREAL_OCAMLLIB=\"$1\"\n\nmkdir -p $cur__install/lib/ocaml\ncd $cur__install/lib/ocaml\n\nfor filename in `ls -1 $REAL_OCAMLLIB`; do\n  ln -s $REAL_OCAMLLIB/$filename $filename;\ndone\n\n#\n# Build\n#\n\ncd $cur__root\n\nexport OCAMLLIB=\"$cur__install/lib/ocaml\"\n\n./configure \\\n  -bindir $cur__install/bin \\\n  -sitelib $cur__install/lib \\\n  -mandir $cur__install/man \\\n  -config $cur__install/lib/findlib.conf \\\n  -no-custom \\\n  -no-camlp4\n\nmake all\nmake opt\nmake install\n\n(opam-installer --prefix=$cur__install || true)\n"
           }
@@ -1029,9 +1060,9 @@
           "name": "ocamlfind",
           "version": "1.8.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\nauthors: \"Gerd Stolpmann <gerd@gerd-stolpmann.de>\"\nhomepage: \"http://projects.camlcity.org/projects/findlib.html\"\nbug-reports: \"https://gitlab.camlcity.org/gerd/lib-findlib/issues\"\ndepends: [\n  \"conf-m4\" {build}\n]\navailable: ocaml-version >= \"4.00.0\"\nbuild: [\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-custom\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"all\"]\n  [make \"opt\"] {ocaml-native}\n]\ninstall: [\n  [make \"install\"]\n  [\"install\" \"-m\" \"0755\" \"ocaml-stub\" \"%{bin}%/ocaml\"] {preinstalled}\n]\nremove: [\n  [\"ocamlfind\" \"remove\" \"bytes\"]\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"uninstall\"]\n  [\"rm\" \"-f\" \"%{bin}%/ocaml\"] {preinstalled}\n]\ndev-repo: \"git+https://gitlab.camlcity.org/gerd/lib-findlib.git\"",
+            "opam-version: \"1.2\"\nname: \"ocamlfind\"\nversion: \"1.8.0\"\nmaintainer: \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\nauthors: \"Gerd Stolpmann <gerd@gerd-stolpmann.de>\"\nhomepage: \"http://projects.camlcity.org/projects/findlib.html\"\nbug-reports: \"https://gitlab.camlcity.org/gerd/lib-findlib/issues\"\ndepends: [\n  \"conf-m4\" {build}\n]\navailable: ocaml-version >= \"4.00.0\"\nbuild: [\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-custom\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"all\"]\n  [make \"opt\"] {ocaml-native}\n]\ninstall: [\n  [make \"install\"]\n  [\"install\" \"-m\" \"0755\" \"ocaml-stub\" \"%{bin}%/ocaml\"] {preinstalled}\n]\nremove: [\n  [\"ocamlfind\" \"remove\" \"bytes\"]\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"uninstall\"]\n  [\"rm\" \"-f\" \"%{bin}%/ocaml\"] {preinstalled}\n]\ndev-repo: \"git+https://gitlab.camlcity.org/gerd/lib-findlib.git\"",
           "override": {
-            "build": [ [ "bash", "./_esy/build", "#{ocaml.lib / 'ocaml'}" ] ],
+            "build": [ [ "bash", "./esy-build", "#{ocaml.lib / 'ocaml'}" ] ],
             "exportedEnv": {
               "OCAMLLIB": {
                 "val": "#{@opam/ocamlfind.install / 'lib' / 'ocaml'}",
@@ -1060,13 +1091,38 @@
           "archive:https://opam.ocaml.org/archives/ocamlbuild.0.12.0+opam.tar.gz#md5:6e877d7f40c119c0c6c03f04342f2264",
           "archive:https://github.com/ocaml/ocamlbuild/archive/0.12.0.tar.gz#md5:442baa19470bd49150f153122e22907b"
         ],
-        "files": [],
+        "files": [
+          {
+            "name": "_esy/ocamlbuild-0.12.0.patch",
+            "content":
+              "--- ./Makefile\n+++ ./Makefile\n@@ -213,7 +213,7 @@\n \trm -f man/ocamlbuild.1\n \n man/options_man.byte: src/ocamlbuild_pack.cmo\n-\t$(OCAMLC) $^ -I src man/options_man.ml -o man/options_man.byte\n+\t$(OCAMLC) -I +unix unix.cma $^ -I src man/options_man.ml -o man/options_man.byte\n \n clean::\n \trm -f man/options_man.cm*\n--- ./META\n+++ ./META\n@@ -2,5 +2,6 @@\n requires = \"unix\"\n version = \"0.12.0\"\n description = \"ocamlbuild support library\"\n+directory= \"^ocamlbuild\"\n archive(byte) = \"ocamlbuildlib.cma\"\n archive(native) = \"ocamlbuildlib.cmxa\"\n--- ./src/command.ml\n+++ ./src/command.ml\n@@ -148,9 +148,10 @@\n   let self = string_of_command_spec_with_calls call_with_tags call_with_target resolve_virtuals in\n   let b = Buffer.create 256 in\n   (* The best way to prevent bash from switching to its windows-style\n-   * quote-handling is to prepend an empty string before the command name. *)\n+   * quote-handling is to prepend an empty string before the command name.\n+   * space seems to work, too - and the ouput is nicer *)\n   if Sys.os_type = \"Win32\" then\n-    Buffer.add_string b \"''\";\n+    Buffer.add_char b ' ';\n   let first = ref true in\n   let put_space () =\n     if !first then\n@@ -260,7 +261,7 @@\n \n let execute_many ?(quiet=false) ?(pretend=false) cmds =\n   add_parallel_stat (List.length cmds);\n-  let degraded = !*My_unix.is_degraded || Sys.os_type = \"Win32\" in\n+  let degraded = !*My_unix.is_degraded in\n   let jobs = !jobs in\n   if jobs < 0 then invalid_arg \"jobs < 0\";\n   let max_jobs = if jobs = 0 then None else Some jobs in\n--- ./src/findlib.ml\n+++ ./src/findlib.ml\n@@ -66,9 +66,6 @@\n     (fun command -> lexer & Lexing.from_string & run_and_read command)\n     command\n \n-let run_and_read command =\n-  Printf.ksprintf run_and_read command\n-\n let rec query name =\n   try\n     Hashtbl.find packages name\n@@ -135,7 +132,8 @@\n   with Not_found -> s\n \n let list () =\n-  List.map before_space (split_nl & run_and_read \"%s list\" ocamlfind)\n+  let cmd = Shell.quote_filename_if_needed ocamlfind ^ \" list\" in\n+  List.map before_space (split_nl & run_and_read cmd)\n \n (* The closure algorithm is easy because the dependencies are already closed\n and sorted for each package. We only have to make the union. We could also\n--- ./src/main.ml\n+++ ./src/main.ml\n@@ -162,6 +162,9 @@\n               Tags.mem \"traverse\" tags\n               || List.exists (Pathname.is_prefix path_name) !Options.include_dirs\n               || List.exists (Pathname.is_prefix path_name) target_dirs)\n+            && ((* beware: !Options.build_dir is an absolute directory *)\n+              Pathname.normalize !Options.build_dir\n+              <> Pathname.normalize (Pathname.pwd/path_name))\n           end\n         end\n       end\n--- ./src/my_std.ml\n+++ ./src/my_std.ml\n@@ -271,13 +271,107 @@\n       try Array.iter (fun x -> if x = basename then raise Exit) a; false\n       with Exit -> true\n \n+let command_plain = function\n+| [| |] -> 0\n+| margv ->\n+  let rec waitpid a b =\n+    match Unix.waitpid a b with\n+    | exception (Unix.Unix_error(Unix.EINTR,_,_)) -> waitpid a b\n+    | x -> x\n+  in\n+  let pid = Unix.(create_process margv.(0) margv stdin stdout stderr) in\n+  let pid', process_status = waitpid [] pid in\n+  assert (pid = pid');\n+  match process_status with\n+  | Unix.WEXITED n -> n\n+  | Unix.WSIGNALED _ -> 2 (* like OCaml's uncaught exceptions *)\n+  | Unix.WSTOPPED _ -> 127\n+\n+(* can't use Lexers because of circular dependency *)\n+let split_path_win str =\n+  let rec aux pos =\n+    try\n+      let i = String.index_from str pos ';' in\n+      let len = i - pos in\n+      if len = 0 then\n+        aux (succ i)\n+      else\n+        String.sub str pos (i - pos) :: aux (succ i)\n+    with Not_found | Invalid_argument _ ->\n+      let len = String.length str - pos in\n+      if len = 0 then [] else [String.sub str pos len]\n+  in\n+  aux 0\n+\n+let windows_shell = lazy begin\n+  let rec iter = function\n+  | [] -> [| \"bash.exe\" ; \"--norc\" ; \"--noprofile\" |]\n+  | hd::tl ->\n+    let dash = Filename.concat hd \"dash.exe\" in\n+    if Sys.file_exists dash then [|dash|] else\n+    let bash = Filename.concat hd \"bash.exe\" in\n+    if Sys.file_exists bash = false then iter tl else\n+    (* if sh.exe and bash.exe exist in the same dir, choose sh.exe *)\n+    let sh = Filename.concat hd \"sh.exe\" in\n+    if Sys.file_exists sh then [|sh|] else [|bash ; \"--norc\" ; \"--noprofile\"|]\n+  in\n+  split_path_win (try Sys.getenv \"PATH\" with Not_found -> \"\") |> iter\n+end\n+\n+let prep_windows_cmd cmd =\n+  (* workaround known ocaml bug, remove later *)\n+  if String.contains cmd '\\t' && String.contains cmd ' ' = false then\n+    \" \" ^ cmd\n+  else\n+    cmd\n+\n+let run_with_shell = function\n+| \"\" -> 0\n+| cmd ->\n+  let cmd = prep_windows_cmd cmd in\n+  let shell = Lazy.force windows_shell in\n+  let qlen = Filename.quote cmd |> String.length in\n+  (* old versions of dash had problems with bs *)\n+  try\n+    if qlen < 7_900 then\n+      command_plain (Array.append shell [| \"-ec\" ; cmd |])\n+    else begin\n+      (* it can still work, if the called command is a cygwin tool *)\n+      let ch_closed = ref false in\n+      let file_deleted = ref false in\n+      let fln,ch =\n+        Filename.open_temp_file\n+          ~mode:[Open_binary]\n+          \"ocamlbuildtmp\"\n+          \".sh\"\n+      in\n+      try\n+        let f_slash = String.map ( fun x -> if x = '\\\\' then '/' else x ) fln in\n+        output_string ch cmd;\n+        ch_closed:= true;\n+        close_out ch;\n+        let ret = command_plain (Array.append shell [| \"-e\" ; f_slash |]) in\n+        file_deleted:= true;\n+        Sys.remove fln;\n+        ret\n+      with\n+      | x ->\n+        if !ch_closed = false then\n+          close_out_noerr ch;\n+        if !file_deleted = false then\n+          (try Sys.remove fln with _ -> ());\n+        raise x\n+    end\n+  with\n+  | (Unix.Unix_error _) as x ->\n+    (* Sys.command doesn't raise an exception, so run_with_shell also won't\n+       raise *)\n+    Printexc.to_string x ^ \":\" ^ cmd |> prerr_endline;\n+    1\n+\n let sys_command =\n-  match Sys.os_type with\n-  | \"Win32\" -> fun cmd ->\n-      if cmd = \"\" then 0 else\n-      let cmd = \"bash --norc -c \" ^ Filename.quote cmd in\n-      Sys.command cmd\n-  | _ -> fun cmd -> if cmd = \"\" then 0 else Sys.command cmd\n+  if Sys.win32 then run_with_shell\n+  else fun cmd -> if cmd = \"\" then 0 else Sys.command cmd\n \n (* FIXME warning fix and use Filename.concat *)\n let filename_concat x y =\n--- ./src/my_std.mli\n+++ ./src/my_std.mli\n@@ -69,3 +69,6 @@\n \n val split_ocaml_version : (int * int * int * string) option\n (** (major, minor, patchlevel, rest) *)\n+\n+val windows_shell : string array Lazy.t\n+val prep_windows_cmd : string -> string\n--- ./src/ocamlbuild_executor.ml\n+++ ./src/ocamlbuild_executor.ml\n@@ -34,6 +34,8 @@\n   job_stdin   : out_channel;\n   job_stderr  : in_channel;\n   job_buffer  : Buffer.t;\n+  job_pid     : int;\n+  job_tmp_file: string option;\n   mutable job_dying : bool;\n };;\n \n@@ -76,6 +78,61 @@\n   in\n   loop 0\n ;;\n+\n+let open_process_full_win cmd env =\n+  let (in_read, in_write) = Unix.pipe () in\n+  let (out_read, out_write) = Unix.pipe () in\n+  let (err_read, err_write) = Unix.pipe () in\n+  Unix.set_close_on_exec in_read;\n+  Unix.set_close_on_exec out_write;\n+  Unix.set_close_on_exec err_read;\n+  let inchan = Unix.in_channel_of_descr in_read in\n+  let outchan = Unix.out_channel_of_descr out_write in\n+  let errchan = Unix.in_channel_of_descr err_read in\n+  let shell = Lazy.force Ocamlbuild_pack.My_std.windows_shell in\n+  let test_cmd =\n+    String.concat \" \" (List.map Filename.quote (Array.to_list shell)) ^\n+    \"-ec \" ^\n+    Filename.quote (Ocamlbuild_pack.My_std.prep_windows_cmd cmd) in\n+  let argv,tmp_file =\n+    if String.length test_cmd < 7_900 then\n+      Array.append\n+        shell\n+        [| \"-ec\" ; Ocamlbuild_pack.My_std.prep_windows_cmd cmd |],None\n+    else\n+    let fln,ch = Filename.open_temp_file ~mode:[Open_binary] \"ocamlbuild\" \".sh\" in\n+    output_string ch (Ocamlbuild_pack.My_std.prep_windows_cmd cmd);\n+    close_out ch;\n+    let fln' = String.map (function '\\\\' -> '/' | c -> c) fln in\n+    Array.append\n+      shell\n+      [| \"-c\" ; fln' |], Some fln in\n+  let pid =\n+    Unix.create_process_env argv.(0) argv env out_read in_write err_write in\n+  Unix.close out_read;\n+  Unix.close in_write;\n+  Unix.close err_write;\n+  (pid, inchan, outchan, errchan,tmp_file)\n+\n+let close_process_full_win (pid,inchan, outchan, errchan, tmp_file) =\n+  let delete tmp_file =\n+    match tmp_file with\n+    | None -> ()\n+    | Some x -> try Sys.remove x with Sys_error _ -> () in\n+  let tmp_file_deleted = ref false in\n+  try\n+    close_in inchan;\n+    close_out outchan;\n+    close_in errchan;\n+    let res = snd(Unix.waitpid [] pid) in\n+    tmp_file_deleted := true;\n+    delete tmp_file;\n+    res\n+  with\n+  | x when tmp_file <> None && !tmp_file_deleted = false ->\n+    delete tmp_file;\n+    raise x\n+\n (* ***)\n (*** execute *)\n (* XXX: Add test for non reentrancy *)\n@@ -130,10 +187,16 @@\n   (*** add_job *)\n   let add_job cmd rest result id =\n     (*display begin fun oc -> fp oc \"Job %a is %s\\n%!\" print_job_id id cmd; end;*)\n-    let (stdout', stdin', stderr') = open_process_full cmd env in\n+    let (pid,stdout', stdin', stderr', tmp_file) =\n+      if Sys.win32 then open_process_full_win cmd env else\n+      let a,b,c = open_process_full cmd env in\n+      -1,a,b,c,None\n+    in\n     incr jobs_active;\n-    set_nonblock (doi stdout');\n-    set_nonblock (doi stderr');\n+    if not Sys.win32 then (\n+      set_nonblock (doi stdout');\n+      set_nonblock (doi stderr');\n+    );\n     let job =\n       { job_id          = id;\n         job_command     = cmd;\n@@ -143,7 +206,9 @@\n         job_stdin       = stdin';\n         job_stderr      = stderr';\n         job_buffer      = Buffer.create 1024;\n-        job_dying       = false }\n+        job_dying       = false;\n+        job_tmp_file    = tmp_file;\n+        job_pid         = pid }\n     in\n     outputs := FDM.add (doi stdout') job (FDM.add (doi stderr') job !outputs);\n     jobs := JS.add job !jobs;\n@@ -199,6 +264,7 @@\n               try\n                 read fd u 0 (Bytes.length u)\n               with\n+              | Unix.Unix_error(Unix.EPIPE,_,_) when Sys.win32 -> 0\n               | Unix.Unix_error(e,_,_)  ->\n                 let msg = error_message e in\n                 display (fun oc -> fp oc\n@@ -241,14 +307,19 @@\n       decr jobs_active;\n \n       (* PR#5371: we would get EAGAIN below otherwise *)\n-      clear_nonblock (doi job.job_stdout);\n-      clear_nonblock (doi job.job_stderr);\n-\n+      if not Sys.win32 then (\n+        clear_nonblock (doi job.job_stdout);\n+        clear_nonblock (doi job.job_stderr);\n+      );\n       do_read ~loop:true (doi job.job_stdout) job;\n       do_read ~loop:true (doi job.job_stderr) job;\n       outputs := FDM.remove (doi job.job_stdout) (FDM.remove (doi job.job_stderr) !outputs);\n       jobs := JS.remove job !jobs;\n-      let status = close_process_full (job.job_stdout, job.job_stdin, job.job_stderr) in\n+      let status =\n+        if Sys.win32 then\n+          close_process_full_win (job.job_pid, job.job_stdout, job.job_stdin, job.job_stderr, job.job_tmp_file)\n+        else\n+          close_process_full (job.job_stdout, job.job_stdin, job.job_stderr) in\n \n       let shown = ref false in\n \n--- ./src/ocamlbuild_unix_plugin.ml\n+++ ./src/ocamlbuild_unix_plugin.ml\n@@ -48,12 +48,22 @@\n   end\n \n let run_and_open s kont =\n+  let s_orig = s in\n+  let s =\n+    (* Be consistent! My_unix.run_and_open uses My_std.sys_command and\n+       sys_command uses bash. *)\n+    if Sys.win32 = false then s else\n+    let l = match Lazy.force My_std.windows_shell |> Array.to_list with\n+    | hd::tl -> (Filename.quote hd)::tl\n+    | _ -> assert false in\n+    \"\\\"\" ^ (String.concat \" \" l) ^ \" -ec \" ^ Filename.quote (\" \" ^ s) ^ \"\\\"\"\n+  in\n   let ic = Unix.open_process_in s in\n   let close () =\n     match Unix.close_process_in ic with\n     | Unix.WEXITED 0 -> ()\n     | Unix.WEXITED _ | Unix.WSIGNALED _ | Unix.WSTOPPED _ ->\n-        failwith (Printf.sprintf \"Error while running: %s\" s) in\n+        failwith (Printf.sprintf \"Error while running: %s\" s_orig) in\n   let res = try\n       kont ic\n     with e -> (close (); raise e)\n--- ./src/options.ml\n+++ ./src/options.ml\n@@ -174,11 +174,24 @@\n     build_dir := Filename.concat (Sys.getcwd ()) s\n   else\n     build_dir := s\n+\n+let slashify =\n+  if Sys.win32 then fun p -> String.map (function '\\\\' -> '/' | x -> x) p\n+  else fun p ->p\n+\n+let sb () =\n+  match Sys.os_type with\n+  | \"Win32\" ->\n+    (try set_binary_mode_out stdout true with _ -> ());\n+  | _ -> ()\n+\n+\n let spec = ref (\n     let print_version () =\n+      sb ();\n       Printf.printf \"ocamlbuild %s\\n%!\" Ocamlbuild_config.version; raise Exit_OK\n     in\n-    let print_vnum () = print_endline Ocamlbuild_config.version; raise Exit_OK in\n+    let print_vnum () = sb (); print_endline Ocamlbuild_config.version; raise Exit_OK in\n   Arg.align\n   [\n    \"-version\", Unit print_version , \" Display the version\";\n@@ -257,8 +270,8 @@\n    \"-build-dir\", String set_build_dir, \"<path> Set build directory (implies no-links)\";\n    \"-install-lib-dir\", Set_string Ocamlbuild_where.libdir, \"<path> Set the install library directory\";\n    \"-install-bin-dir\", Set_string Ocamlbuild_where.bindir, \"<path> Set the install binary directory\";\n-   \"-where\", Unit (fun () -> print_endline !Ocamlbuild_where.libdir; raise Exit_OK), \" Display the install library directory\";\n-   \"-which\", String (fun cmd -> print_endline (find_tool cmd); raise Exit_OK), \"<command> Display path to the tool command\";\n+   \"-where\", Unit (fun () -> sb (); print_endline (slashify !Ocamlbuild_where.libdir); raise Exit_OK), \" Display the install library directory\";\n+   \"-which\", String (fun cmd -> sb (); print_endline (slashify (find_tool cmd)); raise Exit_OK), \"<command> Display path to the tool command\";\n    \"-ocamlc\", set_cmd ocamlc, \"<command> Set the OCaml bytecode compiler\";\n    \"-plugin-ocamlc\", set_cmd plugin_ocamlc, \"<command> Set the OCaml bytecode compiler \\\n      used when building myocamlbuild.ml (only)\";\n--- ./src/pathname.ml\n+++ ./src/pathname.ml\n@@ -84,6 +84,26 @@\n   | x :: xs -> x :: normalize_list xs\n \n let normalize x =\n+  let x =\n+    if Sys.win32 = false then\n+      x\n+    else\n+      let len = String.length x in\n+      let b = Bytes.create len in\n+      for i = 0 to pred len do\n+        match x.[i] with\n+        | '\\\\' -> Bytes.set b i '/'\n+        | c -> Bytes.set b i c\n+      done;\n+      if len > 1 then (\n+        let c1 = Bytes.get b 0 in\n+        let c2 = Bytes.get b 1 in\n+        if c2 = ':' && c1 >= 'a' && c1 <= 'z' &&\n+           ( len = 2 || Bytes.get b 2 = '/') then\n+          Bytes.set b 0 (Char.uppercase_ascii c1)\n+      );\n+      Bytes.unsafe_to_string b\n+  in\n   if Glob.eval not_normal_form_re x then\n     let root, paths = split x in\n     join root (normalize_list paths)\n--- ./src/shell.ml\n+++ ./src/shell.ml\n@@ -24,12 +24,26 @@\n     | 'a'..'z' | 'A'..'Z' | '0'..'9' | '.' | '-' | '/' | '_' | ':' | '@' | '+' | ',' -> loop (pos + 1)\n     | _ -> false in\n   loop 0\n+\n+let generic_quote quotequote s =\n+  let l = String.length s in\n+  let b = Buffer.create (l + 20) in\n+  Buffer.add_char b '\\'';\n+  for i = 0 to l - 1 do\n+    if s.[i] = '\\''\n+    then Buffer.add_string b quotequote\n+    else Buffer.add_char b  s.[i]\n+  done;\n+  Buffer.add_char b '\\'';\n+  Buffer.contents b\n+let unix_quote = generic_quote \"'\\\\''\"\n+\n let quote_filename_if_needed s =\n   if is_simple_filename s then s\n   (* We should probably be using [Filename.unix_quote] except that function\n    * isn't exported. Users on Windows will have to live with not being able to\n    * install OCaml into c:\\o'caml. Too bad. *)\n-  else if Sys.os_type = \"Win32\" then Printf.sprintf \"'%s'\" s\n+  else if Sys.os_type = \"Win32\" then unix_quote s\n   else Filename.quote s\n let chdir dir =\n   reset_filesys_cache ();\n@@ -37,7 +51,7 @@\n let run args target =\n   reset_readdir_cache ();\n   let cmd = String.concat \" \" (List.map quote_filename_if_needed args) in\n-  if !*My_unix.is_degraded || Sys.os_type = \"Win32\" then\n+  if !*My_unix.is_degraded then\n     begin\n       Log.event cmd target Tags.empty;\n       let st = sys_command cmd in\n"
+          }
+        ],
         "opam": {
           "name": "ocamlbuild",
           "version": "0.12.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Gabriel Scherer <gabriel.scherer@gmail.com>\"\nauthors: [\"Nicolas Pouillard\" \"Berke Durak\"]\nlicense: \"LGPL-2 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocamlbuild/\"\ndoc: \"https://github.com/ocaml/ocamlbuild/blob/master/manual/manual.adoc\"\nbug-reports: \"https://github.com/ocaml/ocamlbuild/issues\"\nconflicts: [\n  \"base-ocamlbuild\"\n  \"ocamlfind\" {< \"1.6.2\"}\n]\navailable: ocaml-version >= \"4.03\"\nbuild: [\n  [\n    make\n    \"-f\"\n    \"configure.make\"\n    \"all\"\n    \"OCAMLBUILD_PREFIX=%{prefix}%\"\n    \"OCAMLBUILD_BINDIR=%{bin}%\"\n    \"OCAMLBUILD_LIBDIR=%{lib}%\"\n    \"OCAMLBUILD_MANDIR=%{man}%\"\n    \"OCAML_NATIVE=%{ocaml-native}%\"\n    \"OCAML_NATIVE_TOOLS=%{ocaml-native}%\"\n  ]\n  [make \"check-if-preinstalled\" \"all\" \"opam-install\"]\n]\ndev-repo: \"git+https://github.com/ocaml/ocamlbuild.git\"",
-          "override": null
+            "opam-version: \"1.2\"\nname: \"ocamlbuild\"\nversion: \"0.12.0\"\nmaintainer: \"Gabriel Scherer <gabriel.scherer@gmail.com>\"\nauthors: [\"Nicolas Pouillard\" \"Berke Durak\"]\nlicense: \"LGPL-2 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocamlbuild/\"\ndoc: \"https://github.com/ocaml/ocamlbuild/blob/master/manual/manual.adoc\"\nbug-reports: \"https://github.com/ocaml/ocamlbuild/issues\"\nconflicts: [\n  \"base-ocamlbuild\"\n  \"ocamlfind\" {< \"1.6.2\"}\n]\navailable: ocaml-version >= \"4.03\"\nbuild: [\n  [\n    make\n    \"-f\"\n    \"configure.make\"\n    \"all\"\n    \"OCAMLBUILD_PREFIX=%{prefix}%\"\n    \"OCAMLBUILD_BINDIR=%{bin}%\"\n    \"OCAMLBUILD_LIBDIR=%{lib}%\"\n    \"OCAMLBUILD_MANDIR=%{man}%\"\n    \"OCAML_NATIVE=%{ocaml-native}%\"\n    \"OCAML_NATIVE_TOOLS=%{ocaml-native}%\"\n  ]\n  [make \"check-if-preinstalled\" \"all\" \"opam-install\"]\n]\ndev-repo: \"git+https://github.com/ocaml/ocamlbuild.git\"",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < _esy/ocamlbuild-0.12.0.patch' : 'true'}"
+              ],
+              [
+                "make", "-f", "configure.make", "all",
+                "OCAMLBUILD_PREFIX=#{self.install}",
+                "OCAMLBUILD_BINDIR=#{self.bin}",
+                "OCAMLBUILD_LIBDIR=#{self.lib}",
+                "OCAMLBUILD_MANDIR=#{self.man}", "OCAMLBUILD_NATIVE=true",
+                "OCAMLBUILD_NATIVE_TOOLS=true"
+              ],
+              [
+                "make", "check-if-preinstalled", "all",
+                "#{os == 'windows' ? 'install' : 'opam-install'}"
+              ]
+            ]
+          }
         }
       },
       "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
@@ -1084,7 +1140,7 @@
           "name": "ocaml-migrate-parsetree",
           "version": "1.0.11",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"frederic.bour@lakaban.net\"\nauthors: [\n  \"Frédéric Bour <frederic.bour@lakaban.net>\"\n  \"Jérémie Dimino <jeremie@dimino.org>\"\n]\nlicense: \"LGPL-2.1\"\ntags: [\"syntax\" \"org:ocamllabs\"]\nhomepage: \"https://github.com/ocaml-ppx/ocaml-migrate-parsetree\"\nbug-reports: \"https://github.com/ocaml-ppx/ocaml-migrate-parsetree/issues\"\ndepends: [\n  \"result\"\n  \"ocamlfind\" {build}\n  \"dune\" {build}\n]\navailable: ocaml-version >= \"4.02.0\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/ocaml-ppx/ocaml-migrate-parsetree.git\"",
+            "opam-version: \"1.2\"\nname: \"ocaml-migrate-parsetree\"\nversion: \"1.0.11\"\nmaintainer: \"frederic.bour@lakaban.net\"\nauthors: [\n  \"Frédéric Bour <frederic.bour@lakaban.net>\"\n  \"Jérémie Dimino <jeremie@dimino.org>\"\n]\nlicense: \"LGPL-2.1\"\ntags: [\"syntax\" \"org:ocamllabs\"]\nhomepage: \"https://github.com/ocaml-ppx/ocaml-migrate-parsetree\"\nbug-reports: \"https://github.com/ocaml-ppx/ocaml-migrate-parsetree/issues\"\ndepends: [\n  \"result\"\n  \"ocamlfind\" {build}\n  \"dune\" {build}\n]\navailable: ocaml-version >= \"4.02.0\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/ocaml-ppx/ocaml-migrate-parsetree.git\"",
           "override": null
         }
       },
@@ -1106,7 +1162,7 @@
           "name": "ocaml-compiler-libs",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ocaml-compiler-libs\"\nbug-reports: \"https://github.com/janestreet/ocaml-compiler-libs/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta12\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ocaml-compiler-libs.git\"",
+            "opam-version: \"1.2\"\nname: \"ocaml-compiler-libs\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ocaml-compiler-libs\"\nbug-reports: \"https://github.com/janestreet/ocaml-compiler-libs/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta12\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ocaml-compiler-libs.git\"",
           "override": null
         }
       },
@@ -1164,13 +1220,27 @@
           "archive:https://opam.ocaml.org/archives/merlin-extend.0.3+opam.tar.gz#md5:5bc02f7e256c5a2e99e8dc01b26b81c2",
           "archive:https://github.com/let-def/merlin-extend/archive/v0.3.tar.gz#md5:9c6dfd4f53328f02f12fcc265f4e2dda"
         ],
-        "files": [],
+        "files": [
+          {
+            "name": "_esy/merlin-extend-winfix.patch",
+            "content":
+              "--- ./extend_helper.ml\n+++ ./extend_helper.ml\n@@ -1,13 +1,6 @@\n-(*pp cppo -V OCAML:`ocamlc -version` *)\n open Parsetree\n open Extend_protocol\n \n-#if OCAML_VERSION < (4, 3, 0)\n-# define CONST_STRING Asttypes.Const_string\n-#else\n-# define CONST_STRING Parsetree.Pconst_string\n-#endif\n-\n (** Default implementation for [Reader_def.print_outcome] using\n     [Oprint] from compiler-libs *)\n let print_outcome_using_oprint ppf = function\n@@ -28,7 +21,7 @@\n       pstr_loc = Location.none;\n       pstr_desc = Pstr_eval ({\n           pexp_loc = Location.none;\n-          pexp_desc = Pexp_constant (CONST_STRING (msg, None));\n+          pexp_desc = Pexp_constant (Parsetree.Pconst_string (msg, None));\n           pexp_attributes = [];\n         }, []);\n     }]\n@@ -112,7 +105,7 @@\n   let msg = match payload with\n     | PStr [{\n         pstr_desc = Pstr_eval ({\n-            pexp_desc = Pexp_constant (CONST_STRING (msg, _));\n+            pexp_desc = Pexp_constant (Parsetree.Pconst_string (msg, _));\n           }, _);\n       }] -> msg\n     | _ -> \"Warning: extension produced an incorrect syntax-error node\"\n"
+          }
+        ],
         "opam": {
           "name": "merlin-extend",
           "version": "0.3",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Frederic Bour <frederic.bour@lakaban.net>\"\nauthors: \"Frederic Bour <frederic.bour@lakaban.net>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/let-def/merlin-extend\"\nbug-reports: \"https://github.com/let-def/merlin-extend\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"cppo\" {build}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: make\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"merlin_extend\"]\ndev-repo: \"git+https://github.com/let-def/merlin-extend.git\"",
-          "override": null
+            "opam-version: \"1.2\"\nname: \"merlin-extend\"\nversion: \"0.3\"\nmaintainer: \"Frederic Bour <frederic.bour@lakaban.net>\"\nauthors: \"Frederic Bour <frederic.bour@lakaban.net>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/let-def/merlin-extend\"\nbug-reports: \"https://github.com/let-def/merlin-extend\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"cppo\" {build}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: make\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"merlin_extend\"]\ndev-repo: \"git+https://github.com/let-def/merlin-extend.git\"",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < _esy/merlin-extend-winfix.patch' : 'true'}"
+              ],
+              [ "make" ]
+            ]
+          }
         }
       },
       "dependencies": [
@@ -1191,7 +1261,7 @@
           "name": "merlin",
           "version": "3.1.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"defree@gmail.com\"\nauthors: \"The Merlin team\"\nhomepage: \"https://github.com/ocaml/merlin\"\nbug-reports: \"https://github.com/ocaml/merlin/issues\"\ndepends: [\n  \"ocamlfind\" {>= \"1.5.2\"}\n  \"yojson\"\n]\navailable: ocaml-version >= \"4.02.1\" & ocaml-version < \"4.08\"\nbuild: [\n  [\"./configure\" \"--prefix\" prefix]\n  [\"rm\" \"-rf\" \"%{prefix}%/share/ocamlmerlin\"]\n  [make \"-j\" jobs]\n]\npost-messages:\n  \"\"\"\nmerlin installed.\n\nQuick setup for VIM\n-------------------\nAppend this to your .vimrc to add merlin to vim's runtime-path:\n  let g:opamshare = substitute(system('opam config var share'),'\\\\n$','','''')\n  execute \"set rtp+=\" . g:opamshare . \"/merlin/vim\"\n\nAlso run the following line in vim to index the documentation:\n  :execute \"helptags \" . g:opamshare . \"/merlin/vim/doc\"\n\nQuick setup for EMACS\n-------------------\nAdd opam emacs directory to your load-path by appending this to your .emacs:\n  (let ((opam-share (ignore-errors (car (process-lines \"opam\" \"config\" \"var\" \"share\")))))\n   (when (and opam-share (file-directory-p opam-share))\n    ;; Register Merlin\n    (add-to-list 'load-path (expand-file-name \"emacs/site-lisp\" opam-share))\n    (autoload 'merlin-mode \"merlin\" nil t nil)\n    ;; Automatically start it in OCaml buffers\n    (add-hook 'tuareg-mode-hook 'merlin-mode t)\n    (add-hook 'caml-mode-hook 'merlin-mode t)\n    ;; Use opam switch to lookup ocamlmerlin binary\n    (setq merlin-command 'opam)))\n\nTake a look at https://github.com/ocaml/merlin for more information\n\nQuick setup with opam-user-setup\n--------------------------------\n\nOpam-user-setup support Merlin.\n\n  $ opam user-setup install\n\nshould take care of basic setup.\nSee https://github.com/OCamlPro/opam-user-setup\"\"\"\n    {success & !user-setup:installed}\ndev-repo: \"git+https://github.com/ocaml/merlin.git\"",
+            "opam-version: \"1.2\"\nname: \"merlin\"\nversion: \"3.1.0\"\nmaintainer: \"defree@gmail.com\"\nauthors: \"The Merlin team\"\nhomepage: \"https://github.com/ocaml/merlin\"\nbug-reports: \"https://github.com/ocaml/merlin/issues\"\ndepends: [\n  \"ocamlfind\" {>= \"1.5.2\"}\n  \"yojson\"\n]\navailable: ocaml-version >= \"4.02.1\" & ocaml-version < \"4.08\"\nbuild: [\n  [\"./configure\" \"--prefix\" prefix]\n  [\"rm\" \"-rf\" \"%{prefix}%/share/ocamlmerlin\"]\n  [make \"-j\" jobs]\n]\npost-messages:\n  \"\"\"\nmerlin installed.\n\nQuick setup for VIM\n-------------------\nAppend this to your .vimrc to add merlin to vim's runtime-path:\n  let g:opamshare = substitute(system('opam config var share'),'\\\\n$','','''')\n  execute \"set rtp+=\" . g:opamshare . \"/merlin/vim\"\n\nAlso run the following line in vim to index the documentation:\n  :execute \"helptags \" . g:opamshare . \"/merlin/vim/doc\"\n\nQuick setup for EMACS\n-------------------\nAdd opam emacs directory to your load-path by appending this to your .emacs:\n  (let ((opam-share (ignore-errors (car (process-lines \"opam\" \"config\" \"var\" \"share\")))))\n   (when (and opam-share (file-directory-p opam-share))\n    ;; Register Merlin\n    (add-to-list 'load-path (expand-file-name \"emacs/site-lisp\" opam-share))\n    (autoload 'merlin-mode \"merlin\" nil t nil)\n    ;; Automatically start it in OCaml buffers\n    (add-hook 'tuareg-mode-hook 'merlin-mode t)\n    (add-hook 'caml-mode-hook 'merlin-mode t)\n    ;; Use opam switch to lookup ocamlmerlin binary\n    (setq merlin-command 'opam)))\n\nTake a look at https://github.com/ocaml/merlin for more information\n\nQuick setup with opam-user-setup\n--------------------------------\n\nOpam-user-setup support Merlin.\n\n  $ opam user-setup install\n\nshould take care of basic setup.\nSee https://github.com/OCamlPro/opam-user-setup\"\"\"\n    {success & !user-setup:installed}\ndev-repo: \"git+https://github.com/ocaml/merlin.git\"",
           "override": null
         }
       },
@@ -1200,20 +1270,20 @@
         "@opam/yojson@opam:1.4.0"
       ]
     },
-    "@opam/menhir@opam:20171013": {
+    "@opam/menhir@opam:20170607": {
       "record": {
         "name": "@opam/menhir",
-        "version": "opam:20171013",
+        "version": "opam:20170607",
         "source": [
-          "archive:https://opam.ocaml.org/archives/menhir.20171013+opam.tar.gz#md5:b361a87378407e26b9ea2dde7ddf41a0",
-          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20171013.tar.gz#md5:620863edea40437390ee5e5bd82fba11"
+          "archive:https://opam.ocaml.org/archives/menhir.20170607+opam.tar.gz#md5:aad332baa558bd26202cebc2b1b84a0b",
+          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20170607.tar.gz#md5:993b60845182c71d777b1f3cf9a01b96"
         ],
         "files": [],
         "opam": {
           "name": "menhir",
-          "version": "20171013",
+          "version": "20170607",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"4.02\"\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"",
+            "opam-version: \"1.2\"\nname: \"menhir\"\nversion: \"20170607\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"4.02\"\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"",
           "override": null
         }
       },
@@ -1235,7 +1305,7 @@
           "name": "magic-mime",
           "version": "1.1.0",
           "opam":
-            "opam-version: \"1.2\"\nname: \"magic-mime\"\nmaintainer: \"Anil Madhavapeddy <anil@recoil.org>\"\nauthors: [\"Anil Madhavapeddy\" \"Maxence Guesdon\"]\nlicense: \"ISC\"\nhomepage: \"https://github.com/mirage/ocaml-magic-mime\"\ndoc: \"https://mirage.github.io/ocaml-magic-mime\"\nbug-reports: \"https://github.com/mirage/ocaml-magic-mime/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-magic-mime.git\"",
+            "opam-version: \"1.2\"\nname: \"magic-mime\"\nversion: \"1.1.0\"\nmaintainer: \"Anil Madhavapeddy <anil@recoil.org>\"\nauthors: [\"Anil Madhavapeddy\" \"Maxence Guesdon\"]\nlicense: \"ISC\"\nhomepage: \"https://github.com/mirage/ocaml-magic-mime\"\ndoc: \"https://mirage.github.io/ocaml-magic-mime\"\nbug-reports: \"https://github.com/mirage/ocaml-magic-mime/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-magic-mime.git\"",
           "override": null
         }
       },
@@ -1256,7 +1326,7 @@
           "name": "lwt_ssl",
           "version": "1.1.2",
           "opam":
-            "opam-version: \"1.2\"\nversion: \"1.1.2\"\nmaintainer: \"Anton Bachin <antonbachin@yahoo.com>\"\nauthors: [\"Jérôme Vouillon\" \"Jérémie Dimino\"]\nlicense: \"LGPL with OpenSSL linking exception\"\nhomepage: \"https://github.com/aantron/lwt_ssl\"\ndoc: \"https://github.com/aantron/lwt_ssl/blob/master/src/lwt_ssl.mli\"\nbug-reports: \"https://github.com/aantron/lwt_ssl/issues\"\ndepends: [\n  \"base-unix\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"lwt\" {>= \"3.0.0\"}\n  \"ssl\" {>= \"0.5.0\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/aantron/lwt_ssl.git\"",
+            "opam-version: \"1.2\"\nname: \"lwt_ssl\"\nversion: \"1.1.2\"\nmaintainer: \"Anton Bachin <antonbachin@yahoo.com>\"\nauthors: [\"Jérôme Vouillon\" \"Jérémie Dimino\"]\nlicense: \"LGPL with OpenSSL linking exception\"\nhomepage: \"https://github.com/aantron/lwt_ssl\"\ndoc: \"https://github.com/aantron/lwt_ssl/blob/master/src/lwt_ssl.mli\"\nbug-reports: \"https://github.com/aantron/lwt_ssl/issues\"\ndepends: [\n  \"base-unix\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"lwt\" {>= \"3.0.0\"}\n  \"ssl\" {>= \"0.5.0\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/aantron/lwt_ssl.git\"",
           "override": null
         }
       },
@@ -1279,7 +1349,7 @@
           "name": "lwt_react",
           "version": "1.1.1",
           "opam":
-            "opam-version: \"1.2\"\nversion: \"1.1.1\"\nmaintainer: [\n  \"Anton Bachin <antonbachin@yahoo.com>\"\n  \"Mauricio Fernandez <mfp@acm.org>\"\n  \"Simon Cruanes <simon.cruanes.2007@m4x.org>\"\n]\nauthors: \"Jérémie Dimino\"\nlicense: \"LGPL with OpenSSL linking exception\"\nhomepage: \"https://github.com/ocsigen/lwt\"\ndoc: \"https://ocsigen.org/lwt/api/Lwt_react\"\nbug-reports: \"https://github.com/ocsigen/lwt/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta14\"}\n  \"lwt\" {>= \"3.0.0\"}\n  \"react\" {>= \"1.0.0\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/ocsigen/lwt.git\"",
+            "opam-version: \"1.2\"\nname: \"lwt_react\"\nversion: \"1.1.1\"\nmaintainer: [\n  \"Anton Bachin <antonbachin@yahoo.com>\"\n  \"Mauricio Fernandez <mfp@acm.org>\"\n  \"Simon Cruanes <simon.cruanes.2007@m4x.org>\"\n]\nauthors: \"Jérémie Dimino\"\nlicense: \"LGPL with OpenSSL linking exception\"\nhomepage: \"https://github.com/ocsigen/lwt\"\ndoc: \"https://ocsigen.org/lwt/api/Lwt_react\"\nbug-reports: \"https://github.com/ocsigen/lwt/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta14\"}\n  \"lwt\" {>= \"3.0.0\"}\n  \"react\" {>= \"1.0.0\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/ocsigen/lwt.git\"",
           "override": null
         }
       },
@@ -1301,7 +1371,7 @@
           "name": "lwt",
           "version": "3.3.0",
           "opam":
-            "opam-version: \"1.2\"\nversion: \"3.3.0\"\nmaintainer: [\n  \"Anton Bachin <antonbachin@yahoo.com>\"\n  \"Mauricio Fernandez <mfp@acm.org>\"\n  \"Simon Cruanes <simon.cruanes.2007@m4x.org>\"\n]\nauthors: [\"Jérôme Vouillon\" \"Jérémie Dimino\"]\nlicense: \"LGPL with OpenSSL linking exception\"\nhomepage: \"https://github.com/ocsigen/lwt\"\ndoc: \"https://ocsigen.org/lwt/manual/\"\nbug-reports: \"https://github.com/ocsigen/lwt/issues\"\ndepends: [\n  \"cppo\" {build & >= \"1.1.0\"}\n  \"jbuilder\" {build & >= \"1.0+beta14\"}\n  \"ocamlfind\" {build & >= \"1.7.3-1\"}\n  \"ocaml-migrate-parsetree\"\n  \"ppx_tools_versioned\" {>= \"5.0.1\"}\n  \"result\"\n]\ndepopts: [\"base-threads\" \"base-unix\" \"camlp4\" \"conf-libev\"]\navailable: ocaml-version >= \"4.02.0\" & compiler != \"4.02.1+BER\"\nbuild: [\n  [\n    \"ocaml\"\n    \"src/util/configure.ml\"\n    \"-use-libev\"\n    \"%{conf-libev:installed}%\"\n    \"-use-camlp4\"\n    \"%{camlp4:installed}%\"\n  ]\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"ocaml\" \"src/util/install_filter.ml\"]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\nmessages: [\n  \"For the PPX, please install package lwt_ppx\" {!lwt_ppx:installed}\n  \"For the Camlp4 syntax, please install package lwt_camlp4\"\n    {camlp4:installed & !lwt_camlp4:installed}\n  \"For Lwt_log and Lwt_daemon, please install package lwt_log\"\n    {!lwt_log:installed}\n]\ndev-repo: \"git+https://github.com/ocsigen/lwt.git\"",
+            "opam-version: \"1.2\"\nname: \"lwt\"\nversion: \"3.3.0\"\nmaintainer: [\n  \"Anton Bachin <antonbachin@yahoo.com>\"\n  \"Mauricio Fernandez <mfp@acm.org>\"\n  \"Simon Cruanes <simon.cruanes.2007@m4x.org>\"\n]\nauthors: [\"Jérôme Vouillon\" \"Jérémie Dimino\"]\nlicense: \"LGPL with OpenSSL linking exception\"\nhomepage: \"https://github.com/ocsigen/lwt\"\ndoc: \"https://ocsigen.org/lwt/manual/\"\nbug-reports: \"https://github.com/ocsigen/lwt/issues\"\ndepends: [\n  \"cppo\" {build & >= \"1.1.0\"}\n  \"jbuilder\" {build & >= \"1.0+beta14\"}\n  \"ocamlfind\" {build & >= \"1.7.3-1\"}\n  \"ocaml-migrate-parsetree\"\n  \"ppx_tools_versioned\" {>= \"5.0.1\"}\n  \"result\"\n]\ndepopts: [\"base-threads\" \"base-unix\" \"camlp4\" \"conf-libev\"]\navailable: ocaml-version >= \"4.02.0\" & compiler != \"4.02.1+BER\"\nbuild: [\n  [\n    \"ocaml\"\n    \"src/util/configure.ml\"\n    \"-use-libev\"\n    \"%{conf-libev:installed}%\"\n    \"-use-camlp4\"\n    \"%{camlp4:installed}%\"\n  ]\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"ocaml\" \"src/util/install_filter.ml\"]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\nmessages: [\n  \"For the PPX, please install package lwt_ppx\" {!lwt_ppx:installed}\n  \"For the Camlp4 syntax, please install package lwt_camlp4\"\n    {camlp4:installed & !lwt_camlp4:installed}\n  \"For Lwt_log and Lwt_daemon, please install package lwt_log\"\n    {!lwt_log:installed}\n]\ndev-repo: \"git+https://github.com/ocsigen/lwt.git\"",
           "override": null
         }
       },
@@ -1309,7 +1379,7 @@
         "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.4",
         "@opam/jbuilder@opam:transition",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
-        "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.2",
+        "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.1",
         "@opam/result@opam:1.3"
       ]
     },
@@ -1326,7 +1396,7 @@
           "name": "logs",
           "version": "0.6.2",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"log\" \"system\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/logs\"\ndoc: \"http://erratique.ch/software/logs/doc\"\nbug-reports: \"https://github.com/dbuenzli/logs/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"result\"\n  \"mtime\" {test}\n]\ndepopts: [\"js_of_ocaml\" \"fmt\" \"cmdliner\" \"lwt\"]\nconflicts: [\n  \"cmdliner\" {< \"0.9.8\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\"\n  \"pkg/pkg.ml\"\n  \"build\"\n  \"--pinned\"\n  \"%{pinned}%\"\n  \"--with-js_of_ocaml\"\n  \"%{js_of_ocaml:installed}%\"\n  \"--with-fmt\"\n  \"%{fmt:installed}%\"\n  \"--with-cmdliner\"\n  \"%{cmdliner:installed}%\"\n  \"--with-lwt\"\n  \"%{lwt:installed}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/logs.git\"",
+            "opam-version: \"1.2\"\nname: \"logs\"\nversion: \"0.6.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"log\" \"system\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/logs\"\ndoc: \"http://erratique.ch/software/logs/doc\"\nbug-reports: \"https://github.com/dbuenzli/logs/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"result\"\n  \"mtime\" {test}\n]\ndepopts: [\"js_of_ocaml\" \"fmt\" \"cmdliner\" \"lwt\"]\nconflicts: [\n  \"cmdliner\" {< \"0.9.8\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\"\n  \"pkg/pkg.ml\"\n  \"build\"\n  \"--pinned\"\n  \"%{pinned}%\"\n  \"--with-js_of_ocaml\"\n  \"%{js_of_ocaml:installed}%\"\n  \"--with-fmt\"\n  \"%{fmt:installed}%\"\n  \"--with-cmdliner\"\n  \"%{cmdliner:installed}%\"\n  \"--with-lwt\"\n  \"%{lwt:installed}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/logs.git\"",
           "override": null
         }
       },
@@ -1349,7 +1419,7 @@
           "name": "lambda-term",
           "version": "1.12.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"jeremie@dimino.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/diml/lambda-term\"\nbug-reports: \"https://github.com/diml/lambda-term/issues\"\ndepends: [\n  \"lwt\" {>= \"2.7.0\" & < \"4.0.0\"}\n  \"react\"\n  \"zed\" {>= \"1.2\"}\n  \"camomile\" {>= \"0.8.6\"}\n  \"lwt_react\"\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/diml/lambda-term.git\"",
+            "opam-version: \"1.2\"\nname: \"lambda-term\"\nversion: \"1.12.0\"\nmaintainer: \"jeremie@dimino.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/diml/lambda-term\"\nbug-reports: \"https://github.com/diml/lambda-term/issues\"\ndepends: [\n  \"lwt\" {>= \"2.7.0\" & < \"4.0.0\"}\n  \"react\"\n  \"zed\" {>= \"1.2\"}\n  \"camomile\" {>= \"0.8.6\"}\n  \"lwt_react\"\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/diml/lambda-term.git\"",
           "override": null
         }
       },
@@ -1373,7 +1443,7 @@
           "name": "jsonm",
           "version": "1.0.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"json\" \"codec\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/jsonm\"\ndoc: \"http://erratique.ch/software/jsonm/doc/Jsonm\"\nbug-reports: \"https://github.com/dbuenzli/jsonm/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"uchar\"\n  \"uutf\" {>= \"1.0.0\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pinned\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/jsonm.git\"",
+            "opam-version: \"1.2\"\nname: \"jsonm\"\nversion: \"1.0.1\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"json\" \"codec\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/jsonm\"\ndoc: \"http://erratique.ch/software/jsonm/doc/Jsonm\"\nbug-reports: \"https://github.com/dbuenzli/jsonm/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"uchar\"\n  \"uutf\" {>= \"1.0.0\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pinned\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/jsonm.git\"",
           "override": null
         }
       },
@@ -1393,7 +1463,7 @@
           "name": "jbuilder",
           "version": "transition",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\ndepends: [\"dune\"]\npost-messages:\n  \"Jbuilder has been renamed and the jbuilder package is now a transition package. Use the dune package instead.\"\ndev-repo: \"git+https://github.com/ocaml/dune.git\"",
+            "opam-version: \"1.2\"\nname: \"jbuilder\"\nversion: \"transition\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\ndepends: [\"dune\"]\npost-messages:\n  \"Jbuilder has been renamed and the jbuilder package is now a transition package. Use the dune package instead.\"\ndev-repo: \"git+https://github.com/ocaml/dune.git\"",
           "override": { "dependencies": { "@opam/ocamlfind": "*" } }
         }
       },
@@ -1415,7 +1485,7 @@
           "name": "ipaddr",
           "version": "2.8.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"sheets@alum.mit.edu\"\nauthors: [\"David Sheets\" \"Anil Madhavapeddy\" \"Hugo Heuzard\"]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-ipaddr\"\ndoc: \"https://mirage.github.io/ocaml-ipaddr/\"\nbug-reports: \"https://github.com/mirage/ocaml-ipaddr/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n  \"base-bytes\"\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"sexplib\"\n  \"ounit\" {test}\n]\ndepopts: [\"base-unix\"]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/mirage/ocaml-ipaddr.git\"",
+            "opam-version: \"1.2\"\nname: \"ipaddr\"\nversion: \"2.8.0\"\nmaintainer: \"sheets@alum.mit.edu\"\nauthors: [\"David Sheets\" \"Anil Madhavapeddy\" \"Hugo Heuzard\"]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-ipaddr\"\ndoc: \"https://mirage.github.io/ocaml-ipaddr/\"\nbug-reports: \"https://github.com/mirage/ocaml-ipaddr/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n  \"base-bytes\"\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"sexplib\"\n  \"ounit\" {test}\n]\ndepopts: [\"base-unix\"]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/mirage/ocaml-ipaddr.git\"",
           "override": null
         }
       },
@@ -1438,7 +1508,7 @@
           "name": "gen",
           "version": "0.5.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"simon.cruanes.2007@m4x.org\"\nauthors: \"Simon Cruanes\"\ntags: [\"gen\" \"iterator\" \"iter\" \"fold\"]\nhomepage: \"https://github.com/c-cube/gen/\"\ndoc: \"http://cedeela.fr/~simon/software/gen/\"\nbug-reports: \"https://github.com/c-cube/gen/issues\"\ndepends: [\n  \"jbuilder\" {build}\n  \"base-bytes\"\n  \"odoc\" {doc}\n  \"qtest\" {test}\n  \"qcheck\" {test}\n]\nbuild: [\"jbuilder\" \"build\" \"@install\"]\nrun-test: [\"jbuilder\" \"runtest\"]\ndev-repo: \"git+https://github.com/c-cube/gen.git\"\nbuild-doc: [\"jbuilder\" \"build\" \"@doc\"]",
+            "opam-version: \"1.2\"\nname: \"gen\"\nversion: \"0.5.1\"\nmaintainer: \"simon.cruanes.2007@m4x.org\"\nauthors: \"Simon Cruanes\"\ntags: [\"gen\" \"iterator\" \"iter\" \"fold\"]\nhomepage: \"https://github.com/c-cube/gen/\"\ndoc: \"http://cedeela.fr/~simon/software/gen/\"\nbug-reports: \"https://github.com/c-cube/gen/issues\"\ndepends: [\n  \"jbuilder\" {build}\n  \"base-bytes\"\n  \"odoc\" {doc}\n  \"qtest\" {test}\n  \"qcheck\" {test}\n]\nbuild: [\"jbuilder\" \"build\" \"@install\"]\nrun-test: [\"jbuilder\" \"runtest\"]\ndev-repo: \"git+https://github.com/c-cube/gen.git\"\nbuild-doc: [\"jbuilder\" \"build\" \"@doc\"]",
           "override": null
         }
       },
@@ -1460,7 +1530,7 @@
           "name": "fmt",
           "version": "0.8.5",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: [\"Daniel Bünzli <daniel.buenzl i@erratique.ch>\" \"Gabriel Radanne\"]\nlicense: \"ISC\"\ntags: [\"string\" \"format\" \"pretty-print\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/fmt\"\ndoc: \"http://erratique.ch/software/fmt\"\nbug-reports: \"https://github.com/dbuenzli/fmt/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build & >= \"0.9.0\"}\n  \"result\"\n  \"uchar\"\n]\ndepopts: [\"base-unix\" \"cmdliner\"]\nconflicts: [\n  \"cmdliner\" {< \"0.9.8\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\"\n  \"pkg/pkg.ml\"\n  \"build\"\n  \"--dev-pkg\"\n  \"%{pinned}%\"\n  \"--with-base-unix\"\n  \"%{base-unix:installed}%\"\n  \"--with-cmdliner\"\n  \"%{cmdliner:installed}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/fmt.git\"",
+            "opam-version: \"1.2\"\nname: \"fmt\"\nversion: \"0.8.5\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: [\"Daniel Bünzli <daniel.buenzl i@erratique.ch>\" \"Gabriel Radanne\"]\nlicense: \"ISC\"\ntags: [\"string\" \"format\" \"pretty-print\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/fmt\"\ndoc: \"http://erratique.ch/software/fmt\"\nbug-reports: \"https://github.com/dbuenzli/fmt/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build & >= \"0.9.0\"}\n  \"result\"\n  \"uchar\"\n]\ndepopts: [\"base-unix\" \"cmdliner\"]\nconflicts: [\n  \"cmdliner\" {< \"0.9.8\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\"\n  \"pkg/pkg.ml\"\n  \"build\"\n  \"--dev-pkg\"\n  \"%{pinned}%\"\n  \"--with-base-unix\"\n  \"%{base-unix:installed}%\"\n  \"--with-cmdliner\"\n  \"%{cmdliner:installed}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/fmt.git\"",
           "override": null
         }
       },
@@ -1483,7 +1553,7 @@
           "name": "fileutils",
           "version": "0.5.3",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Sylvain Le Gall <sylvain+ocaml@le-gall.net>\"\nauthors: \"Sylvain Le Gall\"\nlicense: \"LGPL-2.1 with OCaml linking exception\"\nhomepage: \"http://ocaml-fileutils.forge.ocamlcore.org/\"\nbug-reports: \"https://github.com/gildor478/ocaml-fileutils/issues\"\ndepends: [\n  \"base-unix\"\n  \"base-bytes\"\n  \"ocamlbuild\" {build}\n  \"ocamlfind\" {build}\n  \"ounit\" {test & >= \"2.0.0\"}\n]\nbuild: [\n  [\"ocaml\" \"setup.ml\" \"-configure\" \"--prefix\" prefix]\n  [\"ocaml\" \"setup.ml\" \"-build\"]\n]\ninstall: [\"ocaml\" \"setup.ml\" \"-install\"]\nremove: [\"ocamlfind\" \"remove\" \"fileutils\"]\ndev-repo: \"git+https://github.com/gildor478/ocaml-fileutils.git\"\nbuild-doc: [\"ocaml\" \"setup.ml\" \"-doc\"]",
+            "opam-version: \"1.2\"\nname: \"fileutils\"\nversion: \"0.5.3\"\nmaintainer: \"Sylvain Le Gall <sylvain+ocaml@le-gall.net>\"\nauthors: \"Sylvain Le Gall\"\nlicense: \"LGPL-2.1 with OCaml linking exception\"\nhomepage: \"http://ocaml-fileutils.forge.ocamlcore.org/\"\nbug-reports: \"https://github.com/gildor478/ocaml-fileutils/issues\"\ndepends: [\n  \"base-unix\"\n  \"base-bytes\"\n  \"ocamlbuild\" {build}\n  \"ocamlfind\" {build}\n  \"ounit\" {test & >= \"2.0.0\"}\n]\nbuild: [\n  [\"ocaml\" \"setup.ml\" \"-configure\" \"--prefix\" prefix]\n  [\"ocaml\" \"setup.ml\" \"-build\"]\n]\ninstall: [\"ocaml\" \"setup.ml\" \"-install\"]\nremove: [\"ocamlfind\" \"remove\" \"fileutils\"]\ndev-repo: \"git+https://github.com/gildor478/ocaml-fileutils.git\"\nbuild-doc: [\"ocaml\" \"setup.ml\" \"-doc\"]",
           "override": null
         }
       },
@@ -1506,7 +1576,7 @@
           "name": "fieldslib",
           "version": "v0.11.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/fieldslib\"\nbug-reports: \"https://github.com/janestreet/fieldslib/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/fieldslib.git\"",
+            "opam-version: \"1.2\"\nname: \"fieldslib\"\nversion: \"v0.11.0\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/fieldslib\"\nbug-reports: \"https://github.com/janestreet/fieldslib/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/fieldslib.git\"",
           "override": null
         }
       },
@@ -1530,7 +1600,7 @@
           "name": "easy-format",
           "version": "1.3.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nhomepage: \"http://mjambon.com/easy-format.html\"\nbug-reports: \"https://github.com/mjambon/easy-format/issues\"\ndepends: [\n  \"jbuilder\" {build}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/easy-format.git\"",
+            "opam-version: \"1.2\"\nname: \"easy-format\"\nversion: \"1.3.1\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nhomepage: \"http://mjambon.com/easy-format.html\"\nbug-reports: \"https://github.com/mjambon/easy-format/issues\"\ndepends: [\n  \"jbuilder\" {build}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/easy-format.git\"",
           "override": null
         }
       },
@@ -1551,7 +1621,7 @@
           "name": "dune",
           "version": "1.1.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\nconflicts: [\n  \"jbuilder\" {!= \"transition\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"ocaml\" \"configure.ml\" \"--libdir\" lib]\n  [\"ocaml\" \"bootstrap.ml\"]\n  [\"./boot.exe\" \"--release\" \"--subst\"] {pinned}\n  [\"./boot.exe\" \"--release\" \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/ocaml/dune.git\"",
+            "opam-version: \"1.2\"\nname: \"dune\"\nversion: \"1.1.1\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\nconflicts: [\n  \"jbuilder\" {!= \"transition\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"ocaml\" \"configure.ml\" \"--libdir\" lib]\n  [\"ocaml\" \"bootstrap.ml\"]\n  [\"./boot.exe\" \"--release\" \"--subst\"] {pinned}\n  [\"./boot.exe\" \"--release\" \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/ocaml/dune.git\"",
           "override": {
             "build": [
               [ "ocaml", "bootstrap.ml" ],
@@ -1575,7 +1645,7 @@
           "name": "cppo_ocamlbuild",
           "version": "1.6.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"http://mjambon.com/cppo.html\"\nbug-reports: \"https://github.com/mjambon/cppo/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"ocamlbuild\"\n  \"cppo\" {>= \"1.6.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mjambon/cppo.git\"",
+            "opam-version: \"1.2\"\nname: \"cppo_ocamlbuild\"\nversion: \"1.6.0\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"http://mjambon.com/cppo.html\"\nbug-reports: \"https://github.com/mjambon/cppo/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"ocamlbuild\"\n  \"cppo\" {>= \"1.6.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mjambon/cppo.git\"",
           "override": null
         }
       },
@@ -1597,7 +1667,7 @@
           "name": "cppo",
           "version": "1.6.4",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"https://github.com/mjambon/cppo\"\nbug-reports: \"https://github.com/mjambon/cppo/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta17\"}\n  \"base-bytes\"\n  \"base-unix\"\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/cppo.git\"",
+            "opam-version: \"1.2\"\nname: \"cppo\"\nversion: \"1.6.4\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"https://github.com/mjambon/cppo\"\nbug-reports: \"https://github.com/mjambon/cppo/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta17\"}\n  \"base-bytes\"\n  \"base-unix\"\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/cppo.git\"",
           "override": null
         }
       },
@@ -1619,7 +1689,7 @@
           "name": "containers",
           "version": "1.3",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"simon.cruanes@inria.fr\"\nauthors: \"Simon Cruanes\"\ntags: [\"stdlib\" \"containers\" \"iterators\" \"list\" \"heap\" \"queue\"]\nhomepage: \"https://github.com/c-cube/ocaml-containers/\"\ndoc: \"http://cedeela.fr/~simon/software/containers/\"\nbug-reports: \"https://github.com/c-cube/ocaml-containers/issues/\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"base-bytes\"\n  \"result\"\n  \"cppo\" {build}\n  \"ocamlbuild\" {build}\n  \"qtest\" {test}\n]\ndepopts: [\"base-unix\" \"base-threads\"]\nconflicts: [\n  \"sequence\" {< \"0.5\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  [\n    \"./configure\"\n    \"--prefix\"\n    prefix\n    \"--disable-bench\"\n    \"--disable-tests\"\n    \"--%{base-unix:enable}%-unix\"\n    \"--enable-docs\"\n  ]\n  [make \"build\"]\n]\nrun-test: [make \"test\"]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"containers\"]\npost-messages: \"\"\"\nSmall release with many bugfixes and a few new functions.\n\nA summary hub.com/c-cube/ocaml-containers/issues/84\nchangelog: https://github.com/c-cube/ocaml-containers/blob/1.3/CHANGELOG.adoc\"\"\"\ndev-repo: \"git+https://github.com/c-cube/ocaml-containers.git\"\nbuild-doc: [make \"doc\"]",
+            "opam-version: \"1.2\"\nname: \"containers\"\nversion: \"1.3\"\nmaintainer: \"simon.cruanes@inria.fr\"\nauthors: \"Simon Cruanes\"\ntags: [\"stdlib\" \"containers\" \"iterators\" \"list\" \"heap\" \"queue\"]\nhomepage: \"https://github.com/c-cube/ocaml-containers/\"\ndoc: \"http://cedeela.fr/~simon/software/containers/\"\nbug-reports: \"https://github.com/c-cube/ocaml-containers/issues/\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"base-bytes\"\n  \"result\"\n  \"cppo\" {build}\n  \"ocamlbuild\" {build}\n  \"qtest\" {test}\n]\ndepopts: [\"base-unix\" \"base-threads\"]\nconflicts: [\n  \"sequence\" {< \"0.5\"}\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  [\n    \"./configure\"\n    \"--prefix\"\n    prefix\n    \"--disable-bench\"\n    \"--disable-tests\"\n    \"--%{base-unix:enable}%-unix\"\n    \"--enable-docs\"\n  ]\n  [make \"build\"]\n]\nrun-test: [make \"test\"]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"containers\"]\npost-messages: \"\"\"\nSmall release with many bugfixes and a few new functions.\n\nA summary hub.com/c-cube/ocaml-containers/issues/84\nchangelog: https://github.com/c-cube/ocaml-containers/blob/1.3/CHANGELOG.adoc\"\"\"\ndev-repo: \"git+https://github.com/c-cube/ocaml-containers.git\"\nbuild-doc: [make \"doc\"]",
           "override": null
         }
       },
@@ -1639,7 +1709,7 @@
           "name": "conf-which",
           "version": "1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"unixjunkie@sdf.org\"\nauthors: \"Carlo Wood\"\nlicense: \"GPL-2+\"\nhomepage: \"http://www.gnu.org/software/which/\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"which\" \"which\"]\ndepexts: [\n  [\"which\"] {\"centos\"}\n  [\"which\"] {\"fedora\"}\n  [\"which\"] {\"opensuse\"}\n  [\"debianutils\"] {\"debian\"}\n  [\"debianutils\"] {\"ubuntu\"}\n  [\"which\"] {\"nixpkgs\"}\n  [\"which\"] {\"archlinux\"}\n]",
+            "opam-version: \"1.2\"\nname: \"conf-which\"\nversion: \"1\"\nmaintainer: \"unixjunkie@sdf.org\"\nauthors: \"Carlo Wood\"\nlicense: \"GPL-2+\"\nhomepage: \"http://www.gnu.org/software/which/\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"which\" \"which\"]\ndepexts: [\n  [\"which\"] {\"centos\"}\n  [\"which\"] {\"fedora\"}\n  [\"which\"] {\"opensuse\"}\n  [\"debianutils\"] {\"debian\"}\n  [\"debianutils\"] {\"ubuntu\"}\n  [\"which\"] {\"nixpkgs\"}\n  [\"which\"] {\"archlinux\"}\n]",
           "override": null
         }
       },
@@ -1655,7 +1725,7 @@
           "name": "conf-pkg-config",
           "version": "1.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"unixjunkie@sdf.org\"\nauthors: \"Francois Berenger\"\nlicense: \"GPL\"\nhomepage: \"http://www.freedesktop.org/wiki/Software/pkg-config/\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"pkg-config\" \"--help\"]\ninstall:\n  [\"ln\" \"-s\" \"/usr/local/bin/pkgconf\" \"%{bin}%/pkg-config\"] {os = \"openbsd\"}\nremove: [\"rm\" \"-f\" \"%{bin}%/pkg-config\"] {os = \"openbsd\"}\npost-messages:\n  \"conf-pkg-config: A symlink to /usr/local/bin/pkgconf has been installed in the OPAM bin directory (%{bin}%) on your PATH as 'pkg-config'. This is necessary for correct operation.\"\n    {os = \"openbsd\"}\ndepexts: [\n  [\"pkg-config\"] {\"debian\"}\n  [\"pkg-config\"] {\"ubuntu\"}\n  [\"pkg-config\"] {\"archlinux\"}\n  [\"pkgconfig\"] {\"fedora\"}\n  [\"pkgconfig\"] {\"centos\"}\n  [\"pkgconfig\"] {\"mageia\"}\n  [\"pkgconfig\"] {\"rhel\"}\n  [\"pkgconfig\"] {\"oraclelinux\"}\n  [\"pkgconfig\"] {\"alpine\"}\n  [\"devel/pkgconf\"] {\"freebsd\"}\n  [\"devel/pkgconf\"] {\"openbsd\"}\n  [\"pkg-config\"] {\"osx\" & \"homebrew\"}\n  [\"pkgconf\"] {\"freebsd\"}\n]",
+            "opam-version: \"1.2\"\nname: \"conf-pkg-config\"\nversion: \"1.1\"\nmaintainer: \"unixjunkie@sdf.org\"\nauthors: \"Francois Berenger\"\nlicense: \"GPL\"\nhomepage: \"http://www.freedesktop.org/wiki/Software/pkg-config/\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"pkg-config\" \"--help\"]\ninstall:\n  [\"ln\" \"-s\" \"/usr/local/bin/pkgconf\" \"%{bin}%/pkg-config\"] {os = \"openbsd\"}\nremove: [\"rm\" \"-f\" \"%{bin}%/pkg-config\"] {os = \"openbsd\"}\npost-messages:\n  \"conf-pkg-config: A symlink to /usr/local/bin/pkgconf has been installed in the OPAM bin directory (%{bin}%) on your PATH as 'pkg-config'. This is necessary for correct operation.\"\n    {os = \"openbsd\"}\ndepexts: [\n  [\"pkg-config\"] {\"debian\"}\n  [\"pkg-config\"] {\"ubuntu\"}\n  [\"pkg-config\"] {\"archlinux\"}\n  [\"pkgconfig\"] {\"fedora\"}\n  [\"pkgconfig\"] {\"centos\"}\n  [\"pkgconfig\"] {\"mageia\"}\n  [\"pkgconfig\"] {\"rhel\"}\n  [\"pkgconfig\"] {\"oraclelinux\"}\n  [\"pkgconfig\"] {\"alpine\"}\n  [\"devel/pkgconf\"] {\"freebsd\"}\n  [\"devel/pkgconf\"] {\"openbsd\"}\n  [\"pkg-config\"] {\"osx\" & \"homebrew\"}\n  [\"pkgconf\"] {\"freebsd\"}\n]",
           "override": {
             "dependencies": {
               "yarn-pkg-config":
@@ -1686,7 +1756,7 @@
           "name": "conf-openssl",
           "version": "1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"David Sheets <sheets@alum.mit.edu>\"\nauthors: \"The OpenSSL Project\"\nlicense: \"Apache-1.0\"\nhomepage: \"https://www.openssl.org/\"\ndepends: [\"conf-pkg-config\"]\nbuild: [\n  [\"pkg-config\" \"openssl\"]\n    {os != \"darwin\" & os != \"freebsd\" & os != \"openbsd\" & os != \"netbsd\"}\n  [\"./osx-build.sh\"] {os = \"darwin\"}\n]\ndepexts: [\n  [\"libssl-dev\"] {\"debian\"}\n  [\"libssl-dev\"] {\"ubuntu\"}\n  [\"openssl-devel\"] {\"centos\"}\n  [\"openssl-devel\"] {\"oraclelinux\"}\n  [\"openssl-devel\"] {\"fedora\"}\n  [\"openssl\"] {\"osx\" & \"homebrew\"}\n  [\"openssl\"] {\"osx\" & \"macports\"}\n  [\"libressl-dev\"] {\"alpine\"}\n  [\"openssl\"] {\"nixpkgs\"}\n  [\"openssl\"] {\"archlinux\"}\n  [\"libopenssl-devel\"] {\"opensuse\"}\n]",
+            "opam-version: \"1.2\"\nname: \"conf-openssl\"\nversion: \"1\"\nmaintainer: \"David Sheets <sheets@alum.mit.edu>\"\nauthors: \"The OpenSSL Project\"\nlicense: \"Apache-1.0\"\nhomepage: \"https://www.openssl.org/\"\ndepends: [\"conf-pkg-config\"]\nbuild: [\n  [\"pkg-config\" \"openssl\"]\n    {os != \"darwin\" & os != \"freebsd\" & os != \"openbsd\" & os != \"netbsd\"}\n  [\"./osx-build.sh\"] {os = \"darwin\"}\n]\ndepexts: [\n  [\"libssl-dev\"] {\"debian\"}\n  [\"libssl-dev\"] {\"ubuntu\"}\n  [\"openssl-devel\"] {\"centos\"}\n  [\"openssl-devel\"] {\"oraclelinux\"}\n  [\"openssl-devel\"] {\"fedora\"}\n  [\"openssl\"] {\"osx\" & \"homebrew\"}\n  [\"openssl\"] {\"osx\" & \"macports\"}\n  [\"libressl-dev\"] {\"alpine\"}\n  [\"openssl\"] {\"nixpkgs\"}\n  [\"openssl\"] {\"archlinux\"}\n  [\"libopenssl-devel\"] {\"opensuse\"}\n]",
           "override": null
         }
       },
@@ -1704,26 +1774,26 @@
           "name": "conf-m4",
           "version": "1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"tim@gfxmonk.net\"\nlicense: \"GPL-3\"\nhomepage: \"http://www.gnu.org/software/m4/m4.html\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"sh\" \"-exc\" \"echo | m4\"]\ndepexts: [\n  [\"m4\"] {\"debian\"}\n  [\"m4\"] {\"ubuntu\"}\n  [\"m4\"] {\"fedora\"}\n  [\"m4\"] {\"rhel\"}\n  [\"m4\"] {\"centos\"}\n  [\"m4\"] {\"alpine\"}\n  [\"m4\"] {\"nixpkgs\"}\n  [\"m4\"] {\"opensuse\"}\n  [\"m4\"] {\"oraclelinux\"}\n  [\"m4\"] {\"archlinux\"}\n]",
+            "opam-version: \"1.2\"\nname: \"conf-m4\"\nversion: \"1\"\nmaintainer: \"tim@gfxmonk.net\"\nlicense: \"GPL-3\"\nhomepage: \"http://www.gnu.org/software/m4/m4.html\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"sh\" \"-exc\" \"echo | m4\"]\ndepexts: [\n  [\"m4\"] {\"debian\"}\n  [\"m4\"] {\"ubuntu\"}\n  [\"m4\"] {\"fedora\"}\n  [\"m4\"] {\"rhel\"}\n  [\"m4\"] {\"centos\"}\n  [\"m4\"] {\"alpine\"}\n  [\"m4\"] {\"nixpkgs\"}\n  [\"m4\"] {\"opensuse\"}\n  [\"m4\"] {\"oraclelinux\"}\n  [\"m4\"] {\"archlinux\"}\n]",
           "override": null
         }
       },
       "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
     },
-    "@opam/conduit-lwt-unix@opam:1.1.0": {
+    "@opam/conduit-lwt-unix@opam:1.2.0": {
       "record": {
         "name": "@opam/conduit-lwt-unix",
-        "version": "opam:1.1.0",
+        "version": "opam:1.2.0",
         "source": [
-          "archive:https://opam.ocaml.org/archives/conduit-lwt-unix.1.1.0+opam.tar.gz#md5:36963f7684ddb4b03f5de92b68fe7533",
-          "archive:https://github.com/mirage/ocaml-conduit/releases/download/v1.1.0/conduit-1.1.0.tbz#md5:eb1d02c80d06ef812d97dc1ab588b597"
+          "archive:https://opam.ocaml.org/archives/conduit-lwt-unix.1.2.0+opam.tar.gz#md5:0bf7d9a1d43f7a16f3b14c31af38904f",
+          "archive:https://github.com/mirage/ocaml-conduit/releases/download/v1.2.0/conduit-1.2.0.tbz#md5:fe5f619935ba765619e1854e5ee2e4a5"
         ],
         "files": [],
         "opam": {
           "name": "conduit-lwt-unix",
-          "version": "1.1.0",
+          "version": "1.2.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\" \"Thomas Leonard\" \"Thomas Gazagnaire\" \"Rudi Grinberg\"\n]\nlicense: \"ISC\"\ntags: \"org:mirage\"\nhomepage: \"https://github.com/mirage/ocaml-conduit\"\nbug-reports: \"https://github.com/mirage/ocaml-conduit/issues\"\ndepends: [\n  \"base-unix\"\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"ppx_sexp_conv\"\n  \"conduit-lwt\" {>= \"1.1.0\"}\n  \"lwt\" {>= \"3.0.0\"}\n  \"uri\" {>= \"1.9.4\"}\n  \"ipaddr\" {>= \"2.8.0\"}\n]\ndepopts: [\"tls\" \"lwt_ssl\" \"launchd\"]\nconflicts: [\n  \"tls\" {< \"0.8.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name \"--name\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-conduit.git\"",
+            "opam-version: \"1.2\"\nname: \"conduit-lwt-unix\"\nversion: \"1.2.0\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\" \"Thomas Leonard\" \"Thomas Gazagnaire\" \"Rudi Grinberg\"\n]\nlicense: \"ISC\"\ntags: \"org:mirage\"\nhomepage: \"https://github.com/mirage/ocaml-conduit\"\nbug-reports: \"https://github.com/mirage/ocaml-conduit/issues\"\ndepends: [\n  \"base-unix\"\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"ppx_sexp_conv\"\n  \"conduit-lwt\"\n  \"lwt\" {>= \"3.0.0\"}\n  \"uri\" {>= \"1.9.4\"}\n  \"ipaddr\" {>= \"2.8.0\"}\n]\ndepopts: [\"tls\" \"lwt_ssl\" \"launchd\"]\nconflicts: [\n  \"tls\" {< \"0.8.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-n\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-conduit.git\"",
           "override": null
         }
       },
@@ -1747,7 +1817,7 @@
           "name": "conduit-lwt",
           "version": "1.1.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\" \"Thomas Leonard\" \"Thomas Gazagnaire\" \"Rudi Grinberg\"\n]\nlicense: \"ISC\"\ntags: \"org:mirage\"\nhomepage: \"https://github.com/mirage/ocaml-conduit\"\nbug-reports: \"https://github.com/mirage/ocaml-conduit/issues\"\ndepends: [\n  \"base-unix\"\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"ppx_sexp_conv\"\n  \"conduit\" {>= \"1.1.0\"}\n  \"lwt\" {>= \"3.0.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name \"--name\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-conduit.git\"",
+            "opam-version: \"1.2\"\nname: \"conduit-lwt\"\nversion: \"1.1.0\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\" \"Thomas Leonard\" \"Thomas Gazagnaire\" \"Rudi Grinberg\"\n]\nlicense: \"ISC\"\ntags: \"org:mirage\"\nhomepage: \"https://github.com/mirage/ocaml-conduit\"\nbug-reports: \"https://github.com/mirage/ocaml-conduit/issues\"\ndepends: [\n  \"base-unix\"\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"ppx_sexp_conv\"\n  \"conduit\" {>= \"1.1.0\"}\n  \"lwt\" {>= \"3.0.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name \"--name\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-conduit.git\"",
           "override": null
         }
       },
@@ -1770,7 +1840,7 @@
           "name": "conduit",
           "version": "1.1.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\" \"Thomas Leonard\" \"Thomas Gazagnaire\" \"Rudi Grinberg\"\n]\nlicense: \"ISC\"\ntags: \"org:mirage\"\nhomepage: \"https://github.com/mirage/ocaml-conduit\"\nbug-reports: \"https://github.com/mirage/ocaml-conduit/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"ppx_sexp_conv\"\n  \"sexplib\"\n  \"astring\"\n  \"uri\"\n  \"result\"\n  \"logs\" {>= \"0.5.0\"}\n  \"ipaddr\" {>= \"2.5.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name \"--name\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-conduit.git\"",
+            "opam-version: \"1.2\"\nname: \"conduit\"\nversion: \"1.1.0\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\" \"Thomas Leonard\" \"Thomas Gazagnaire\" \"Rudi Grinberg\"\n]\nlicense: \"ISC\"\ntags: \"org:mirage\"\nhomepage: \"https://github.com/mirage/ocaml-conduit\"\nbug-reports: \"https://github.com/mirage/ocaml-conduit/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"ppx_sexp_conv\"\n  \"sexplib\"\n  \"astring\"\n  \"uri\"\n  \"result\"\n  \"logs\" {>= \"0.5.0\"}\n  \"ipaddr\" {>= \"2.5.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name \"--name\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-conduit.git\"",
           "override": null
         }
       },
@@ -1795,14 +1865,14 @@
           "name": "cohttp-lwt-unix",
           "version": "1.0.2",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"conduit-lwt-unix\" {>= \"1.0.3\"}\n  \"cmdliner\"\n  \"magic-mime\"\n  \"logs\"\n  \"fmt\" {>= \"0.8.2\"}\n  \"cohttp-lwt\" {>= \"1.0.2\"}\n  \"lwt\" {>= \"3.0.0\" & < \"4.0.0\"}\n  \"base-unix\"\n  \"ounit\" {test}\n]\nconflicts: [\n  \"lwt\" {< \"2.5.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"",
+            "opam-version: \"1.2\"\nname: \"cohttp-lwt-unix\"\nversion: \"1.0.2\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"conduit-lwt-unix\" {>= \"1.0.3\"}\n  \"cmdliner\"\n  \"magic-mime\"\n  \"logs\"\n  \"fmt\" {>= \"0.8.2\"}\n  \"cohttp-lwt\" {>= \"1.0.2\"}\n  \"lwt\" {>= \"3.0.0\" & < \"4.0.0\"}\n  \"base-unix\"\n  \"ounit\" {test}\n]\nconflicts: [\n  \"lwt\" {< \"2.5.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"",
           "override": null
         }
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
         "@opam/cmdliner@opam:1.0.2", "@opam/cohttp-lwt@opam:1.0.2",
-        "@opam/conduit-lwt-unix@opam:1.1.0", "@opam/fmt@opam:0.8.5",
+        "@opam/conduit-lwt-unix@opam:1.2.0", "@opam/fmt@opam:0.8.5",
         "@opam/jbuilder@opam:transition", "@opam/logs@opam:0.6.2",
         "@opam/lwt@opam:3.3.0", "@opam/magic-mime@opam:1.1.0"
       ]
@@ -1820,7 +1890,7 @@
           "name": "cohttp-lwt",
           "version": "1.0.2",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"cohttp\" {>= \"1.0.0\"}\n  \"lwt\"\n]\nconflicts: [\n  \"lwt\" {< \"2.5.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"",
+            "opam-version: \"1.2\"\nname: \"cohttp-lwt\"\nversion: \"1.0.2\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"cohttp\" {>= \"1.0.0\"}\n  \"lwt\"\n]\nconflicts: [\n  \"lwt\" {< \"2.5.0\"}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"",
           "override": null
         }
       },
@@ -1842,7 +1912,7 @@
           "name": "cohttp",
           "version": "1.0.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"base-bytes\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"re\"\n  \"uri\" {>= \"1.9.0\"}\n  \"fieldslib\"\n  \"sexplib\"\n  \"ppx_fields_conv\" {>= \"v0.9.0\"}\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"stringext\"\n  \"base64\" {>= \"2.0.0\"}\n  \"fmt\" {test}\n  \"jsonm\" {build}\n  \"alcotest\" {test}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"",
+            "opam-version: \"1.2\"\nname: \"cohttp\"\nversion: \"1.0.0\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"base-bytes\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"re\"\n  \"uri\" {>= \"1.9.0\"}\n  \"fieldslib\"\n  \"sexplib\"\n  \"ppx_fields_conv\" {>= \"v0.9.0\"}\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"stringext\"\n  \"base64\" {>= \"2.0.0\"}\n  \"fmt\" {test}\n  \"jsonm\" {build}\n  \"alcotest\" {test}\n]\navailable: ocaml-version >= \"4.03.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"",
           "override": null
         }
       },
@@ -1869,7 +1939,7 @@
           "name": "cmdliner",
           "version": "1.0.2",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"cli\" \"system\" \"declarative\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/cmdliner\"\ndoc: \"http://erratique.ch/software/cmdliner/doc/Cmdliner\"\nbug-reports: \"https://github.com/dbuenzli/cmdliner/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"result\"\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pinned\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/cmdliner.git\"",
+            "opam-version: \"1.2\"\nname: \"cmdliner\"\nversion: \"1.0.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"cli\" \"system\" \"declarative\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/cmdliner\"\ndoc: \"http://erratique.ch/software/cmdliner/doc/Cmdliner\"\nbug-reports: \"https://github.com/dbuenzli/cmdliner/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"result\"\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pinned\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/cmdliner.git\"",
           "override": null
         }
       },
@@ -1892,7 +1962,7 @@
           "name": "camomile",
           "version": "1.0.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"yoriyuki.y@gmail.com\"\nauthors: \"Yoriyuki Yamagata\"\nlicense: \"LGPL-2+ with OCaml linking exception\"\nhomepage: \"https://github.com/yoriyuki/Camomile/wiki\"\nbug-reports: \"https://github.com/yoriyuki/Camomile/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta17\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"ocaml\" \"configure.ml\" \"--share\" \"%{share}%/camomile\"]\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/yoriyuki/Camomile.git\"",
+            "opam-version: \"1.2\"\nname: \"camomile\"\nversion: \"1.0.1\"\nmaintainer: \"yoriyuki.y@gmail.com\"\nauthors: \"Yoriyuki Yamagata\"\nlicense: \"LGPL-2+ with OCaml linking exception\"\nhomepage: \"https://github.com/yoriyuki/Camomile/wiki\"\nbug-reports: \"https://github.com/yoriyuki/Camomile/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta17\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"ocaml\" \"configure.ml\" \"--share\" \"%{share}%/camomile\"]\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/yoriyuki/Camomile.git\"",
           "override": null
         }
       },
@@ -1913,7 +1983,7 @@
           "name": "biniou",
           "version": "1.2.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"https://github.com/mjambon/biniou\"\nbug-reports: \"https://github.com/mjambon/biniou/issues\"\ndepends: [\n  \"conf-which\" {build}\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n  \"easy-format\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/biniou.git\"",
+            "opam-version: \"1.2\"\nname: \"biniou\"\nversion: \"1.2.0\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"https://github.com/mjambon/biniou\"\nbug-reports: \"https://github.com/mjambon/biniou/issues\"\ndepends: [\n  \"conf-which\" {build}\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n  \"easy-format\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/biniou.git\"",
           "override": null
         }
       },
@@ -1935,7 +2005,7 @@
           "name": "base64",
           "version": "2.2.0",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"mirageos-devel@lists.xenproject.org\"\nauthors: [\"Thomas Gazagnaire\" \"Anil Madhavapeddy\" \"Peter Zotov\"]\nlicense: \"ISC\"\nhomepage: \"https://github.com/mirage/ocaml-base64\"\ndoc: \"http://mirage.github.io/ocaml-base64/\"\nbug-reports: \"https://github.com/mirage/ocaml-base64/issues\"\ndepends: [\n  \"base-bytes\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"bos\" {test}\n  \"rresult\" {test}\n  \"alcotest\" {test & >= \"0.4.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mirage/ocaml-base64.git\"",
+            "opam-version: \"1.2\"\nname: \"base64\"\nversion: \"2.2.0\"\nmaintainer: \"mirageos-devel@lists.xenproject.org\"\nauthors: [\"Thomas Gazagnaire\" \"Anil Madhavapeddy\" \"Peter Zotov\"]\nlicense: \"ISC\"\nhomepage: \"https://github.com/mirage/ocaml-base64\"\ndoc: \"http://mirage.github.io/ocaml-base64/\"\nbug-reports: \"https://github.com/mirage/ocaml-base64/issues\"\ndepends: [\n  \"base-bytes\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"bos\" {test}\n  \"rresult\" {test}\n  \"alcotest\" {test & >= \"0.4.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mirage/ocaml-base64.git\"",
           "override": null
         }
       },
@@ -1954,11 +2024,11 @@
           "name": "base-unix",
           "version": "base",
           "opam":
-            "opam-version: \"1\"\nmaintainer: \"https://github.com/ocaml/opam-repository/issues\"",
+            "opam-version: \"2.0\"\nname: \"base-unix\"\nversion: \"base\"\nmaintainer: \"https://github.com/ocaml/opam-repository/issues\"\ndepends: [\"ocaml\"]",
           "override": null
         }
       },
-      "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
+      "dependencies": [ "@esy-ocaml/substs@0.0.1", "ocaml@4.6.5" ]
     },
     "@opam/base-threads@opam:base": {
       "record": {
@@ -1970,11 +2040,11 @@
           "name": "base-threads",
           "version": "base",
           "opam":
-            "opam-version: \"1\"\nmaintainer: \"https://github.com/ocaml/opam-repository/issues\"",
+            "opam-version: \"2.0\"\nname: \"base-threads\"\nversion: \"base\"\nmaintainer: \"https://github.com/ocaml/opam-repository/issues\"\ndepends: [\"ocaml\"]",
           "override": null
         }
       },
-      "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
+      "dependencies": [ "@esy-ocaml/substs@0.0.1", "ocaml@4.6.5" ]
     },
     "@opam/base-bytes@opam:base": {
       "record": {
@@ -1986,7 +2056,7 @@
           "name": "base-bytes",
           "version": "base",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \" \"\nauthors: \" \"\nhomepage: \" \"\ndepends: [\n  \"ocamlfind\" {>= \"1.5.3\"}\n]\navailable: ocaml-version >= \"4.02.0\"",
+            "opam-version: \"1.2\"\nname: \"base-bytes\"\nversion: \"base\"\nmaintainer: \" \"\nauthors: \" \"\nhomepage: \" \"\ndepends: [\n  \"ocamlfind\" {>= \"1.5.3\"}\n]\navailable: ocaml-version >= \"4.02.0\"",
           "override": null
         }
       },
@@ -2002,13 +2072,27 @@
           "archive:https://opam.ocaml.org/archives/base.v0.11.1+opam.tar.gz#md5:c211940166b706df35bd47a8ffd4b89f",
           "archive:https://github.com/janestreet/base/releases/download/v0.11.1/base-v0.11.1.tbz#md5:e7e7dc5db3f1fea19d74a31bbd4ac621"
         ],
-        "files": [],
+        "files": [
+          {
+            "name": "_esy/base-v0.11.1.patch",
+            "content":
+              "--- ./src/exn_stubs.c\n+++ ./src/exn_stubs.c\n@@ -1,8 +1,13 @@\n #include <caml/mlvalues.h>\n \n extern int caml_backtrace_pos;\n+#ifndef _MSC_VER\n+#define UNUSED __attribute__((unused))\n+#else\n+#define UNUSED\n+#endif\n \n-CAMLprim value Base_clear_caml_backtrace_pos (value __attribute__((unused)) unit) {\n+CAMLprim value Base_clear_caml_backtrace_pos (value UNUSED unit) {\n   caml_backtrace_pos = 0;\n   return Val_unit;\n }\n--- ./src/int_math_stubs.c\n+++ ./src/int_math_stubs.c\n@@ -5,6 +5,25 @@\n #include <caml/mlvalues.h>\n #include <caml/memory.h>\n \n+#if defined(_MSC_VER)\n+#include <intrin.h>\n+#ifdef ARCH_SIXTYFOUR\n+#define __builtin_popcountll(x) __popcnt64((uint64_t)(x))\n+static __inline uint32_t __builtin_clzll(uint64_t value) {\n+  uint32_t leading_zero = 0;\n+  _BitScanReverse64(&leading_zero, value);\n+  return (63 - leading_zero);\n+}\n+#else\n+#define __builtin_popcount(x) __popcnt((unsigned int)(x))\n+static __inline uint32_t __builtin_clz(uint32_t value) {\n+  uint32_t leading_zero = 0;\n+  _BitScanReverse(&leading_zero, value);\n+  return (31 - leading_zero);\n+}\n+#endif /* ARCH_SIXTYFOUR */\n+#endif /* defined(_MSC_VER) */\n+\n static int64_t int_pow(int64_t base, int64_t exponent) {\n   int64_t ret = 1;\n   int64_t mul[4];\n--- ./src/jbuild\n+++ ./src/jbuild\n@@ -65,7 +65,7 @@\n     (progn\n      (with-stdout-to popcnt_test.c\n       (echo \"int main(int argc, char ** argv) { return __builtin_popcount(argc); }\"))\n-     (system \"${CC} -mpopcnt -c popcnt_test.c 2> ${null} && \\\n+     (bash \"${CC} -mpopcnt -c popcnt_test.c 2> ${null} && \\\n echo '(-mpopcnt)' > ${@} || echo '()' > ${@}\"))))))\n \n (ocamllex (hex_lexer))\n"
+          }
+        ],
         "opam": {
           "name": "base",
           "version": "v0.11.1",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/base\"\nbug-reports: \"https://github.com/janestreet/base/issues\"\ndepends: [\n  \"sexplib0\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n]\ndepopts: [\"base-native-int63\"]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/base.git\"",
-          "override": null
+            "opam-version: \"1.2\"\nname: \"base\"\nversion: \"v0.11.1\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/base\"\nbug-reports: \"https://github.com/janestreet/base/issues\"\ndepends: [\n  \"sexplib0\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n]\ndepopts: [\"base-native-int63\"]\navailable: ocaml-version >= \"4.04.1\"\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/base.git\"",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < _esy/base-v0.11.1.patch' : 'true'}"
+              ],
+              [ "jbuilder", "build", "-p", "base", "-j", "4" ]
+            ]
+          }
         }
       },
       "dependencies": [
@@ -2029,7 +2113,7 @@
           "name": "astring",
           "version": "0.8.3",
           "opam":
-            "opam-version: \"1.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"string\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/astring\"\ndoc: \"http://erratique.ch/software/astring/doc\"\nbug-reports: \"https://github.com/dbuenzli/astring/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"base-bytes\"\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pinned\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/astring.git\"",
+            "opam-version: \"1.2\"\nname: \"astring\"\nversion: \"0.8.3\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"string\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/astring\"\ndoc: \"http://erratique.ch/software/astring/doc\"\nbug-reports: \"https://github.com/dbuenzli/astring/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"base-bytes\"\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pinned\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/astring.git\"",
           "override": null
         }
       },
@@ -2077,7 +2161,7 @@
       },
       "dependencies": [
         "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
-        "@opam/jbuilder@opam:transition", "@opam/menhir@opam:20171013",
+        "@opam/jbuilder@opam:transition", "@opam/menhir@opam:20170607",
         "@opam/merlin-extend@opam:0.3",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
         "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3"
