@@ -2,24 +2,35 @@ type file = {
   name: string,
   size: int,
 };
+type onOk =
+  (
+    ~message: option(string),
+    ~start_time: float,
+    ~files: list(file),
+    Context.t
+  ) =>
+  Lwt.t(unit);
+type onError = (~error: Error.reason, Context.t) => Lwt.t(unit);
 
-type report =
-  | JSON
-  | Text
-  | Internal(
-      (
-        ~message: option(string),
-        ~start_time: float,
-        ~ctx: Context.t,
-        ~files: list(file)
-      ) =>
-      Lwt.t(unit),
-      (~ctx: Context.t, ~error: Error.reason) => Lwt.t(unit),
-    );
+type t = {
+  onOk,
+  onError,
+};
+
+let make = (onOk: onOk, onError: onError, ()) => {
+  onOk,
+  onError,
+};
+
+let reportOk = (~message, ~start_time, ~files, ~ctx, reporter) =>
+  reporter.onOk(~message, ~start_time, ~files, ctx)
+
+let reportError = (~error, ~ctx, reporter) =>
+  reporter.onError(~error, ctx)
 
 module Text = {
-  let report_ok =
-      (~message, ~start_time: float, ~ctx: Context.t, ~files: list(file)) => {
+  let onOk =
+      (~message, ~start_time: float, ~files: list(file), ctx: Context.t) => {
     /* TODO: fix next line when we report multiple files */
     let {size, _} = List.hd(files);
     let pretty_size =
@@ -46,15 +57,17 @@ module Text = {
     |> Lwt_io.write(Lwt_io.stdout);
   };
 
-  let report_error = (~ctx: Context.t, ~error: Error.reason) => {
+  let onError = (~error: Error.reason, ctx: Context.t) => {
     let error_msg = Context.stringOfError(ctx, error);
     Lwt_io.write(Lwt_io.stderr, error_msg);
   };
+
+  let make = make(onOk, onError);
 };
 
 module JSON = {
-  let report_ok =
-      (~message, ~start_time: float, ~ctx: Context.t, ~files: list(file)) => {
+  let onOk =
+      (~message, ~start_time: float, ~files: list(file), ctx: Context.t) => {
     open Yojson.Basic;
     let files =
       files
@@ -88,30 +101,13 @@ module JSON = {
     |> Lwt_io.write(Lwt_io.stdout);
   };
 
-  let report_error = (~ctx: Context.t, ~error: Error.reason) =>
+  let onError = (~error: Error.reason, ctx: Context.t) =>
     Yojson.Basic.(
       `Assoc([("error", `String(Context.stringOfError(ctx, error)))])
       |> to_string(~std=true)
       |> (s => s ++ "\n")
       |> Lwt_io.write(Lwt_io.stderr)
     );
-};
 
-type t = {
-  report_ok:
-    (
-      ~message: option(string),
-      ~start_time: float,
-      ~ctx: Context.t,
-      ~files: list(file)
-    ) =>
-    Lwt.t(unit),
-  report_error: (~ctx: Context.t, ~error: Error.reason) => Lwt.t(unit),
+  let make = make(onOk, onError);
 };
-
-let make = (report: report) =>
-  switch (report) {
-  | JSON => JSON.{report_ok, report_error}
-  | Text => Text.{report_ok, report_error}
-  | Internal(report_ok, report_error) => {report_ok, report_error}
-  };

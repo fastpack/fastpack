@@ -99,12 +99,12 @@ module Serve = {
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let report_ok =
+          let reportOk =
               (
                 ~message as _message,
                 ~start_time as _start_time,
-                ~ctx as _ctx,
                 ~files as _file,
+                _ctx,
               ) => {
             /* TODO: this function is invoked when bundle is built successfully */
             print_endline("built successfully!");
@@ -112,7 +112,7 @@ module Serve = {
             Lwt.return_unit;
           };
 
-          let report_error = (~ctx as _ctx, ~error as _error) => {
+          let reportError = ( ~error as _error, _ctx) => {
             /* TODO: this function is invoked when an error occured */
             print_endline("error occured!");
             print_endline("Maybe display an error?");
@@ -122,7 +122,7 @@ module Serve = {
           /* TODO: maybe decouple mode from the CommonOptions ? */
           let%lwt packer =
             Packer.make(
-              ~report=Some(Reporter.Internal(report_ok, report_error)),
+              ~reporter=Some(Reporter.make(reportOk, reportError, ())),
               {...options, mode: Mode.Development},
             );
 
