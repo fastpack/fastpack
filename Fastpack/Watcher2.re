@@ -58,7 +58,13 @@ let rebuild = (~filesChanged: StringSet.t, ~packer, prev_result) => {
       };
     let%lwt newResult =
       if (runPack) {
-        Packer.pack(~current_location, ~graph, ~initial=false, ~start_time, packer);
+        Packer.pack(
+          ~current_location,
+          ~graph,
+          ~initial=false,
+          ~start_time,
+          packer,
+        );
       } else {
         switch (result) {
         | `Ok => Lwt.return_ok(ctx)
@@ -205,8 +211,12 @@ let rec ask_watchman = (ch, link_map, link_paths, ignoreFilename) =>
     ch,
   );
 
-let make = (config: Config.t) => {
-  let%lwt packer = Packer.make({...config, mode: Mode.Development});
+let make = (~packer=None, config: Config.t) => {
+  let%lwt packer =
+    switch (packer) {
+    | Some(packer) => Lwt.return(packer)
+    | None => Packer.make({...config, mode: Mode.Development})
+    };
 
   let%lwt currentDir = Lwt_unix.getcwd();
 
@@ -244,7 +254,8 @@ let make = (config: Config.t) => {
         | Some(filenames) => `FilesChanged(filenames) |> Lwt.return
         },
         {
-          let%lwt result = rebuild(~filesChanged=filenames, ~packer, prevResult);
+          let%lwt result =
+            rebuild(~filesChanged=filenames, ~packer, prevResult);
           `Rebuilt(result) |> Lwt.return;
         },
       ]);

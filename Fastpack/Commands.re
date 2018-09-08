@@ -132,7 +132,7 @@ module Serve = {
             );
           };
 
-          let reportError = ( ~error as _error, _ctx) => {
+          let reportError = (~error, ctx) => {
             print_endline("error occured!");
 
             Yojson.Basic.(
@@ -145,12 +145,13 @@ module Serve = {
             );
           };
 
-          /* TODO: maybe decouple mode from the CommonOptions ? */
           let%lwt packer =
             Packer.make(
               ~reporter=Some(Reporter.make(reportOk, reportError, ())),
               {...options, mode: Mode.Development},
             );
+          let%lwt {Watcher2.watch, finalize} =
+            Watcher2.make(~packer=Some(packer), options);
 
           Lwt.finalize(
             () =>
@@ -164,12 +165,9 @@ module Serve = {
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(_ctx) =>
-                let server = devserver;
-                let watcher = Watcher.watch(~ctx, ~pack);
-                Lwt.join([server, watcher]);
+              | Ok(_ctx) => Lwt.join([devserver, watch()])
               },
-            () => Packer.finalize(packer),
+            finalize,
           );
         },
       )
