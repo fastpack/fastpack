@@ -208,7 +208,7 @@ process = { env: {} };
             ),
           );
         let%lwt () = emit("\n},\n");
-        ctx.cache.add_module(m);
+        Cache.addModule(m, ctx.cache);
         Lwt.return_unit;
       };
 

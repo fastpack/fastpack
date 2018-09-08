@@ -147,9 +147,9 @@ let make =
     | Some(package) => Lwt.return(package)
     | None =>
       let filename = FilePath.concat(dir, "package.json");
-      switch%lwt (FSCache.exists(filename, cache.files)) {
+      switch%lwt (Cache.File.exists(filename, cache)) {
       | true =>
-        let%lwt content = FSCache.readExisting(filename, cache.files);
+        let%lwt content = Cache.File.readExisting(filename, cache);
         let package = Package.of_json(filename, content);
         package_json_cache := M.add(dir, package, package_json_cache^);
         Lwt.return(package);
@@ -180,7 +180,7 @@ let make =
         RunAsync.(
           withContext(
             context,
-            switch%lwt (FSCache.stat(filename, cache.files)) {
+            switch%lwt (Cache.File.stat(filename, cache)) {
             | Some({Unix.st_kind: Lwt_unix.S_REG, _}) => return(filename)
             | _ => withContext("...no.", resolve'(rest))
             },
@@ -196,16 +196,15 @@ let make =
     RunAsync.(
       withContext(
         context,
-        switch%lwt (FSCache.stat(path, cache.files)) {
+        switch%lwt (Cache.File.stat(path, cache)) {
         | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) =>
           withContext(
             "...yes.",
             {
               let package_json = FilePath.concat(path, "package.json");
-              switch%lwt (FSCache.exists(package_json, cache.files)) {
+              switch%lwt (Cache.File.exists(package_json, cache)) {
               | true =>
-                let%lwt content =
-                  FSCache.readExisting(package_json, cache.files);
+                let%lwt content = Cache.File.readExisting(package_json, cache);
                 let {Package.entry_point, _} =
                   Package.of_json(package_json, content);
                 resolve_file(FS.abs_path(path, entry_point));
@@ -253,7 +252,7 @@ let make =
         RunAsync.(
           withContext(
             context,
-            switch%lwt (FSCache.stat(path, cache.files)) {
+            switch%lwt (Cache.File.stat(path, cache)) {
             | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) => return(path)
             | _ => withContext("...no.", exists'(rest))
             },
@@ -330,7 +329,7 @@ let make =
                         | Some(PathRequest(path)) =>
                           withContext(
                             Printf.sprintf("...yes. '%s'", path),
-                            switch%lwt (FSCache.stat(path, cache.files)) {
+                            switch%lwt (Cache.File.stat(path, cache)) {
                             | Some({Unix.st_kind: Lwt_unix.S_REG, _}) =>
                               return((path, []))
                             | _ => error("File not found: " ++ path)

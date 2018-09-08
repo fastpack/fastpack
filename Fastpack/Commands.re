@@ -60,7 +60,7 @@ module Build = {
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(ctx) => ctx.cache.dump()
+              | Ok(ctx) => Cache.save(ctx.cache)
               },
             () => Packer.finalize(packer),
           );

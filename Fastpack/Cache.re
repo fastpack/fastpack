@@ -3,10 +3,10 @@ module M = Map.Make(String);
 module FS = FastpackUtil.FS;
 module Scope = FastpackUtil.Scope;
 
-type strategy =
-  | Memory
-  | Persistent(invalidate)
-and invalidate = {
+type load =
+  | Empty
+  | Load(params)
+and params = {
   currentDir: string,
   projectRootDir: string,
   mock: list((string, Config.Mock.t)),
@@ -15,76 +15,54 @@ and invalidate = {
   preprocess: list(Preprocessor.config),
 };
 
-module ModuleEntry = {
-  type t = {
-    id: string,
-    package: Package.t,
-    module_type: Module.module_type,
-    files: list((string, string)),
-    source: string,
-    build_dependencies: M.t(float),
-    static_dependencies: list((Module.Dependency.t, Module.location)),
-    dynamic_dependencies: list((Module.Dependency.t, Module.location)),
-    scope: Scope.t,
-    exports: Scope.exports,
-  };
-};
-
-type entry = {
-  exists: bool,
-  st_mtime: float,
-  st_kind: Unix.file_kind,
-  digest: string,
-  content: string,
-};
-
-type cache = {
-  files: FSCache.persistent,
-  modules: M.t(ModuleEntry.t),
-};
+type save =
+  | No
+  | Filename(string);
 
 type t = {
-  /* file_exists: string => Lwt.t(bool), */
-  /* file_stat: string => Lwt.t(Unix.stats), */
-  /* file_stat_opt: string => Lwt.t(option(Unix.stats)), */
-  /* get_file: string => Lwt.t(string), */
-  /* get_file_no_raise: string => Lwt.t((entry, bool)), */
-  /* get_package: string => Lwt.t((Package.t, bool)), */
-  /* find_package_for_filename: (string, string) => Lwt.t((Package.t, bool)), */
+  loaded: load,
+  save,
   files: FSCache.t,
-  get_module: Module.location => Lwt.t(option(Module.t)),
-  add_module: Module.t => unit,
-  remove_module: Module.location => unit,
-  cleanup: unit => unit,
-  /* add_build_dependencies: Module.t -> string list -> unit Lwt.t; */
-  /* get_invalidated_modules : string -> string list; */
-  /* setup_build_dependencies : StringSet.t -> unit; */
-  dump: unit => Lwt.t(unit),
-  starts_empty: bool,
+  modules: Hashtbl.t(Module.location, Module.t),
 };
 
-exception FileDoesNotExist(string);
+type persistent = {
+  files: FSCache.persistent,
+  modules: list((Module.location, Module.t)),
+};
 
-type init =
-  | Persistent(string)
-  | Memory;
+/* let empty = {files: FSCache.(make() |> toPersistent), modules: M.empty}; */
 
-let empty = {files: FSCache.(make() |> toPersistent), modules: M.empty};
-
-let create = (strategy: strategy) => {
-  let cacheId = ref("");
-  let cacheFilename = ref("");
-  let setCacheFilename =
-      (
-        ~cacheDir,
-        ~currentDir,
-        ~projectRootDir,
-        ~mock,
-        ~nodeModulesPaths,
-        ~resolveExtension,
-        ~preprocess,
-      ) => {
-    cacheId :=
+let make = (load: load) =>
+  switch (load) {
+  | Empty =>
+    {
+      files: FSCache.make(),
+      modules: Hashtbl.create(5000),
+      loaded: Empty,
+      save: No,
+    }
+    |> Lwt.return
+  | Load({
+      currentDir,
+      projectRootDir,
+      mock,
+      nodeModulesPaths,
+      resolveExtension,
+      preprocess,
+    }) =>
+    let node_modules = FilePath.concat(currentDir, "node_modules");
+    let%lwt cacheDir =
+      switch%lwt (FS.try_dir(node_modules)) {
+      | Some(dir) =>
+        FilePath.concat(FilePath.concat(dir, ".cache"), "fpack")
+        |> Lwt.return
+      | None =>
+        FilePath.concat(FilePath.concat(currentDir, ".cache"), "fpack")
+        |> Lwt.return
+      };
+    let%lwt () = FS.makedirs(cacheDir);
+    let id =
       Printf.sprintf(
         {|
     Current Directory: %s
@@ -101,195 +79,124 @@ let create = (strategy: strategy) => {
         String.concat(",", resolveExtension),
         String.concat(",", List.map(Preprocessor.to_string, preprocess)),
       );
-    cacheFilename :=
+    let filename =
       FilePath.concat(
         cacheDir,
         String.concat(
           "-",
           [
             "cache",
-            cacheId^ |> Digest.string |> Digest.to_hex,
+            id |> Digest.string |> Digest.to_hex,
             Version.github_commit,
           ],
         ),
       );
+    switch%lwt (Lwt_unix.file_exists(filename)) {
+    | true =>
+      let%lwt {files, modules} =
+        Lwt_io.with_file(
+          ~mode=Lwt_io.Input, ~flags=Unix.[O_RDONLY], filename, ch =>
+          (Lwt_io.read_value(ch): Lwt.t(persistent))
+        );
+      {
+        files: FSCache.ofPersistent(files),
+        modules: Hashtbl.of_list(modules),
+        loaded: load,
+        save: Filename(filename),
+      }
+      |> Lwt.return;
+    | false =>
+      {
+        files: FSCache.make(),
+        modules: Hashtbl.create(5000),
+        loaded: Empty,
+        save: Filename(filename),
+      }
+      |> Lwt.return
+    };
   };
 
-  let%lwt loaded =
-    switch (strategy) {
-    | Memory => Lwt.return(empty)
-    | Persistent({
-        currentDir,
-        projectRootDir,
-        mock,
-        nodeModulesPaths,
-        resolveExtension,
-        preprocess,
-      }) =>
-      let node_modules = FilePath.concat(currentDir, "node_modules");
-      let%lwt cacheDir =
-        switch%lwt (FS.try_dir(node_modules)) {
-        | Some(dir) =>
-          FilePath.concat(FilePath.concat(dir, ".cache"), "fpack")
-          |> Lwt.return
-        | None =>
-          FilePath.concat(FilePath.concat(currentDir, ".cache"), "fpack")
-          |> Lwt.return
-        };
-      let%lwt () = FS.makedirs(cacheDir);
-      setCacheFilename(
-        ~cacheDir,
-        ~currentDir,
-        ~projectRootDir,
-        ~mock,
-        ~nodeModulesPaths,
-        ~resolveExtension,
-        ~preprocess,
-      );
-      switch%lwt (Lwt_unix.file_exists(cacheFilename^)) {
-      | true =>
-        Lwt_io.with_file(
-          ~mode=Lwt_io.Input, ~flags=Unix.[O_RDONLY], cacheFilename^, ch =>
-          (Lwt_io.read_value(ch): Lwt.t(cache))
-        )
-      | false => Lwt.return(empty)
-      };
-    };
+let isLoadedEmpty = cache => cache.loaded == Empty;
 
-  let files = FSCache.ofPersistent(loaded.files);
-  let modules = ref(loaded.modules);
+let addModule = (m: Module.t, cache: t) =>
+  Hashtbl.replace(cache.modules, m.location, m);
 
-  let get_module = location => {
-    let location_str = Module.location_to_string(location);
-    let build_dependencies_changed = build_dependencies =>
-      build_dependencies
+let removeModule = (location: Module.location, cache: t) =>
+  Hashtbl.remove(cache.modules, location);
+
+let getModule = (location: Module.location, cache: t) =>
+  switch (Hashtbl.find_opt(cache.modules, location)) {
+  | None => Lwt.return_none
+  | Some((m: Module.t)) =>
+    let build_dependencies_changed =
+      m.build_dependencies
       |> M.bindings
       |> Lwt_list.exists_s(((filename, known_st_mtime)) =>
-           switch%lwt (FSCache.stat(filename, files)) {
+           switch%lwt (FSCache.stat(filename, cache.files)) {
            | None => Lwt.return(true)
            | Some({Unix.st_mtime, _}) =>
              Lwt.return(known_st_mtime != st_mtime)
            }
          );
-
-    switch (M.get(location_str, modules^)) {
-    | None => Lwt.return_none
-    | Some({
-        id,
-        package,
-        module_type,
-        files,
-        source,
-        build_dependencies,
-        static_dependencies,
-        dynamic_dependencies,
-        scope,
-        exports,
-      }) =>
-      switch%lwt (build_dependencies_changed(build_dependencies)) {
-      | true =>
-        modules := M.remove(location_str, modules^);
-        Lwt.return_none;
-      | false =>
-        Lwt.return_some({
-          Module.id,
-          location,
-          package,
-          static_dependencies,
-          dynamic_dependencies,
-          build_dependencies,
-          module_type,
-          files,
-          source,
-          scope,
-          exports,
-        })
-      }
+    switch%lwt (build_dependencies_changed) {
+    | true =>
+      removeModule(m.location, cache);
+      Lwt.return_none;
+    | false => Lwt.return(Some(m))
     };
   };
 
-  let remove_module = (location: Module.location) => {
-    let location_str = Module.location_to_string(location);
-    modules := M.remove(location_str, modules^);
-  };
-
-  let cleanup = () =>
-    FSCache.clear(
-      files,
-      /* modules := M.empty; */
-    );
-
-  let add_module = (m: Module.t) =>
-    switch (m.location) {
-    | Module.EmptyModule
-    | Module.Runtime => ()
-    | _ =>
-      let location_str = Module.location_to_string(m.location);
-      let module_entry = {
-        ModuleEntry.id: m.id,
-        package: m.package,
-        build_dependencies: m.build_dependencies,
-        static_dependencies: m.static_dependencies,
-        dynamic_dependencies: m.dynamic_dependencies,
-        module_type: m.module_type,
-        files: m.files,
-        scope: m.scope,
-        exports: m.exports,
-        source: m.source,
-      };
-
-      modules := M.add(location_str, module_entry, modules^);
-    };
-
-  let dump = () =>
-    if (cacheFilename^ != "") {
-      let tempDir = FilePath.dirname(cacheFilename^);
-      let suffix = FilePath.basename(cacheFilename^);
-      let%lwt () = FS.makedirs(tempDir);
-      let (tempFile, _) =
-        Filename.open_temp_file(
-          ~perms=0o644,
-          ~temp_dir=tempDir,
-          ".fpack",
-          suffix,
-        );
-
-      let%lwt () =
-        Lwt_io.with_file(
-          ~mode=Lwt_io.Output,
-          ~perm=0o644,
-          ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
-          tempFile,
-          ch =>
-          Lwt_io.write_value(
-            ch,
-            ~flags=[],
-            {files: FSCache.toPersistent(files), modules: modules^},
-          )
-        );
-
-      Lwt.finalize(
-        () =>
-          switch%lwt (Lwt_unix.rename(tempFile, cacheFilename^)) {
-          | () => Lwt.return_unit
-          | exception (Sys_error(_)) => Lwt.return_unit
-          },
-        () =>
-          if%lwt (Lwt_unix.file_exists(tempFile)) {
-            Lwt_unix.unlink(tempFile);
-          },
+let save = cache =>
+  switch (cache.save) {
+  | No => Lwt.return_unit
+  | Filename(filename) =>
+    let tempDir = FilePath.dirname(filename);
+    let suffix = FilePath.basename(filename);
+    let%lwt () = FS.makedirs(tempDir);
+    let (tempFile, _) =
+      Filename.open_temp_file(
+        ~perms=0o644,
+        ~temp_dir=tempDir,
+        ".fpack",
+        suffix,
       );
-    } else {
-      Lwt.return_unit;
-    };
 
-  Lwt.return({
-    files,
-    get_module,
-    add_module,
-    remove_module,
-    cleanup,
-    dump,
-    starts_empty: FSCache.isEmpty(files),
-  });
+    let%lwt () =
+      Lwt_io.with_file(
+        ~mode=Lwt_io.Output,
+        ~perm=0o644,
+        ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
+        tempFile,
+        ch =>
+        Lwt_io.write_value(
+          ch,
+          ~flags=[],
+          {
+            files: FSCache.toPersistent(cache.files),
+            modules: Hashtbl.to_list(cache.modules),
+          },
+        )
+      );
+
+    Lwt.finalize(
+      () =>
+        switch%lwt (Lwt_unix.rename(tempFile, filename)) {
+        | () => Lwt.return_unit
+        | exception (Sys_error(_)) => Lwt.return_unit
+        },
+      () =>
+        if%lwt (Lwt_unix.file_exists(tempFile)) {
+          Lwt_unix.unlink(tempFile);
+        },
+    );
+  };
+
+module File = {
+  let invalidate = (filename, cache: t) =>
+    FSCache.invalidate(filename, cache.files);
+  let exists = (filename, cache: t) => FSCache.exists(filename, cache.files);
+  let stat = (filename, cache: t) => FSCache.stat(filename, cache.files);
+  let read = (filename, cache: t) => FSCache.read(filename, cache.files);
+  let readExisting = (filename, cache: t) =>
+    FSCache.readExisting(filename, cache.files);
 };
