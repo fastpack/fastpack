@@ -80,7 +80,7 @@ module Watch = {
     run(options.debug, () =>
       Lwt_main.run(
         {
-          let%lwt {Watcher2.watch, finalize} = Watcher2.make(options);
+          let%lwt {Watcher.watch, finalize} = Watcher.make(options);
           Lwt.finalize(watch, finalize);
         },
       )
@@ -150,8 +150,8 @@ module Serve = {
               ~reporter=Some(Reporter.make(reportOk, reportError, ())),
               {...options, mode: Mode.Development},
             );
-          let%lwt {Watcher2.watch, finalize} =
-            Watcher2.make(~packer=Some(packer), options);
+          let%lwt {Watcher.watch, finalize} =
+            Watcher.make(~packer=Some(packer), options);
 
           Lwt.finalize(
             () =>
