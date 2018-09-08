@@ -98,7 +98,7 @@ let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
     } else {
       let dirname = FilePath.dirname(filename);
       let package_json = FilePath.concat(dirname, "package.json");
-      if%lwt (FSCache.exists(package_json, cache.files)) {
+      if%lwt (Cache.File.exists(package_json, cache)) {
         Lwt.return_some(package_json);
       } else {
         find_package_json_for_filename(dirname);
@@ -107,7 +107,7 @@ let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
 
   switch%lwt (find_package_json_for_filename(filename)) {
   | Some(package_json) =>
-    let%lwt content = FSCache.readExisting(package_json, cache.files);
+    let%lwt content = Cache.File.readExisting(package_json, cache);
     Lwt.return(Package.of_json(package_json, content));
   | None => Lwt.return(Package.empty)
   };
@@ -174,7 +174,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
             };
 
           let%lwt content =
-            switch%lwt (FSCache.read(filename, ctx.cache.files)) {
+            switch%lwt (Cache.File.read(filename, ctx.cache)) {
             | Some(content) => Lwt.return(content)
             | None => Lwt.fail(Rebuild(filename, location))
             };
@@ -265,7 +265,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
       let%lwt files =
         Lwt_list.map_s(
           filename => {
-            let%lwt content = FSCache.readExisting(filename, ctx.cache.files);
+            let%lwt content = Cache.File.readExisting(filename, ctx.cache);
             Lwt.return((filename, content));
           },
           files,
@@ -275,7 +275,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
       let%lwt build_dependencies =
         Lwt_list.fold_left_s(
           (build_dependencies, filename) =>
-            switch%lwt (FSCache.stat(filename, ctx.cache.files)) {
+            switch%lwt (Cache.File.stat(filename, ctx.cache)) {
             | Some({Unix.st_mtime, _}) =>
               Lwt.return(M.add(filename, st_mtime, build_dependencies))
             | None => Lwt.fail(Failure(filename ++ " does not exist"))
@@ -293,7 +293,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
 
   switch (location) {
   | Module.File(_) =>
-    switch%lwt (ctx.cache.get_module(location)) {
+    switch%lwt (Cache.getModule(location, ctx.cache)) {
     | Some((m: Module.t)) =>
       DependencyGraph.add_build_dependencies(
         ctx.graph,
@@ -356,7 +356,7 @@ let build = (ctx: Context.t) => {
                   let%lwt build =
                     Lwt_list.fold_left_s(
                       (build, filename) =>
-                        switch%lwt (FSCache.stat(filename, ctx.cache.files)) {
+                        switch%lwt (Cache.File.stat(filename, ctx.cache)) {
                         | Some({Unix.st_mtime, _}) =>
                           Lwt.return(M.add(filename, st_mtime, build))
                         | None =>

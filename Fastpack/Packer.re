@@ -52,12 +52,12 @@ let make = (~report=None, config: Config.t) => {
 
   /* cache & cache reporting */
   let%lwt cache =
-    Cache.create(
+    Cache.make(
       switch (config.cache) {
-      | Config.Cache.Disable => Cache.Memory
+      | Config.Cache.Disable => Cache.Empty
       | Config.Cache.Use =>
         Cache.(
-          Persistent({
+          Load({
             currentDir: current_dir,
             projectRootDir: config.projectRootDir,
             mock: config.mock,
@@ -69,7 +69,7 @@ let make = (~report=None, config: Config.t) => {
       },
     );
   let cache_report =
-    switch (config.cache, cache.starts_empty) {
+    switch (config.cache, Cache.isLoadedEmpty(cache)) {
     | (Config.Cache.Disable, _) => "disabled"
     | (Config.Cache.Use, true) => "empty"
     | (Config.Cache.Use, false) => "used"
@@ -82,7 +82,7 @@ let make = (~report=None, config: Config.t) => {
       } else {
         let dirname = FilePath.dirname(filename);
         let package_json = FilePath.concat(dirname, "package.json");
-        if%lwt (FSCache.exists(package_json, cache.files)) {
+        if%lwt (Cache.File.exists(package_json, cache)) {
           Lwt.return_some(package_json);
         } else {
           find_package_json_for_filename(dirname);
@@ -91,7 +91,7 @@ let make = (~report=None, config: Config.t) => {
 
     switch%lwt (find_package_json_for_filename(filename)) {
     | Some(package_json) =>
-      let%lwt content = FSCache.readExisting(package_json, cache.files);
+      let%lwt content = Cache.File.readExisting(package_json, cache);
       Lwt.return(Package.of_json(package_json, content));
     | None => Lwt.return(Package.empty)
     };
@@ -224,9 +224,9 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
     },
     fun
     | GraphBuilder.Rebuild(filename, location) => {
-        FSCache.invalidate(filename, ctx.cache.files);
+        Cache.File.invalidate(filename, ctx.cache);
         Module.LocationSet.iter(
-          location => ctx.cache.remove_module(location),
+          location => Cache.removeModule(location, ctx.cache),
           DependencyGraph.get_module_parents(ctx.graph, location),
         );
         pack(

@@ -34,7 +34,7 @@ let rebuild = (~filesChanged: StringSet.t, ~packer, prev_result) => {
     | Ok((ctx, filesWatched)) => (`Ok, ctx, filesWatched)
     };
 
-  StringSet.iter(f => FSCache.invalidate(f, ctx.cache.files), filesChanged);
+  StringSet.iter(f => Cache.File.invalidate(f, ctx.cache), filesChanged);
   switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
   | [] => Lwt.return(prev_result)
   | filesChanged =>
@@ -261,7 +261,7 @@ let make = (config: Config.t) => {
     switch (lastResult^) {
     | Ok((ctx: Context.t, _)) =>
       let dump = (ctx: Context.t, result) => {
-        let%lwt () = ctx.cache.dump();
+        let%lwt () = Cache.save(ctx.cache);
         lastResultCachedDumped := Some(result);
         Lwt.return_unit;
       };
