@@ -1,8 +1,4 @@
-type t = {
-  resolve:
-    (~basedir: string, string) => Lwt.t((Module.location, list(string))),
-};
-
+type t;
 exception Error(string);
 
 let make:
@@ -12,7 +8,11 @@ let make:
     ~mock: list((string, Config.Mock.t)),
     ~node_modules_paths: list(string),
     ~extensions: list(string),
-    ~preprocessor: Preprocessor.t,
-    ~cache: Cache.t
+    ~preprocessors: list(Config.Preprocessor.t),
+    ~cache: Cache.t,
+    unit
   ) =>
   t;
+
+let resolve:
+  (~basedir: string, string, t) => Lwt.t((Module.location, list(string)));

@@ -149,8 +149,9 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
       ~mock=config.mock,
       ~node_modules_paths=config.nodeModulesPaths,
       ~extensions=config.resolveExtension,
-      ~preprocessor=packer.preprocessor,
+      ~preprocessors=config.preprocess,
       ~cache,
+      ()
     );
 
   let ctx = {

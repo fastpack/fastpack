@@ -38,24 +38,25 @@ let resolve
   ?(mock=[])
   ?(node_modules_paths=["node_modules"])
   ?(extensions=[".js"; ".json"])
-  ?(preprocessor=Preprocessor.empty)
+  ?(preprocessors=[])
   ?(basedir=test_path)
   request
   =
     let basedir = FS.abs_path current_dir basedir in
     let resolve' () =
       let%lwt cache = Fastpack.Cache.(make Empty)  in
-      let { resolve } =
+      let resolver =
         make
           ~project_root:current_dir
           ~current_dir
           ~mock
           ~node_modules_paths
           ~extensions
-          ~preprocessor
+          ~preprocessors
           ~cache
+          ()
       in
-      let%lwt resolved = resolve ~basedir request in
+      let%lwt resolved = resolve ~basedir request resolver in
       Lwt.return (show resolved)
     in
     let msg = Lwt_main.run (
@@ -405,7 +406,9 @@ Empty request
 
 
 let%expect_test "preprocessors: configured only" =
-  resolve ~preprocessor:Preprocessor.transpile_all "./index";
+  resolve
+    ~preprocessors:[Fastpack.Config.Preprocessor.ofString "\\.js"]
+    "./index";
   [%expect_exact {|
 ((File
     { filename = (Some "/.../test/resolve/index.js");
@@ -415,14 +418,9 @@ let%expect_test "preprocessors: configured only" =
 
 let%expect_test "preprocessors: configured and specified" =
   let config = "\\.js$:browser-shim?x=1!browser-entry-point" in
-  let preprocessor = Lwt_main.run(Preprocessor.(
-      make ~configs:[of_string config]
-        ~project_root:test_path
-        ~current_dir:test_path
-        ~output_dir:"."
-    ))
-  in
-  resolve ~preprocessor "dependency?k=v&a=b!./fs!./index";
+  resolve
+    ~preprocessors:[Fastpack.Config.Preprocessor.ofString config]
+    "dependency?k=v&a=b!./fs!./index";
   [%expect_exact {|
 ((File
     { filename = (Some "/.../test/resolve/index.js");
@@ -443,14 +441,9 @@ let%expect_test "preprocessors: configured and specified" =
 
 let%expect_test "preprocessors: ignore configured processors" =
   let config = "\\.js$:browser-shim?x=1!browser-entry-point" in
-  let preprocessor = Lwt_main.run(Preprocessor.(
-      make ~configs:[of_string config]
-        ~project_root:test_path
-        ~current_dir:test_path
-        ~output_dir:"."
-    ))
-  in
-  resolve ~preprocessor "!dependency?k=v&a=b!./fs!./index";
+  resolve
+    ~preprocessors:[Fastpack.Config.Preprocessor.ofString config]
+    "!dependency?k=v&a=b!./fs!./index";
   [%expect_exact {|
 ((File
     { filename = (Some "/.../test/resolve/index.js");
@@ -463,14 +456,10 @@ let%expect_test "preprocessors: ignore configured processors" =
 
 let%expect_test "preprocessors: error" =
   let config = "\\.js$:browser-shim?x=1!browser-entry-point" in
-  let preprocessor = Lwt_main.run(Preprocessor.(
-      make ~configs:[of_string config]
-        ~project_root:test_path
-        ~current_dir:test_path
-        ~output_dir:"."
-    ))
-  in
-  resolve ~preprocessor "dependency-not-found?k=v&a=b!./fs!./index";
+  resolve
+    ~preprocessors:[Fastpack.Config.Preprocessor.ofString config]
+    "dependency-not-found?k=v&a=b!./fs!./index";
+
   [%expect_exact {|
 Cannot find package path
   Resolving 'dependency-not-found?k=v&a=b!./fs!./index'. Base directory: '/.../test/resolve'

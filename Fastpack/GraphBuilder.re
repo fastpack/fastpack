@@ -36,7 +36,7 @@ let resolve = (ctx: Context.t, request: Module.Dependency.t) => {
     };
 
   Lwt.catch(
-    () => ctx.resolver.resolve(~basedir, request.request),
+    () => Resolver.resolve(~basedir, request.request, ctx.resolver),
     fun
     | Resolver.Error(path) =>
       Lwt.fail(Context.PackError(ctx, CannotResolveModule(path, request)))

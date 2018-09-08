@@ -7,61 +7,14 @@ type processor =
   | Builtin
   | Node(string);
 
-type config = {
-  pattern_s: string,
-  pattern: Re.re,
-  processors: list(string),
-};
 
 type t = {
-  get_processors: string => list(string),
   process:
     (Module.location, option(string)) =>
     Lwt.t((string, list(string), list(string))),
-  configs: list(config),
+  configs: list(Config.Preprocessor.t),
   finalize: unit => Lwt.t(unit),
 };
-
-let of_string = s => {
-  let (pattern_s, processors) =
-    switch (String.(s |> trim |> split_on_char(':'))) {
-    | []
-    | [""] => raise(Failure("Empty config"))
-    | [pattern_s]
-    | [pattern_s, ""] => (pattern_s, ["builtin"])
-    | [pattern_s, ...rest] =>
-      let processors =
-        String.(rest |> concat(":") |> split_on_char('!'))
-        |> List.filter_map(s => {
-             let s = String.trim(s);
-             s == "" ?
-               None :
-               (
-                 switch (String.split_on_char('?', s)) {
-                 | [] => raise(Failure("Empty processor"))
-                 | [processor] => Some(processor)
-                 | ["builtin", ""] => Some("builtin")
-                 | [processor, opts] when processor != "builtin" =>
-                   Some(processor ++ "?" ++ opts)
-                 | _ => raise(Failure("Incorrect preprocessor config"))
-                 }
-               );
-           });
-
-      (pattern_s, processors);
-    };
-
-  let pattern =
-    try (Re_posix.compile_pat(pattern_s)) {
-    | Re_posix.Parse_error =>
-      raise(Failure("Pattern regexp parse error. Use POSIX syntax"))
-    };
-
-  {pattern_s, pattern, processors};
-};
-
-let to_string = ({pattern_s, processors, _}) =>
-  Printf.sprintf("%s:%s", pattern_s, String.concat("!", processors));
 
 let all_transpilers =
   FastpackTranspiler.[
@@ -89,14 +42,12 @@ let builtin = source =>
   };
 
 let empty = {
-  get_processors: _ => [],
   process: (_, s) => Lwt.return((CCOpt.get_or(~default="", s), [], [])),
   configs: [],
   finalize: () => Lwt.return_unit,
 };
 
 let transpile_all = {
-  get_processors: _ => ["builtin"],
   process: (_, s) => builtin(s),
   configs: [],
   finalize: () => Lwt.return_unit,
@@ -235,33 +186,6 @@ module NodeServer = {
 };
 
 let make = (~configs, ~project_root, ~current_dir, ~output_dir) => {
-  let processors = ref(M.empty);
-
-  let get_processors = filename =>
-    switch (M.get(filename, processors^)) {
-    | Some(processors) => processors
-    | None =>
-      let relname = FS.relative_path(current_dir, filename);
-      let p =
-        configs
-        |> List.fold_left(
-             (acc, {pattern, processors, _}) =>
-               switch (acc) {
-               | [] =>
-                 switch (Re.exec_opt(pattern, relname)) {
-                 | None => []
-                 | Some(_) => processors
-                 }
-               | _ => acc
-               },
-             [],
-           )
-        |> List.rev;
-
-      processors := M.add(filename, p, processors^);
-      p;
-    };
-
   let process = (location, source) =>
     switch (location) {
     | Module.Main(_)
@@ -332,7 +256,6 @@ let make = (~configs, ~project_root, ~current_dir, ~output_dir) => {
     };
 
   Lwt.return({
-    get_processors,
     process,
     configs,
     finalize: NodeServer.finalize,
