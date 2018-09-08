@@ -14,7 +14,7 @@ type t = {
 };
 type packResult = result(Context.t, Context.t);
 
-let make = (~report=None, config: Config.t) => {
+let make = (~reporter=None, config: Config.t) => {
   let%lwt current_dir = Lwt_unix.getcwd();
 
   /* entry points */
@@ -41,14 +41,14 @@ let make = (~report=None, config: Config.t) => {
       ~project_root=config.projectRootDir,
       ~current_dir,
       ~output_dir=config.outputDir,
-      ()
+      (),
     );
 
   let reader =
     Worker.Reader.make(
       ~project_root=config.projectRootDir,
       ~output_dir=config.outputDir,
-      ()
+      (),
     );
 
   /* cache & cache reporting */
@@ -107,16 +107,15 @@ let make = (~report=None, config: Config.t) => {
     );
 
   let reporter =
-    Reporter.make(
-      switch (report) {
-      | Some(report) => report
-      | None =>
-        switch (config.report) {
-        | Config.Reporter.JSON => Reporter.JSON
-        | Config.Reporter.Text => Reporter.Text
-        }
-      },
-    );
+    switch (reporter) {
+    | Some(reporter) => reporter
+    | None =>
+      switch (config.report) {
+      | Config.Reporter.JSON => Reporter.JSON.make()
+      | Config.Reporter.Text => Reporter.Text.make()
+      }
+    };
+
   Lwt.return({
     current_dir,
     config,
@@ -152,7 +151,7 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
       ~extensions=config.resolveExtension,
       ~preprocessors=config.preprocess,
       ~cache,
-      ()
+      (),
     );
 
   let ctx = {
@@ -178,8 +177,6 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
       },
     cache,
   };
-
-  let {Reporter.report_ok, report_error} = packer.reporter;
 
   Lwt.catch(
     () => {
@@ -221,7 +218,13 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
         )
       );
       let%lwt () =
-        report_ok(~message=Some(message), ~start_time, ~ctx, ~files);
+        Reporter.reportOk(
+          ~message=Some(message),
+          ~start_time,
+          ~ctx,
+          ~files,
+          packer.reporter,
+        );
       Lwt.return_ok(ctx);
     },
     fun
@@ -240,7 +243,7 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
         );
       }
     | Context.PackError(ctx, error) => {
-        let%lwt () = report_error(~ctx, ~error);
+        let%lwt () = Reporter.reportError(~ctx, ~error, packer.reporter);
         Lwt.return_error(ctx);
       }
     | exn => Lwt.fail(exn),

@@ -99,7 +99,6 @@ module Serve = {
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-
           let (broadcastToWebsocket, devserver) =
             FastpackServer.Devserver.start(
               ~port=3000,
@@ -116,13 +115,12 @@ module Serve = {
               ~port=3000,
               (),
             );
-
-          let report_ok =
+          let reportOk =
               (
                 ~message as _message,
                 ~start_time as _start_time,
-                ~ctx as _ctx,
                 ~files as _file,
+                _ctx,
               ) => {
             print_endline("built successfully!");
 
@@ -134,7 +132,7 @@ module Serve = {
             );
           };
 
-          let report_error = (~ctx, ~error) => {
+          let reportError = ( ~error as _error, _ctx) => {
             print_endline("error occured!");
 
             Yojson.Basic.(
@@ -150,7 +148,7 @@ module Serve = {
           /* TODO: maybe decouple mode from the CommonOptions ? */
           let%lwt packer =
             Packer.make(
-              ~report=Some(Reporter.Internal(report_ok, report_error)),
+              ~reporter=Some(Reporter.make(reportOk, reportError, ())),
               {...options, mode: Mode.Development},
             );
 

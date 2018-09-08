@@ -74,21 +74,22 @@ let run_with ~test_name ~cmd ~files f =
           let report_ok
               ~message:_message
               ~start_time:_start_time
-              ~ctx:_ctx
-              ~files  =
+              ~files
+              _ctx
+            =
             let {Reporter. name; _} = List.hd files in
             let%lwt content = Lwt_io.(with_file ~mode:Input name read) in
             messages := (Re.replace ~f:(fun _ -> "\n({") re_modules content) :: !messages;
             Lwt.return_unit
           in
-          let report_error ~ctx ~error =
+          let report_error ~error ctx =
             let error_text = Context.stringOfError ctx error in
             messages := error_text :: !messages;
             Lwt.return_unit
           in
           let%lwt packer =
             Packer.make
-              ~report:(Some(Reporter.Internal(report_ok, report_error)))
+              ~reporter:(Some(Reporter.make report_ok report_error ()))
               opts
           in
           Lwt.finalize (fun () ->
