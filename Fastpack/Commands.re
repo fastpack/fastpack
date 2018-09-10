@@ -210,6 +210,16 @@ module Help = {
 };
 
 module Default = {
+  let man = [
+    `S(Manpage.s_description),
+    `P(
+      "$(tname) prints the last lines of each $(i,FILE) to standard output. If
+        no file is specified reads standard input. The number of printed
+        lines can be  specified with the $(b,-n) option.",
+    ),
+    `S(Manpage.s_bugs),
+    `P("Report them to <hehey at example.org>."),
+  ];
   let command = (
     fst(Build.command),
     Term.info(
@@ -217,6 +227,7 @@ module Default = {
       ~version,
       ~doc="Pack JavaScript code into a single bundle",
       ~sdocs,
+      ~man,
       ~exits,
     ),
   );

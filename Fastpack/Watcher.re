@@ -1,5 +1,6 @@
 open Lwt.Infix;
 module FS = FastpackUtil.FS;
+module Process = FastpackUtil.Process;
 module M = Map.Make(String);
 module StringSet = Set.Make(String);
 
@@ -155,15 +156,15 @@ let start_watchman = root => {
     |> Yojson.to_string;
 
   let cmd = "watchman --no-save-state -j --no-pretty -p";
-  let%lwt (started_process, ch_in, ch_out) = FS.open_process(cmd);
+  let process = Process.start(cmd);
   /* TODO: validate if process is started at all */
-  let%lwt () = Lwt_io.write(ch_out, subscribe_message ++ "\n");
-  let%lwt _ = Lwt_io.read_line(ch_in);
+  let%lwt () = Process.write(subscribe_message ++ "\n", process);
+  let%lwt _ = Process.readLine(process);
   /* TODO: validate answer */
   /*{"version":"4.9.0","subscribe":"mysubscriptionname","clock":"c:1523968199:68646:1:95"}*/
   /* this line is ignored, receiving possible files */
-  let%lwt _ = Lwt_io.read_line(ch_in);
-  Lwt.return((started_process, ch_in));
+  let%lwt _ = Process.readLine(process);
+  Lwt.return(process);
 };
 
 let rec find_linked_path = (filename, link_map) =>
@@ -180,36 +181,28 @@ let rec find_linked_path = (filename, link_map) =>
       };
     };
 
-let rec ask_watchman = (ch, link_map, link_paths, ignoreFilename) =>
-  Lwt_io.atomic(
-    ch =>
-      switch%lwt (Lwt_io.read_line_opt(ch)) {
-      | None => Lwt.return_none
-      | Some(line) =>
-        open Yojson.Safe.Util;
-        let data = Yojson.Safe.from_string(line);
-        let root = member("root", data) |> to_string;
-        let files =
-          member("files", data)
-          |> to_list
-          |> List.map(to_string)
-          |> List.map(filename => FS.abs_path(root, filename))
-          |> List.map(filename =>
-               find_linked_path(filename, link_map, link_paths)
-             )
-          |> List.filter(ignoreFilename)
-          |> List.fold_left(
-               (set, filename) => StringSet.add(filename, set),
-               StringSet.empty,
-             );
-        if (files == StringSet.empty) {
-          ask_watchman(ch, link_map, link_paths, ignoreFilename);
-        } else {
-          Lwt.return_some(files);
-        };
-      },
-    ch,
-  );
+let rec ask_watchman = (process, link_map, link_paths, ignoreFilename) => {
+  let%lwt line = Process.readLine(process);
+  open Yojson.Safe.Util;
+  let data = Yojson.Safe.from_string(line);
+  let root = member("root", data) |> to_string;
+  let files =
+    member("files", data)
+    |> to_list
+    |> List.map(to_string)
+    |> List.map(filename => FS.abs_path(root, filename))
+    |> List.map(filename => find_linked_path(filename, link_map, link_paths))
+    |> List.filter(ignoreFilename)
+    |> List.fold_left(
+         (set, filename) => StringSet.add(filename, set),
+         StringSet.empty,
+       );
+  if (files == StringSet.empty) {
+    ask_watchman(process, link_map, link_paths, ignoreFilename);
+  } else {
+    Lwt.return_some(files);
+  };
+};
 
 let make = (~packer=None, config: Config.t) => {
   let%lwt packer =
@@ -232,7 +225,7 @@ let make = (~packer=None, config: Config.t) => {
     |> List.rev;
 
   let%lwt prevResult = build(packer);
-  let%lwt (started_process, ch_in) = start_watchman(config.projectRootDir);
+  let%lwt started_process = start_watchman(config.projectRootDir);
   process := Some(started_process);
   let%lwt () =
     Lwt_io.(
@@ -249,7 +242,9 @@ let make = (~packer=None, config: Config.t) => {
   let rec tryRebuilding = (filenames, prevResult) => {
     let%lwt nextResult =
       Lwt.pick([
-        switch%lwt (ask_watchman(ch_in, link_map, link_paths, ignoreFilename)) {
+        switch%lwt (
+          ask_watchman(started_process, link_map, link_paths, ignoreFilename)
+        ) {
         | None => raise(Context.ExitError("No input from watchman"))
         | Some(filenames) => `FilesChanged(filenames) |> Lwt.return
         },
@@ -289,7 +284,9 @@ let make = (~packer=None, config: Config.t) => {
     };
 
   let rec watch = result =>
-    switch%lwt (ask_watchman(ch_in, link_map, link_paths, ignoreFilename)) {
+    switch%lwt (
+      ask_watchman(started_process, link_map, link_paths, ignoreFilename)
+    ) {
     | None => Lwt.return_unit
     | Some(filenames) =>
       let%lwt result = tryRebuilding(filenames, result);
@@ -309,12 +306,10 @@ let make = (~packer=None, config: Config.t) => {
     watch: () => watch(prevResult) <&> FS.setInterval(5., dumpCache) <?> w,
     finalize: () => {
       let%lwt () = Packer.finalize(packer);
-      let () =
-        switch (process^) {
-        | None => ()
-        | Some(process) => process#terminate
-        };
-      Lwt.return_unit;
+      switch (process^) {
+      | None => Lwt.return_unit
+      | Some(process) => Process.finalize(process)
+      };
     },
   });
 };
