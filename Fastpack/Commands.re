@@ -98,7 +98,6 @@ module Serve = {
     run(options.debug, () =>
       Lwt_main.run(
         {
-          let start_time = Unix.gettimeofday();
           let (broadcastToWebsocket, devserver) =
             FastpackServer.Devserver.start(
               ~port=3000,
@@ -157,23 +156,11 @@ module Serve = {
           let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
           Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
           Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
-          open Lwt.Infix;
-
-          Lwt.finalize(
-            () =>
-              switch%lwt (
-                Packer.pack(
-                  ~graph=None,
-                  ~current_location=None,
-                  ~initial=true,
-                  ~start_time,
-                  packer,
-                )
-              ) {
-              | Error(_) => raise(Context.ExitError(""))
-              | Ok(_ctx) => Lwt.join([devserver <?> w, watch()])
-              },
-            finalize,
+          Lwt.Infix.(
+            Lwt.finalize(
+              () => Lwt.join([devserver <?> w, watch()]),
+              finalize,
+            )
           );
         },
       )
