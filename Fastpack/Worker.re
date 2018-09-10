@@ -11,6 +11,7 @@ module L = Ast.Literal;
 
 module UTF8 = FastpackUtil.UTF8;
 module FS = FastpackUtil.FS;
+module Process = FastpackUtil.Process;
 module Parser = FastpackUtil.Parser;
 module Scope = FastpackUtil.Scope;
 module Visit = FastpackUtil.Visit;
@@ -691,26 +692,13 @@ let start = (~project_root, ~output_dir, ()) => {
 };
 
 module Reader = {
-  type t = {
-    workerPool:
-      Lwt_pool.t(
-        (
-          Lwt_process.process_none,
-          Lwt_io.channel(Lwt_io.input),
-          Lwt_io.channel(Lwt_io.output),
-        ),
-      ),
-  };
+  type t = {workerPool: Lwt_pool.t(Process.t)};
 
   let make = (~project_root, ~output_dir, ()) => {
     workerPool:
       Lwt_pool.create(
         Environment.getCPUCount(),
-        ~dispose=
-          ((p, _, _)) => {
-            p#terminate;
-            p#close |> ignore |> Lwt.return;
-          },
+        ~dispose=p => Process.finalize(p),
         () => {
           Logs.debug(x => x("reader created"));
 
@@ -721,7 +709,7 @@ module Reader = {
               project_root,
               output_dir,
             );
-          FastpackUtil.FS.open_process(cmd);
+          Process.start(cmd) |> Lwt.return;
         },
       ),
   };
@@ -729,21 +717,12 @@ module Reader = {
   let finalize = reader => Lwt_pool.clear(reader.workerPool);
 
   let read = (~location, ~source, reader) => {
-    let%lwt response =
-      Lwt_pool.use(reader.workerPool, ((_, fp_in_ch, fp_out_ch)) =>
-        Lwt_io.atomic(
-          out_ch =>
-            Lwt_io.atomic(
-              in_ch => {
-                let%lwt () = Lwt_io.write_value(out_ch, {location, source});
-                let%lwt output: Lwt.t(response) = Lwt_io.read_value(in_ch);
-                Lwt.return(output);
-              },
-              fp_in_ch,
-            ),
-          fp_out_ch,
-        )
+    let%lwt response: Lwt.t(response) =
+      Lwt_pool.use(
+        reader.workerPool,
+        Process.writeAndReadValue({location, source}),
       );
+
     switch (response) {
     | Complete(data) => Lwt.return_ok(data)
     | ParseError(args) =>
@@ -758,7 +737,8 @@ module Reader = {
     | PreprocessorError(message) =>
       Lwt.return_error(Error.PreprocessorError(message))
     | UnhandledCondition(message)
-    | Traceback(message) => Lwt.return_error(Error.UnhandledCondition(message))
+    | Traceback(message) =>
+      Lwt.return_error(Error.UnhandledCondition(message))
     };
   };
 };
