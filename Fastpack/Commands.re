@@ -186,7 +186,7 @@ module Worker = {
     let {Config.projectRootDir: project_root, outputDir: output_dir, _} = options;
     Lwt_main.run(Worker.start(~project_root, ~output_dir, ()));
   };
-  let doc = "worker subprocess (don't use directly)";
+  let doc = "worker subprocess (do not use directly)";
   let command =
     register((
       Term.(ret(const(run) $ Config.term)),
@@ -211,14 +211,12 @@ module Help = {
 
 module Default = {
   let man = [
-    `S(Manpage.s_description),
-    `P(
-      "$(tname) prints the last lines of each $(i,FILE) to standard output. If
-        no file is specified reads standard input. The number of printed
-        lines can be  specified with the $(b,-n) option.",
-    ),
+    `S(Manpage.s_commands),
+    `P({|PLEASE NOTE: production mode is temporarily disabled. In the meantime,
+please always use the `--development` flag.
+|}),
     `S(Manpage.s_bugs),
-    `P("Report them to <hehey at example.org>."),
+    `P("Report them to https://github.com/fastpack/fastpack/issues."),
   ];
   let command = (
     fst(Build.command),

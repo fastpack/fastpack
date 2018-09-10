@@ -29,13 +29,8 @@ To produce a development bundle:
 % fpack --development ./index.js
 ```
 
-To produce a production bundle:
-
-```
-% fpack ./index.js \
-  --postprocess 'babel --presets env' \
-  --postprocess 'uglify -cm'
-```
+**Please note**, bundling in production mode is temporarily deisabled. Always
+use the `--development` flag for now.
 
 Note that `babel`, `babel-preset-env` and `uglify-js` packages must be
 installed.
@@ -49,7 +44,23 @@ NAME
        fpack - Pack JavaScript code into a single bundle
 
 SYNOPSIS
-       fpack [OPTION]... [ENTRY POINTS]...
+       fpack COMMAND ...
+
+COMMANDS
+       PLEASE NOTE: production mode is temporarily disabled. In the meantime,
+       please always use the `--development` flag.
+
+       build
+           rebuild the bundle on a file change
+
+       help
+           Show this message and exit
+
+       serve
+           watch for file changes, rebuild bundle & serve
+
+       watch
+           watch for file changes and rebuild the bundle
 
 ARGUMENTS
        ENTRY POINTS
@@ -62,10 +73,9 @@ OPTIONS
        --development
            Build bundle for development
 
-       --help[=FMT] (default=auto)
-           Show this help in format FMT. The value FMT must be one of `auto',
-           `pager', `groff' or `plain'. With `auto', the format is `pager` or
-           `plain' whenever the TERM env var is `dumb' or undefined.
+       --dry-run
+           Run all the build operations without storing the bundle in the
+           file system
 
        --mock=PACKAGE[:SUBSTITUTE]
            Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is
@@ -102,6 +112,9 @@ OPTIONS
            are absolutely equal. An example of using the Webpack loader:
            '\.js$:babel-loader?filename=.babelrc'.
 
+       --project-root=PATH (absent=.)
+           Ancestor to which node_modules will be resolved.. Defaults to '.'
+
        --report=[ json ] (absent=text)
            Output packer statistics
 
@@ -114,11 +127,14 @@ OPTIONS
        --target=[ app | esm | cjs ] (absent=app)
            Deployment target.
 
+COMMON OPTIONS
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of `auto',
+           `pager', `groff' or `plain'. With `auto', the format is `pager` or
+           `plain' whenever the TERM env var is `dumb' or undefined.
+
        --version
            Show version information.
-
-       -w, --watch
-           Watch file changes and rebuild bundle
 ```
 
 ## Development
