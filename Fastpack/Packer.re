@@ -129,7 +129,7 @@ let make = (~reporter=None, config: Config.t) => {
   });
 };
 
-let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
+let rec pack = (~dryRun=false, ~current_location, ~graph, ~initial, ~start_time, packer) => {
   let {current_dir, config, cache, _} = packer;
   let message =
     if (initial) {
@@ -187,9 +187,10 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
       Logs.debug(x =>
         x("after build. Graph: %d", DependencyGraph.length(ctx.graph))
       );
-      let%lwt (emitted_modules, files) =
-        switch (config.mode) {
-        | Mode.Production =>
+
+      let emit =
+        switch (dryRun, config.mode) {
+        | (_, Mode.Production) =>
           raise(
             Context.PackError(
               ctx,
@@ -200,9 +201,10 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
               ),
             ),
           )
-        | Mode.Test
-        | Mode.Development => ScopedEmitter.emit(ctx, start_time)
+        | (true, _) => ScopedEmitter.update_graph
+        | (false, _) => ScopedEmitter.emit
         };
+      let%lwt (emitted_modules, files) = emit(ctx, start_time);
       let ctx = {
         ...ctx,
         graph: DependencyGraph.cleanup(ctx.graph, emitted_modules),
@@ -235,6 +237,7 @@ let rec pack = (~current_location, ~graph, ~initial, ~start_time, packer) => {
           DependencyGraph.get_module_parents(ctx.graph, location),
         );
         pack(
+          ~dryRun,
           ~current_location=None,
           ~graph=None,
           ~initial,

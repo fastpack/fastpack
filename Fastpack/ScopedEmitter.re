@@ -279,7 +279,10 @@ let emit = (ctx: Context.t, start_time) => {
   );
 };
 
-let update_graph = (ctx: Context.t) => {
-  let%lwt _ = run(0.0, ctx, Lwt_io.null);
-  Lwt.return_unit;
+let update_graph = (ctx: Context.t, start_time) => {
+  let%lwt (emitted_modules, _) = run(start_time, ctx, Lwt_io.null);
+  Lwt.return((
+    emitted_modules,
+    [{Reporter.name: "dry-run", size: 0}],
+  ));
 };

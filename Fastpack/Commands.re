@@ -41,7 +41,7 @@ let register = cmd => {
 };
 
 module Build = {
-  let run = (options: Config.t) =>
+  let run = (options: Config.t, dryRun: bool) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
@@ -52,6 +52,7 @@ module Build = {
             () =>
               switch%lwt (
                 Packer.pack(
+                  ~dryRun,
                   ~graph=None,
                   ~current_location=None,
                   ~initial=true,
@@ -67,10 +68,16 @@ module Build = {
         },
       )
     );
+
+  let dryRunT = {
+    let doc = "Run all the build operations without storing the bundle in the file system";
+    Arg.(value & flag & info(["dry-run"], ~doc));
+  };
+
   let doc = "rebuild the bundle on a file change";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term)),
+      Term.(ret(const(run) $ Config.term $ dryRunT)),
       Term.info("build", ~doc, ~sdocs, ~exits),
     ));
 };
