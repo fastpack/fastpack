@@ -153,6 +153,12 @@ module Serve = {
           let%lwt {Watcher.watch, finalize} =
             Watcher.make(~packer=Some(packer), options);
 
+          let (w, u) = Lwt.wait();
+          let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
+          Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
+          Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
+          open Lwt.Infix;
+
           Lwt.finalize(
             () =>
               switch%lwt (
@@ -165,7 +171,7 @@ module Serve = {
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(_ctx) => Lwt.join([devserver, watch()])
+              | Ok(_ctx) => Lwt.join([devserver <?> w, watch()])
               },
             finalize,
           );
