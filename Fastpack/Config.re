@@ -96,6 +96,44 @@ module Preprocessor = {
   let print = (ppf, (_, opt)) => Format.fprintf(ppf, "%s", toString(opt));
 };
 
+module Rewrite = {
+  type t = {
+    pattern_s: string,
+    pattern: Re.re,
+    target: string,
+  };
+
+  let ofString = s => {
+    let (pattern_s, target) =
+      switch (String.(s |> trim |> split_on_char(':'))) {
+      | []
+      | [_]
+      | [_, ""] => raise(Failure("Empty config"))
+      | [pattern_s, ...rest] => (
+          pattern_s,
+          String.(rest |> concat(":") |> trim),
+        )
+      };
+
+    let pattern =
+      try (Re_posix.compile_pat(pattern_s)) {
+      | Re_posix.Parse_error =>
+        raise(Failure("Pattern regexp parse error. Use POSIX syntax"))
+      };
+
+    {pattern_s, pattern, target};
+  };
+
+  let toString = ({pattern_s, target, _}) =>
+    Printf.sprintf("%s:%s", pattern_s, target);
+  let parse = s =>
+    try (Result.Ok((false, ofString(s)))) {
+    | Failure(msg) => Result.Error(`Msg(msg))
+    };
+
+  let print = (ppf, (_, opt)) => Format.fprintf(ppf, "%s", toString(opt));
+};
+
 type t = {
   entryPoints: list(string),
   outputDir: string,
@@ -109,6 +147,7 @@ type t = {
   cache: Cache.t,
   preprocess: list(Preprocessor.t),
   postprocess: list(string),
+  rewrite: list(Rewrite.t),
   report: Reporter.t,
   debug: bool,
 };
@@ -127,6 +166,7 @@ let create =
       ~cache,
       ~preprocess,
       ~postprocess,
+      ~rewrite,
       ~report,
       ~debug,
     ) => {
@@ -176,6 +216,7 @@ let create =
     cache,
     preprocess,
     postprocess,
+    rewrite,
     report,
     debug,
   };
@@ -196,6 +237,7 @@ let term = {
         cache,
         preprocess,
         postprocess,
+        rewrite,
         report,
         debug,
       ) =>
@@ -212,6 +254,7 @@ let term = {
       ~cache,
       ~preprocess=List.map(snd, preprocess),
       ~postprocess,
+      ~rewrite=List.map(snd, rewrite),
       ~report,
       ~debug,
     );
@@ -345,6 +388,15 @@ let term = {
     Arg.(value & opt_all(string, []) & info(["postprocess"], ~docv, ~doc));
   };
 
+  let rewriteT = {
+    let rewrite = Arg.conv(Rewrite.(parse, print));
+
+    let doc = "Rewrite url matching the PATTERN with the TARGET.";
+
+    let docv = "PATTERN:TARGET";
+    Arg.(value & opt_all(rewrite, []) & info(["rewrite"], ~docv, ~doc));
+  };
+
   let reportT = {
     let doc = "Output packer statistics";
     let docv = "[ json ]";
@@ -374,6 +426,7 @@ let term = {
     $ cacheT
     $ preprocessT
     $ postprocessT
+    $ rewriteT
     $ reportT
     $ debugT
   );

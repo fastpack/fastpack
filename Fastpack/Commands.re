@@ -109,6 +109,7 @@ module Serve = {
             FastpackServer.Devserver.start(
               ~port=3000,
               ~outputDir=options.outputDir,
+              ~rewrite=options.rewrite,
               ~debug=options.debug,
               (),
             );
