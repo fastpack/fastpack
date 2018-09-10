@@ -101,7 +101,7 @@ module Watch = {
 };
 
 module Serve = {
-  let run = (options: Config.t) =>
+  let run = (options: Config.t, serverConfig: FastpackServer.Config.t) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
@@ -109,7 +109,7 @@ module Serve = {
             FastpackServer.Devserver.start(
               ~port=3000,
               ~outputDir=options.outputDir,
-              ~rewrite=options.rewrite,
+              ~config=serverConfig,
               ~debug=options.debug,
               (),
             );
@@ -177,7 +177,7 @@ module Serve = {
   let command =
     register((
       /* TODO: add options here */
-      Term.(ret(const(run) $ Config.term)),
+      Term.(ret(const(run) $ Config.term $ FastpackServer.Config.term)),
       Term.info("serve", ~doc, ~sdocs, ~exits),
     ));
 };

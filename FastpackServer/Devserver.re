@@ -1,12 +1,19 @@
 let createCallback =
-    (~config, ~websocketHandler, conn, req: Cohttp.Request.t, body) => {
+    (
+      ~config: Config.t,
+      ~outputDir,
+      ~websocketHandler,
+      conn,
+      req: Cohttp.Request.t,
+      body,
+    ) => {
   let req_path = Cohttp.Request.uri(req) |> Uri.path;
   let path_parts = Str.(split(regexp("/"), req_path));
 
   let matched_rewrite =
     Config.(
       List.find_opt(
-        ({pattern}) =>
+        ({Config.Rewrite.pattern, _}) =>
           switch (Re.exec_opt(pattern, req_path)) {
           | Some(_) => true
           | None => false
@@ -33,18 +40,15 @@ let createCallback =
    * then we check if it's a GET and send it to the static handler
    * else we fail with 404
    */
-  Config.(
-    switch (req.meth, path_parts) {
-    | (`GET, ["ws"]) => websocketHandler(conn, req, body)
-    | (`GET, _) => StaticHandler.serveStatic(config.outputDir, req_path)
-    | _ =>
-      Cohttp_lwt_unix.Server.respond_string(~status=`Not_found, ~body="", ())
-    }
-  );
+  switch (req.meth, path_parts) {
+  | (`GET, ["ws"]) => websocketHandler(conn, req, body)
+  | (`GET, _) => StaticHandler.serveStatic(outputDir, req_path)
+  | _ =>
+    Cohttp_lwt_unix.Server.respond_string(~status=`Not_found, ~body="", ())
+  };
 };
 
-let start = (~port=3000, ~outputDir, ~rewrite, ~debug, ()) => {
-  let config = Config.{port, outputDir, rewrite, debug};
+let start = (~port=3000, ~outputDir, ~config, ~debug, ()) => {
   Printf.sprintf("Listening on port %d...", port) |> print_endline;
 
   let (broadcastToWebsocket, websocketHandler) =
@@ -54,7 +58,7 @@ let start = (~port=3000, ~outputDir, ~rewrite, ~debug, ()) => {
     Cohttp_lwt_unix.Server.create(
       ~mode=`TCP(`Port(port)),
       Cohttp_lwt_unix.Server.make(
-        ~callback=createCallback(~config, ~websocketHandler),
+        ~callback=createCallback(~config, ~outputDir, ~websocketHandler),
         (),
       ),
     );
