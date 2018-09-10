@@ -1,7 +1,87 @@
 open Lwt.Infix;
 module FS = FastpackUtil.FS;
+module Process = FastpackUtil.Process;
 module M = Map.Make(String);
-let debug = Logs.debug;
+module StringSet = Set.Make(String);
+
+type t = {
+  watch: unit => Lwt.t(unit),
+  finalize: unit => Lwt.t(unit),
+};
+
+let build = (packer: Packer.t) => {
+  let%lwt initial_result =
+    Packer.pack(
+      ~current_location=None,
+      ~graph=None,
+      ~initial=true,
+      ~start_time=Unix.gettimeofday(),
+      packer,
+    );
+
+  switch (initial_result) {
+  | Error((ctx: Context.t)) =>
+    Lwt.return_error((ctx, DependencyGraph.get_files(ctx.graph)))
+  | Ok((ctx: Context.t)) =>
+    Lwt.return_ok((ctx, DependencyGraph.get_files(ctx.graph)))
+  };
+};
+
+let rebuild = (~filesChanged: StringSet.t, ~packer, prev_result) => {
+  let start_time = Unix.gettimeofday();
+  let (result, ctx: Context.t, filesWatched: StringSet.t) =
+    switch (prev_result) {
+    | Error((ctx, filesWatched)) => (`Error, ctx, filesWatched)
+    | Ok((ctx, filesWatched)) => (`Ok, ctx, filesWatched)
+    };
+
+  StringSet.iter(f => Cache.File.invalidate(f, ctx.cache), filesChanged);
+  switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
+  | [] => Lwt.return(prev_result)
+  | filesChanged =>
+    let (runPack, graph, current_location) =
+      switch (result) {
+      | `Error => (true, None, None)
+      | `Ok =>
+        switch (
+          DependencyGraph.get_changed_module_locations(
+            ctx.graph,
+            filesChanged,
+          )
+          |> Module.LocationSet.elements
+        ) {
+        | [] => (false, None, None)
+        | [location] =>
+          DependencyGraph.remove_module(ctx.graph, location);
+          (true, Some(ctx.graph), Some(location));
+        | _ => (true, None, None)
+        }
+      };
+    let%lwt newResult =
+      if (runPack) {
+        Packer.pack(
+          ~current_location,
+          ~graph,
+          ~initial=false,
+          ~start_time,
+          packer,
+        );
+      } else {
+        switch (result) {
+        | `Ok => Lwt.return_ok(ctx)
+        | `Error => Lwt.return_error(ctx)
+        };
+      };
+    switch (newResult) {
+    | Ok(ctx) => Lwt.return_ok((ctx, DependencyGraph.get_files(ctx.graph)))
+    | Error((ctx: Context.t)) =>
+      Lwt.return_error((
+        ctx,
+        StringSet.union(DependencyGraph.get_files(ctx.graph), filesWatched),
+      ))
+    };
+  };
+};
 
 let collect_links = current_dir => {
   let node_modules = FilePath.concat(current_dir, "node_modules");
@@ -76,45 +156,65 @@ let start_watchman = root => {
     |> Yojson.to_string;
 
   let cmd = "watchman --no-save-state -j --no-pretty -p";
-  let%lwt (started_process, ch_in, ch_out) = FS.open_process(cmd);
+  let process = Process.start(cmd);
   /* TODO: validate if process is started at all */
-  let%lwt () = Lwt_io.write(ch_out, subscribe_message ++ "\n");
-  let%lwt _ = Lwt_io.read_line(ch_in);
+  let%lwt () = Process.write(subscribe_message ++ "\n", process);
+  let%lwt _ = Process.readLine(process);
   /* TODO: validate answer */
   /*{"version":"4.9.0","subscribe":"mysubscriptionname","clock":"c:1523968199:68646:1:95"}*/
   /* this line is ignored, receiving possible files */
-  let%lwt _ = Lwt_io.read_line(ch_in);
-  Lwt.return((started_process, ch_in));
+  let%lwt _ = Process.readLine(process);
+  Lwt.return(process);
 };
 
-let ask_watchman = ch =>
-  switch%lwt (Lwt_io.read_line_opt(ch)) {
-  | None => Lwt.return_none
-  | Some(line) =>
-    open Yojson.Safe.Util;
-    let data = Yojson.Safe.from_string(line);
-    let root = member("root", data) |> to_string;
-    let files =
-      member("files", data)
-      |> to_list
-      |> List.map(to_string)
-      |> List.map(filename => FS.abs_path(root, filename));
+let rec find_linked_path = (filename, link_map) =>
+  fun
+  | [] => filename
+  | [path, ...paths] =>
+    switch (FilePath.is_subdir(filename, path)) {
+    | false => find_linked_path(filename, link_map, paths)
+    | true =>
+      let relative = FilePath.make_relative(path, filename);
+      switch (M.get(path, link_map)) {
+      | Some(base_path) => FS.abs_path(base_path, relative)
+      | None => failwith("Path not found in the links map: " ++ path)
+      };
+    };
 
+let rec ask_watchman = (process, link_map, link_paths, ignoreFilename) => {
+  let%lwt line = Process.readLine(process);
+  open Yojson.Safe.Util;
+  let data = Yojson.Safe.from_string(line);
+  let root = member("root", data) |> to_string;
+  let files =
+    member("files", data)
+    |> to_list
+    |> List.map(to_string)
+    |> List.map(filename => FS.abs_path(root, filename))
+    |> List.map(filename => find_linked_path(filename, link_map, link_paths))
+    |> List.filter(ignoreFilename)
+    |> List.fold_left(
+         (set, filename) => StringSet.add(filename, set),
+         StringSet.empty,
+       );
+  if (files == StringSet.empty) {
+    ask_watchman(process, link_map, link_paths, ignoreFilename);
+  } else {
     Lwt.return_some(files);
   };
+};
 
-let watch = (~pack, ~ctx: Context.t) => {
-  /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
-   * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
-   * */
-  let (w, u) = Lwt.wait();
-  Lwt_unix.on_signal(Sys.sigint, _ => Lwt.wakeup_exn(u, Context.ExitOK))
-  |> ignore;
-  Lwt_unix.on_signal(Sys.sigterm, _ => Lwt.wakeup_exn(u, Context.ExitOK))
-  |> ignore;
+let make = (~packer=None, config: Config.t) => {
+  let%lwt packer =
+    switch (packer) {
+    | Some(packer) => Lwt.return(packer)
+    | None => Packer.make({...config, mode: Mode.Development})
+    };
+
+  let%lwt currentDir = Lwt_unix.getcwd();
 
   let process = ref(None);
-  let%lwt link_map = collect_links(ctx.current_dir);
+  let%lwt link_map = collect_links(currentDir);
   let link_paths =
     link_map
     |> M.bindings
@@ -124,92 +224,92 @@ let watch = (~pack, ~ctx: Context.t) => {
        )
     |> List.rev;
 
-  let common_root = common_root([ctx.current_dir, ...link_paths]);
-  let common_root =
-    if (common_root != "") {
-      common_root;
-    } else {
-      ctx.current_dir;
-    };
-  let%lwt (started_process, ch_in) = start_watchman(common_root);
+  let%lwt prevResult = build(packer);
+  let%lwt started_process = start_watchman(config.projectRootDir);
   process := Some(started_process);
   let%lwt () =
-    Lwt_io.(write(stdout, "Watching file changes (Ctrl+C to stop)\n"));
+    Lwt_io.(
+      write(
+        stdout,
+        Printf.sprintf("Watching directory: %s \n", config.projectRootDir),
+      )
+    );
+  let%lwt () = Lwt_io.(write(stdout, "(Ctrl+C to stop)\n"));
+  let ignoreFilename = filename =>
+    !FilePath.is_subdir(filename, config.outputDir)
+    && filename != config.outputDir;
 
-  let rec find_linked_path = filename =>
-    fun
-    | [] => filename
-    | [path, ...paths] =>
-      switch (FilePath.is_subdir(filename, path)) {
-      | false => find_linked_path(filename, paths)
-      | true =>
-        let relative = FilePath.make_relative(path, filename);
-        switch (M.get(path, link_map)) {
-        | Some(base_path) => FS.abs_path(base_path, relative)
-        | None => failwith("Path not found in the links map: " ++ path)
-        };
-      };
-
-  let rec read_pack = graph =>
-    switch%lwt (ask_watchman(ch_in)) {
-    | None => Lwt.return_unit
-    | Some(filenames) =>
-      let start_time = Unix.gettimeofday();
-      let filenames =
-        List.map(
-          filename => find_linked_path(filename, link_paths),
-          filenames,
-        );
-
-      List.iter(ctx.cache.remove, filenames);
-      let%lwt graph =
-        switch (DependencyGraph.get_modules_by_filenames(graph, filenames)) {
-        /* Something is changed in the dir, but we don't care */
-        | [] => Lwt.return(graph)
-        /* Exactly one module is changed */
-        | [m] =>
-          DependencyGraph.remove_module(graph, m);
+  let rec tryRebuilding = (filenames, prevResult) => {
+    let%lwt nextResult =
+      Lwt.pick([
+        switch%lwt (
+          ask_watchman(started_process, link_map, link_paths, ignoreFilename)
+        ) {
+        | None => raise(Context.ExitError("No input from watchman"))
+        | Some(filenames) => `FilesChanged(filenames) |> Lwt.return
+        },
+        {
           let%lwt result =
-            pack(
-              ~current_location=Some(m.location),
-              ~graph=Some(graph),
-              ~initial=false,
-              ~start_time,
-            );
-
-          switch (result) {
-          | Ok(ctx) => Lwt.return(ctx.Context.graph)
-          | Error(_) =>
-            DependencyGraph.add_module(graph, m);
-            Lwt.return(graph);
-          };
-        | _ =>
-          let%lwt result =
-            pack(
-              ~current_location=None,
-              ~graph=None,
-              ~initial=false,
-              ~start_time,
-            );
-
-          switch (result) {
-          | Ok(ctx) => Lwt.return(ctx.Context.graph)
-          | Error(_) => Lwt.return(graph)
-          };
-        };
-
-      ([@tailcall] read_pack)(graph);
+            rebuild(~filesChanged=filenames, ~packer, prevResult);
+          `Rebuilt(result) |> Lwt.return;
+        },
+      ]);
+    switch (nextResult) {
+    | `FilesChanged(newFilenames) =>
+      tryRebuilding(StringSet.union(filenames, newFilenames), prevResult)
+    | `Rebuilt(result) => Lwt.return(result)
     };
-
-  let finalize = () => {
-    let () =
-      switch (process^) {
-      | None => ()
-      | Some(process) => process#terminate
-      };
-
-    Lwt.return_unit;
   };
 
-  Lwt.finalize(() => read_pack(ctx.Context.graph) <?> w, finalize);
+  let lastResult = ref(prevResult);
+  let lastResultCachedDumped = ref(None);
+  let dumpCache = () =>
+    switch (lastResult^) {
+    | Ok((ctx: Context.t, _)) =>
+      let dump = (ctx: Context.t, result) => {
+        let%lwt () = Cache.save(ctx.cache);
+        lastResultCachedDumped := Some(result);
+        Lwt.return_unit;
+      };
+      switch (lastResultCachedDumped^) {
+      | None => dump(ctx, lastResult^)
+      | Some(lastResultCachedDumped) =>
+        if (lastResult^ !== lastResultCachedDumped) {
+          dump(ctx, lastResult^);
+        } else {
+          Lwt.return_unit;
+        }
+      };
+    | Error(_) => Lwt.return_unit
+    };
+
+  let rec watch = result =>
+    switch%lwt (
+      ask_watchman(started_process, link_map, link_paths, ignoreFilename)
+    ) {
+    | None => Lwt.return_unit
+    | Some(filenames) =>
+      let%lwt result = tryRebuilding(filenames, result);
+      lastResult := result;
+      watch(result);
+    };
+
+  /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
+   * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
+   * */
+  let (w, u) = Lwt.wait();
+  let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
+  Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
+  Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
+
+  Lwt.return({
+    watch: () => watch(prevResult) <&> FS.setInterval(5., dumpCache) <?> w,
+    finalize: () => {
+      let%lwt () = Packer.finalize(packer);
+      switch (process^) {
+      | None => Lwt.return_unit
+      | Some(process) => Process.finalize(process)
+      };
+    },
+  });
 };

@@ -193,6 +193,11 @@ module LocationSet =
     type t = location;
   });
 
+module LocationMap = Map.Make({
+  let compare = compare_location
+  type t = location
+})
+
 type t = {
   /*** Opaque module id */
   id: string,
@@ -204,15 +209,13 @@ type t = {
   /*** List of resolved dynamic dependencies, populated for cached modules */
   dynamic_dependencies: list((Dependency.t, location)),
   /*** Mapping of filename to digest */
-  build_dependencies: M.t(string),
-  /*** If module is analyzed when packing */
-  state,
+  build_dependencies: M.t(float),
   /*** CJS / CSJ with __esModule flag / EcmaScript */
   module_type,
   /*** "side-effect" files to be emitted alongside with module */
   files: list((string, string)),
   /*** Module source along with transformations applied */
-  workspace: Workspace.t((t, DependencyMap.t(t))),
+  source: string,
   /*** Module scope */
   scope: FastpackUtil.Scope.t,
   /*** Module exports */

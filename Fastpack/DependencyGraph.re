@@ -1,26 +1,31 @@
-module M = Map.Make(String);
 module StringSet = Set.Make(String);
 exception Cycle(list(string));
 
 type t = {
-  modules: Hashtbl.t(Module.location, Module.t),
+  modules: Hashtbl.t(Module.location, Lazy.t(Lwt.t(Module.t))),
   static_dependencies:
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
   dynamic_dependencies:
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
-  files: Hashtbl.t(string, Module.t),
+  build_dependencies: Hashtbl.t(string, Module.location),
+  parents: Hashtbl.t(Module.location, Module.LocationSet.t),
 };
 
 let empty = (~size=5000, ()) => {
   modules: Hashtbl.create(size),
   static_dependencies: Hashtbl.create(size * 20),
   dynamic_dependencies: Hashtbl.create(size * 20),
-  files: Hashtbl.create(size * 5),
+  build_dependencies: Hashtbl.create(size * 5),
+  parents: Hashtbl.create(size * 20),
 };
 
 let lookup = (table, key) => Hashtbl.find_opt(table, key);
 
-let lookup_module = (graph, location) => lookup(graph.modules, location);
+let lookup_module = (graph, location) =>
+  switch (lookup(graph.modules, location)) {
+  | None => None
+  | Some(v) => Some(Lazy.force(v))
+  };
 
 let lookup_dependencies = (~kind, graph, m: Module.t) => {
   let dependencies =
@@ -47,27 +52,35 @@ let to_dependency_map = graph => {
       }
     );
 
-  List.fold_left(
-    (dep_map, (dep, m)) => Module.DependencyMap.add(dep, m, dep_map),
+  Lwt_list.fold_left_s(
+    (dep_map, (dep, m)) => {
+      let%lwt m = m;
+      Module.DependencyMap.add(dep, m, dep_map) |> Lwt.return;
+    },
     Module.DependencyMap.empty,
     to_pairs(graph.static_dependencies)
     @ to_pairs(graph.dynamic_dependencies),
   );
 };
 
-let add_module = (graph, m: Module.t) =>
-  switch (Hashtbl.find_all(graph.modules, m.location)) {
-  | [] =>
-    Hashtbl.add(graph.modules, m.location, m);
-    List.iter(
-      filename => Hashtbl.add(graph.files, filename, m),
-      M.bindings(m.build_dependencies) |> List.map(((k, _)) => k),
-    );
-  | [_] =>
-    Hashtbl.remove(graph.modules, m.location);
-    Hashtbl.add(graph.modules, m.location, m);
-  | _ => failwith("DependencyGraph: cannot add more modules")
-  };
+let add_module = (graph, location, m: Lazy.t(Lwt.t(Module.t))) =>
+  Hashtbl.replace(graph.modules, location, m);
+
+let add_module_parents = (graph, location, parents: Module.LocationSet.t) =>
+  Hashtbl.add(graph.parents, location, parents);
+
+let get_module_parents = (graph, location) =>
+  Hashtbl.find_all(graph.parents, location)
+  |> List.fold_left(
+       (acc, parents) => Module.LocationSet.union(acc, parents),
+       Module.LocationSet.empty,
+     );
+
+let add_build_dependencies = (graph, filenames, location) =>
+  List.iter(
+    filename => Hashtbl.add(graph.build_dependencies, filename, location),
+    filenames,
+  );
 
 let add_dependency =
     (~kind, graph, m: Module.t, dep: (Module.Dependency.t, Module.location)) => {
@@ -76,44 +89,49 @@ let add_dependency =
     | `Static => graph.static_dependencies
     | `Dynamic => graph.dynamic_dependencies
     };
-
   Hashtbl.add(dependencies, m.location, dep);
 };
 
-let remove_module = (graph, m: Module.t) => {
+let remove_module = (graph, location: Module.location) => {
   let remove = (k, v) =>
-    if (Module.equal_location(k, m.location)) {
+    if (Module.equal_location(k, location)) {
       None;
     } else {
       Some(v);
     };
 
-  let remove_files = (_, m') =>
-    if (Module.equal_location(m.location, m'.Module.location)) {
+  let remove_files = (_, location') =>
+    if (Module.equal_location(location, location')) {
       None;
     } else {
-      Some(m);
+      Some(location');
     };
 
   Hashtbl.filter_map_inplace(remove, graph.modules);
+  Hashtbl.filter_map_inplace(remove, graph.parents);
   Hashtbl.filter_map_inplace(remove, graph.static_dependencies);
   Hashtbl.filter_map_inplace(remove, graph.dynamic_dependencies);
-  Hashtbl.filter_map_inplace(remove_files, graph.files);
+  Hashtbl.filter_map_inplace(remove_files, graph.build_dependencies);
 };
 
-let get_modules_by_filenames = (graph, filenames) =>
+let get_files = graph =>
+  Hashtbl.fold(
+    (filename, _, set) => StringSet.add(filename, set),
+    graph.build_dependencies,
+    StringSet.empty,
+  );
+
+let get_changed_module_locations = (graph, filenames) =>
   List.fold_left(
-    (modules, filename) =>
+    (locations, filename) =>
       List.fold_left(
-        (modules, m) => M.add(m.Module.id, m, modules),
-        modules,
-        Hashtbl.find_all(graph.files, filename),
+        (locations, location) => Module.LocationSet.add(location, locations),
+        locations,
+        Hashtbl.find_all(graph.build_dependencies, filename),
       ),
-    M.empty,
+    Module.LocationSet.empty,
     filenames,
-  )
-  |> M.bindings
-  |> List.map(snd);
+  );
 
 /* TODO: make emitted_modules be LocationSet */
 let cleanup = (graph, emitted_modules) => {
@@ -125,64 +143,34 @@ let cleanup = (graph, emitted_modules) => {
     };
 
   let () = Hashtbl.filter_map_inplace(keep, graph.modules);
+  let () = Hashtbl.filter_map_inplace(keep, graph.parents);
   let () = Hashtbl.filter_map_inplace(keep, graph.static_dependencies);
   let () = Hashtbl.filter_map_inplace(keep, graph.dynamic_dependencies);
   let () =
     Hashtbl.filter_map_inplace(
-      (_, m) => keep(m.Module.location, m),
-      graph.files,
+      (_, location) => keep(location, location),
+      graph.build_dependencies,
     );
   graph;
 };
 
 let length = graph => Hashtbl.length(graph.modules);
 
-let modules = graph => Hashtbl.to_seq(graph.modules);
+let modules = graph =>
+  Hashtbl.to_seq(graph.modules)
+  |> Sequence.map(((k, m)) => (k, Lazy.force(m)));
 
-let get_static_chain = (graph, entry) => {
-  let modules = ref([]);
-  let seen_globally = ref(StringSet.empty);
-  let add_module = (m: Module.t) => {
-    let location_str = Module.location_to_string(m.location);
-    modules := [m, ...modules^];
-    seen_globally := StringSet.add(location_str, seen_globally^);
+let ensureModule = (graph, location, makeModule) =>
+  switch (lookup_module(graph, location)) {
+  | Some(mPromise) => mPromise
+  | None =>
+    let lazyMakeModule = Lazy.from_fun(makeModule);
+    add_module(graph, location, lazyMakeModule);
+    Lazy.force(lazyMakeModule);
   };
 
-  let check_module = (m: Module.t) => {
-    let location_str = Module.location_to_string(m.location);
-    StringSet.mem(location_str, seen_globally^);
+let hasModule = (graph, location) =>
+  switch (Hashtbl.find_opt(graph.modules, location)) {
+  | Some(_) => true
+  | None => false
   };
-
-  let rec sort = (seen, m: Module.t) => {
-    let location_str = Module.location_to_string(m.location);
-    List.mem(location_str, seen) ?
-      /* let prev_m = */
-      /*   match lookup_module graph (List.hd seen) with */
-      /*   | Some prev_m -> prev_m */
-      /*   | None -> Error.ie "DependencyGraph.sort - imporssible state" */
-      /* in */
-      switch (m.module_type) {
-      | Module.ESM
-      | Module.CJS_esModule => ()
-      | Module.CJS => raise(Cycle([location_str, ...seen]))
-      } :
-      check_module(m) ?
-        () :
-        {
-          let sort' = sort([location_str, ...seen]);
-          let () =
-            List.iter(
-              sort',
-              List.filter_map(
-                ((_, m)) => m,
-                lookup_dependencies(~kind=`Static, graph, m),
-              ),
-            );
-
-          add_module(m);
-        };
-  };
-
-  sort([], entry);
-  List.rev(modules^);
-};

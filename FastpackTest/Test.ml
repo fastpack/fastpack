@@ -3,6 +3,10 @@ module FS = FastpackUtil.FS
 let project_path =
   FS.abs_path (Unix.getcwd ()) "../../../"
 
+let () =
+  Fastpack.Environment.setExecutable
+    (FilePath.concat project_path "_build/default/bin/fpack.exe")
+
 let get_test_path name =
   FS.abs_path project_path ("./test/" ^ name)
 

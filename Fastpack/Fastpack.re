@@ -9,8 +9,11 @@ module Resolver = Resolver;
 module Preprocessor = Preprocessor;
 module Reporter = Reporter;
 module Watcher = Watcher;
-module CommonOptions = CommonOptions;
+module Config = Config
 module Commands = Commands
+module Packer = Packer
+module DependencyGraph = DependencyGraph
+module Environment = Environment
 
 exception PackError = Context.PackError;
 exception ExitError = Context.ExitError;

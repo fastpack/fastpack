@@ -7,7 +7,8 @@ process = { env: {} };
   var installedModules = {};
 
   // The require function
-  function __fastpack_require__(moduleId) {
+  function __fastpack_require__(fromModule, request) {
+    var moduleId = fromModule === null ? request : modules[fromModule].d[request];
 
     // Check if module is in cache
     if(installedModules[moduleId]) {
@@ -21,12 +22,12 @@ process = { env: {} };
     };
 
     // Execute the module function
-    modules[moduleId].call(
+    modules[moduleId].m.call(
       module.exports,
       module,
       module.exports,
-      __fastpack_require__,
-      __fastpack_import__
+      __fastpack_require__.bind(null, moduleId),
+      __fastpack_import__.bind(null, moduleId)
     );
 
     // Flag the module as loaded
@@ -36,13 +37,13 @@ process = { env: {} };
     return module.exports;
   }
 
-  function __fastpack_import__(moduleId) {
+  function __fastpack_import__(fromModule, request) {
     if (!window.Promise) {
       throw 'window.Promise is undefined, consider using a polyfill';
     }
     return new Promise(function(resolve, reject) {
       try {
-        resolve(__fastpack_require__(moduleId));
+        resolve(__fastpack_require__(fromModule, request));
       } catch (e) {
         reject(e);
       }
@@ -62,17 +63,23 @@ process = { env: {} };
     }
     return ret;
   }
-  return __fastpack_require__(__fastpack_require__.s = '$fp$main');
+  return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-({
-"a": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nlet a1 = \"Тест\";;Object.defineProperty(exports, \"a1\", {enumerable: true, get: function() {return a1;}});\nlet a2 = \"Привет, мир\";;Object.defineProperty(exports, \"a2\", {enumerable: true, get: function() {return a2;}});\nlet a3 = \"哈囉世界\";;Object.defineProperty(exports, \"a3\", {enumerable: true, get: function() {return a3;}});\nlet a4 = \"💩\";;Object.defineProperty(exports, \"a4\", {enumerable: true, get: function() {return a4;}});\nexports.default = {a1: a1, a2: a2, a3: a3, a4: a4};\n\n//# sourceURL=fpack:///a.js");
+    ({
+"a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nlet a1 = \"Тест\";;Object.defineProperty(exports, \"a1\", {enumerable: true, get: function() {return a1;}});\nlet a2 = \"Привет, мир\";;Object.defineProperty(exports, \"a2\", {enumerable: true, get: function() {return a2;}});\nlet a3 = \"哈囉世界\";;Object.defineProperty(exports, \"a3\", {enumerable: true, get: function() {return a3;}});\nlet a4 = \"💩\";;Object.defineProperty(exports, \"a4\", {enumerable: true, get: function() {return a4;}});\nexports.default = {a1: a1, a2: a2, a3: a3, a4: a4};\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");
 },
-"index": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(/* \"./a\" */ \"a\");\n\nconsole.log(_1__a.a1, _1__a.a2, _1__a.a3);\nexports.default = function() {\n  console.log(\"Русский\", \"development\",\n              \"разработка\");\n}\n\n//# sourceURL=fpack:///index.js");
+d: {}
 },
-"$fp$main": function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(/* \"./index.js\" */ \"index\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\n\nconsole.log(_1__a.a1, _1__a.a2, _1__a.a3);\nexports.default = function() {\n  console.log(\"Русский\", \"development\",\n              \"разработка\");\n}\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"./a":"a"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
 },
 
 });

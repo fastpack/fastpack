@@ -11,6 +11,7 @@ let run = (debug, f) => {
     Logs.set_reporter(Logs_fmt.reporter());
   };
   try (`Ok(f())) {
+  | Config.ExitError(message)
   | Context.ExitError(message) =>
     Lwt_main.run(Lwt_io.(write(stderr, message)));
     /* supress the default behaviour of the cmdliner, since it does a lot
@@ -32,81 +33,78 @@ let run = (debug, f) => {
   };
 };
 
+let cmds = ref([]);
+let all = () => cmds^;
+let register = cmd => {
+  cmds := [cmd, ...cmds^];
+  cmd;
+};
+
 module Build = {
-  let run = (options: CommonOptions.t) =>
+  let run = (options: Config.t, dryRun: bool) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let%lwt {Packer.pack, finalize} = Packer.make(options);
+          let%lwt packer = Packer.make(options);
 
           Lwt.finalize(
             () =>
               switch%lwt (
-                pack(
+                Packer.pack(
+                  ~dryRun,
                   ~graph=None,
                   ~current_location=None,
                   ~initial=true,
                   ~start_time,
+                  packer,
                 )
               ) {
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(_) => Lwt.return_unit
+              | Ok(ctx) => Cache.save(ctx.cache)
               },
-            finalize,
+            () => Packer.finalize(packer),
           );
         },
       )
     );
+
+  let dryRunT = {
+    let doc = "Run all the build operations without storing the bundle in the file system";
+    Arg.(value & flag & info(["dry-run"], ~doc));
+  };
+
   let doc = "rebuild the bundle on a file change";
-  let command = (
-    Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("build", ~doc, ~sdocs, ~exits),
-  );
+  let command =
+    register((
+      Term.(ret(const(run) $ Config.term $ dryRunT)),
+      Term.info("build", ~doc, ~sdocs, ~exits),
+    ));
 };
 
 module Watch = {
-  let run = (options: CommonOptions.t) =>
+  let run = (options: Config.t) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
-          let start_time = Unix.gettimeofday();
-          /* TODO: maybe decouple mode from the CommonOptions ? */
-          let%lwt {Packer.pack, finalize} =
-            Packer.make({...options, mode: Mode.Development});
-
-          Lwt.finalize(
-            () =>
-              switch%lwt (
-                pack(
-                  ~graph=None,
-                  ~current_location=None,
-                  ~initial=true,
-                  ~start_time,
-                )
-              ) {
-              | Error(_) => raise(Context.ExitError(""))
-              | Ok(ctx) => Watcher.watch(~ctx, ~pack)
-              },
-            finalize,
-          );
+          let%lwt {Watcher.watch, finalize} = Watcher.make(options);
+          Lwt.finalize(watch, finalize);
         },
       )
     );
-  let doc = "build the bundle";
-  let command = (
-    Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("watch", ~doc, ~sdocs, ~exits),
-  );
+  let doc = "watch for file changes and rebuild the bundle";
+  let command =
+    register((
+      Term.(ret(const(run) $ Config.term)),
+      Term.info("watch", ~doc, ~sdocs, ~exits),
+    ));
 };
 
 module Serve = {
-  let run = (options: CommonOptions.t) =>
+  let run = (options: Config.t) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
-          let start_time = Unix.gettimeofday();
-
           let (broadcastToWebsocket, devserver) =
             FastpackServer.Devserver.start(
               ~port=3000,
@@ -123,13 +121,12 @@ module Serve = {
               ~port=3000,
               (),
             );
-
-          let report_ok =
+          let reportOk =
               (
                 ~message as _message,
                 ~start_time as _start_time,
-                ~ctx as _ctx,
                 ~files as _file,
+                _ctx,
               ) => {
             print_endline("built successfully!");
 
@@ -141,7 +138,7 @@ module Serve = {
             );
           };
 
-          let report_error = (~ctx, ~error) => {
+          let reportError = (~error, ctx) => {
             print_endline("error occured!");
 
             Yojson.Basic.(
@@ -154,59 +151,73 @@ module Serve = {
             );
           };
 
-          /* TODO: maybe decouple mode from the CommonOptions ? */
-          let%lwt {Packer.pack, finalize} =
-            Packer.make({
-              ...options,
-              mode: Mode.Development,
-              report: Reporter.Internal(report_ok, report_error),
-            });
+          let%lwt packer =
+            Packer.make(
+              ~reporter=Some(Reporter.make(reportOk, reportError, ())),
+              {...options, mode: Mode.Development},
+            );
+          let%lwt {Watcher.watch, finalize} =
+            Watcher.make(~packer=Some(packer), options);
 
-          Lwt.finalize(
-            () =>
-              switch%lwt (
-                pack(
-                  ~graph=None,
-                  ~current_location=None,
-                  ~initial=true,
-                  ~start_time,
-                )
-              ) {
-              | Error(_) => raise(Context.ExitError(""))
-              | Ok(ctx) =>
-                /* super-functional web-server :) */
-                let server = devserver;
-                let watcher = Watcher.watch(~ctx, ~pack);
-                Lwt.join([server, watcher]);
-              },
-            finalize,
+          let (w, u) = Lwt.wait();
+          let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
+          Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
+          Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
+          Lwt.Infix.(
+            Lwt.finalize(
+              () => Lwt.join([devserver <?> w, watch()]),
+              finalize,
+            )
           );
         },
       )
     );
   let doc = "watch for file changes, rebuild bundle & serve";
-  let command = (
-    /* TODO: add options here */
-    Term.(ret(const(run) $ CommonOptions.term)),
-    Term.info("serve", ~doc, ~sdocs, ~exits),
-  );
+  let command =
+    register((
+      /* TODO: add options here */
+      Term.(ret(const(run) $ Config.term)),
+      Term.info("serve", ~doc, ~sdocs, ~exits),
+    ));
+};
+
+module Worker = {
+  let run = (options: Config.t) => {
+    let {Config.projectRootDir: project_root, outputDir: output_dir, _} = options;
+    Lwt_main.run(Worker.start(~project_root, ~output_dir, ()));
+  };
+  let doc = "worker subprocess (do not use directly)";
+  let command =
+    register((
+      Term.(ret(const(run) $ Config.term)),
+      Term.info("worker", ~doc, ~sdocs, ~exits),
+    ));
 };
 
 module Help = {
   let run = () => `Help((`Auto, None));
-  let command = (
-    Term.(ret(const(run) $ const())),
-    Term.info(
-      "help",
-      ~version,
-      ~doc="Show this message and exit",
-      ~sdocs,
-      ~exits,
-    ),
-  );
+  let command =
+    register((
+      Term.(ret(const(run) $ const())),
+      Term.info(
+        "help",
+        ~version,
+        ~doc="Show this message and exit",
+        ~sdocs,
+        ~exits,
+      ),
+    ));
 };
 
 module Default = {
+  let man = [
+    `S(Manpage.s_commands),
+    `P({|PLEASE NOTE: production mode is temporarily disabled. In the meantime,
+please always use the `--development` flag.
+|}),
+    `S(Manpage.s_bugs),
+    `P("Report them to https://github.com/fastpack/fastpack/issues."),
+  ];
   let command = (
     fst(Build.command),
     Term.info(
@@ -214,10 +225,10 @@ module Default = {
       ~version,
       ~doc="Pack JavaScript code into a single bundle",
       ~sdocs,
+      ~man,
       ~exits,
     ),
   );
 };
 
-let all = [Build.command, Watch.command, Serve.command, Help.command];
 let default = Default.command;

@@ -1,5 +1,5 @@
 {
-  "hash": "d97f8ffb56d3512edd5ece4ae04f27d3",
+  "hash": "3051d770dd4737d43ac25e1d4c6fded2",
   "root": "fastpack@path:.",
   "node": {
     "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#d488cd9321cd5036bd36ec96744ce78c5d45fc49": {
@@ -24,8 +24,8 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/reason@3.3.3", "@opam/jbuilder@opam:transition",
-        "@opam/re@opam:1.7.1"
+        "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
+        "@opam/jbuilder@opam:transition", "@opam/re@opam:1.7.1"
       ]
     },
     "ocaml@4.6.5": {
@@ -48,7 +48,8 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/reason@3.3.3",
+        "@esy-ocaml/esy-installer@0.0.0",
+        "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
         "@esy-ocaml/rtop@3.3.0", "@opam/cmdliner@opam:1.0.2",
         "@opam/cohttp@opam:1.0.0", "@opam/containers@opam:1.3",
         "@opam/fileutils@opam:0.5.3", "@opam/fmt@opam:0.8.5",
@@ -56,10 +57,11 @@
         "@opam/lwt@opam:3.3.0", "@opam/merlin@opam:3.1.0",
         "@opam/ocp-indent@opam:1.6.1", "@opam/ppx_deriving@opam:4.2.1",
         "@opam/ppx_expect@opam:v0.11.0", "@opam/ppx_let@opam:v0.11.0",
-        "@opam/re@opam:1.7.1", "@opam/sedlex@opam:1.99.4",
-        "@opam/sequence@opam:1.1", "@opam/utop@opam:2.2.0",
-        "@opam/websocket-lwt@opam:2.11", "@opam/wtf8@opam:1.0.1",
-        "@opam/yojson@opam:1.4.0", "ocaml@4.6.5", "refmterr@3.1.7"
+        "@opam/ppx_tools_versioned@opam:5.2", "@opam/re@opam:1.7.1",
+        "@opam/sedlex@opam:1.99.4", "@opam/sequence@opam:1.1",
+        "@opam/utop@opam:2.2.0", "@opam/websocket-lwt@opam:2.11",
+        "@opam/wtf8@opam:1.0.1", "@opam/yojson@opam:1.4.0", "ocaml@4.6.5",
+        "refmterr@3.1.7"
       ]
     },
     "@opam/zed@opam:1.6": {
@@ -495,7 +497,7 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/gen@opam:0.5.1",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
-        "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.1"
+        "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.2"
       ]
     },
     "@opam/result@opam:1.3": {
@@ -611,27 +613,26 @@
         "@opam/ppxlib@opam:0.3.0", "@opam/variantslib@opam:v0.11.0"
       ]
     },
-    "@opam/ppx_tools_versioned@opam:5.1": {
+    "@opam/ppx_tools_versioned@opam:5.2": {
       "record": {
         "name": "@opam/ppx_tools_versioned",
-        "version": "opam:5.1",
+        "version": "opam:5.2",
         "source": [
-          "archive:https://opam.ocaml.org/archives/ppx_tools_versioned.5.1+opam.tar.gz#md5:d61ed69f49df0261430845510c11ec5f",
-          "archive:https://github.com/ocaml-ppx/ppx_tools_versioned/archive/5.1.tar.gz#md5:e48cc87d6da6c2f3020fd8dfe8fe50de"
+          "archive:https://opam.ocaml.org/archives/ppx_tools_versioned.5.2+opam.tar.gz#md5:8fd1b5ae4a846543df0b1ed6e008cfc8",
+          "archive:https://github.com/ocaml-ppx/ppx_tools_versioned/archive/5.2.tar.gz#md5:f2f1a1cd11aeb9f91a92ab691720a401"
         ],
         "files": [],
         "opam": {
           "name": "ppx_tools_versioned",
-          "version": "5.1",
+          "version": "5.2",
           "opam":
-            "opam-version: \"1.2\"\nname: \"ppx_tools_versioned\"\nversion: \"5.1\"\nmaintainer: \"frederic.bour@lakaban.net\"\nauthors: [\n  \"Frédéric Bour <frederic.bour@lakaban.net>\"\n  \"Alain Frisch <alain.frisch@lexifi.com>\"\n]\nlicense: \"MIT\"\ntags: \"syntax\"\nhomepage: \"https://github.com/let-def/ppx_tools_versioned\"\nbug-reports: \"https://github.com/let-def/ppx_tools_versioned/issues\"\ndepends: [\n  \"ocamlfind\" {>= \"1.5.0\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0.7\"}\n]\navailable: ocaml-version >= \"4.02.0\"\nbuild: [make \"all\"]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"ppx_tools_versioned\"]\ndev-repo: \"git://github.com/let-def/ppx_tools_versioned.git\"",
+            "opam-version: \"1.2\"\nname: \"ppx_tools_versioned\"\nversion: \"5.2\"\nmaintainer: \"frederic.bour@lakaban.net\"\nauthors: [\n  \"Frédéric Bour <frederic.bour@lakaban.net>\"\n  \"Alain Frisch <alain.frisch@lexifi.com>\"\n]\nlicense: \"MIT\"\ntags: \"syntax\"\nhomepage: \"https://github.com/let-def/ppx_tools_versioned\"\nbug-reports: \"https://github.com/let-def/ppx_tools_versioned/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta17\"}\n  \"ocaml-migrate-parsetree\" {>= \"0.5\"}\n]\navailable: ocaml-version >= \"4.02.0\"\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git://github.com/let-def/ppx_tools_versioned.git\"",
           "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1",
-        "@opam/ocaml-migrate-parsetree@opam:1.0.11",
-        "@opam/ocamlfind@opam:1.8.0"
+        "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
+        "@opam/ocaml-migrate-parsetree@opam:1.0.11"
       ]
     },
     "@opam/ppx_tools@opam:5.1+4.06.0": {
@@ -1270,21 +1271,39 @@
         "@opam/yojson@opam:1.4.0"
       ]
     },
-    "@opam/menhir@opam:20170607": {
+    "@opam/menhir@opam:20171013": {
       "record": {
         "name": "@opam/menhir",
-        "version": "opam:20170607",
+        "version": "opam:20171013",
         "source": [
-          "archive:https://opam.ocaml.org/archives/menhir.20170607+opam.tar.gz#md5:aad332baa558bd26202cebc2b1b84a0b",
-          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20170607.tar.gz#md5:993b60845182c71d777b1f3cf9a01b96"
+          "archive:https://opam.ocaml.org/archives/menhir.20171013+opam.tar.gz#md5:b361a87378407e26b9ea2dde7ddf41a0",
+          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20171013.tar.gz#md5:620863edea40437390ee5e5bd82fba11"
         ],
-        "files": [],
+        "files": [
+          {
+            "name": "_esy/menhir-20171013.patch",
+            "content":
+              "--- ./Makefile\n+++ ./Makefile\n@@ -59,13 +59,8 @@\n \n # If the compiler is MSVC, then object file names end in .obj instead of .o.\n \n-ifneq (,$(shell ocamlc -config | grep -E \"ccomp_type: msvc\"))\n-  OBJ          := obj\n-# LIBSUFFIX    := lib\n-else\n-  OBJ          := o\n-# LIBSUFFIX    := a\n-endif\n+OBJ          := $(shell ocamlc -config | awk -F '[\\t \\r]+' '/^ext_obj:/ {print $$2}' | tr -d '.')\n+#LIBSUFFIX   := $(shell ocamlc -config | awk -F '[\\t \\r]+' '/^ext_lib:/ {print $$2}' | tr -d '.')\n \n # If we are under Windows (regardless of whether we are using MSVC or mingw)\n # then the name of the executable file ends in .exe.\n@@ -91,8 +86,9 @@\n # performed if \"os_type\" is \"Win32\" or \"Win64\", and must not be performed if\n # \"os_type\" is \"Cygwin\" or \"Unix\".\n \n-ifneq (,$(shell ocamlc -config | grep -E \"os_type: (Win32|Win64)\"))\n-installation_libdir := $(shell cygpath -m $(libdir))\n+OS_TYPE:=\t$(shell ocamlc -config | awk -F '[\\t \\r]+' '/^os_type:/ {print $$2}')\n+ifeq ($(OS_TYPE),Win32)\n+installation_libdir := $(shell cygpath -m $(libdir) || echo $(libdir))\n else\n installation_libdir := $(libdir)\n endif\n--- ./src/cmly_write.ml\n+++ ./src/cmly_write.ml\n@@ -168,6 +168,6 @@\n   output_value oc (t : grammar)\n \n let write filename =\n-  let oc = open_out filename in\n+  let oc = open_out_bin filename in\n   write oc (encode());\n   close_out oc\n"
+          }
+        ],
         "opam": {
           "name": "menhir",
-          "version": "20170607",
+          "version": "20171013",
           "opam":
-            "opam-version: \"1.2\"\nname: \"menhir\"\nversion: \"20170607\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"4.02\"\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"",
-          "override": null
+            "opam-version: \"1.2\"\nname: \"menhir\"\nversion: \"20171013\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"4.02\"\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < _esy/menhir-20171013.patch' : 'true'}"
+              ],
+              [
+                "make", "-f", "Makefile", "PREFIX=#{self.install}",
+                "USE_OCAMLFIND=true", "docdir=#{self.doc}/menhir",
+                "libdir=#{self.lib}/menhir", "mandir=#{self.man}/man1"
+              ]
+            ]
+          }
         }
       },
       "dependencies": [
@@ -1379,7 +1398,7 @@
         "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.4",
         "@opam/jbuilder@opam:transition",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
-        "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.1",
+        "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.2",
         "@opam/result@opam:1.3"
       ]
     },
@@ -2144,27 +2163,30 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/reason@3.3.3",
+        "@esy-ocaml/esy-installer@0.0.0",
+        "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
         "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
         "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3",
         "@opam/utop@opam:2.2.0"
       ]
     },
-    "@esy-ocaml/reason@3.3.3": {
+    "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323": {
       "record": {
         "name": "@esy-ocaml/reason",
-        "version": "3.3.3",
+        "version":
+          "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
         "source":
-          "archive:https://registry.npmjs.org/@esy-ocaml/reason/-/reason-3.3.3.tgz#sha1:cd4c673504f7217a11a77089b021b5ba9ed1f744",
+          "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
         "files": [],
         "opam": null
       },
       "dependencies": [
         "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
-        "@opam/jbuilder@opam:transition", "@opam/menhir@opam:20170607",
+        "@opam/dune@opam:1.1.1", "@opam/menhir@opam:20171013",
         "@opam/merlin-extend@opam:0.3",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
-        "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3"
+        "@opam/ocamlbuild@opam:0.12.0", "@opam/ocamlfind@opam:1.8.0",
+        "@opam/result@opam:1.3", "@opam/utop@opam:2.2.0"
       ]
     },
     "@esy-ocaml/esy-installer@0.0.0": {

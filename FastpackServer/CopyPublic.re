@@ -24,7 +24,7 @@ let copy = (~sourceDir, ~outputDir, ~outputFilename, ~port, ()) =>
           Str.replace_first(
             Str.regexp("</body>"),
             Printf.sprintf(
-              {|<script type="text/javascript" src="/%s"></script>
+              {|<script type="text/javascript" src="%s"></script>
   <script>
     const ws = new WebSocket("ws://localhost:%d/ws");
 
@@ -47,7 +47,7 @@ let copy = (~sourceDir, ~outputDir, ~outputFilename, ~port, ()) =>
     });
   </script>
 </body>|},
-              outputFilename,
+              FS.relative_path(outputDir, outputFilename),
               port,
             ),
             indexHtml,
