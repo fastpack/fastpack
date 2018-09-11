@@ -21,12 +21,14 @@ process = { env: {} };
       exports: {}
     };
 
+    var r = __fastpack_require__.bind(null, moduleId);
+    r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
       module.exports,
       module,
       module.exports,
-      __fastpack_require__.bind(null, moduleId),
+      r,
       __fastpack_import__.bind(null, moduleId)
     );
 
