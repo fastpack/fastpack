@@ -7,4 +7,5 @@ RUN apt-get -y install rsync
 RUN apt-get -y install m4
 RUN apt-get -y install autoconf
 RUN apt-get -y install automake
+RUN apt-get -y install pkg-config
 RUN npm install -g esy@0.2.11
