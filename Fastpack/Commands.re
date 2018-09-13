@@ -121,15 +121,17 @@ module Serve = {
               ~port=3000,
               (),
             );
-          let reportOk =
-              (
-                ~message as _message,
-                ~start_time as _start_time,
-                ~files as _file,
-                _ctx,
-              ) => {
-            print_endline("built successfully!");
-
+          let textReporter = Reporter.Text.make();
+          let reportOk = (~message, ~start_time, ~files, ctx) => {
+            print_endline("success");
+            let%lwt () =
+              Reporter.reportOk(
+                ~message,
+                ~start_time,
+                ~files,
+                ~ctx,
+                textReporter,
+              );
             Yojson.Basic.(
               `Assoc([("build", `String("OK"))])
               |> to_string(~std=true)
@@ -139,8 +141,8 @@ module Serve = {
           };
 
           let reportError = (~error, ctx) => {
-            print_endline("error occured!");
-
+            print_endline("error");
+            let%lwt () = Reporter.reportError(~error, ~ctx, textReporter);
             Yojson.Basic.(
               `Assoc([
                 ("error", `String(Context.stringOfError(ctx, error))),
@@ -212,9 +214,11 @@ module Help = {
 module Default = {
   let man = [
     `S(Manpage.s_commands),
-    `P({|PLEASE NOTE: production mode is temporarily disabled. In the meantime,
+    `P(
+      {|PLEASE NOTE: production mode is temporarily disabled. In the meantime,
 please always use the `--development` flag.
-|}),
+|},
+    ),
     `S(Manpage.s_bugs),
     `P("Report them to https://github.com/fastpack/fastpack/issues."),
   ];
