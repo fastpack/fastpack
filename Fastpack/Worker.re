@@ -350,10 +350,29 @@ let start = (~project_root, ~output_dir, ()) => {
                     let (_, module_var_definition) =
                       ensure_module_var(~name=namespace, dep.request);
 
+                    let default_specifier =
+                      switch (specifiers) {
+                      | Some(
+                          S.ImportDeclaration.ImportNamedSpecifiers(
+                            specifiers,
+                          ),
+                        ) =>
+                          List.exists(
+                            ({S.ImportDeclaration.kind, remote:(_, remote), _}) =>
+                              switch (kind) {
+                              | Some(S.ImportDeclaration.ImportValue)
+                              | None => remote == "default"
+                              | _ => false
+                              },
+                            specifiers,
+                          );
+                      | _ => false
+                      };
+
                     let (_, module_default_var_definition) =
-                      switch (default) {
-                      | None => ("", "")
-                      | Some(_) => ensure_module_default_var(dep.request)
+                      switch (default, default_specifier) {
+                      | (None, false) => ("", "")
+                      | _ => ensure_module_default_var(dep.request)
                       };
 
                     module_var_definition ++ module_default_var_definition;
