@@ -19,7 +19,7 @@ let sub = (s, u_offset, u_length) => {
       skip_tail(s, pos + 1, n - 1);
     }
   and skip_tail = (s, pos, n) =>
-    if (pos == length) {
+    if (pos >= length) {
       skip(s, length, 0);
     } else if (is_symbol(s.[pos])) {
       skip(s, pos, n);
