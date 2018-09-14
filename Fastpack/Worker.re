@@ -176,23 +176,25 @@ let start = (~project_root, ~output_dir, ()) => {
         (var, define_var(var, fastpack_require(request)));
       };
 
-    let module_default_vars = ref(M.empty);
-    let ensure_module_default_var = request =>
-      switch (M.get(request, module_default_vars^)) {
-      | Some(var) => (var, "")
-      | None =>
-        let (module_var, module_var_definition) = ensure_module_var(request);
-        let var = avoid_name_collision(module_var ++ "__default");
-        let expression =
-          Printf.sprintf(
-            "%s.__esModule ? %s.default : %s",
-            module_var,
-            module_var,
-            module_var,
-          );
-        module_default_vars := M.add(request, var, module_default_vars^);
-        (var, module_var_definition ++ define_var(var, expression));
-      };
+    let get_module_default = module_var =>
+      Printf.sprintf("__fastpack_require__.default(%s)", module_var);
+    /* let module_default_vars = ref(M.empty); */
+    /* let ensure_module_default_var = request => */
+    /*   switch (M.get(request, module_default_vars^)) { */
+    /*   | Some(var) => (var, "") */
+    /*   | None => */
+    /*     let (module_var, module_var_definition) = ensure_module_var(request); */
+    /*     let var = avoid_name_collision(module_var ++ "__default"); */
+    /*     let expression = */
+    /*       Printf.sprintf( */
+    /*         "%s.__esModule ? %s.default : %s", */
+    /*         module_var, */
+    /*         module_var, */
+    /*         module_var, */
+    /*       ); */
+    /*     module_default_vars := M.add(request, var, module_default_vars^); */
+    /*     (var, module_var_definition ++ define_var(var, expression)); */
+    /*   }; */
 
     let static_dependencies = ref([]);
     let dynamic_dependencies = ref([]);
@@ -234,16 +236,13 @@ let start = (~project_root, ~output_dir, ()) => {
         local,
       );
 
-    let patch_imported_name = (~from_request, _, remote) =>
+    let patch_imported_name = (~from_request, _, remote) => {
+      let (module_var, _) = ensure_module_var(from_request);
       switch (remote) {
-      | "default" =>
-        let (default_var, _) = ensure_module_default_var(from_request);
-
-        default_var;
-      | _ =>
-        let (module_var, _) = ensure_module_var(from_request);
-        module_var ++ "." ++ remote;
+      | "default" => get_module_default(module_var)
+      | _ => module_var ++ "." ++ remote
       };
+    };
 
     let define_local_exports = exports =>
       exports
@@ -277,10 +276,7 @@ let start = (~project_root, ~output_dir, ()) => {
         |> List.map(((exported, remote)) =>
              switch (remote) {
              | "default" =>
-               let (default_var, default_definition) =
-                 ensure_module_default_var(request);
-
-               default_definition ++ define_export(exported, default_var);
+               define_export(exported, get_module_default(module_var))
              | _ => define_export(exported, module_var ++ "." ++ remote)
              }
            )
@@ -350,32 +346,38 @@ let start = (~project_root, ~output_dir, ()) => {
                     let (_, module_var_definition) =
                       ensure_module_var(~name=namespace, dep.request);
 
-                    let default_specifier =
-                      switch (specifiers) {
-                      | Some(
-                          S.ImportDeclaration.ImportNamedSpecifiers(
-                            specifiers,
-                          ),
-                        ) =>
-                          List.exists(
-                            ({S.ImportDeclaration.kind, remote:(_, remote), _}) =>
-                              switch (kind) {
-                              | Some(S.ImportDeclaration.ImportValue)
-                              | None => remote == "default"
-                              | _ => false
-                              },
-                            specifiers,
-                          );
-                      | _ => false
-                      };
+                    /* let default_specifier = */
+                    /*   switch (specifiers) { */
+                    /*   | Some( */
+                    /*       S.ImportDeclaration.ImportNamedSpecifiers( */
+                    /*         specifiers, */
+                    /*       ), */
+                    /*     ) => */
+                    /*     List.exists( */
+                    /*       ( */
+                    /*         { */
+                    /*           S.ImportDeclaration.kind, */
+                    /*           remote: (_, remote), */
+                    /*           _, */
+                    /*         }, */
+                    /*       ) => */
+                    /*         switch (kind) { */
+                    /*         | Some(S.ImportDeclaration.ImportValue) */
+                    /*         | None => remote == "default" */
+                    /*         | _ => false */
+                    /*         }, */
+                    /*       specifiers, */
+                    /*     ) */
+                    /*   | _ => false */
+                    /*   }; */
 
-                    let (_, module_default_var_definition) =
-                      switch (default, default_specifier) {
-                      | (None, false) => ("", "")
-                      | _ => ensure_module_default_var(dep.request)
-                      };
+                    /* let (_, module_default_var_definition) = */
+                    /*   switch (default, default_specifier) { */
+                    /*   | (None, false) => ("", "") */
+                    /*   | _ => ensure_module_default_var(dep.request) */
+                    /*   }; */
 
-                    module_var_definition ++ module_default_var_definition;
+                    module_var_definition;
                   };
 
                 if (patch == "") {

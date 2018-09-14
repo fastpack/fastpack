@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -65,6 +66,9 @@ process = { env: {} };
     }
     return ret;
   }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
+  }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
@@ -74,7 +78,7 @@ eval("module.exports = \"Hello, world!\\n\\nLorem Ipsum is simply dummy text of 
 d: {}
 },
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1_raw_loader_test_txt = __fastpack_require__(\"raw-loader!./test.txt\");const _1_raw_loader_test_txt__default = _1_raw_loader_test_txt.__esModule ? _1_raw_loader_test_txt.default : _1_raw_loader_test_txt;\n\n\ndocument.body.innerHTML = `\n<h1>test.txt</h1>\n<pre>${_1_raw_loader_test_txt__default}</pre>\n`;\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1_raw_loader_test_txt = __fastpack_require__(\"raw-loader!./test.txt\");\n\n\ndocument.body.innerHTML = `\n<h1>test.txt</h1>\n<pre>${__fastpack_require__.default(_1_raw_loader_test_txt)}</pre>\n`;\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"raw-loader!./test.txt":"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt"}
 },

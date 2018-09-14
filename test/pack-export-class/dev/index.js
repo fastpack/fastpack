@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -65,6 +66,9 @@ process = { env: {} };
     }
     return ret;
   }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
+  }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
@@ -89,7 +93,7 @@ eval("module.exports.__esModule = true;\nconst $__fpack__ = __fastpack_require__
 d: {"$fp$runtime":"$fp$runtime"}
 },
 "builtin$$B$$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__ExportDefaultNamedClass = __fastpack_require__(\"./ExportDefaultNamedClass\");const _1__ExportDefaultNamedClass__default = _1__ExportDefaultNamedClass.__esModule ? _1__ExportDefaultNamedClass.default : _1__ExportDefaultNamedClass;\nconst _2__ExportDefaultClass = __fastpack_require__(\"./ExportDefaultClass\");const _2__ExportDefaultClass__default = _2__ExportDefaultClass.__esModule ? _2__ExportDefaultClass.default : _2__ExportDefaultClass;\nconst _3__ExportNamedClass = __fastpack_require__(\"./ExportNamedClass\");\n\n\n\nconsole.log(_1__ExportDefaultNamedClass__default.prop);\nconsole.log(_2__ExportDefaultClass__default.prop);\n\n//# sourceURL=fpack:///builtin!index.js\n//# sourceURL=fpack:///builtin!index.js");
+eval("module.exports.__esModule = true;\nconst _1__ExportDefaultNamedClass = __fastpack_require__(\"./ExportDefaultNamedClass\");\nconst _2__ExportDefaultClass = __fastpack_require__(\"./ExportDefaultClass\");\nconst _3__ExportNamedClass = __fastpack_require__(\"./ExportNamedClass\");\n\n\n\nconsole.log(__fastpack_require__.default(_1__ExportDefaultNamedClass).prop);\nconsole.log(__fastpack_require__.default(_2__ExportDefaultClass).prop);\n\n//# sourceURL=fpack:///builtin!index.js\n//# sourceURL=fpack:///builtin!index.js");
 },
 d: {"./ExportDefaultNamedClass":"builtin$$B$$ExportDefaultNamedClass","./ExportDefaultClass":"builtin$$B$$ExportDefaultClass","./ExportNamedClass":"builtin$$B$$ExportNamedClass"}
 },

@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -65,6 +66,9 @@ process = { env: {} };
     }
     return ret;
   }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
+  }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
@@ -79,7 +83,7 @@ eval("module.exports.__esModule = true;\nexports.default = class  {\n  construct
 d: {}
 },
 "nm$package$$_$$1$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__babel_transpile_js = __fastpack_require__(\"./babel-transpile.js\");const _1__babel_transpile_js__default = _1__babel_transpile_js.__esModule ? _1__babel_transpile_js.default : _1__babel_transpile_js;\nconst _2__builtin_transpile_js = __fastpack_require__(\"./builtin-transpile.js\");const _2__builtin_transpile_js__default = _2__builtin_transpile_js.__esModule ? _2__builtin_transpile_js.default : _2__builtin_transpile_js;\n\n\n\nexports.default = function () {\n  console.log('package-1')\n  console.log(_1__babel_transpile_js__default, _2__builtin_transpile_js__default)\n}\n\n//# sourceURL=fpack:///nm/package-1/index.js\n//# sourceURL=fpack:///nm/package-1/index.js");
+eval("module.exports.__esModule = true;\nconst _1__babel_transpile_js = __fastpack_require__(\"./babel-transpile.js\");\nconst _2__builtin_transpile_js = __fastpack_require__(\"./builtin-transpile.js\");\n\n\n\nexports.default = function () {\n  console.log('package-1')\n  console.log(__fastpack_require__.default(_1__babel_transpile_js), __fastpack_require__.default(_2__builtin_transpile_js))\n}\n\n//# sourceURL=fpack:///nm/package-1/index.js\n//# sourceURL=fpack:///nm/package-1/index.js");
 },
 d: {"./babel-transpile.js":"NM$$babel$$_$$loader$lib$indexDOT$$js$$B$$nm$package$$_$$1$babel$$_$$transpile","./builtin-transpile.js":"builtin$$B$$nm$package$$_$$1$builtin$$_$$transpile"}
 },
@@ -94,7 +98,7 @@ eval("module.exports.__esModule = true;\nfunction mock() {\n  console.log('mock'
 d: {}
 },
 "app$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1_package_1 = __fastpack_require__(\"package-1\");const _1_package_1__default = _1_package_1.__esModule ? _1_package_1.default : _1_package_1;\nconst _2_package_2 = __fastpack_require__(\"package-2\");const _2_package_2__default = _2_package_2.__esModule ? _2_package_2.default : _2_package_2;\nconst _3_mocked = __fastpack_require__(\"mocked\");const _3_mocked__default = _3_mocked.__esModule ? _3_mocked.default : _3_mocked;\n\n\n\n\nconsole.log(_1_package_1__default, _2_package_2__default, _3_mocked__default)\n\n//# sourceURL=fpack:///app/index.js\n//# sourceURL=fpack:///app/index.js");
+eval("module.exports.__esModule = true;\nconst _1_package_1 = __fastpack_require__(\"package-1\");\nconst _2_package_2 = __fastpack_require__(\"package-2\");\nconst _3_mocked = __fastpack_require__(\"mocked\");\n\n\n\n\nconsole.log(__fastpack_require__.default(_1_package_1), __fastpack_require__.default(_2_package_2), __fastpack_require__.default(_3_mocked))\n\n//# sourceURL=fpack:///app/index.js\n//# sourceURL=fpack:///app/index.js");
 },
 d: {"package-1":"nm$package$$_$$1$index","package-2":"app$nm$package$$_$$2$index","mocked":"app$mock"}
 },
