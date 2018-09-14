@@ -83,7 +83,7 @@ eval("module.exports.__esModule = true;\nexports.default = class  {\n  construct
 d: {}
 },
 "nm$package$$_$$1$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__babel_transpile_js = __fastpack_require__(\"./babel-transpile.js\");\nconst _2__builtin_transpile_js = __fastpack_require__(\"./builtin-transpile.js\");\n\n\n\nexports.default = function () {\n  console.log('package-1')\n  console.log(__fastpack_require__.default(_1__babel_transpile_js), __fastpack_require__.default(_2__builtin_transpile_js))\n}\n\n//# sourceURL=fpack:///nm/package-1/index.js\n//# sourceURL=fpack:///nm/package-1/index.js");
+eval("module.exports.__esModule = true;\nconst _1__babel_transpile_js = __fastpack_require__(\"./babel-transpile.js\");\nconst _2__builtin_transpile_js = __fastpack_require__(\"./builtin-transpile.js\");\n\n\n\nexports.default = function () {\n  console.log('package-1')\n  console.log((__fastpack_require__.default(_1__babel_transpile_js)), (__fastpack_require__.default(_2__builtin_transpile_js)))\n}\n\n//# sourceURL=fpack:///nm/package-1/index.js\n//# sourceURL=fpack:///nm/package-1/index.js");
 },
 d: {"./babel-transpile.js":"NM$$babel$$_$$loader$lib$indexDOT$$js$$B$$nm$package$$_$$1$babel$$_$$transpile","./builtin-transpile.js":"builtin$$B$$nm$package$$_$$1$builtin$$_$$transpile"}
 },
@@ -98,7 +98,7 @@ eval("module.exports.__esModule = true;\nfunction mock() {\n  console.log('mock'
 d: {}
 },
 "app$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1_package_1 = __fastpack_require__(\"package-1\");\nconst _2_package_2 = __fastpack_require__(\"package-2\");\nconst _3_mocked = __fastpack_require__(\"mocked\");\n\n\n\n\nconsole.log(__fastpack_require__.default(_1_package_1), __fastpack_require__.default(_2_package_2), __fastpack_require__.default(_3_mocked))\n\n//# sourceURL=fpack:///app/index.js\n//# sourceURL=fpack:///app/index.js");
+eval("module.exports.__esModule = true;\nconst _1_package_1 = __fastpack_require__(\"package-1\");\nconst _2_package_2 = __fastpack_require__(\"package-2\");\nconst _3_mocked = __fastpack_require__(\"mocked\");\n\n\n\n\nconsole.log((__fastpack_require__.default(_1_package_1)), (__fastpack_require__.default(_2_package_2)), (__fastpack_require__.default(_3_mocked)))\n\n//# sourceURL=fpack:///app/index.js\n//# sourceURL=fpack:///app/index.js");
 },
 d: {"package-1":"nm$package$$_$$1$index","package-2":"app$nm$package$$_$$2$index","mocked":"app$mock"}
 },

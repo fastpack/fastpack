@@ -78,7 +78,7 @@ eval("module.exports = \"Hello, world!\\n\\nLorem Ipsum is simply dummy text of 
 d: {}
 },
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1_raw_loader_test_txt = __fastpack_require__(\"raw-loader!./test.txt\");\n\n\ndocument.body.innerHTML = `\n<h1>test.txt</h1>\n<pre>${__fastpack_require__.default(_1_raw_loader_test_txt)}</pre>\n`;\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1_raw_loader_test_txt = __fastpack_require__(\"raw-loader!./test.txt\");\n\n\ndocument.body.innerHTML = `\n<h1>test.txt</h1>\n<pre>${(__fastpack_require__.default(_1_raw_loader_test_txt))}</pre>\n`;\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"raw-loader!./test.txt":"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt"}
 },

@@ -93,7 +93,7 @@ eval("module.exports.__esModule = true;\nconst $__fpack__ = __fastpack_require__
 d: {"$fp$runtime":"$fp$runtime"}
 },
 "builtin$$B$$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__ExportDefaultNamedClass = __fastpack_require__(\"./ExportDefaultNamedClass\");\nconst _2__ExportDefaultClass = __fastpack_require__(\"./ExportDefaultClass\");\nconst _3__ExportNamedClass = __fastpack_require__(\"./ExportNamedClass\");\n\n\n\nconsole.log(__fastpack_require__.default(_1__ExportDefaultNamedClass).prop);\nconsole.log(__fastpack_require__.default(_2__ExportDefaultClass).prop);\n\n//# sourceURL=fpack:///builtin!index.js\n//# sourceURL=fpack:///builtin!index.js");
+eval("module.exports.__esModule = true;\nconst _1__ExportDefaultNamedClass = __fastpack_require__(\"./ExportDefaultNamedClass\");\nconst _2__ExportDefaultClass = __fastpack_require__(\"./ExportDefaultClass\");\nconst _3__ExportNamedClass = __fastpack_require__(\"./ExportNamedClass\");\n\n\n\nconsole.log((__fastpack_require__.default(_1__ExportDefaultNamedClass)).prop);\nconsole.log((__fastpack_require__.default(_2__ExportDefaultClass)).prop);\n\n//# sourceURL=fpack:///builtin!index.js\n//# sourceURL=fpack:///builtin!index.js");
 },
 d: {"./ExportDefaultNamedClass":"builtin$$B$$ExportDefaultNamedClass","./ExportDefaultClass":"builtin$$B$$ExportDefaultClass","./ExportNamedClass":"builtin$$B$$ExportNamedClass"}
 },

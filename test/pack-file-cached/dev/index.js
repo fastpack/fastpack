@@ -78,7 +78,7 @@ eval("module.exports = \"./5d5d9eefa31e5e13a6610d9fa7a283bb.svg\";\n//# sourceUR
 d: {}
 },
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1_file_loader_publicPath_logo_svg = __fastpack_require__(\"file-loader?publicPath=./!./logo.svg\");\n\ndocument.body.innerHTML = '<img src=\"' + __fastpack_require__.default(_1_file_loader_publicPath_logo_svg) + '\"/>';\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1_file_loader_publicPath_logo_svg = __fastpack_require__(\"file-loader?publicPath=./!./logo.svg\");\n\ndocument.body.innerHTML = '<img src=\"' + (__fastpack_require__.default(_1_file_loader_publicPath_logo_svg)) + '\"/>';\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"file-loader?publicPath=./!./logo.svg":"NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg"}
 },

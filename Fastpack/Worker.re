@@ -177,7 +177,7 @@ let start = (~project_root, ~output_dir, ()) => {
       };
 
     let get_module_default = module_var =>
-      Printf.sprintf("__fastpack_require__.default(%s)", module_var);
+      Printf.sprintf("(__fastpack_require__.default(%s))", module_var);
     /* let module_default_vars = ref(M.empty); */
     /* let ensure_module_default_var = request => */
     /*   switch (M.get(request, module_default_vars^)) { */
