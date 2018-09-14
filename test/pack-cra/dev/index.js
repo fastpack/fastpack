@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -64,6 +65,9 @@ process = { env: {} };
       }
     }
     return ret;
+  }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
@@ -214,7 +218,7 @@ eval("\nvar content = __fastpack_require__(\"!!../node_modules/css-loader/index.
 d: {"!!../node_modules/css-loader/index.js?importLoaders=1!../node_modules/postcss-loader/lib/index.js?path=postcss.config.js!./App.css":"NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$AppDOT$$css","!../node_modules/style-loader/lib/addStyles.js":"NM$$style$$_$$loader$lib$addStyles","!!../node_modules/css-loader/index.js?importLoaders=1!../node_modules/postcss-loader/lib/index.js?path=postcss.config.js!./App.css":"NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$AppDOT$$css"}
 },
 "builtin$$B$$src$App":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1_react = __fastpack_require__(\"react\");const _1_react__default = _1_react.__esModule ? _1_react.default : _1_react;\nconst _2__logo_svg = __fastpack_require__(\"./logo.svg\");const _2__logo_svg__default = _2__logo_svg.__esModule ? _2__logo_svg.default : _2__logo_svg;\n__fastpack_require__(\"./App.css\");\n\n\n\n\nclass App extends _1_react.Component {\n  render() {\n    return _1_react__default.createElement(\"div\", {\"className\": \"App\"}, _1_react__default.createElement(\"header\", {\"className\": \"App-header\"}, _1_react__default.createElement(\"img\", {\"src\": _2__logo_svg__default, \"className\": \"App-logo\", \"alt\": \"logo\"}), _1_react__default.createElement(\"h1\", {\"className\": \"App-title\"}, 'Welcome to React')), _1_react__default.createElement(\"p\", {\"className\": \"App-intro\"}, '          To get started, edit ', _1_react__default.createElement(\"code\", null, 'src/App.js'), ' and save to reload.'));\n    \n  }\n  \n}exports.default = App;\n\n//# sourceURL=fpack:///builtin!src/App.js\n//# sourceURL=fpack:///builtin!src/App.js");
+eval("module.exports.__esModule = true;\nconst _1_react = __fastpack_require__(\"react\");\nconst _2__logo_svg = __fastpack_require__(\"./logo.svg\");\n__fastpack_require__(\"./App.css\");\n\n\n\n\nclass App extends _1_react.Component {\n  render() {\n    return (__fastpack_require__.default(_1_react)).createElement(\"div\", {\"className\": \"App\"}, (__fastpack_require__.default(_1_react)).createElement(\"header\", {\"className\": \"App-header\"}, (__fastpack_require__.default(_1_react)).createElement(\"img\", {\"src\": (__fastpack_require__.default(_2__logo_svg)), \"className\": \"App-logo\", \"alt\": \"logo\"}), (__fastpack_require__.default(_1_react)).createElement(\"h1\", {\"className\": \"App-title\"}, 'Welcome to React')), (__fastpack_require__.default(_1_react)).createElement(\"p\", {\"className\": \"App-intro\"}, '          To get started, edit ', (__fastpack_require__.default(_1_react)).createElement(\"code\", null, 'src/App.js'), ' and save to reload.'));\n    \n  }\n  \n}exports.default = App;\n\n//# sourceURL=fpack:///builtin!src/App.js\n//# sourceURL=fpack:///builtin!src/App.js");
 },
 d: {"react":"NM$$react$index","./logo.svg":"NM$$url$$_$$loader$indexDOT$$js$$B$$src$logoDOT$$svg","./App.css":"NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$AppDOT$$css"}
 },
@@ -224,7 +228,7 @@ eval("module.exports.__esModule = true;\n// In production, we register a service
 d: {}
 },
 "builtin$$B$$src$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1_react = __fastpack_require__(\"react\");const _1_react__default = _1_react.__esModule ? _1_react.default : _1_react;\nconst _2_react_dom = __fastpack_require__(\"react-dom\");const _2_react_dom__default = _2_react_dom.__esModule ? _2_react_dom.default : _2_react_dom;\n__fastpack_require__(\"./index.css\");\n\nconst _3__App = __fastpack_require__(\"./App\");const _3__App__default = _3__App.__esModule ? _3__App.default : _3__App;\nconst _4__registerServiceWorker = __fastpack_require__(\"./registerServiceWorker\");const _4__registerServiceWorker__default = _4__registerServiceWorker.__esModule ? _4__registerServiceWorker.default : _4__registerServiceWorker;\n\n\n\n\n\n_2_react_dom__default.render(_1_react__default.createElement(_3__App__default, null), document.getElementById('root'));\n_4__registerServiceWorker__default();\n\n//# sourceURL=fpack:///builtin!src/index.js\n//# sourceURL=fpack:///builtin!src/index.js");
+eval("module.exports.__esModule = true;\nconst _1_react = __fastpack_require__(\"react\");\nconst _2_react_dom = __fastpack_require__(\"react-dom\");\n__fastpack_require__(\"./index.css\");\n\nconst _3__App = __fastpack_require__(\"./App\");\nconst _4__registerServiceWorker = __fastpack_require__(\"./registerServiceWorker\");\n\n\n\n\n\n(__fastpack_require__.default(_2_react_dom)).render((__fastpack_require__.default(_1_react)).createElement((__fastpack_require__.default(_3__App)), null), document.getElementById('root'));\n(__fastpack_require__.default(_4__registerServiceWorker))();\n\n//# sourceURL=fpack:///builtin!src/index.js\n//# sourceURL=fpack:///builtin!src/index.js");
 },
 d: {"react":"NM$$react$index","react-dom":"NM$$react$$_$$dom$index","./index.css":"NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$Q$$importLoaders$$E$$1$$B$$NM$$postcss$$_$$loader$lib$indexDOT$$js$$Q$$path$$E$$postcssDOT$$configDOT$$js$$B$$src$indexDOT$$css","./App":"builtin$$B$$src$App","./registerServiceWorker":"builtin$$B$$src$registerServiceWorker"}
 },

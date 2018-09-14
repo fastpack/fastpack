@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -65,6 +66,9 @@ process = { env: {} };
     }
     return ret;
   }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
+  }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
@@ -74,7 +78,7 @@ eval("module.exports.__esModule = true;\nexports.default = x => x;\n\n//# source
 d: {}
 },
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");const _1__a__default = _1__a.__esModule ? _1__a.default : _1__a;\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a"}
 },
