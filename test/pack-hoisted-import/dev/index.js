@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -65,6 +66,9 @@ process = { env: {} };
     }
     return ret;
   }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
+  }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
@@ -84,7 +88,7 @@ eval("module.exports.__esModule = true;\nexports.default = function () { return 
 d: {}
 },
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\nconst _2__a_js = __fastpack_require__(\"./a.js\");\n__fastpack_require__(\"./b\");\n\nconst _3__c = __fastpack_require__(\"./c\");const _3__c__default = _3__c.__esModule ? _3__c.default : _3__c;\n\nconsole.log(_1__a.a1() + _2__a_js.a2() + _3__c__default());\n\n\n\n\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\nconst _2__a_js = __fastpack_require__(\"./a.js\");\n__fastpack_require__(\"./b\");\n\nconst _3__c = __fastpack_require__(\"./c\");\n\nconsole.log(_1__a.a1() + _2__a_js.a2() + (__fastpack_require__.default(_3__c))());\n\n\n\n\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a","./a.js":"a","./b":"b","./c":"c"}
 },

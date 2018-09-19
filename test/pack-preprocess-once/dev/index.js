@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -65,6 +66,9 @@ process = { env: {} };
     }
     return ret;
   }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
+  }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
@@ -84,7 +88,7 @@ eval("module.exports.__esModule = true;\nexports.default = function () {\n  cons
 d: {}
 },
 "builtin$$B$$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__log1 = __fastpack_require__(\"./log1\");const _1__log1__default = _1__log1.__esModule ? _1__log1.default : _1__log1;\nconst _2__log2 = __fastpack_require__(\"./log2\");const _2__log2__default = _2__log2.__esModule ? _2__log2.default : _2__log2;\nconst _3__log3 = __fastpack_require__(\"./log3\");const _3__log3__default = _3__log3.__esModule ? _3__log3.default : _3__log3;\n\n\n\n_1__log1__default();\n_2__log2__default();\n_3__log3__default();\n\n//# sourceURL=fpack:///builtin!index.js\n//# sourceURL=fpack:///builtin!index.js");
+eval("module.exports.__esModule = true;\nconst _1__log1 = __fastpack_require__(\"./log1\");\nconst _2__log2 = __fastpack_require__(\"./log2\");\nconst _3__log3 = __fastpack_require__(\"./log3\");\n\n\n\n(__fastpack_require__.default(_1__log1))();\n(__fastpack_require__.default(_2__log2))();\n(__fastpack_require__.default(_3__log3))();\n\n//# sourceURL=fpack:///builtin!index.js\n//# sourceURL=fpack:///builtin!index.js");
 },
 d: {"./log1":"logSourceDOT$$js$$B$$log1","./log2":"builtin$$B$$log2","./log3":"builtin$$B$$log3"}
 },

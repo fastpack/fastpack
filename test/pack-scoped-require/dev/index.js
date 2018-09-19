@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -64,6 +65,9 @@ process = { env: {} };
       }
     }
     return ret;
+  }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })

@@ -22,6 +22,7 @@ process = { env: {} };
     };
 
     var r = __fastpack_require__.bind(null, moduleId);
+    r.default = __fastpack_require__.default;
     r.omitDefault = __fastpack_require__.omitDefault;
     // Execute the module function
     modules[moduleId].m.call(
@@ -65,6 +66,9 @@ process = { env: {} };
     }
     return ret;
   }
+  __fastpack_require__.default = function(exports) {
+    return exports.__esModule ? exports.default : exports;
+  }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
@@ -84,7 +88,7 @@ eval("module.exports.__esModule = true;\n\nconst _1__z = __fastpack_require__(\"
 d: {"./z":"z","./y":"y"}
 },
 "yz_reimport":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__y = __fastpack_require__(\"./y\");\nconst _2__z = __fastpack_require__(\"./z\");const _2__z__default = _2__z.__esModule ? _2__z.default : _2__z;\n\n\n\nexports.default = {a: _1__y.a, updateA: _1__y.updateA, Z: _2__z__default};\n\n//# sourceURL=fpack:///yz_reimport.js\n//# sourceURL=fpack:///yz_reimport.js");
+eval("module.exports.__esModule = true;\nconst _1__y = __fastpack_require__(\"./y\");\nconst _2__z = __fastpack_require__(\"./z\");\n\n\n\nexports.default = {a: _1__y.a, updateA: _1__y.updateA, Z: (__fastpack_require__.default(_2__z))};\n\n//# sourceURL=fpack:///yz_reimport.js\n//# sourceURL=fpack:///yz_reimport.js");
 },
 d: {"./y":"y","./z":"z"}
 },
@@ -94,17 +98,17 @@ eval("\nmodule.exports = function() {\n  console.log('cjs');\n}\n\n//# sourceURL
 d: {}
 },
 "x":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst ZModule = __fastpack_require__(\"./z\");\n\n\n\nlet z = 1, zz = 1;\nObject.defineProperty(exports, \"z\", {enumerable: true, get: function() {return z;}});Object.defineProperty(exports, \"Z\", {enumerable: true, get: function() {return zz;}});\n\nlet x = 1, y = 2;;Object.defineProperty(exports, \"x\", {enumerable: true, get: function() {return x;}});Object.defineProperty(exports, \"y\", {enumerable: true, get: function() {return y;}});\n\n// export default function () {\n//   x = 1;\n// };\n// export default class {};\nclass F {}\nexports.default = F;\n;\n\nfunction updateX() {\n  x++;\n  console.log('updated X', x);\n};Object.defineProperty(exports, \"updateX\", {enumerable: true, get: function() {return updateX;}});\n\nconst _1__y = __fastpack_require__(\"./y\");const _1__y__default = _1__y.__esModule ? _1__y.default : _1__y;Object.defineProperty(exports, \"X\", {enumerable: true, get: function() {return _1__y__default;}});Object.defineProperty(exports, \"xA\", {enumerable: true, get: function() {return _1__y.a;}});Object.defineProperty(exports, \"updateA\", {enumerable: true, get: function() {return _1__y.updateA;}});\nconst ZModule__default = ZModule.__esModule ? ZModule.default : ZModule;Object.defineProperty(exports, \"ZM\", {enumerable: true, get: function() {return ZModule__default;}});\n\n//# sourceURL=fpack:///x.js\n//# sourceURL=fpack:///x.js");
+eval("module.exports.__esModule = true;\nconst ZModule = __fastpack_require__(\"./z\");\n\n\n\nlet z = 1, zz = 1;\nObject.defineProperty(exports, \"z\", {enumerable: true, get: function() {return z;}});Object.defineProperty(exports, \"Z\", {enumerable: true, get: function() {return zz;}});\n\nlet x = 1, y = 2;;Object.defineProperty(exports, \"x\", {enumerable: true, get: function() {return x;}});Object.defineProperty(exports, \"y\", {enumerable: true, get: function() {return y;}});\n\n// export default function () {\n//   x = 1;\n// };\n// export default class {};\nclass F {}\nexports.default = F;\n;\n\nfunction updateX() {\n  x++;\n  console.log('updated X', x);\n};Object.defineProperty(exports, \"updateX\", {enumerable: true, get: function() {return updateX;}});\n\nconst _1__y = __fastpack_require__(\"./y\");Object.defineProperty(exports, \"X\", {enumerable: true, get: function() {return (__fastpack_require__.default(_1__y));}});Object.defineProperty(exports, \"xA\", {enumerable: true, get: function() {return _1__y.a;}});Object.defineProperty(exports, \"updateA\", {enumerable: true, get: function() {return _1__y.updateA;}});\nObject.defineProperty(exports, \"ZM\", {enumerable: true, get: function() {return (__fastpack_require__.default(ZModule));}});\n\n//# sourceURL=fpack:///x.js\n//# sourceURL=fpack:///x.js");
 },
 d: {"./z":"z","./y":"y","./z":"z"}
 },
 "util":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__x = __fastpack_require__(\"./x\");\nconst _1__x__default = _1__x.__esModule ? _1__x.default : _1__x;\nconst allX = _1__x;\nconst YZ = __fastpack_require__(\"./yz\");\n\n\n\n\n\n\nfunction xShouldRemain() {\n  let x = \"this is not updated\";\n  let updateX = () => console.log(x);\n}\n\nif(false) {\n  let x = \"this is not updated as well\";\n  let updateX = () => console.log(x);\n  updateX();\n}\n\nlet $lib1 = {};\nconsole.log($lib1.x);\n\nmodule.exports.sayHello = function() {\n  _1__x__default();\n  console.log(\"x before update\", _1__x.x);\n  _1__x.updateX();\n  console.log(\"x after update:\", _1__x.x);\n};\n\n//# sourceURL=fpack:///util.js\n//# sourceURL=fpack:///util.js");
+eval("module.exports.__esModule = true;\nconst _1__x = __fastpack_require__(\"./x\");\nconst allX = _1__x;\nconst YZ = __fastpack_require__(\"./yz\");\n\n\n\n\n\n\nfunction xShouldRemain() {\n  let x = \"this is not updated\";\n  let updateX = () => console.log(x);\n}\n\nif(false) {\n  let x = \"this is not updated as well\";\n  let updateX = () => console.log(x);\n  updateX();\n}\n\nlet $lib1 = {};\nconsole.log($lib1.x);\n\nmodule.exports.sayHello = function() {\n  (__fastpack_require__.default(_1__x))();\n  console.log(\"x before update\", _1__x.x);\n  _1__x.updateX();\n  console.log(\"x after update:\", _1__x.x);\n};\n\n//# sourceURL=fpack:///util.js\n//# sourceURL=fpack:///util.js");
 },
 d: {"./x":"x","./x":"x","./x":"x","./x":"x","./yz":"yz"}
 },
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./yz\");\n\n__fastpack_require__(\"./yz_reimport.js\");\n\nconst _1__cjs = __fastpack_require__(\"./cjs\");const _1__cjs__default = _1__cjs.__esModule ? _1__cjs.default : _1__cjs;\n\n\n\n\nconst util = __fastpack_require__(\"./util\");\n\nif (true) {\n  let yz = __fastpack_import__(/* \"./yz\");\n}\nelse {\n  _1__cjs__default();\n}\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./yz\");\n\n__fastpack_require__(\"./yz_reimport.js\");\n\nconst _1__cjs = __fastpack_require__(\"./cjs\");\n\n\n\n\nconst util = __fastpack_require__(\"./util\");\n\nif (true) {\n  let yz = __fastpack_import__(/* \"./yz\");\n}\nelse {\n  (__fastpack_require__.default(_1__cjs))();\n}\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"./yz":"yz","./yz_reimport.js":"yz_reimport","./cjs":"cjs","./util":"util","./yz":"yz"}
 },

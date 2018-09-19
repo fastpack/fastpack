@@ -106,7 +106,7 @@
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/biniou@opam:1.2.0",
-        "@opam/cppo@opam:1.6.4", "@opam/easy-format@opam:1.3.1",
+        "@opam/cppo@opam:1.6.5", "@opam/easy-format@opam:1.3.1",
         "@opam/jbuilder@opam:transition"
       ]
     },
@@ -258,7 +258,7 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-threads@opam:base",
         "@opam/base-unix@opam:base", "@opam/camomile@opam:1.0.1",
-        "@opam/cppo@opam:1.6.4", "@opam/jbuilder@opam:transition",
+        "@opam/cppo@opam:1.6.5", "@opam/jbuilder@opam:transition",
         "@opam/lambda-term@opam:1.12.0", "@opam/lwt@opam:3.3.0",
         "@opam/lwt_react@opam:1.1.1", "@opam/ocamlfind@opam:1.8.0",
         "@opam/react@opam:1.2.1"
@@ -375,40 +375,26 @@
         "@opam/jbuilder@opam:transition"
       ]
     },
-    "@opam/ssl@opam:0.5.5": {
+    "@opam/ssl@opam:0.5.6": {
       "record": {
         "name": "@opam/ssl",
-        "version": "opam:0.5.5",
+        "version": "opam:0.5.6",
         "source": [
-          "archive:https://opam.ocaml.org/archives/ssl.0.5.5+opam.tar.gz#md5:d1635909f962b9ec9c0e9ccfe16e0c73",
-          "archive:https://github.com/savonet/ocaml-ssl/releases/download/0.5.5/ocaml-ssl-0.5.5.tar.gz#md5:cdb1cdf9ee8c582165d4d11f35e53c4d"
+          "archive:https://opam.ocaml.org/archives/ssl.0.5.6+opam.tar.gz#md5:384368b25edc545b663be10d19410cc8",
+          "archive:https://github.com/savonet/ocaml-ssl/archive/v0.5.6.tar.gz#md5:500b0bb7af4a736255ce706cc8e26762"
         ],
-        "files": [
-          {
-            "name": "osx-configure.sh",
-            "content":
-              "#!/bin/sh\n\nPREFIX=$1\n\nif [ -d \"/usr/local/opt/openssl/\" ]; then\n  # Homebrew\n  ./configure --prefix \"${PREFIX}\" CPPFLAGS=\"-I/usr/local/opt/openssl/include\" LDFLAGS=\"-L/usr/local/opt/openssl/lib\"\nelse\n  # MacPorts\n  ./configure --prefix \"${PREFIX}\" CPPFLAGS=\"-I/opt/local/include\" LDFLAGS=\"-L/opt/local/lib\"\nfi\n",
-            "perm": 493
-          }
-        ],
+        "files": [],
         "opam": {
           "name": "ssl",
-          "version": "0.5.5",
+          "version": "0.5.6",
           "opam":
-            "opam-version: \"1.2\"\nname: \"ssl\"\nversion: \"0.5.5\"\nmaintainer: \"Christopher Zimmermann <christopher@gmerlin.de>\"\nauthors: \"Samuel Mimram <samuel.mimram@ens-lyon.org>\"\nhomepage: \"https://github.com/savonet/ocaml-ssl\"\nbug-reports: \"https://github.com/savonet/ocaml-ssl/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"conf-which\" {build}\n  \"conf-openssl\"\n  \"base-bytes\"\n]\nbuild: [\n  [\"./configure\" \"--prefix\" prefix] {os != \"darwin\"}\n  [\"./osx-configure.sh\" prefix] {os = \"darwin\"}\n  [make]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" name]\ndev-repo: \"git+https://github.com/savonet/ocaml-ssl.git\"",
-          "override": {
-            "build": [
-              "sed -i'' -e 's/OCAMLFIND_LDCONF=.*/OCAMLFIND_LDCONF=\"ignore\"/g' ./configure",
-              "#{os == 'darwin' ? './osx-configure.sh' : './configure --prefix'} #{self.install}",
-              "make"
-            ]
-          }
+            "opam-version: \"1.2\"\nname: \"ssl\"\nversion: \"0.5.6\"\nmaintainer: \"Christopher Zimmermann <christopher@gmerlin.de>\"\nauthors: \"Samuel Mimram <samuel.mimram@ens-lyon.org>\"\nhomepage: \"https://github.com/savonet/ocaml-ssl\"\nbug-reports: \"https://github.com/savonet/ocaml-ssl/issues\"\ndepends: [\n  \"dune\" {build}\n  \"base-unix\"\n  \"conf-openssl\"\n]\navailable: ocaml-version >= \"4.02.0\"\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/savonet/ocaml-ssl.git\"",
+          "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
-        "@opam/conf-openssl@opam:1", "@opam/conf-which@opam:1",
-        "@opam/ocamlfind@opam:1.8.0"
+        "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
+        "@opam/conf-openssl@opam:1", "@opam/dune@opam:1.1.1"
       ]
     },
     "@opam/sexplib0@opam:v0.11.0": {
@@ -482,15 +468,15 @@
         "name": "@opam/sedlex",
         "version": "opam:1.99.4",
         "source": [
-          "archive:https://opam.ocaml.org/archives/sedlex.1.99.4+opam.tar.gz#md5:2055b6183a0eacf404361fb058fcff9e",
-          "archive:https://github.com/alainfrisch/sedlex/archive/v1.99.4.tar.gz#md5:f621d80e36cda2548528766f31b16b12"
+          "archive:https://opam.ocaml.org/archives/sedlex.1.99.4+opam.tar.gz#md5:3899d707f46d74eacc931ccb2f3c9f21",
+          "archive:https://github.com/ocaml-community/sedlex/archive/v1.99.4.tar.gz#md5:f621d80e36cda2548528766f31b16b12"
         ],
         "files": [],
         "opam": {
           "name": "sedlex",
           "version": "1.99.4",
           "opam":
-            "opam-version: \"1.2\"\nname: \"sedlex\"\nversion: \"1.99.4\"\nmaintainer: \"Alain Frisch <alain.frisch@lexifi.com>\"\nauthors: \"Alain Frisch <alain.frisch@lexifi.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/alainfrisch/sedlex\"\nbug-reports: \"https://github.com/alainfrisch/sedlex/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ppx_tools_versioned\" {< \"5.2.1\"}\n  \"ocaml-migrate-parsetree\"\n  \"gen\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [make \"all\"]\n  [make \"opt\"]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"sedlex\"]\ndev-repo: \"git+https://github.com/alainfrisch/sedlex.git\"",
+            "opam-version: \"1.2\"\nname: \"sedlex\"\nversion: \"1.99.4\"\nmaintainer: \"Alain Frisch <alain.frisch@lexifi.com>\"\nauthors: \"Alain Frisch <alain.frisch@lexifi.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml-community/sedlex\"\nbug-reports: \"https://github.com/ocaml-community/sedlex/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ppx_tools_versioned\" {< \"5.2.1\"}\n  \"ocaml-migrate-parsetree\"\n  \"gen\"\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [make \"all\"]\n  [make \"opt\"]\n]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"sedlex\"]\ndev-repo: \"git+https://github.com/ocaml-community/sedlex.git\"",
           "override": null
         }
       },
@@ -840,7 +826,7 @@
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.4",
+        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.5",
         "@opam/cppo_ocamlbuild@opam:1.6.0",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
         "@opam/ocamlbuild@opam:0.12.0", "@opam/ocamlfind@opam:1.8.0",
@@ -983,7 +969,7 @@
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
-        "@opam/cppo@opam:1.6.4", "@opam/ocamlbuild@opam:0.12.0",
+        "@opam/cppo@opam:1.6.5", "@opam/ocamlbuild@opam:0.12.0",
         "@opam/ocamlfind@opam:1.8.0"
       ]
     },
@@ -1050,11 +1036,6 @@
             "name": "ocamlfind.install",
             "content":
               "bin: [\n  \"src/findlib/ocamlfind\" {\"ocamlfind\"}\n  \"?src/findlib/ocamlfind_opt\" {\"ocamlfind\"}\n  \"?tools/safe_camlp4\"\n]\ntoplevel: [\"src/findlib/topfind\"]\n"
-          },
-          {
-            "name": "esy-build",
-            "content":
-              "#!/bin/bash\n\nset -euo pipefail\nset -x\n\n#\n# Shim OCAMLLIB so that we can write topfind there\n#\n\nREAL_OCAMLLIB=\"$1\"\n\nmkdir -p $cur__install/lib/ocaml\ncd $cur__install/lib/ocaml\n\nfor filename in `ls -1 $REAL_OCAMLLIB`; do\n  ln -s $REAL_OCAMLLIB/$filename $filename;\ndone\n\n#\n# Build\n#\n\ncd $cur__root\n\nexport OCAMLLIB=\"$cur__install/lib/ocaml\"\n\n./configure \\\n  -bindir $cur__install/bin \\\n  -sitelib $cur__install/lib \\\n  -mandir $cur__install/man \\\n  -config $cur__install/lib/findlib.conf \\\n  -no-custom \\\n  -no-camlp4\n\nmake all\nmake opt\nmake install\n\n(opam-installer --prefix=$cur__install || true)\n"
           }
         ],
         "opam": {
@@ -1063,19 +1044,27 @@
           "opam":
             "opam-version: \"1.2\"\nname: \"ocamlfind\"\nversion: \"1.8.0\"\nmaintainer: \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\nauthors: \"Gerd Stolpmann <gerd@gerd-stolpmann.de>\"\nhomepage: \"http://projects.camlcity.org/projects/findlib.html\"\nbug-reports: \"https://gitlab.camlcity.org/gerd/lib-findlib/issues\"\ndepends: [\n  \"conf-m4\" {build}\n]\navailable: ocaml-version >= \"4.00.0\"\nbuild: [\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-custom\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"all\"]\n  [make \"opt\"] {ocaml-native}\n]\ninstall: [\n  [make \"install\"]\n  [\"install\" \"-m\" \"0755\" \"ocaml-stub\" \"%{bin}%/ocaml\"] {preinstalled}\n]\nremove: [\n  [\"ocamlfind\" \"remove\" \"bytes\"]\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"uninstall\"]\n  [\"rm\" \"-f\" \"%{bin}%/ocaml\"] {preinstalled}\n]\ndev-repo: \"git+https://gitlab.camlcity.org/gerd/lib-findlib.git\"",
           "override": {
-            "build": [ [ "bash", "./esy-build", "#{ocaml.lib / 'ocaml'}" ] ],
+            "build": [
+              [
+                "./configure", "-bindir", "#{self.bin}", "-sitelib",
+                "#{self.lib}", "-mandir", "#{self.man}", "-config",
+                "#{self.lib}/findlib.conf", "-no-custom", "-no-topfind"
+              ],
+              [ "make", "all" ],
+              [ "make", "opt" ]
+            ],
+            "install": [
+              [ "make", "install" ],
+              [ "install", "-m", "0755", "ocaml-stub", "#{self.bin}/ocaml" ],
+              [ "mkdir", "-p", "#{self.toplevel}" ],
+              [
+                "install", "-m", "0644", "src/findlib/topfind",
+                "#{self.toplevel}/topfind"
+              ]
+            ],
             "exportedEnv": {
-              "OCAMLLIB": {
-                "val": "#{@opam/ocamlfind.install / 'lib' / 'ocaml'}",
-                "scope": "global"
-              },
-              "CAML_LD_LIBRARY_PATH": {
-                "val":
-                  "#{@opam/ocamlfind.install / 'lib' / 'ocaml' / 'stublibs' : @opam/ocamlfind.install / 'lib' / 'ocaml' : $CAML_LD_LIBRARY_PATH}",
-                "scope": "global"
-              },
               "OCAML_TOPLEVEL_PATH": {
-                "val": "#{@opam/ocamlfind.install / 'lib' / 'ocaml'}",
+                "val": "#{self.toplevel}",
                 "scope": "global"
               }
             }
@@ -1089,7 +1078,7 @@
         "name": "@opam/ocamlbuild",
         "version": "opam:0.12.0",
         "source": [
-          "archive:https://opam.ocaml.org/archives/ocamlbuild.0.12.0+opam.tar.gz#md5:6e877d7f40c119c0c6c03f04342f2264",
+          "archive:https://opam.ocaml.org/archives/ocamlbuild.0.12.0+opam.tar.gz#md5:43f12b7f9a57d8e967a652bfb6a9dd65",
           "archive:https://github.com/ocaml/ocamlbuild/archive/0.12.0.tar.gz#md5:442baa19470bd49150f153122e22907b"
         ],
         "files": [
@@ -1103,7 +1092,7 @@
           "name": "ocamlbuild",
           "version": "0.12.0",
           "opam":
-            "opam-version: \"1.2\"\nname: \"ocamlbuild\"\nversion: \"0.12.0\"\nmaintainer: \"Gabriel Scherer <gabriel.scherer@gmail.com>\"\nauthors: [\"Nicolas Pouillard\" \"Berke Durak\"]\nlicense: \"LGPL-2 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocamlbuild/\"\ndoc: \"https://github.com/ocaml/ocamlbuild/blob/master/manual/manual.adoc\"\nbug-reports: \"https://github.com/ocaml/ocamlbuild/issues\"\nconflicts: [\n  \"base-ocamlbuild\"\n  \"ocamlfind\" {< \"1.6.2\"}\n]\navailable: ocaml-version >= \"4.03\"\nbuild: [\n  [\n    make\n    \"-f\"\n    \"configure.make\"\n    \"all\"\n    \"OCAMLBUILD_PREFIX=%{prefix}%\"\n    \"OCAMLBUILD_BINDIR=%{bin}%\"\n    \"OCAMLBUILD_LIBDIR=%{lib}%\"\n    \"OCAMLBUILD_MANDIR=%{man}%\"\n    \"OCAML_NATIVE=%{ocaml-native}%\"\n    \"OCAML_NATIVE_TOOLS=%{ocaml-native}%\"\n  ]\n  [make \"check-if-preinstalled\" \"all\" \"opam-install\"]\n]\ndev-repo: \"git+https://github.com/ocaml/ocamlbuild.git\"",
+            "opam-version: \"1.2\"\nname: \"ocamlbuild\"\nversion: \"0.12.0\"\nmaintainer: \"Gabriel Scherer <gabriel.scherer@gmail.com>\"\nauthors: [\"Nicolas Pouillard\" \"Berke Durak\"]\nlicense: \"LGPL-2 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocamlbuild/\"\ndoc: \"https://github.com/ocaml/ocamlbuild/blob/master/manual/manual.adoc\"\nbug-reports: \"https://github.com/ocaml/ocamlbuild/issues\"\nconflicts: [\n  \"base-ocamlbuild\"\n  \"ocamlfind\" {< \"1.6.2\"}\n]\navailable: ocaml-version >= \"4.03\" & ocaml-version < \"4.08.0\"\nbuild: [\n  [\n    make\n    \"-f\"\n    \"configure.make\"\n    \"all\"\n    \"OCAMLBUILD_PREFIX=%{prefix}%\"\n    \"OCAMLBUILD_BINDIR=%{bin}%\"\n    \"OCAMLBUILD_LIBDIR=%{lib}%\"\n    \"OCAMLBUILD_MANDIR=%{man}%\"\n    \"OCAML_NATIVE=%{ocaml-native}%\"\n    \"OCAML_NATIVE_TOOLS=%{ocaml-native}%\"\n  ]\n  [make \"check-if-preinstalled\" \"all\" \"opam-install\"]\n]\ndev-repo: \"git+https://github.com/ocaml/ocamlbuild.git\"",
           "override": {
             "build": [
               [
@@ -1245,7 +1234,7 @@
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.4",
+        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.5",
         "@opam/ocamlfind@opam:1.8.0"
       ]
     },
@@ -1271,31 +1260,31 @@
         "@opam/yojson@opam:1.4.0"
       ]
     },
-    "@opam/menhir@opam:20171013": {
+    "@opam/menhir@opam:20170712": {
       "record": {
         "name": "@opam/menhir",
-        "version": "opam:20171013",
+        "version": "opam:20170712",
         "source": [
-          "archive:https://opam.ocaml.org/archives/menhir.20171013+opam.tar.gz#md5:b361a87378407e26b9ea2dde7ddf41a0",
-          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20171013.tar.gz#md5:620863edea40437390ee5e5bd82fba11"
+          "archive:https://opam.ocaml.org/archives/menhir.20170712+opam.tar.gz#md5:18aaf814e51aeb4fbfd8b7c1fb7ffbba",
+          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20170712.tar.gz#md5:85a5c2aef1d3f2224dab7c53d79892e5"
         ],
         "files": [
           {
-            "name": "_esy/menhir-20171013.patch",
+            "name": "_esy/menhir-20170712.patch",
             "content":
-              "--- ./Makefile\n+++ ./Makefile\n@@ -59,13 +59,8 @@\n \n # If the compiler is MSVC, then object file names end in .obj instead of .o.\n \n-ifneq (,$(shell ocamlc -config | grep -E \"ccomp_type: msvc\"))\n-  OBJ          := obj\n-# LIBSUFFIX    := lib\n-else\n-  OBJ          := o\n-# LIBSUFFIX    := a\n-endif\n+OBJ          := $(shell ocamlc -config | awk -F '[\\t \\r]+' '/^ext_obj:/ {print $$2}' | tr -d '.')\n+#LIBSUFFIX   := $(shell ocamlc -config | awk -F '[\\t \\r]+' '/^ext_lib:/ {print $$2}' | tr -d '.')\n \n # If we are under Windows (regardless of whether we are using MSVC or mingw)\n # then the name of the executable file ends in .exe.\n@@ -91,8 +86,9 @@\n # performed if \"os_type\" is \"Win32\" or \"Win64\", and must not be performed if\n # \"os_type\" is \"Cygwin\" or \"Unix\".\n \n-ifneq (,$(shell ocamlc -config | grep -E \"os_type: (Win32|Win64)\"))\n-installation_libdir := $(shell cygpath -m $(libdir))\n+OS_TYPE:=\t$(shell ocamlc -config | awk -F '[\\t \\r]+' '/^os_type:/ {print $$2}')\n+ifeq ($(OS_TYPE),Win32)\n+installation_libdir := $(shell cygpath -m $(libdir) || echo $(libdir))\n else\n installation_libdir := $(libdir)\n endif\n--- ./src/cmly_write.ml\n+++ ./src/cmly_write.ml\n@@ -168,6 +168,6 @@\n   output_value oc (t : grammar)\n \n let write filename =\n-  let oc = open_out filename in\n+  let oc = open_out_bin filename in\n   write oc (encode());\n   close_out oc\n"
+              "--- ./Makefile\n+++ ./Makefile\n@@ -60,10 +60,11 @@\n # If the compiler is MSVC, then the name of the executable file ends in .exe,\n # and object file names end in .obj instead of .o.\n \n-ifneq (,$(shell ocamlc -config | grep -E \"ccomp_type: msvc\"))\n+OS_TYPE:=$(shell ocamlc -config | tr -d '\\15' | awk '/^os_type:/ {print $$2}')\n+ifeq ($(OS_TYPE),$(filter $(OS_TYPE),Win32 Cygwin))\n   MENHIREXE    := menhir.exe\n-  OBJ          := obj\n-# LIBSUFFIX    := lib\n+  OBJ          := $(shell ocamlc -config | tr -d '\\15' | awk '/^ext_obj:/ {print $$2}' | tr -d '.')\n+# LIBSUFFIX    := $(shell ocamlc -config | tr -d '\\15' | awk '/^ext_lib:/ {print $$2}' | tr -d '.')\n else\n   MENHIREXE    := menhir\n   OBJ          := o\n@@ -85,8 +86,8 @@\n # performed if \"os_type\" is \"Win32\" or \"Win64\", and must not be performed if\n # \"os_type\" is \"Cygwin\" or \"Unix\".\n \n-ifneq (,$(shell ocamlc -config | grep -E \"os_type: (Win32|Win64)\"))\n-installation_libdir := $(shell cygpath -m $(libdir))\n+ifeq ($(OS_TYPE),Win32)\n+installation_libdir := $(shell cygpath -m $(libdir) || echo $(libdir))\n else\n installation_libdir := $(libdir)\n endif\n--- ./src/cmly_write.ml\n+++ ./src/cmly_write.ml\n@@ -168,6 +168,6 @@\n   output_value oc (t : grammar)\n \n let write filename =\n-  let oc = open_out filename in\n+  let oc = open_out_bin filename in\n   write oc (encode());\n   close_out oc\n"
           }
         ],
         "opam": {
           "name": "menhir",
-          "version": "20171013",
+          "version": "20170712",
           "opam":
-            "opam-version: \"1.2\"\nname: \"menhir\"\nversion: \"20171013\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"4.02\"\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"",
+            "opam-version: \"1.2\"\nname: \"menhir\"\nversion: \"20170712\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\navailable: ocaml-version >= \"4.02\"\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"",
           "override": {
             "build": [
               [
                 "bash", "-c",
-                "#{os == 'windows' ? 'patch -p1 < _esy/menhir-20171013.patch' : 'true'}"
+                "#{os == 'windows' ? 'patch -p1 < _esy/menhir-20170712.patch' : 'true'}"
               ],
               [
                 "make", "-f", "Makefile", "PREFIX=#{self.install}",
@@ -1352,7 +1341,7 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
         "@opam/jbuilder@opam:transition", "@opam/lwt@opam:3.3.0",
-        "@opam/ssl@opam:0.5.5"
+        "@opam/ssl@opam:0.5.6"
       ]
     },
     "@opam/lwt_react@opam:1.1.1": {
@@ -1395,7 +1384,7 @@
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.4",
+        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.5",
         "@opam/jbuilder@opam:transition",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
         "@opam/ocamlfind@opam:1.8.0", "@opam/ppx_tools_versioned@opam:5.2",
@@ -1669,30 +1658,30 @@
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.4",
+        "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.5",
         "@opam/jbuilder@opam:transition", "@opam/ocamlbuild@opam:0.12.0"
       ]
     },
-    "@opam/cppo@opam:1.6.4": {
+    "@opam/cppo@opam:1.6.5": {
       "record": {
         "name": "@opam/cppo",
-        "version": "opam:1.6.4",
+        "version": "opam:1.6.5",
         "source": [
-          "archive:https://opam.ocaml.org/archives/cppo.1.6.4+opam.tar.gz#md5:c6651a3677048b442859d085138c2cc2",
-          "archive:https://github.com/mjambon/cppo/archive/v1.6.4.tar.gz#md5:f7a4a6a0e83b76562b45db3a93ffd204"
+          "archive:https://opam.ocaml.org/archives/cppo.1.6.5+opam.tar.gz#md5:07b0faeb722c1d625befb89fdc39617f",
+          "archive:https://github.com/mjambon/cppo/archive/v1.6.5.tar.gz#md5:1cd25741d31417995b0973fe0b6f6c82"
         ],
         "files": [],
         "opam": {
           "name": "cppo",
-          "version": "1.6.4",
+          "version": "1.6.5",
           "opam":
-            "opam-version: \"1.2\"\nname: \"cppo\"\nversion: \"1.6.4\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"https://github.com/mjambon/cppo\"\nbug-reports: \"https://github.com/mjambon/cppo/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta17\"}\n  \"base-bytes\"\n  \"base-unix\"\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/cppo.git\"",
+            "opam-version: \"1.2\"\nname: \"cppo\"\nversion: \"1.6.5\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"https://github.com/mjambon/cppo\"\nbug-reports: \"https://github.com/mjambon/cppo/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta17\"}\n  \"base-unix\"\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\nrun-test: [\"jbuilder\" \"runtest\" \"-p\" name]\ndev-repo: \"git+https://github.com/mjambon/cppo.git\"",
           "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
-        "@opam/base-unix@opam:base", "@opam/jbuilder@opam:transition"
+        "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
+        "@opam/jbuilder@opam:transition"
       ]
     },
     "@opam/containers@opam:1.3": {
@@ -1714,7 +1703,7 @@
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
-        "@opam/cppo@opam:1.6.4", "@opam/ocamlbuild@opam:0.12.0",
+        "@opam/cppo@opam:1.6.5", "@opam/ocamlbuild@opam:0.12.0",
         "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3"
       ]
     },
@@ -2182,7 +2171,7 @@
       },
       "dependencies": [
         "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
-        "@opam/dune@opam:1.1.1", "@opam/menhir@opam:20171013",
+        "@opam/dune@opam:1.1.1", "@opam/menhir@opam:20170712",
         "@opam/merlin-extend@opam:0.3",
         "@opam/ocaml-migrate-parsetree@opam:1.0.11",
         "@opam/ocamlbuild@opam:0.12.0", "@opam/ocamlfind@opam:1.8.0",
