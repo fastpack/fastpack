@@ -6,5 +6,6 @@
   (package Fastpack)
   (libraries (FastpackUtil Fastpack FastpackTranspiler cmdliner lwt.unix sedlex fileutils yojson containers logs logs.fmt logs.lwt ppx_expect.evaluator ppx_inline_test.runner.lib))
   (flags (:standard "-open" "Containers"))
+  (link_flags (:include link_flags))
   (preprocess (pps (lwt.ppx)))))
 

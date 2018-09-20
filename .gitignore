@@ -19,3 +19,4 @@ test/tmp_stderr.txt.backup
 test/watch/*.js
 test/watch/bundle
 *.install
+bin/link_flags

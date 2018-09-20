@@ -2,10 +2,13 @@
 
 b: build
 
-build:
+bin/link_flags:
+	@node scripts/gen_link_flags.js > bin/link_flags
+
+build: bin/link_flags
 	@esy build
 
-build-dev:
+build-dev: bin/link_flags
 	@esy b refmterr jbuilder build --dev bin/fpack.exe
 
 install:

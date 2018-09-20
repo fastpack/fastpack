@@ -8,12 +8,25 @@ jobs:
   pool:
     vmImage: 'Ubuntu 16.04'
   steps:
+  - script: |
+      sed \
+        -e "s/%%VERSION%%/$(node -p "require('./package.json').version")/g" \
+        Fastpack/Version.re
+    displayName: replace version
+  - script: |
+      sed \
+        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
+        Fastpack/Version.re
   - script: make fetch
     displayName: make fetch
   - script: docker build -t alpine-fastpack linux-build/alpine
     displayName: 'docker build'
-  - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration'
-    displayName: 'make test'
+  - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration && make build && ldd _build/default/bin/fpack.exe'
+    displayName: 'make all'
+  - task: PublishBuildArtifacts@1
+    inputs:
+      artifactName: 'vendor-linux-fpack.exe'
+      pathToPublish: '_build/default/bin/fpack.exe'
 
 - job: MacOS
   pool:
@@ -69,8 +82,15 @@ jobs:
       downloadPath: .
   - script: cp -R vendor-darwin-fpack.exe/fpack.exe dist/vendor-darwin
     displayName: copy osx binary
-  - script: cp -R node-service README.md dist
-    displayName: copy node-service and README.md
+  - task: DownloadBuildArtifacts@0
+    displayName: download linux binary
+    inputs:
+      artifactName: 'vendor-linux-fpack.exe'
+      downloadPath: .
+  - script: cp -R vendor-linux-fpack.exe/fpack.exe dist/vendor-linux
+    displayName: copy linux binary
+  - script: cp -R node-service dist
+    displayName: copy node-service
   - task: PublishBuildArtifacts@1
     inputs:
       artifactName: fpack
