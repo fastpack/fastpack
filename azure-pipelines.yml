@@ -18,6 +18,8 @@ jobs:
 - job: MacOS
   pool:
     vmImage: 'macOS 10.13'
+  variables:
+    TRAVIS_OS_NAME: osx
   steps:
   - script: make fetch
     displayName: make fetch
