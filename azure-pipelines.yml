@@ -46,4 +46,8 @@ jobs:
     inputs:
       contents: dist
       targetFolder: '$(build.artifactStagingDirectory)'
+  - task: PublishBuildArtifacts@1
+    inputs:
+      artifactName: 'vendor-darwin'
+      pathToPublish: '$(build.artifactStagingDirectory)'
 
