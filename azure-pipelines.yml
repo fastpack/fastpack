@@ -9,9 +9,8 @@ jobs:
     vmImage: 'Ubuntu 16.04'
   steps:
   - script: make fetch
-  - script: npm i -g yarn
-  - script: make setup-test
+    displayName: make fetch
   - script: docker build -t alpine-fastpack linux-build/alpine
     displayName: 'docker build'
-  - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make test-integration'
+  - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration'
     displayName: 'make test'
