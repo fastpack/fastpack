@@ -33,8 +33,9 @@
   },
   "homepage": "https://github.com/fastpack/fastpack#readme",
   "resolutions": {
-    "**/@opam/gen": "0.5.0",
-    "**/@opam/ppxlib": "0.3.0"
+    "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
+    "@opam/ppx_tools_versioned": "5.2",
+    "@opam/menhir": "20170712"
   },
   "dependencies": {
     "@esy-ocaml/esy-installer": "*",
@@ -53,7 +54,7 @@
     "@opam/yojson": "1.4.0",
     "@opam/logs": "0.6.2",
     "@opam/fmt": "0.8.5",
-    "@opam/re": "1.7.1",
+    "@opam/re": "1.8.0",
     "@opam/ppx_expect": "*",
     "@opam/ppx_let": "*",
     "@opam/ppx_deriving": "^4.2.1",
