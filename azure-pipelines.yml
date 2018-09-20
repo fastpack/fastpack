@@ -24,13 +24,13 @@ jobs:
   - script: |
       sed \
         -i '' \
-        -e "s/%%VERSION%%/$$(node -p "require('./package.json').version")/g" \
+        -e "s/%%VERSION%%/$(node -p "require('./package.json').version")/g" \
         Fastpack/Version.re
     displayName: replace version
   - script: |
       sed \
         -i '' \
-        -e "s/%%COMMIT%%/$$(git log --pretty=format:'%h' -n 1)/g" \
+        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
         Fastpack/Version.re
     displayName: replace commit
   - script: make fetch
