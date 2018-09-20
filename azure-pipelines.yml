@@ -39,7 +39,7 @@ jobs:
     displayName: make build (release)
   - script: |
       mkdir -p dist/vendor-darwin && \
-      cp -R _build/default/bin/fpack.exe dist/vendor-darwin \
+      cp -R _build/default/bin/fpack.exe dist/vendor-darwin && \
       cp -R node-service dist
     displayName: prepare release
   - task: CopyFiles@2
