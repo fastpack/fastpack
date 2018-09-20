@@ -14,3 +14,20 @@ jobs:
     displayName: 'docker build'
   - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration'
     displayName: 'make test'
+
+- job: MacOS
+  pool:
+    vmImage: 'macOS 10.13'
+  steps:
+  - script: make fetch
+    displayName: make fetch
+  - script: npm install -g yarn
+    displayName: install Yarn
+  - script: make install
+    displayName: make install
+  - script: make test
+    displayName: make test
+  - script: make setup-test
+    displayName: make setup-test
+  - script: make test-integration
+    displayName: make test-integration
