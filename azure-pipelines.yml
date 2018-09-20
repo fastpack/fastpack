@@ -63,12 +63,14 @@ jobs:
     vmImage: 'Ubuntu 16.04'
   steps:
   - task: DownloadBuildArtifacts@0
-    displayName: 'Download Build Artifacts'
+    displayName: download osx binary
     inputs:
       artifactName: 'vendor-darwin-fpack.exe'
-      downloadPath: dist/vendor-darwin/fpack.exe
-  - script: cp -R node-service dist
-    displayName: copy node-service
+      downloadPath: .
+  - script: cp -R vendor-darwin-fpack.exe/fpack.exe dist/vendor-darwin
+    displayName: copy osx binary
+  - script: cp -R node-service README.md dist
+    displayName: copy node-service and README.md
   - task: PublishBuildArtifacts@1
     inputs:
       artifactName: fpack
