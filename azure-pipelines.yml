@@ -3,6 +3,7 @@
 # Add steps that use Docker Compose, tag images, push to a registry, run an image, and more:
 # https://docs.microsoft.com/vsts/pipelines/languages/docker
 
+name: $(Build.SourceVersionMessage)_$(Build.SourceVersion)
 jobs:
 - job: Linux
   pool:
