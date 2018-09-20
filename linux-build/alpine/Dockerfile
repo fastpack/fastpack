@@ -29,11 +29,14 @@ RUN apk add g++
 RUN apk add patch
 RUN apk add libressl
 RUN apk add libressl-dev
+RUN apk add git
 
 # esy uses this
 COPY shasum /usr/bin
 RUN chmod +x /usr/bin/shasum
 
 RUN npm install --global --unsafe-perm=true esy@latest
+RUN make fetch install
+RUN make setup-test
 
 CMD ["/bin/bash"]
