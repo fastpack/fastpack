@@ -40,7 +40,8 @@ jobs:
   - script: |
       mkdir -p dist/vendor-darwin && \
       cp -R _build/default/bin/fpack.exe dist/vendor-darwin && \
-      cp -R node-service dist
+      cp -R node-service dist && \
+      rm -rf flow flow_parser node_modules
     displayName: prepare release
   - task: CopyFiles@2
     inputs:
