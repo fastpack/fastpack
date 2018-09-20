@@ -43,12 +43,8 @@ jobs:
       cp -R node-service dist && \
       rm -rf flow flow_parser node_modules
     displayName: prepare release
-  - task: CopyFiles@2
-    inputs:
-      contents: 'dist\**'
-      targetFolder: '$(build.artifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     inputs:
       artifactName: 'vendor-darwin'
-      pathToPublish: '$(build.artifactStagingDirectory)'
+      pathToPublish: 'dist'
 
