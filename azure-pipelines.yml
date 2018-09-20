@@ -12,7 +12,7 @@ jobs:
     displayName: make fetch
   - script: docker build -t alpine-fastpack linux-build/alpine
     displayName: 'docker build'
-  - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration'
+  - bash: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration'
     displayName: 'make test'
 
 - job: MacOS
@@ -33,5 +33,5 @@ jobs:
     displayName: make test
   - script: make setup-test
     displayName: make setup-test
-  - script: make test-integration
+  - bash: make test-integration
     displayName: make test-integration
