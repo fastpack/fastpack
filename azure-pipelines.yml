@@ -35,16 +35,22 @@ jobs:
     displayName: make setup-test
   - script: make test-integration
     displayName: make test-integration
+  - script: |
+      sed \
+		    -i '' \
+		    -e "s/%%VERSION%%/$$(node -p "require('./package.json').version")/g" \
+		    Fastpack/Version.re
+    displayName: replace version
+  - script: |
+	    sed \
+		    -i '' \
+		    -e "s/%%COMMIT%%/$$(git log --pretty=format:'%h' -n 1)/g" \
+		    Fastpack/Version.re
+    displayName: replace commit
   - script: make build
     displayName: make build (release)
-  - script: |
-      mkdir -p dist/vendor-darwin && \
-      cp -R _build/default/bin/fpack.exe dist/vendor-darwin && \
-      cp -R node-service dist && \
-      rm -rf flow flow_parser node_modules
-    displayName: prepare release
   - task: PublishBuildArtifacts@1
     inputs:
-      artifactName: 'vendor-darwin'
-      pathToPublish: 'dist'
+      artifactName: 'vendor-darwin-fpack.exe'
+      pathToPublish: '_build/default/bin/fpack.exe'
 
