@@ -21,6 +21,18 @@ jobs:
   variables:
     TRAVIS_OS_NAME: osx
   steps:
+  - script: |
+      sed \
+		    -i '' \
+		    -e "s/%%VERSION%%/$$(node -p "require('./package.json').version")/g" \
+		    Fastpack/Version.re
+    displayName: replace version
+  - script: |
+	    sed \
+		    -i '' \
+		    -e "s/%%COMMIT%%/$$(git log --pretty=format:'%h' -n 1)/g" \
+		    Fastpack/Version.re
+    displayName: replace commit
   - script: make fetch
     displayName: make fetch
   - script: npm install -g yarn
@@ -35,22 +47,30 @@ jobs:
     displayName: make setup-test
   - script: make test-integration
     displayName: make test-integration
-  - script: |
-      sed \
-		    -i '' \
-		    -e "s/%%VERSION%%/$$(node -p "require('./package.json').version")/g" \
-		    Fastpack/Version.re
-    displayName: replace version
-  - script: |
-	    sed \
-		    -i '' \
-		    -e "s/%%COMMIT%%/$$(git log --pretty=format:'%h' -n 1)/g" \
-		    Fastpack/Version.re
-    displayName: replace commit
   - script: make build
     displayName: make build (release)
   - task: PublishBuildArtifacts@1
     inputs:
       artifactName: 'vendor-darwin-fpack.exe'
       pathToPublish: '_build/default/bin/fpack.exe'
+
+- job: Package
+  dependsOn:
+  - Linux
+  - MacOS
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  steps:
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Download Build Artifacts'
+    inputs:
+      artifactName: 'vendor-darwin-fpack.exe'
+      downloadPath: dist/vendor-darwin/fpack.exe
+  - script: cp -R node-service dist
+    displayName: copy node-service
+  - task: PublishBuildArtifacts@1
+    inputs:
+      artifactName: fpack
+      pathToPublish: dist
 
