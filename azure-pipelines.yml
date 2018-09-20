@@ -44,7 +44,7 @@ jobs:
     displayName: prepare release
   - task: CopyFiles@2
     inputs:
-      contents: dist
+      contents: 'dist\**'
       targetFolder: '$(build.artifactStagingDirectory)'
   - task: PublishBuildArtifacts@1
     inputs:
