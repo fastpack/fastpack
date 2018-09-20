@@ -12,7 +12,7 @@ jobs:
     displayName: make fetch
   - script: docker build -t alpine-fastpack linux-build/alpine
     displayName: 'docker build'
-  - bash: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration'
+  - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration'
     displayName: 'make test'
 
 - job: MacOS
@@ -33,5 +33,17 @@ jobs:
     displayName: make test
   - script: make setup-test
     displayName: make setup-test
-  - bash: make test-integration
+  - script: make test-integration
     displayName: make test-integration
+  - script: make build
+    displayName: make build (release)
+  - script: |
+      mkdir -p dist/vendor-darwin && \
+      cp -R _build/default/bin/fpack.exe dist/vendor-darwin \
+      cp -R node-service dist
+    displayName: prepare release
+  - task: CopyFiles@2
+    inputs:
+      contents: dist
+      targetFolder: '$(build.artifactStagingDirectory)'
+
