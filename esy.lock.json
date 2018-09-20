@@ -1,5 +1,5 @@
 {
-  "hash": "22b920e3490c47bb743a5116bc87662c",
+  "hash": "ac86154fe6c213095b2914a02b50aa82",
   "root": "fastpack@path:.",
   "node": {
     "ocaml@4.6.6": {
@@ -22,16 +22,16 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.1", "@esy-ocaml/flow-parser@0.36.0",
+        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/flow-parser@0.76.0",
         "@opam/cmdliner@opam:1.0.2", "@opam/containers@opam:1.3",
         "@opam/fileutils@opam:0.5.3", "@opam/fmt@opam:0.8.5",
         "@opam/jbuilder@opam:transition", "@opam/logs@opam:0.6.2",
         "@opam/lwt@opam:3.3.0", "@opam/merlin@opam:3.1.0",
-        "@opam/ocp-indent@opam:1.6.1", "@opam/ppx_deriving@opam:4.2.1",
-        "@opam/ppx_expect@opam:v0.11.0", "@opam/ppx_let@opam:v0.11.0",
-        "@opam/re@opam:1.8.0", "@opam/sedlex@opam:1.99.4",
-        "@opam/sequence@opam:1.1", "@opam/utop@opam:2.2.0",
-        "@opam/wtf8@opam:1.0.1", "@opam/yojson@opam:1.4.0", "ocaml@4.6.6"
+        "@opam/ppx_deriving@opam:4.2.1", "@opam/ppx_expect@opam:v0.11.0",
+        "@opam/ppx_let@opam:v0.11.0", "@opam/re@opam:1.8.0",
+        "@opam/sedlex@opam:1.99.4", "@opam/sequence@opam:1.1",
+        "@opam/utop@opam:2.2.0", "@opam/wtf8@opam:1.0.1",
+        "@opam/yojson@opam:1.4.0", "ocaml@4.6.6"
       ]
     },
     "@opam/zed@opam:1.6": {
@@ -712,47 +712,6 @@
         "ocaml@4.6.6"
       ]
     },
-    "@opam/ocp-indent@opam:1.6.1": {
-      "record": {
-        "name": "@opam/ocp-indent",
-        "version": "opam:1.6.1",
-        "source":
-          "archive:https://github.com/OCamlPro/ocp-indent/archive/1.6.1.tar.gz#md5:935d03f4f6376d687c46f350ff5eecdd",
-        "files": [],
-        "opam": {
-          "name": "ocp-indent",
-          "version": "1.6.1",
-          "opam":
-            "opam-version: \"2.0\"\nname: \"ocp-indent\"\nversion: \"1.6.1\"\nsynopsis: \"A simple tool to indent OCaml programs\"\ndescription: \"\"\"\nOcp-indent is based on an approximate, tolerant OCaml parser and a simple stack\nmachine ; this is much faster and more reliable than using regexps. Presets and\nconfiguration options available, with the possibility to set them project-wide.\nSupports most common syntax extensions, and extensible for others.\n\nIncludes:\n\n* An indentor program, callable from the command-line or from within editors\n* Bindings for popular editors\n* A library that can be directly used by editor writers, or just for\napproximate parsing.\"\"\"\nmaintainer: \"contact@ocamlpro.com\"\nauthors: [\n  \"Louis Gesbert <louis.gesbert@ocamlpro.com>\"\n  \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\n  \"Jun Furuse\"\n]\nlicense: \"LGPL\"\ntags: [\"org:ocamlpro\" \"org:typerex\"]\nhomepage: \"http://www.typerex.org/ocp-indent.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-indent/issues\"\ndepends: [\n  \"ocaml\"\n  \"ocp-build\" {build & >= \"1.99.6-beta\"}\n  \"cmdliner\" {>= \"1.0.0\"}\n  \"base-bytes\"\n]\nbuild: [\n  [\"./configure\" \"--prefix\" prefix]\n  [make]\n]\npost-messages:\n  \"\"\"\nThis package requires additional configuration for use in editors. Install package 'user-setup', or manually:\n\n* for Emacs, add these lines to ~/.emacs:\n  (add-to-list 'load-path \"%{share}%/emacs/site-lisp\")\n  (require 'ocp-indent)\n\n* for Vim, add this line to ~/.vimrc:\n  set rtp^=\"%{share}%/ocp-indent/vim\\\"\"\"\"\n    {success & !user-setup:installed}\ndev-repo: \"git+https://github.com/OCamlPro/ocp-indent.git\"\nurl {\n  src: \"https://github.com/OCamlPro/ocp-indent/archive/1.6.1.tar.gz\"\n  checksum: \"md5=935d03f4f6376d687c46f350ff5eecdd\"\n}",
-          "override": null
-        }
-      },
-      "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
-        "@opam/cmdliner@opam:1.0.2", "@opam/ocp-build@opam:1.99.20-beta",
-        "ocaml@4.6.6"
-      ]
-    },
-    "@opam/ocp-build@opam:1.99.20-beta": {
-      "record": {
-        "name": "@opam/ocp-build",
-        "version": "opam:1.99.20-beta",
-        "source":
-          "archive:http://github.com/OCamlPro/ocp-build/archive/1.99.20-beta.tar.gz#md5:72d9c1b1a42d1873628e2d6e7529d8cb",
-        "files": [],
-        "opam": {
-          "name": "ocp-build",
-          "version": "1.99.20-beta",
-          "opam":
-            "opam-version: \"2.0\"\nname: \"ocp-build\"\nversion: \"1.99.20-beta\"\nsynopsis: \"Project builder for OCaml\"\ndescription: \"\"\"\nocp-build main features are:\n* simple library/program description\n* detection of ocamlfind libraries (parsing of META)\n* incremental and parallel compilation of OCaml projects\"\"\"\nmaintainer: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nauthors: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nhomepage: \"http://www.typerex.org/ocp-build.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-build/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02.1\"}\n  \"ocamlfind\"\n  \"cmdliner\" {>= \"1.0\"}\n]\nconflicts: [\n  \"typerex\" {< \"1.99.7\"}\n  \"typerex-build\"\n]\nbuild: [\n  [\"./configure\" \"--prefix\" \"%{prefix}%\"]\n  [make]\n]\ninstall: [make \"install\"]\nremove: [\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-build\"]\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-pp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocp-build\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-compat\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-debug\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-lang\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-subcmd\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-system\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-unix\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/installed.ocp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/site-ocp2/ocp-build\"]\n  [\"sh\" \"-exc\" \"rmdir %{prefix}%/lib/ocaml/typerex || true\"]\n]\ndev-repo: \"git+https://github.com/OCamlPro/ocp-build.git\"\nurl {\n  src: \"http://github.com/OCamlPro/ocp-build/archive/1.99.20-beta.tar.gz\"\n  checksum: \"md5=72d9c1b1a42d1873628e2d6e7529d8cb\"\n}",
-          "override": null
-        }
-      },
-      "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/cmdliner@opam:1.0.2",
-        "@opam/ocamlfind@opam:1.8.0", "ocaml@4.6.6"
-      ]
-    },
     "@opam/ocamlfind@opam:1.8.0": {
       "record": {
         "name": "@opam/ocamlfind",
@@ -1404,26 +1363,26 @@
       },
       "dependencies": []
     },
-    "@esy-ocaml/flow-parser@0.36.0": {
+    "@esy-ocaml/flow-parser@0.76.0": {
       "record": {
         "name": "@esy-ocaml/flow-parser",
-        "version": "0.36.0",
+        "version": "0.76.0",
         "source":
-          "archive:https://registry.npmjs.org/@esy-ocaml/flow-parser/-/flow-parser-0.36.0.tgz#sha1:04ca2d0272bbe011cfcf985962ed5087ccb29e81",
+          "archive:https://registry.npmjs.org/@esy-ocaml/flow-parser/-/flow-parser-0.76.0.tgz#sha1:54b2902956e1315291b478e500d608be9ba2dc39",
         "files": [],
         "opam": null
       },
       "dependencies": [
-        "@opam/ocamlbuild@opam:0.12.0", "@opam/ocamlfind@opam:1.8.0",
-        "ocaml@4.6.6"
+        "@esy-ocaml/esy-installer@0.0.0", "@opam/jbuilder@opam:transition",
+        "@opam/sedlex@opam:1.99.4", "@opam/wtf8@opam:1.0.1"
       ]
     },
-    "@esy-ocaml/esy-installer@0.0.1": {
+    "@esy-ocaml/esy-installer@0.0.0": {
       "record": {
         "name": "@esy-ocaml/esy-installer",
-        "version": "0.0.1",
+        "version": "0.0.0",
         "source":
-          "archive:https://registry.npmjs.org/@esy-ocaml/esy-installer/-/esy-installer-0.0.1.tgz#sha1:420c65f7e5f9bafa3da578532c352acdf00837aa",
+          "archive:https://registry.npmjs.org/@esy-ocaml/esy-installer/-/esy-installer-0.0.0.tgz#sha1:6b0e2bd4ee43531ac74793fe55cfcc3aca197a66",
         "files": [],
         "opam": null
       },
