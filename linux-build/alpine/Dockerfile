@@ -36,7 +36,3 @@ COPY shasum /usr/bin
 RUN chmod +x /usr/bin/shasum
 
 RUN npm install --global --unsafe-perm=true esy@latest
-RUN make fetch install
-RUN make setup-test
-
-CMD ["/bin/bash"]

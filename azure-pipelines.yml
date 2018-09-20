@@ -10,7 +10,5 @@ jobs:
   steps:
   - script: docker build -t alpine-fastpack linux-build/alpine
     displayName: 'docker build'
-  - script: docker run --rm alpine-fastpack "/bin/bash -c 'make test'"
+  - script: docker run --rm alpine-fastpack "/bin/bash -c 'make fetch install && make setup-test && make test && make test-integration'"
     displayName: 'make test'
-  - script: docker run --rm alpine-fastpack "/bin/bash -c 'make test-integration'"
-    displayName: 'make test-integration'
