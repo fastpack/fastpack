@@ -21,15 +21,17 @@ jobs:
   variables:
     TRAVIS_OS_NAME: osx
   steps:
-  - script: sed \
-		    -i '' \
-		    -e "s/%%VERSION%%/$$(node -p "require('./package.json').version")/g" \
-		    Fastpack/Version.re
+  - script: |
+      sed \
+        -i '' \
+        -e "s/%%VERSION%%/$$(node -p "require('./package.json').version")/g" \
+        Fastpack/Version.re
     displayName: replace version
-  - script: sed \
-		    -i '' \
-		    -e "s/%%COMMIT%%/$$(git log --pretty=format:'%h' -n 1)/g" \
-		    Fastpack/Version.re
+  - script: |
+      sed \
+        -i '' \
+        -e "s/%%COMMIT%%/$$(git log --pretty=format:'%h' -n 1)/g" \
+        Fastpack/Version.re
     displayName: replace commit
   - script: make fetch
     displayName: make fetch
