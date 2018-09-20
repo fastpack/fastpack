@@ -23,6 +23,8 @@ jobs:
     displayName: make fetch
   - script: npm install -g yarn
     displayName: install Yarn
+  - script: npm install -g esy@0.2.11
+    displayName: install esy
   - script: make install
     displayName: make install
   - script: make test
