@@ -1,4 +1,4 @@
-.PHONY: test
+.PHONY: test bump-version
 
 b: build
 
@@ -57,6 +57,9 @@ bootstrap: fetch install build setup-test
 
 clean: clean-test
 	@rm -rf _build/ node_modules/
+
+bump-version:
+	@node scripts/bump_version.js
 
 #
 # RELEASE
