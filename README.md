@@ -142,7 +142,7 @@ COMMON OPTIONS
 Make sure you have `esy` (at least `0.2.8` version) installed:
 
 ```bash
-npm install -g esy@0.2.8
+npm install -g esy@0.2.11
 ```
 
 Now install dependencies & build everything:
@@ -161,6 +161,7 @@ To run tests:
 
 ```bash
 make test
+make test-integration
 ```
 
 To test compiled executables prepend with `esy x`:
@@ -189,15 +190,6 @@ And execute commands from there.
 
 ## Release Process
 
-Currently release process is assumed to be performed on macOS with Docker
-installed. Docker is needed to produce Linux x64 binaries.
-
-Run either of those:
-
-```
-% make release-patch
-% make release-minor
-% make release-major
-```
-
-After that succeeds follow the printed instructions.
+The NPM package is built on every commit to the `master` branch by the
+Microsoft Azure Pipelines (see Artifacts/fpack). Publishing it on npmjs.org
+remains manual for now.
