@@ -1,6 +1,6 @@
 # fastpack
 
-[![Build Status](https://travis-ci.org/fastpack/fastpack.svg?branch=master)](https://travis-ci.org/fastpack/fastpack)
+[![Build Status](https://dev.azure.com/fastpack/fastpack/_apis/build/status/fastpack.fastpack)](https://dev.azure.com/fastpack/fastpack/_build/latest?definitionId=1)
 
 Pack JS code into a single bundle fast & easy.
 
