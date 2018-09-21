@@ -3,7 +3,7 @@
 # Add steps that use Docker Compose, tag images, push to a registry, run an image, and more:
 # https://docs.microsoft.com/vsts/pipelines/languages/docker
 
-name: $(Build.SourceVersionMessage)_$(Build.SourceVersion)
+name: $(Build.SourceVersion)
 jobs:
 - job: Linux
   pool:
@@ -11,16 +11,11 @@ jobs:
   steps:
   - script: |
       sed -i \
-        -e "s/%%VERSION%%/$(node -p "require('./package.json').version")/g" \
-        Fastpack/Version.re
-    displayName: replace version
-  - script: |
-      sed -i \
         -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
         Fastpack/Version.re
   - script: make fetch
     displayName: make fetch
-  - script: docker build -t alpine-fastpack linux-build/alpine
+  - script: docker build -t alpine-fastpack linux-build
     displayName: 'docker build'
   - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration && make build && ldd _build/default/bin/fpack.exe'
     displayName: 'make all'
@@ -35,12 +30,6 @@ jobs:
   variables:
     TRAVIS_OS_NAME: osx
   steps:
-  - script: |
-      sed \
-        -i '' \
-        -e "s/%%VERSION%%/$(node -p "require('./package.json').version")/g" \
-        Fastpack/Version.re
-    displayName: replace version
   - script: |
       sed \
         -i '' \
