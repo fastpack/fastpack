@@ -1,7 +1,7 @@
 
-// This function is a modified version of the one created by the Webpack project
-global = window;
+global = this;
 process = { env: {} };
+// This function is a modified version of the one created by the Webpack project
 (function(modules) {
   // The module cache
   var installedModules = {};
