@@ -3,5 +3,5 @@ switch(process.platform) {
     console.log("(-ccopt -static)");
     break;
   default:
-    console.log("()");
+    console.log("(-ccopt -L/usr/lib)");
 }
