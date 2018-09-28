@@ -1,0 +1,7 @@
+
+Module resolution error: cannot resolve 'url'
+/.../test/error-cannot-resolve-node-module/url.js
+This looks like base node.js library and unlikely is required in the browser environment.
+If you still want to use it, first install the browser implementation with:
+
+		npm install --save url
