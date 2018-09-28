@@ -206,8 +206,7 @@ let to_string = (package_dir, error) =>
         ],
       )
     | Some(Some(mock)) =>
-      String.concat(
-        "\n",
+      let msg =
         [
           error_title,
           error_path,
@@ -215,12 +214,21 @@ let to_string = (package_dir, error) =>
           "If you still want to use it, first install the browser implementation with:",
           "",
           Printf.sprintf("\t\tnpm install --save %s", mock),
-          "",
-          "And then add this command line option when running fpack:",
-          "",
-          Printf.sprintf("\t\t--mock %s:%s", dep.request, mock),
-        ],
-      )
+        ]
+        @ (
+          if (mock != dep.request) {
+            [
+              "",
+              "And then add this command line option when running fpack:",
+              "",
+              Printf.sprintf("\t\t--mock %s:%s", dep.request, mock),
+            ];
+          } else {
+            [];
+          }
+        );
+
+      String.concat("\n", msg);
     };
 
   | CannotParseFile((location_str, errors, source)) =>

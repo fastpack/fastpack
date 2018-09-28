@@ -1,6 +1,6 @@
 {
   "name": "fastpack",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "description": "Pack JS code into a single bundle fast & easy.",
   "main": "index.js",
   "esy": {
