@@ -29,7 +29,7 @@ To produce a development bundle:
 % fpack --development ./index.js
 ```
 
-**Please note**, bundling in production mode is temporarily deisabled. Always
+**Please note**, bundling in production mode is temporarily disabled. Always
 use the `--development` flag for now.
 
 Note that `babel`, `babel-preset-env` and `uglify-js` packages must be
