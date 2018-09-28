@@ -76,7 +76,10 @@ let run = (start_time, ctx: Context.t, output_channel) => {
     Printf.sprintf(
       {|
 global = this;
-process = { env: {} };
+process = { env: {}, browser: true };
+if(!global.Buffer) {
+  global.Buffer = {isBuffer: false};
+}
 // This function is a modified version of the one created by the Webpack project
 %s(function(modules) {
   // The module cache

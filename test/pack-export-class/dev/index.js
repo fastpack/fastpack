@@ -1,6 +1,9 @@
 
 global = this;
-process = { env: {} };
+process = { env: {}, browser: true };
+if(!global.Buffer) {
+  global.Buffer = {isBuffer: false};
+}
 // This function is a modified version of the one created by the Webpack project
 (function(modules) {
   // The module cache
