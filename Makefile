@@ -50,11 +50,7 @@ train-integration: build-dev
 test-server:
 	cd test && node server.js
 
-fetch:
-	git submodule init
-	git submodule update
-
-bootstrap: fetch install build setup-test
+bootstrap: install build setup-test
 
 clean: clean-test
 	@rm -rf _build/ node_modules/
