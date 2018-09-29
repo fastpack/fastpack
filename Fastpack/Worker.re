@@ -2,8 +2,8 @@ module MLSet = Module.LocationSet;
 module StringSet = Set.Make(String);
 module M = Map.Make(String);
 
-module Ast = FlowParser.Ast;
-module Loc = FlowParser.Loc;
+module Ast = Flow_parser.Ast;
+module Loc = Flow_parser.Loc;
 module S = Ast.Statement;
 module E = Ast.Expression;
 module P = Ast.Pattern;
@@ -30,7 +30,7 @@ type request = {
 
 type response =
   | Complete(ok)
-  | ParseError(list((Loc.t, FlowParser.Parse_error.t)))
+  | ParseError(list((Loc.t, Flow_parser.Parse_error.t)))
   | ScopeError(Scope.reason)
   | PreprocessorError(string)
   | UnhandledCondition(string)
@@ -100,8 +100,8 @@ let start = (~project_root, ~output_dir, ()) => {
     let ((_, stmts, _) as program, _) =
       FastpackUtil.Parser.parse_source(source);
 
-    module Ast = FlowParser.Ast;
-    module Loc = FlowParser.Loc;
+    module Ast = Flow_parser.Ast;
+    module Loc = Flow_parser.Loc;
     module S = Ast.Statement;
     module E = Ast.Expression;
     module L = Ast.Literal;
@@ -695,7 +695,7 @@ let start = (~project_root, ~output_dir, ()) => {
           );
         },
         fun
-        | FlowParser.Parse_error.Error(args) => Lwt.return(ParseError(args))
+        | Flow_parser.Parse_error.Error(args) => Lwt.return(ParseError(args))
         | Scope.ScopeError(reason) => Lwt.return(ScopeError(reason))
         | Preprocessor.Error(message) =>
           Lwt.return(PreprocessorError(message))

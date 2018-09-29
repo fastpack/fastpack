@@ -1,4 +1,4 @@
-module Loc = FlowParser.Loc;
+module Loc = Flow_parser.Loc;
 
 let ie = FastpackUtil.Error.ie;
 

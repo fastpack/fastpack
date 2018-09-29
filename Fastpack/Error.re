@@ -1,4 +1,4 @@
-module Loc = FlowParser.Loc;
+module Loc = Flow_parser.Loc;
 module Scope = FastpackUtil.Scope;
 
 /*
@@ -150,7 +150,7 @@ type reason =
   | CannotLeavePackageDir(string)
   | CannotResolveModule(string, Module.Dependency.t)
   | CannotParseFile(
-      (string, list((Loc.t, FlowParser.Parse_error.t)), string),
+      (string, list((Loc.t, Flow_parser.Parse_error.t)), string),
     )
   | NotImplemented(option(Loc.t), string)
   | CannotRenameModuleBinding(Loc.t, string, Module.Dependency.t)
@@ -238,7 +238,7 @@ let to_string = (package_dir, error) =>
       |> List.mapi((i, line) => (i + 1, line));
 
     let format_error = (isTTY, (loc, error)) => {
-      let error_desc = FlowParser.Parse_error.PP.error(error);
+      let error_desc = Flow_parser.Parse_error.PP.error(error);
       String.concat(
         "\n",
         [

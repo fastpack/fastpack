@@ -13,8 +13,6 @@ jobs:
       sed -i \
         -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
         Fastpack/Version.re
-  - script: make fetch
-    displayName: make fetch
   - script: docker build -t alpine-fastpack linux-build
     displayName: 'docker build'
   - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration && make build && ldd _build/default/bin/fpack.exe'
@@ -36,8 +34,6 @@ jobs:
         -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
         Fastpack/Version.re
     displayName: replace commit
-  - script: make fetch
-    displayName: make fetch
   - script: npm install -g yarn
     displayName: install Yarn
   - script: npm install -g esy@0.2.11

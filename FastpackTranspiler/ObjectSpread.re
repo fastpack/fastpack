@@ -4,8 +4,8 @@
  **/
 module AstMapper = FastpackUtil.AstMapper;
 module AstHelper = FastpackUtil.AstHelper;
-module Ast = FlowParser.Ast;
-module Loc = FlowParser.Loc;
+module Ast = Flow_parser.Ast;
+module Loc = Flow_parser.Loc;
 module E = Ast.Expression;
 module F = Ast.Function;
 module S = Ast.Statement;
