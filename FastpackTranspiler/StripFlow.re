@@ -1,27 +1,28 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 
 let transpile = (_context, program) => {
-  let map_function = (_scope, (loc, func)): (Loc.t, Ast.Function.t(Loc.t)) => (
+  let map_function =
+      (_scope, (loc, func)): (Loc.t, Ast.Function.t(Loc.t, Loc.t)) => (
     loc,
-    {...func, predicate: None, returnType: None, typeParameters: None},
+    {...func, predicate: None, return: None, tparams: None},
   );
 
-  let map_pattern = (_scope, (loc, pattern)): Ast.Pattern.t(Loc.t) => {
+  let map_pattern = (_scope, (loc, pattern)): Ast.Pattern.t(Loc.t, Loc.t) => {
     module P = Ast.Pattern;
     let pattern =
       switch (pattern) {
-      | P.Object(obj) => P.Object({...obj, typeAnnotation: None})
-      | P.Array(arr) => P.Array({...arr, typeAnnotation: None})
+      | P.Object(obj) => P.Object({...obj, annot: None})
+      | P.Array(arr) => P.Array({...arr, annot: None})
       | P.Identifier(ident) =>
-        P.Identifier({...ident, typeAnnotation: None, optional: false})
+        P.Identifier({...ident, annot: None, optional: false})
       | node => node
       };
 
     (loc, pattern);
   };
 
-  let map_class = (cls: Ast.Class.t(Loc.t)) => {
+  let map_class = (cls: Ast.Class.t(Loc.t, Loc.t)) => {
     module C = Ast.Class;
     let (body_loc, {C.Body.body}) = cls.body;
     let body =
@@ -30,18 +31,16 @@ let transpile = (_context, program) => {
           switch (el) {
           | C.Body.Property((
               loc,
-              {value, typeAnnotation, static, variance, _} as prop,
+              {value, annot, static, variance, _} as prop,
             )) =>
             /* this strips away properties declared only as type annotations */
-            if (!static
-                && value == None
-                && (typeAnnotation != None || variance != None)) {
+            if (!static && value == None && (annot != None || variance != None)) {
               None;
             } else {
               Some(
                 C.Body.Property((
                   loc,
-                  {...prop, typeAnnotation: None, variance: None},
+                  {...prop, annot: None, variance: None},
                 )),
               );
             }
@@ -52,14 +51,19 @@ let transpile = (_context, program) => {
 
     {
       ...cls,
-      typeParameters: None,
-      superTypeParameters: None,
+      tparams: None,
       implements: [],
+      extends:
+        switch (cls.extends) {
+        | None => None
+        | Some((loc, {C.Extends.expr, _})) =>
+          Some((loc, {C.Extends.expr, targs: None}))
+        },
       body: (body_loc, {C.Body.body: body}),
     };
   };
 
-  let map_expression = (_scope, (loc, node): Ast.Expression.t(Loc.t)) => {
+  let map_expression = (_scope, (loc, node): Ast.Expression.t(Loc.t, Loc.t)) => {
     module E = Ast.Expression;
     let node =
       switch (node) {
@@ -71,7 +75,7 @@ let transpile = (_context, program) => {
     (loc, node);
   };
 
-  let map_statement = (_scope, (loc, stmt): Ast.Statement.t(Loc.t)) => {
+  let map_statement = (_scope, (loc, stmt): Ast.Statement.t(Loc.t, Loc.t)) => {
     module S = Ast.Statement;
     let stmt =
       switch (stmt) {

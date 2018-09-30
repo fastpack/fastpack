@@ -1,4 +1,4 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 
 module E = Ast.Expression;
@@ -17,7 +17,8 @@ let transpile = (_, program) => {
     E.Literal(FastpackUtil.AstHelper.literal_true),
   );
 
-  let map_expression = (context, (loc, node): Ast.Expression.t(Loc.t)) => {
+  let map_expression =
+      (context, (loc, node): Ast.Expression.t(Loc.t, Loc.t)) => {
     open Ast.JSX;
 
     /*** Transpile JSX elememnt name */
@@ -36,7 +37,6 @@ let transpile = (_, program) => {
             _object: (loc, aux_object(_object)),
             property: E.Member.PropertyIdentifier(aux_property(property)),
             computed: false,
-            optional: false,
           })
         };
 
@@ -54,7 +54,6 @@ let transpile = (_, program) => {
             _object: (Loc.none, aux_object(_object)),
             property: E.Member.PropertyIdentifier(aux_property(property)),
             computed: false,
-            optional: false,
           }),
         ))
       | NamespacedName((loc, _)) =>
@@ -68,7 +67,8 @@ let transpile = (_, program) => {
     };
 
     /*** Transpile JSX attributes */
-    let transpile_attributes = (attributes: list(Opening.attribute(Loc.t))) => {
+    let transpile_attributes =
+        (attributes: list(Opening.attribute(Loc.t, Loc.t))) => {
       let empty_object_literal = (Loc.none, E.Object({properties: []}));
 
       let object_assign = arguments => (
@@ -80,14 +80,13 @@ let transpile = (_, program) => {
               computed: false,
               _object: (Loc.none, E.Identifier((Loc.none, "Object"))),
               property: E.Member.PropertyIdentifier((Loc.none, "assign")),
-              optional: false,
             }),
           ),
           arguments: [
             E.Expression(empty_object_literal),
             ...List.rev(arguments),
           ],
-          optional: false,
+          targs: None
         }),
       );
 
@@ -108,7 +107,7 @@ let transpile = (_, program) => {
 
         let (bucket, expressions) =
           List.fold_left(
-            ((bucket, expressions), attr: Opening.attribute(Loc.t)) =>
+            ((bucket, expressions), attr: Opening.attribute(Loc.t, Loc.t)) =>
               switch (attr) {
               | Opening.Attribute((loc, {name, value})) =>
                 let key =
@@ -210,7 +209,7 @@ let transpile = (_, program) => {
         |> String.concat(" ");
       };
 
-      let transpile_child = ((loc, child): child(Loc.t)) => {
+      let transpile_child = ((loc, child): child(Loc.t, Loc.t)) => {
         let expr =
           switch (child) {
           | Element(element) => Some((loc, transpile_element(element)))
@@ -265,7 +264,6 @@ let transpile = (_, program) => {
             _object: (Loc.none, E.Identifier((Loc.none, "React"))),
             property:
               E.Member.PropertyIdentifier((Loc.none, "createElement")),
-            optional: false,
           }),
         ),
         arguments: [
@@ -273,7 +271,7 @@ let transpile = (_, program) => {
           transpile_attributes(attributes),
           ...transpile_children(children),
         ],
-        optional: false,
+        targs: None
       });
     }
     and transpile_fragment =
@@ -287,7 +285,6 @@ let transpile = (_, program) => {
             _object: (Loc.none, E.Identifier((Loc.none, "React"))),
             property: E.Member.PropertyIdentifier((Loc.none, "Fragment")),
             computed: false,
-            optional: false,
           }),
         ));
 
@@ -299,11 +296,10 @@ let transpile = (_, program) => {
             _object: (Loc.none, E.Identifier((Loc.none, "React"))),
             property:
               E.Member.PropertyIdentifier((Loc.none, "createElement")),
-            optional: false,
           }),
         ),
         arguments: [name, E.Expression(null_expression), ...elements],
-        optional: false,
+        targs: None
       });
     };
 

@@ -4,7 +4,7 @@
  **/
 module AstMapper = FastpackUtil.AstMapper;
 module AstHelper = FastpackUtil.AstHelper;
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module E = Ast.Expression;
 module F = Ast.Function;
@@ -18,7 +18,7 @@ module L = Ast.Literal;
  * TODO: Decide if we need to move this to a top level module.
  **/
 module AstFolder = {
-  let rec fold_pattern = (f, v, (_loc, node): P.t(Loc.t)) => {
+  let rec fold_pattern = (f, v, (_loc, node): P.t(Loc.t, Loc.t)) => {
     let v =
       switch (node) {
       | P.Object({properties, _}) =>
@@ -62,14 +62,13 @@ module Helper = {
           computed: false,
           _object: (Loc.none, E.Identifier((Loc.none, "Object"))),
           property: E.Member.PropertyIdentifier((Loc.none, "assign")),
-          optional: false,
         }),
       ),
       arguments: [
         E.Expression(empty_object_literal),
         ...List.rev(arguments),
       ],
-      optional: false,
+      targs: None
     }),
   );
 
@@ -85,11 +84,10 @@ module Helper = {
             computed: false,
             _object: (Loc.none, E.Identifier((Loc.none, "$fpack"))),
             property: E.Member.PropertyIdentifier((Loc.none, "objectOmit")),
-            optional: false,
           }),
         ),
         arguments: [E.Expression(expr), E.Expression(keys)],
-        optional: false,
+        targs: None,
       }),
     );
   };
@@ -109,7 +107,7 @@ module Helper = {
 };
 
 module TranspileObjectSpread = {
-  let test = (obj: E.Object.t(Loc.t)) =>
+  let test = (obj: E.Object.t(Loc.t, Loc.t)) =>
     List.exists(
       fun
       | E.Object.SpreadProperty(_) => true
@@ -117,7 +115,7 @@ module TranspileObjectSpread = {
       obj.properties,
     );
 
-  let transpile = (obj: E.Object.t(Loc.t)) => {
+  let transpile = (obj: E.Object.t(Loc.t, Loc.t)) => {
     let add_argument = (bucket, arguments) =>
       switch (bucket) {
       | [] => arguments
@@ -147,14 +145,14 @@ module TranspileObjectSpread = {
 module TranspileObjectSpreadRest = {
   module Pattern = {
     type item =
-      | Assign((P.t'(Loc.t), E.t(Loc.t)))
-      | Omit((P.t'(Loc.t), E.t(Loc.t), list(E.t(Loc.t))));
+      | Assign((P.t'(Loc.t, Loc.t), E.t(Loc.t, Loc.t)))
+      | Omit((P.t'(Loc.t, Loc.t), E.t(Loc.t, Loc.t), list(E.t(Loc.t, Loc.t))));
 
     type t = {
       before: list(item),
       self: option(item),
       after: list(item),
-      result: E.t(Loc.t),
+      result: E.t(Loc.t, Loc.t),
     };
 
     let test = {
@@ -455,8 +453,8 @@ module TranspileObjectSpreadRest = {
           generator: false,
           predicate: None,
           expression: false,
-          typeParameters: None,
-          returnType: None,
+          tparams: None,
+          return: None,
           body:
             F.BodyBlock((
               Loc.none,
@@ -565,7 +563,7 @@ module TranspileObjectSpreadRest = {
 
   module VariableDeclaration = {
     let test =
-        (~with_init=true, {declarations, _}: S.VariableDeclaration.t(Loc.t)) => {
+        (~with_init=true, {declarations, _}: S.VariableDeclaration.t(Loc.t, Loc.t)) => {
       let test_declaration =
           ((_, {S.VariableDeclaration.Declarator.id, init})) =>
         switch (with_init, id, init) {
@@ -642,7 +640,7 @@ module TranspileObjectSpreadRest = {
                     Loc.none,
                     Ast.Pattern.Identifier({
                       name: (Loc.none, binding),
-                      typeAnnotation: None,
+                      annot: None,
                       optional: false,
                     }),
                   ),
@@ -719,58 +717,64 @@ module TranspileObjectSpreadRest = {
   };
 
   module Try = {
-    let test = ((_, {param, _}): S.Try.CatchClause.t(Loc.t)) =>
-      Pattern.test(param);
+    let test = ((_, {param, _}): S.Try.CatchClause.t(Loc.t, Loc.t)) =>
+      switch (param) {
+      | None => false
+      | Some(param) => Pattern.test(param)
+      };
 
     let transpile =
         (
           context,
           scope,
-          (loc, {S.Try.CatchClause.body: (body_loc, {body}), param}),
-        ) => {
-      let name = context.Context.gen_binding(scope);
-      let new_param = (
-        Loc.none,
-        P.Identifier({
-          name: (Loc.none, name),
-          typeAnnotation: None,
-          optional: false,
-        }),
-      );
-
-      let body = [
-        (
+          (loc, {S.Try.CatchClause.body: (body_loc, {body}), param}) as orig,
+        ) =>
+      switch (param) {
+      | None => orig
+      | Some(param) =>
+        let name = context.Context.gen_binding(scope);
+        let new_param = (
           Loc.none,
-          S.VariableDeclaration(
-            VariableDeclaration.transpile(
-              context,
-              scope,
-              {
-                S.VariableDeclaration.kind: S.VariableDeclaration.Let,
-                declarations: [
-                  (
-                    Loc.none,
-                    {
-                      S.VariableDeclaration.Declarator.id: param,
-                      init: Some(AstHelper.e_identifier(name)),
-                    },
-                  ),
-                ],
-              },
+          P.Identifier({
+            name: (Loc.none, name),
+            annot: None,
+            optional: false,
+          }),
+        );
+
+        let body = [
+          (
+            Loc.none,
+            S.VariableDeclaration(
+              VariableDeclaration.transpile(
+                context,
+                scope,
+                {
+                  S.VariableDeclaration.kind: S.VariableDeclaration.Let,
+                  declarations: [
+                    (
+                      Loc.none,
+                      {
+                        S.VariableDeclaration.Declarator.id: param,
+                        init: Some(AstHelper.e_identifier(name)),
+                      },
+                    ),
+                  ],
+                },
+              ),
             ),
           ),
-        ),
-        ...body,
-      ];
+          ...body,
+        ];
 
-      (
-        loc,
-        {
-          S.Try.CatchClause.param: new_param,
-          body: (body_loc, {body: body}),
-        },
-      );
-    };
+        (
+          loc,
+          {
+            S.Try.CatchClause.param: Some(new_param),
+            body: (body_loc, {body: body}),
+          },
+        );
+      };
   };
 
   module ForOf = {
@@ -801,7 +805,7 @@ module TranspileObjectSpreadRest = {
                     Loc.none,
                     Ast.Pattern.Identifier({
                       name: (Loc.none, binding),
-                      typeAnnotation: None,
+                      annot: None,
                       optional: false,
                     }),
                   ),
@@ -879,7 +883,7 @@ module TranspileObjectSpreadRest = {
 };
 
 let transpile = ({Context.require_runtime, _} as context, program) => {
-  let map_statement = ({AstMapper.scope, _}, (loc, node): S.t(Loc.t)) => {
+  let map_statement = ({AstMapper.scope, _}, (loc, node): S.t(Loc.t, Loc.t)) => {
     module T = TranspileObjectSpreadRest;
     let node =
       switch (node) {
@@ -926,7 +930,7 @@ let transpile = ({Context.require_runtime, _} as context, program) => {
     [(loc, node)];
   };
 
-  let map_expression = ({AstMapper.scope, _}, (loc, node): E.t(Loc.t)) => {
+  let map_expression = ({AstMapper.scope, _}, (loc, node): E.t(Loc.t, Loc.t)) => {
     let node =
       switch (node) {
       | E.Object(obj) when TranspileObjectSpread.test(obj) =>

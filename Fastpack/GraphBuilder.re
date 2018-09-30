@@ -2,7 +2,7 @@ module MLSet = Module.LocationSet;
 module StringSet = Set.Make(String);
 module M = Map.Make(String);
 
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module S = Ast.Statement;
 module E = Ast.Expression;
@@ -53,7 +53,7 @@ let is_json = (location: Module.location) =>
 
 let get_module_type = stmts => {
   /* TODO: what if module has only import() expression? */
-  let import_or_export = (module_type, (_, stmt): S.t(Loc.t)) =>
+  let import_or_export = (module_type, (_, stmt): S.t(Loc.t, Loc.t)) =>
     switch (module_type) {
     | Module.ESM
     | Module.CJS_esModule => module_type

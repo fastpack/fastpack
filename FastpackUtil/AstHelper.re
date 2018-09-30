@@ -1,4 +1,4 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module S = Ast.Statement;
 module E = Ast.Expression;
@@ -33,7 +33,7 @@ let e_literal_str = s => e_literal(literal_str(s));
 let p_identifier = name =>
   P.Identifier({
     P.Identifier.name: (Loc.none, name),
-    typeAnnotation: None,
+    annot: None,
     optional: false,
   });
 
@@ -45,7 +45,6 @@ let member = (_object, property) => (
     _object,
     property: E.Member.PropertyIdentifier((Loc.none, property)),
     computed: false,
-    optional: false,
   }),
 );
 
@@ -55,7 +54,6 @@ let member_expr = (_object, expr) => (
     _object,
     property: E.Member.PropertyExpression(expr),
     computed: true,
-    optional: false,
   }),
 );
 
@@ -64,7 +62,7 @@ let call = (callee, arguments) => (
   E.Call({
     callee,
     arguments: List.map(arg => E.Expression(arg), arguments),
-    optional: false,
+    targs: None,
   }),
 );
 
@@ -129,7 +127,7 @@ let variable_declaration = (loc, kind, name, value) => (
             Loc.none,
             Ast.Pattern.Identifier({
               name: (Loc.none, name),
-              typeAnnotation: None,
+              annot: None,
               optional: false,
             }),
           ),
