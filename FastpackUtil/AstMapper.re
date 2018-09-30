@@ -1,4 +1,4 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module Expression = Ast.Expression;
 module Pattern = Ast.Pattern;
@@ -17,11 +17,14 @@ type ctx = {
   parents: list(APS.parent),
 }
 and mapper = {
-  map_statement: (ctx, Statement.t(Loc.t)) => list(Statement.t(Loc.t)),
-  map_expression: (ctx, Expression.t(Loc.t)) => Expression.t(Loc.t),
+  map_statement:
+    (ctx, Statement.t(Loc.t, Loc.t)) => list(Statement.t(Loc.t, Loc.t)),
+  map_expression:
+    (ctx, Expression.t(Loc.t, Loc.t)) => Expression.t(Loc.t, Loc.t),
   map_function:
-    (ctx, (Loc.t, Function.t(Loc.t))) => (Loc.t, Function.t(Loc.t)),
-  map_pattern: (ctx, Pattern.t(Loc.t)) => Pattern.t(Loc.t),
+    (ctx, (Loc.t, Function.t(Loc.t, Loc.t))) =>
+    (Loc.t, Function.t(Loc.t, Loc.t)),
+  map_pattern: (ctx, Pattern.t(Loc.t, Loc.t)) => Pattern.t(Loc.t, Loc.t),
 };
 
 let do_nothing = (_, node) => node;
@@ -132,7 +135,8 @@ and map_statement = (ctx, (loc, statement)) => {
             (ctx, (loc, {Statement.Try.CatchClause.param, body})) => (
               loc,
               {
-                Statement.Try.CatchClause.param: map_pattern(ctx, param),
+                Statement.Try.CatchClause.param:
+                  map_if_some(ctx, map_pattern, param),
                 body: map_block(ctx, body),
               },
             ),
@@ -255,11 +259,19 @@ and map_statement = (ctx, (loc, statement)) => {
 
   ctx.handler.map_statement(ctx, (loc, statement));
 }
-and map_class = (ctx, {Class.body: (body_loc, {body}), superClass, _} as n) =>
+and map_class = (ctx, {Class.body: (body_loc, {body}), extends, _} as n) =>
   /*** TODO: handle `classDecorators` */
   {
     ...n,
-    superClass: map_if_some(ctx, map_expression, superClass),
+    extends:
+      map_if_some(
+        ctx,
+        (ctx, (loc, {Class.Extends.expr, targs})) => (
+          loc,
+          {Class.Extends.expr: map_expression(ctx, expr), targs},
+        ),
+        extends,
+      ),
     body: (
       body_loc,
       {
@@ -292,10 +304,10 @@ and map_expression = (ctx, (loc, expression)) => {
     };
 
     switch (expression) {
-    | Expression.TypeCast({expression, typeAnnotation}) =>
+    | Expression.TypeCast({expression, annot}) =>
       Expression.TypeCast({
         expression: map_expression(ctx, expression),
-        typeAnnotation,
+        annot,
       })
     | Expression.Array({elements}) =>
       Expression.Array({
@@ -372,15 +384,46 @@ and map_expression = (ctx, (loc, expression)) => {
       let alternate = map_expression(ctx, alternate);
       Expression.Conditional({test, consequent, alternate});
 
-    | Expression.New({callee, arguments}) =>
+    | Expression.New({callee, arguments, targs}) =>
       let callee = map_expression(ctx, callee);
       let arguments = map_list(ctx, map_expression_or_spread, arguments);
-      Expression.New({callee, arguments});
+      Expression.New({callee, arguments, targs});
 
-    | Expression.Call({callee, arguments, optional}) =>
+    | Expression.OptionalCall({call: {callee, arguments, targs}, optional}) =>
       let callee = map_expression(ctx, callee);
       let arguments = map_list(ctx, map_expression_or_spread, arguments);
-      Expression.Call({callee, arguments, optional});
+      Expression.OptionalCall({
+        call: {
+          callee,
+          arguments,
+          targs,
+        },
+        optional,
+      });
+
+    | Expression.Call({callee, arguments, targs}) =>
+      let callee = map_expression(ctx, callee);
+      let arguments = map_list(ctx, map_expression_or_spread, arguments);
+      Expression.Call({callee, arguments, targs});
+
+    | Expression.OptionalMember({member, optional}) =>
+      let _object = map_expression(ctx, member._object);
+      let property =
+        switch (member.property) {
+        | Expression.Member.PropertyPrivateName(_)
+        | Expression.Member.PropertyIdentifier(_) => member.property
+        | Expression.Member.PropertyExpression(expr) =>
+          let expr = map_expression(ctx, expr);
+          Expression.Member.PropertyExpression(expr);
+        };
+      Expression.OptionalMember({
+        member: {
+          ...member,
+          _object,
+          property,
+        },
+        optional,
+      });
 
     | Expression.Member({_object, property, _} as n) =>
       let _object = map_expression(ctx, _object);
@@ -392,7 +435,6 @@ and map_expression = (ctx, (loc, expression)) => {
           let expr = map_expression(ctx, expr);
           Expression.Member.PropertyExpression(expr);
         };
-
       Expression.Member({...n, _object, property});
 
     | Expression.Yield({argument, _} as n) =>

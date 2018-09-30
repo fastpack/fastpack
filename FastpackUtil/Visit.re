@@ -1,4 +1,4 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module E = Ast.Expression;
 module P = Ast.Pattern;
@@ -11,17 +11,17 @@ type visit_action =
   | Continue(ctx)
   | Break
 and visit_handler = {
-  visit_statement: (ctx, S.t(Loc.t)) => visit_action,
-  enter_statement: (ctx, S.t(Loc.t)) => unit,
-  leave_statement: (ctx, S.t(Loc.t)) => unit,
-  visit_expression: (ctx, E.t(Loc.t)) => visit_action,
-  visit_function: (ctx, (Loc.t, F.t(Loc.t))) => visit_action,
-  enter_function: (ctx, (Loc.t, F.t(Loc.t))) => unit,
-  leave_function: (ctx, (Loc.t, F.t(Loc.t))) => unit,
-  visit_block: (ctx, (Loc.t, S.Block.t(Loc.t))) => visit_action,
-  enter_block: (ctx, (Loc.t, S.Block.t(Loc.t))) => unit,
-  leave_block: (ctx, (Loc.t, S.Block.t(Loc.t))) => unit,
-  visit_pattern: (ctx, P.t(Loc.t)) => visit_action,
+  visit_statement: (ctx, S.t(Loc.t, Loc.t)) => visit_action,
+  enter_statement: (ctx, S.t(Loc.t, Loc.t)) => unit,
+  leave_statement: (ctx, S.t(Loc.t, Loc.t)) => unit,
+  visit_expression: (ctx, E.t(Loc.t, Loc.t)) => visit_action,
+  visit_function: (ctx, (Loc.t, F.t(Loc.t, Loc.t))) => visit_action,
+  enter_function: (ctx, (Loc.t, F.t(Loc.t, Loc.t))) => unit,
+  leave_function: (ctx, (Loc.t, F.t(Loc.t, Loc.t))) => unit,
+  visit_block: (ctx, (Loc.t, S.Block.t(Loc.t, Loc.t))) => visit_action,
+  enter_block: (ctx, (Loc.t, S.Block.t(Loc.t, Loc.t))) => unit,
+  leave_block: (ctx, (Loc.t, S.Block.t(Loc.t, Loc.t))) => unit,
+  visit_pattern: (ctx, P.t(Loc.t, Loc.t)) => visit_action,
 }
 and ctx = {
   handler: visit_handler,
@@ -52,7 +52,7 @@ let visit_if_some = (ctx, visit) =>
   | None => ()
   | Some(item) => visit(ctx, item);
 
-let rec visit_statement = (ctx, (loc, statement): S.t(Loc.t)) => {
+let rec visit_statement = (ctx, (loc, statement): S.t(Loc.t, Loc.t)) => {
   let () = ctx.handler.enter_statement(ctx, (loc, statement));
   let action = ctx.handler.visit_statement(ctx, (loc, statement));
   let () =
@@ -86,8 +86,7 @@ let rec visit_statement = (ctx, (loc, statement): S.t(Loc.t)) => {
 
       | S.With({_object, body}) => visit_statement(ctx, body)
 
-      | S.TypeAlias({id: _id, typeParameters: _typeParameters, right: _right}) =>
-        ()
+      | S.TypeAlias(_) => ()
 
       | S.Switch({discriminant, cases}) =>
         visit_expression(ctx, discriminant);
@@ -110,7 +109,7 @@ let rec visit_statement = (ctx, (loc, statement): S.t(Loc.t)) => {
         visit_if_some(
           ctx,
           (ctx, (_loc, {S.Try.CatchClause.param, body})) => {
-            visit_pattern(ctx, param);
+            visit_if_some(ctx, visit_pattern, param);
             visit_block(ctx, body);
           },
           try_handler,
@@ -195,10 +194,12 @@ let rec visit_statement = (ctx, (loc, statement): S.t(Loc.t)) => {
 
   ctx.handler.leave_statement(ctx, (loc, statement));
 }
-and visit_class = (ctx, {Class.body: (_, {body}), superClass, _}) => {
-  /*** TODO: handle `classDecorators` */
-  /*** TODO: handle `implements` */
-  visit_if_some(ctx, visit_expression, superClass);
+and visit_class = (ctx, {Class.body: (_, {body}), extends, _}) => {
+  visit_if_some(
+    ctx,
+    (ctx, (_, {Class.Extends.expr, _})) => visit_expression(ctx, expr),
+    extends,
+  );
   visit_list(
     ctx,
     (ctx, item) =>
@@ -214,28 +215,10 @@ and visit_class = (ctx, {Class.body: (_, {body}), superClass, _}) => {
           },
         )) =>
         visit_function(ctx, value)
-      | Class.Body.Property((
-          _loc,
-          {
-            key,
-            value,
-            typeAnnotation: _typeAnnotation,
-            static: _static,
-            variance: _variance,
-          },
-        )) =>
+      | Class.Body.Property((_loc, {key, value, _})) =>
         visit_object_property_key(ctx, key);
         visit_if_some(ctx, visit_expression, value);
-      | Class.Body.PrivateField((
-          _loc,
-          {
-            key: _key,
-            value,
-            typeAnnotation: _typeAnnotation,
-            static: _static,
-            variance: _variance,
-          },
-        )) =>
+      | Class.Body.PrivateField((_loc, {value, _})) =>
         visit_if_some(ctx, visit_expression, value)
       },
     body,
@@ -303,14 +286,16 @@ and visit_expression = (ctx, (loc, expression) as expr) => {
       visit_expression(ctx, consequent);
       visit_expression(ctx, alternate);
 
-    | E.New({callee, arguments}) =>
+    | E.New({callee, arguments, _}) =>
       visit_expression(ctx, callee);
       visit_list(ctx, visit_expression_or_spread, arguments);
 
+    | E.OptionalCall({call: {callee, arguments, _}, _})
     | E.Call({callee, arguments, _}) =>
       visit_expression(ctx, callee);
       visit_list(ctx, visit_expression_or_spread, arguments);
 
+    | E.OptionalMember({member: {_object, property, _}, _})
     | E.Member({_object, property, _}) =>
       visit_expression(ctx, _object);
       switch (property) {
@@ -342,12 +327,12 @@ and visit_expression = (ctx, (loc, expression) as expr) => {
     };
   };
 }
-and visit_pattern = (ctx, (_loc, pattern) as p: P.t(Loc.t)) =>
+and visit_pattern = (ctx, (_loc, pattern) as p: P.t(Loc.t, Loc.t)) =>
   switch (ctx.handler.visit_pattern(ctx, p)) {
   | Break => ()
   | Continue(ctx) =>
     switch (pattern) {
-    | P.Object({properties, typeAnnotation: _typeAnnotation}) =>
+    | P.Object({properties, _}) =>
       visit_list(
         ctx,
         (ctx, prop) =>
@@ -363,7 +348,7 @@ and visit_pattern = (ctx, (_loc, pattern) as p: P.t(Loc.t)) =>
         properties,
       )
 
-    | P.Array({elements, typeAnnotation: _typeAnnotation}) =>
+    | P.Array({elements, _}) =>
       visit_list(
         ctx,
         (ctx, element) =>

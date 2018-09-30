@@ -1,14 +1,14 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module S = Ast.Statement;
 module E = Ast.Expression;
 module F = Ast.Function;
 
 type parent =
-  | Statement(S.t(Loc.t))
-  | Function((Loc.t, F.t(Loc.t)))
-  | Block((Loc.t, S.Block.t(Loc.t)))
-  | Expression(E.t(Loc.t));
+  | Statement(S.t(Loc.t, Loc.t))
+  | Function((Loc.t, F.t(Loc.t, Loc.t)))
+  | Block((Loc.t, S.Block.t(Loc.t, Loc.t)))
+  | Expression(E.t(Loc.t, Loc.t));
 
 let push_expression = (expr, stack) => [Expression(expr), ...stack];
 

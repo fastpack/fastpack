@@ -40,7 +40,7 @@
     "@esy-ocaml/reason": "*",
     "@esy-ocaml/rtop": "3.3.0",
     "refmterr": "*",
-    "@fastpack/flow_parser": "0.70.0",
+    "@fastpack/flow_parser": "0.81.0",
     "@opam/cmdliner": "1.0.2",
     "@opam/containers": "1.3",
     "@opam/cohttp": "*",

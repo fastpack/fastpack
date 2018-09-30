@@ -1,4 +1,4 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module S = Ast.Statement;
 module F = Ast.Function;
@@ -185,7 +185,7 @@ let update_bindings = (loc, name, typ, shorthand, bindings: M.t(binding)) =>
     raise @@ ScopeError(NamingCollision(name, loc, prev_loc))
   };
 
-let names_of_node = ((_, node): S.t(Loc.t)) => {
+let names_of_node = ((_, node): S.t(Loc.t, Loc.t)) => {
   let type_of_kind = kind =>
     switch (kind) {
     | S.VariableDeclaration.Let => Let
@@ -605,7 +605,12 @@ let of_block = (parents, (_: Loc.t, {S.Block.body}) as block, scope) => {
             ..._,
           ]
             when body == block =>
-          names_of_pattern(param)
+          (
+            switch (param) {
+            | None => []
+            | Some(param) => names_of_pattern(param)
+            }
+          )
           |> List.map(((id, shorthand)) => (id, Let, shorthand))
           |> gather_bindings
         | _ => M.empty

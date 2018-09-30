@@ -1,4 +1,4 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module S = Ast.Statement;
 module E = Ast.Expression;
@@ -52,7 +52,10 @@ module Transform = {
   };
 
   let transform_class = cls => {
-    let {C.id, classDecorators, superClass, body: (_, {body}), _} = cls;
+    let {C.id, classDecorators, extends, body: (_, {body}), _} = cls;
+
+    let decoratorsToExpressions =
+      List.map(((_, {C.Decorator.expression})) => expression);
 
     let (props, methods) =
       List.partition(
@@ -87,13 +90,13 @@ module Transform = {
               _,
               {C.Method.key, decorators: [_, ..._] as decorators, _},
             )) =>
-            Some((key, decorators))
+            Some((key, decorators |> decoratorsToExpressions))
           | _ => None
           },
         methods,
       );
 
-    let move_props_to_constructor = (cls: C.t(Loc.t)) =>
+    let move_props_to_constructor = (cls: C.t(Loc.t, Loc.t)) =>
       switch (props) {
       | [] => cls
       | props =>
@@ -184,7 +187,7 @@ module Transform = {
             );
           | None =>
             let maybe_super =
-              switch (superClass) {
+              switch (extends) {
               | None => []
               | Some(_) => [
                   (
@@ -200,7 +203,7 @@ module Transform = {
                               {argument: AstHelper.e_identifier("args")},
                             )),
                           ],
-                          optional: false,
+                          targs: None,
                         }),
                       ),
                       directive: None,
@@ -249,8 +252,8 @@ module Transform = {
                       generator: false,
                       predicate: None,
                       expression: false,
-                      returnType: None,
-                      typeParameters: None,
+                      return: None,
+                      tparams: None,
                     },
                   ),
                 },
@@ -273,7 +276,13 @@ module Transform = {
       classDecorators: [],
     };
 
-    (cls, id, statics, classDecorators, decorators);
+    (
+      cls,
+      id,
+      statics,
+      classDecorators |> decoratorsToExpressions,
+      decorators,
+    );
   };
 
   let wrap_class = (cls, statics, classDecorators, decorators) => {
@@ -313,7 +322,7 @@ module Transform = {
 };
 
 let transpile = ({Context.require_runtime, _}, program) => {
-  let map_expression = (_, (loc, node): E.t(Loc.t)) =>
+  let map_expression = (_, (loc, node): E.t(Loc.t, Loc.t)) =>
     switch (node) {
     | E.Class(cls) =>
       switch (Transform.transform_class(cls)) {
@@ -325,7 +334,8 @@ let transpile = ({Context.require_runtime, _}, program) => {
     | _ => (loc, node)
     };
 
-  let map_statement = ({AstMapper.parents, _}, (loc, stmt): S.t(Loc.t)) =>
+  let map_statement =
+      ({AstMapper.parents, _}, (loc, stmt): S.t(Loc.t, Loc.t)) =>
     switch (stmt) {
     | S.ExportDefaultDeclaration(
         {

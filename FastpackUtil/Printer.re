@@ -1,4 +1,4 @@
-module Ast = Flow_parser.Ast;
+module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 module E = Ast.Expression;
 module P = Ast.Pattern;
@@ -54,6 +54,9 @@ module Parens = {
     | E.Conditional(_) => 4
     | E.Logical({operator: E.Logical.Or, _}) => 5
     | E.Logical({operator: E.Logical.And, _}) => 6
+    | E.Logical({operator: E.Logical.NullishCoalesce, _}) =>
+      ie("NullishCoalesce is not supported")
+
     | E.Binary({operator: E.Binary.BitOr, _}) => 7
     | E.Binary({operator: E.Binary.Xor, _}) => 8
     | E.Binary({operator: E.Binary.BitAnd, _}) => 9
@@ -108,6 +111,8 @@ module Parens = {
     | E.TemplateLiteral(_)
     | E.This => 100
 
+    | E.OptionalCall(_) => ie("Optional Call is not supported")
+    | E.OptionalMember(_) => ie("Optional Member is not supported")
     | E.TypeCast(_) => ie("Precedence: TypeCast is not supported")
     | E.Generator(_) => ie("Precedence: Generator is not supported")
     | E.Comprehension(_) => ie("Precedence: Comprehension is not supported")
@@ -310,7 +315,7 @@ let emit_if_none = (emit, option, ctx) =>
   };
 
 let print =
-    (~with_scope=false, (_, statements: list(S.t(Loc.t)), comments)) => {
+    (~with_scope=false, (_, statements: list(S.t(Loc.t, Loc.t)), comments)) => {
   let rec emit_scope = (~sep="\n", ~emit_newline_after=true, get_scope, ctx) =>
     if (with_scope) {
       let ctx = {...ctx, scope: get_scope(ctx.scope)};
@@ -472,7 +477,7 @@ let print =
              ((_loc, {S.Try.CatchClause.param, body}), ctx) =>
                ctx
                |> emit(" catch (")
-               |> emit_pattern(param)
+               |> emit_if_some(emit_pattern, param)
                |> emit(") ")
                |> emit_block(body),
              handler,
@@ -903,6 +908,7 @@ let print =
           switch (operator) {
           | E.Logical.Or => emit(" || ")
           | E.Logical.And => emit(" && ")
+					| E.Logical.NullishCoalesce => emit(" ?? ")
           }
         )
         |> emit_expression(right)
@@ -913,7 +919,7 @@ let print =
         |> emit_expression(consequent)
         |> emit(" : ")
         |> emit_expression(alternate)
-      | E.New({callee, arguments}) =>
+      | E.New({callee, arguments, _}) =>
         ctx
         |> emit("new ")
         |> emit_expression(callee)
@@ -924,6 +930,8 @@ let print =
              arguments,
            )
         |> emit(")")
+
+      | E.OptionalCall({call: {callee, arguments, _}, _})
       | E.Call({callee, arguments, _}) =>
         ctx
         |> emit_expression(callee)
@@ -934,6 +942,8 @@ let print =
              arguments,
            )
         |> emit(")")
+
+      | E.OptionalMember({member: {_object, property, computed, _}, _})
       | E.Member({_object, property, computed, _}) =>
         let emit_property = property =>
           switch (property) {
@@ -1097,19 +1107,7 @@ let print =
          closingElement,
        );
   }
-  and emit_class =
-      (
-        {
-          id,
-          body: (_, {body}),
-          superClass,
-          typeParameters,
-          superTypeParameters,
-          implements,
-          classDecorators,
-        },
-        ctx,
-      ) => {
+  and emit_class = ({id, body: (_, {body}), extends, classDecorators, _}, ctx) => {
     let emit_class_element = (item, ctx) =>
       switch (item) {
       | C.Body.Method((loc, {kind, key, value, static, decorators})) =>
@@ -1136,10 +1134,7 @@ let print =
              ~emit_id=emit_object_property_key(key),
              value,
            )
-      | C.Body.Property((
-          loc,
-          {key, value, typeAnnotation, static, variance},
-        )) =>
+      | C.Body.Property((loc, {key, value, static, variance, _})) =>
         ctx
         |> emit_comments(loc)
         |> (
@@ -1151,28 +1146,21 @@ let print =
         )
         |> emit_if_some(emit_variance, variance)
         |> emit_object_property_key(key)
-        |> emit_if_some(emit_type_annotation, typeAnnotation)
         |> emit_if_some(_ => emit(" = "), value)
         |> emit_if_some(emit_expression, value)
         |> emit_semicolon
       | C.Body.PrivateField(_) => ie("Class PrivateField is not implemented")
       };
 
-    fail_if(
-      List.length(implements) > 0,
-      "ClassDeclaration: implements is not supported",
-    );
     ctx
     |> emit_list(emit_decorator, classDecorators)
     |> emit("class ")
     |> emit_if_some(emit_identifier, id)
-    |> emit_if_some(emit_type_parameter_declaration, typeParameters)
     |> emit_if_some(
-         (superClass, ctx) =>
-           ctx |> emit(" extends ") |> emit_expression(superClass),
-         superClass,
+         ((_, {C.Extends.expr, _}), ctx) =>
+           ctx |> emit(" extends ") |> emit_expression(expr),
+         extends,
        )
-    |> emit_if_some(emit_type_parameter_instantiation, superTypeParameters)
     |> emit(" {")
     |> indent
     |> emit_list(~emit_sep=emit_newline, emit_class_element, body)
@@ -1209,7 +1197,7 @@ let print =
   and emit_pattern = ((loc, pattern), ctx) => {
     let ctx = emit_comments(loc, ctx);
     switch (pattern) {
-    | P.Object({properties, typeAnnotation}) =>
+    | P.Object({properties, _}) =>
       ctx
       |> emit("{")
       |> emit_list(
@@ -1230,8 +1218,7 @@ let print =
            properties,
          )
       |> emit("}")
-      |> emit_if_some(emit_type_annotation, typeAnnotation)
-    | P.Array({elements, typeAnnotation}) =>
+    | P.Array({elements, _}) =>
       ctx
       |> emit("[")
       |> emit_list(
@@ -1246,20 +1233,9 @@ let print =
            elements,
          )
       |> emit("]")
-      |> emit_if_some(emit_type_annotation, typeAnnotation)
     | P.Assignment({left, right}) =>
       ctx |> emit_pattern(left) |> emit(" = ") |> emit_expression(right)
-    | P.Identifier({name, typeAnnotation, optional}) =>
-      ctx
-      |> emit_identifier(name)
-      |> (
-        if (optional) {
-          emit("?");
-        } else {
-          emit_none;
-        }
-      )
-      |> emit_if_some(emit_type_annotation, typeAnnotation)
+    | P.Identifier({name, _}) => ctx |> emit_identifier(name)
     | P.Expression(expr) => emit_expression(expr, ctx)
     };
   }
@@ -1278,10 +1254,10 @@ let print =
     | E.Object.Property.Computed(expr) =>
       ctx |> emit("[") |> emit_expression(~parens=false, expr) |> emit("]")
     }
-  and emit_decorator = (decorator, ctx) =>
+  and emit_decorator = ((_, {C.Decorator.expression}), ctx) =>
     ctx
     |> emit("@(")
-    |> emit_expression(decorator)
+    |> emit_expression(expression)
     |> emit(")")
     |> emit_newline
   and emit_function =
@@ -1291,17 +1267,7 @@ let print =
         ~emit_id=?,
         (
           loc,
-          {
-            F.id,
-            params: (_, {params, rest}),
-            body,
-            async,
-            generator,
-            predicate: _predicate,
-            expression: _expression,
-            returnType,
-            typeParameters,
-          },
+          {F.id, params: (_, {params, rest}), body, async, generator, _},
         ) as f,
         ctx,
       ) => {
@@ -1341,7 +1307,6 @@ let print =
       | Some(emit_id) => emit_id
       }
     )
-    |> emit_if_some(emit_type_parameter_declaration, typeParameters)
     |> emit_if(!omit_parameter_parens, emit("("))
     |> emit_list(~emit_sep=emit_comma, emit_pattern, params)
     |> emit_if(List.length(params) > 0 && rest != None, emit(","))
@@ -1357,7 +1322,6 @@ let print =
          Scope.of_function(ctx.parents, f),
        )
     |> emit_if(as_arrow, emit(" =>"))
-    |> emit_if_some(emit_type_annotation, returnType)
     |> emit_space
     |> (
       switch (body) {
@@ -1401,8 +1365,6 @@ let print =
     )
     |> remove_scope;
   }
-  and emit_type_annotation = ((loc, typeAnnotation), ctx) =>
-    ctx |> emit_comments(loc) |> emit(": ") |> emit_type(typeAnnotation)
   and emit_variance = ((_, variance)) =>
     switch (variance) {
     | V.Plus => emit("+")
@@ -1451,83 +1413,6 @@ let print =
     | E.Spread((_, {argument})) =>
       ctx |> emit("...") |> emit_expression(~parens=false, argument)
     }
-  and emit_type = ((loc, value), ctx) => {
-    let ctx = emit_comments(loc, ctx);
-    switch (value) {
-    | T.Any => emit("any", ctx)
-    | T.Mixed => emit("mixed", ctx)
-    | T.Empty => ctx
-    | T.Void => emit("void", ctx)
-    | T.Null => emit("null", ctx)
-    | T.Number => emit("number", ctx)
-    | T.String => emit("string", ctx)
-    | T.Boolean => emit("boolean", ctx)
-    | T.Nullable(typ) => ctx |> emit("?") |> emit_type(typ)
-    | T.Function(typ) => emit_function_type((loc, typ), ctx)
-    | T.Object(typ) => emit_object_type((loc, typ), ctx)
-    | T.Array(typ) => ctx |> emit("Array<") |> emit_type(typ) |> emit(">")
-    | T.Generic(typ) => emit_generic_type((loc, typ), ctx)
-    | T.Union(_, _, _) => ctx
-    | T.Intersection(_, _, _) => ctx
-    | T.Typeof(typ) => ctx |> emit("typeof ") |> emit_type(typ)
-    | T.Tuple(typs) =>
-      ctx
-      |> emit("[")
-      |> emit_list(~emit_sep=emit_comma, emit_type, typs)
-      |> emit("]")
-    | T.StringLiteral({value: _, raw}) => emit(raw, ctx)
-    | T.NumberLiteral({value: _, raw}) => emit(raw, ctx)
-    | T.BooleanLiteral(value) =>
-      emit(if (value) {"true"} else {"false"}, ctx)
-    | T.Exists => emit("*", ctx)
-    };
-  }
-  and emit_object_type = ((_loc, _value), _ctx) =>
-    ie("emit_object_type: not implemented")
-  and emit_type_generic_identifier = (id, ctx) =>
-    switch (id) {
-    | T.Generic.Identifier.Unqualified(id) => ctx |> emit_identifier(id)
-    | T.Generic.Identifier.Qualified((_loc, {qualification, id})) =>
-      ctx
-      |> emit_identifier(id)
-      |> emit(": ")
-      |> emit_type_generic_identifier(qualification)
-    }
-  and emit_generic_type = ((loc, {id, typeParameters}), ctx) =>
-    ctx
-    |> emit_comments(loc)
-    |> emit_type_generic_identifier(id)
-    |> emit_if_some(emit_type_parameter_instantiation, typeParameters)
-  and emit_function_type = ((_loc, _value), _ctx) =>
-    ie("emit_function_type: not implemented")
-  and emit_type_parameter = ((loc, value), ctx) => {
-    let {T.ParameterDeclaration.TypeParam.name, bound, variance, default} = value;
-
-    ctx
-    |> emit_comments(loc)
-    |> emit_if_some(emit_variance, variance)
-    |> emit_identifier(name)
-    |> emit_if_some(
-         ((_, bound), ctx) => ctx |> emit(": ") |> emit_type(bound),
-         bound,
-       )
-    |> emit_if_some(
-         (default, ctx) => ctx |> emit(" = ") |> emit_type(default),
-         default,
-       );
-  }
-  and emit_type_parameter_declaration = ((loc, {params}), ctx) =>
-    ctx
-    |> emit_comments(loc)
-    |> emit("<")
-    |> emit_list(~emit_sep=emit_comma, emit_type_parameter, params)
-    |> emit(">")
-  and emit_type_parameter_instantiation = ((loc, {params}), ctx) =>
-    ctx
-    |> emit_comments(loc)
-    |> emit("<")
-    |> emit_list(~emit_sep=emit_comma, emit_type, params)
-    |> emit(">")
   and emit_literal = ((loc, {L.raw, _}), ctx) =>
     ctx |> emit_comments(loc) |> emit(raw)
   and emit_string_literal = ((_, {SL.raw, _})) => emit(raw)
