@@ -727,3 +727,61 @@ d: {"./index.js":"index"}
 Number of rebuilds: 1
 
 |}]
+
+let%expect_test "make sure data.json triggers rebuild" =
+  run_with
+    ~test_name:"watch"
+    ~cmd:"fpack --no-cache --dev index.js"
+    ~files:[
+      "index.js", {|let json = require('./data.json');|};
+      "data.json", {|{"x": 1}|};
+    ]
+    (fun initial_result change_and_rebuild ->
+       initial_result
+       |> change_and_rebuild
+         ~actions:["data.json", `Content {|{"x": 2}|}]
+       >>= (fun _ -> Lwt.return_unit)
+    );
+  [%expect_exact {|
+({
+"dataDOT$$json":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports = {\"x\": 1}\n;\n//# sourceURL=fpack:///data.json");
+},
+d: {}
+},
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("let json = __fastpack_require__(\"./data.json\");\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"./data.json":"dataDOT$$json"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
+
+});
+---------------------------------------------
+
+({
+"dataDOT$$json":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports = {\"x\": 2}\n;\n//# sourceURL=fpack:///data.json");
+},
+d: {}
+},
+"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("let json = __fastpack_require__(\"./data.json\");\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+},
+d: {"./data.json":"dataDOT$$json"}
+},
+"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
+
+});
+---------------------------------------------
+Number of rebuilds: 1
+
+|}]
