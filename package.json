@@ -49,7 +49,6 @@
     "@opam/lwt": "3.3.0",
     "@opam/merlin": "*",
     "@opam/sequence": "*",
-    "@opam/ocp-indent": "*",
     "@opam/utop": "^2.0.2",
     "@opam/websocket-lwt": "*",
     "@opam/yojson": "1.4.0",

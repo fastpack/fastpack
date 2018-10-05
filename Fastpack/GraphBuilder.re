@@ -46,7 +46,7 @@ let resolve = (ctx: Context.t, request: Module.Dependency.t) => {
 
 let is_json = (location: Module.location) =>
   switch (location) {
-  | Module.File({filename: Some(filename), _}) =>
+  | Module.File({filename: Some(filename), preprocessors: []}) =>
     String.suffix(~suf=".json", filename)
   | _ => false
   };
@@ -211,11 +211,25 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
       location,
     );
 
+    let recordBuildDependencies =
+      Lwt_list.fold_left_s(
+        (build_dependencies, filename) =>
+          switch%lwt (Cache.File.stat(filename, ctx.cache)) {
+          | Some({Unix.st_mtime, _}) =>
+            Lwt.return(M.add(filename, st_mtime, build_dependencies))
+          | None => Lwt.fail(Failure(filename ++ " does not exist"))
+          },
+        M.empty,
+      );
+
     switch (is_json(location), source) {
     | (true, Some(source)) =>
       let json =
         Yojson.to_string(`String("module.exports = " ++ source ++ ";"));
-      make_module(location, String.(sub(json, 1, length(json) - 2)));
+      let%lwt (m, dependencies) =
+        make_module(location, String.(sub(json, 1, length(json) - 2)));
+      let%lwt build_dependencies = recordBuildDependencies(self_dependency);
+      Lwt.return(({...m, build_dependencies}, dependencies));
     | (true, None) => failwith("impossible: *.json file without source")
     | (false, _) =>
       let%lwt {
@@ -251,16 +265,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
 
       let%lwt (m, _) = make_module(location, source);
       let%lwt build_dependencies =
-        Lwt_list.fold_left_s(
-          (build_dependencies, filename) =>
-            switch%lwt (Cache.File.stat(filename, ctx.cache)) {
-            | Some({Unix.st_mtime, _}) =>
-              Lwt.return(M.add(filename, st_mtime, build_dependencies))
-            | None => Lwt.fail(Failure(filename ++ " does not exist"))
-            },
-          M.empty,
-          self_dependency @ build_dependencies,
-        );
+        recordBuildDependencies(self_dependency @ build_dependencies);
 
       Lwt.return((
         {...m, module_type, scope, exports, build_dependencies, files},
