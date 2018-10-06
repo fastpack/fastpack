@@ -1,19 +1,7 @@
 {
-  "hash": "997cbfca47c89fdc938d15e287d877ec",
+  "hash": "752e11b783be2e778be781c309503274",
   "root": "fastpack@path:.",
   "node": {
-    "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#d488cd9321cd5036bd36ec96744ce78c5d45fc49": {
-      "record": {
-        "name": "yarn-pkg-config",
-        "version":
-          "github:esy-ocaml/yarn-pkg-config#d488cd9321cd5036bd36ec96744ce78c5d45fc49",
-        "source":
-          "github:esy-ocaml/yarn-pkg-config#d488cd9321cd5036bd36ec96744ce78c5d45fc49",
-        "files": [],
-        "opam": null
-      },
-      "dependencies": []
-    },
     "refmterr@3.1.7": {
       "record": {
         "name": "refmterr",
@@ -56,11 +44,21 @@
         "@opam/fmt@opam:0.8.5", "@opam/jbuilder@opam:transition",
         "@opam/logs@opam:0.6.2", "@opam/lwt@opam:3.3.0",
         "@opam/merlin@opam:3.1.0", "@opam/ppx_deriving@opam:4.2.1",
-        "@opam/ppx_expect@opam:v0.11.0", "@opam/ppx_let@opam:v0.11.0",
+        "@opam/ppx_expect@opam:v0.11.1", "@opam/ppx_let@opam:v0.11.0",
         "@opam/re@opam:1.7.1", "@opam/sequence@opam:1.1",
         "@opam/utop@opam:2.2.0", "@opam/websocket-lwt@opam:2.11",
         "@opam/yojson@opam:1.4.0", "ocaml@4.6.6", "refmterr@3.1.7"
       ]
+    },
+    "esy-openssl@github:bryphe/esy-openssl#7debb25": {
+      "record": {
+        "name": "esy-openssl",
+        "version": "github:bryphe/esy-openssl#7debb25",
+        "source": "github:bryphe/esy-openssl#7debb25",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": []
     },
     "@opam/zed@opam:1.6": {
       "record": {
@@ -350,24 +348,17 @@
         "@opam/jbuilder@opam:transition", "ocaml@4.6.6"
       ]
     },
-    "@opam/ssl@opam:0.5.6": {
+    "@opam/ssl@github:bryphe/ocaml-ssl#8a4ac6a": {
       "record": {
         "name": "@opam/ssl",
-        "version": "opam:0.5.6",
-        "source":
-          "archive:https://github.com/savonet/ocaml-ssl/archive/v0.5.6.tar.gz#md5:500b0bb7af4a736255ce706cc8e26762",
+        "version": "github:bryphe/ocaml-ssl#8a4ac6a",
+        "source": "github:bryphe/ocaml-ssl#8a4ac6a",
         "files": [],
-        "opam": {
-          "name": "ssl",
-          "version": "0.5.6",
-          "opam":
-            "opam-version: \"2.0\"\nname: \"ssl\"\nversion: \"0.5.6\"\nsynopsis: \"Bindings for OpenSSL\"\nmaintainer: \"Christopher Zimmermann <christopher@gmerlin.de>\"\nauthors: \"Samuel Mimram <samuel.mimram@ens-lyon.org>\"\nhomepage: \"https://github.com/savonet/ocaml-ssl\"\nbug-reports: \"https://github.com/savonet/ocaml-ssl/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02.0\"}\n  \"dune\" {build}\n  \"base-unix\"\n  \"conf-openssl\"\n]\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/savonet/ocaml-ssl.git\"\nurl {\n  src: \"https://github.com/savonet/ocaml-ssl/archive/v0.5.6.tar.gz\"\n  checksum: \"md5=500b0bb7af4a736255ce706cc8e26762\"\n}",
-          "override": null
-        }
+        "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
-        "@opam/conf-openssl@opam:1", "@opam/dune@opam:1.3.0", "ocaml@4.6.6"
+        "@opam/base-unix@opam:base", "@opam/dune@opam:1.3.0",
+        "esy-openssl@github:bryphe/esy-openssl#7debb25"
       ]
     },
     "@opam/sexplib0@opam:v0.11.0": {
@@ -732,18 +723,18 @@
         "@opam/ppxlib@opam:0.3.1", "ocaml@4.6.6"
       ]
     },
-    "@opam/ppx_expect@opam:v0.11.0": {
+    "@opam/ppx_expect@opam:v0.11.1": {
       "record": {
         "name": "@opam/ppx_expect",
-        "version": "opam:v0.11.0",
+        "version": "opam:v0.11.1",
         "source":
-          "archive:https://ocaml.janestreet.com/ocaml-core/v0.11/files/ppx_expect-v0.11.0.tar.gz#md5:ee183ff3ca85954a84a54d32b8073546",
+          "archive:https://github.com/janestreet/ppx_expect/releases/download/v0.11.1/ppx_expect-v0.11.1.tbz#md5:ee5e03094674de295aadc10efe6bb7b7",
         "files": [],
         "opam": {
           "name": "ppx_expect",
-          "version": "v0.11.0",
+          "version": "v0.11.1",
           "opam":
-            "opam-version: \"2.0\"\nname: \"ppx_expect\"\nversion: \"v0.11.0\"\nsynopsis: \"Cram like framework for OCaml\"\ndescription: \"Part of the Jane Street's PPX rewriters collection.\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"Apache-2.0\"\nhomepage: \"https://github.com/janestreet/ppx_expect\"\nbug-reports: \"https://github.com/janestreet/ppx_expect/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.04.1\"}\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_assert\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_compare\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_custom_printf\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_fields_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_here\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_inline_test\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_sexp_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_variants_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"stdio\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n  \"re\" {>= \"1.5.0\"}\n]\nconflicts: [\n  \"jbuilder\" {= \"1.0+beta19\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_expect.git\"\nurl {\n  src:\n    \"https://ocaml.janestreet.com/ocaml-core/v0.11/files/ppx_expect-v0.11.0.tar.gz\"\n  checksum: \"md5=ee183ff3ca85954a84a54d32b8073546\"\n}",
+            "opam-version: \"2.0\"\nname: \"ppx_expect\"\nversion: \"v0.11.1\"\nsynopsis: \"Cram like framework for OCaml\"\ndescription: \"Part of the Jane Street's PPX rewriters collection.\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/janestreet/ppx_expect\"\nbug-reports: \"https://github.com/janestreet/ppx_expect/issues\"\ndepends: [\n  \"base\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_assert\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_compare\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_custom_printf\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_fields_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_here\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_inline_test\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_sexp_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"ppx_variants_conv\" {>= \"v0.11\" & < \"v0.12\"}\n  \"stdio\" {>= \"v0.11\" & < \"v0.12\"}\n  \"jbuilder\" {build & >= \"1.0+beta18.1\"}\n  \"ocaml-migrate-parsetree\" {>= \"1.0\"}\n  \"ppxlib\" {>= \"0.1.0\"}\n  \"re\" {>= \"1.5.0\"}\n  \"ocaml\" {>= \"4.04.1\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/ppx_expect.git\"\nurl {\n  src:\n    \"https://github.com/janestreet/ppx_expect/releases/download/v0.11.1/ppx_expect-v0.11.1.tbz\"\n  checksum: \"md5=ee5e03094674de295aadc10efe6bb7b7\"\n}",
           "override": null
         }
       },
@@ -1184,29 +1175,29 @@
         "@opam/yojson@opam:1.4.0", "ocaml@4.6.6"
       ]
     },
-    "@opam/menhir@opam:20171013": {
+    "@opam/menhir@opam:20170712": {
       "record": {
         "name": "@opam/menhir",
-        "version": "opam:20171013",
+        "version": "opam:20170712",
         "source":
-          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20171013.tar.gz#md5:620863edea40437390ee5e5bd82fba11",
+          "archive:http://gallium.inria.fr/~fpottier/menhir/menhir-20170712.tar.gz#md5:85a5c2aef1d3f2224dab7c53d79892e5",
         "files": [
           {
-            "name": "menhir-20171013.patch",
+            "name": "menhir-20170712.patch",
             "content":
-              "--- ./Makefile\n+++ ./Makefile\n@@ -59,13 +59,8 @@\n \n # If the compiler is MSVC, then object file names end in .obj instead of .o.\n \n-ifneq (,$(shell ocamlc -config | grep -E \"ccomp_type: msvc\"))\n-  OBJ          := obj\n-# LIBSUFFIX    := lib\n-else\n-  OBJ          := o\n-# LIBSUFFIX    := a\n-endif\n+OBJ          := $(shell ocamlc -config | awk -F '[\\t \\r]+' '/^ext_obj:/ {print $$2}' | tr -d '.')\n+#LIBSUFFIX   := $(shell ocamlc -config | awk -F '[\\t \\r]+' '/^ext_lib:/ {print $$2}' | tr -d '.')\n \n # If we are under Windows (regardless of whether we are using MSVC or mingw)\n # then the name of the executable file ends in .exe.\n@@ -91,8 +86,9 @@\n # performed if \"os_type\" is \"Win32\" or \"Win64\", and must not be performed if\n # \"os_type\" is \"Cygwin\" or \"Unix\".\n \n-ifneq (,$(shell ocamlc -config | grep -E \"os_type: (Win32|Win64)\"))\n-installation_libdir := $(shell cygpath -m $(libdir))\n+OS_TYPE:=\t$(shell ocamlc -config | awk -F '[\\t \\r]+' '/^os_type:/ {print $$2}')\n+ifeq ($(OS_TYPE),Win32)\n+installation_libdir := $(shell cygpath -m $(libdir) || echo $(libdir))\n else\n installation_libdir := $(libdir)\n endif\n--- ./src/cmly_write.ml\n+++ ./src/cmly_write.ml\n@@ -168,6 +168,6 @@\n   output_value oc (t : grammar)\n \n let write filename =\n-  let oc = open_out filename in\n+  let oc = open_out_bin filename in\n   write oc (encode());\n   close_out oc\n"
+              "--- ./Makefile\n+++ ./Makefile\n@@ -60,10 +60,11 @@\n # If the compiler is MSVC, then the name of the executable file ends in .exe,\n # and object file names end in .obj instead of .o.\n \n-ifneq (,$(shell ocamlc -config | grep -E \"ccomp_type: msvc\"))\n+OS_TYPE:=$(shell ocamlc -config | tr -d '\\15' | awk '/^os_type:/ {print $$2}')\n+ifeq ($(OS_TYPE),$(filter $(OS_TYPE),Win32 Cygwin))\n   MENHIREXE    := menhir.exe\n-  OBJ          := obj\n-# LIBSUFFIX    := lib\n+  OBJ          := $(shell ocamlc -config | tr -d '\\15' | awk '/^ext_obj:/ {print $$2}' | tr -d '.')\n+# LIBSUFFIX    := $(shell ocamlc -config | tr -d '\\15' | awk '/^ext_lib:/ {print $$2}' | tr -d '.')\n else\n   MENHIREXE    := menhir\n   OBJ          := o\n@@ -85,8 +86,8 @@\n # performed if \"os_type\" is \"Win32\" or \"Win64\", and must not be performed if\n # \"os_type\" is \"Cygwin\" or \"Unix\".\n \n-ifneq (,$(shell ocamlc -config | grep -E \"os_type: (Win32|Win64)\"))\n-installation_libdir := $(shell cygpath -m $(libdir))\n+ifeq ($(OS_TYPE),Win32)\n+installation_libdir := $(shell cygpath -m $(libdir) || echo $(libdir))\n else\n installation_libdir := $(libdir)\n endif\n--- ./src/cmly_write.ml\n+++ ./src/cmly_write.ml\n@@ -168,6 +168,6 @@\n   output_value oc (t : grammar)\n \n let write filename =\n-  let oc = open_out filename in\n+  let oc = open_out_bin filename in\n   write oc (encode());\n   close_out oc\n"
           }
         ],
         "opam": {
           "name": "menhir",
-          "version": "20171013",
+          "version": "20170712",
           "opam":
-            "opam-version: \"2.0\"\nname: \"menhir\"\nversion: \"20171013\"\nsynopsis: \"LR(1) parser generator\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocaml\" {>= \"4.02\"}\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"\nurl {\n  src: \"http://gallium.inria.fr/~fpottier/menhir/menhir-20171013.tar.gz\"\n  checksum: \"md5=620863edea40437390ee5e5bd82fba11\"\n}",
+            "opam-version: \"2.0\"\nname: \"menhir\"\nversion: \"20170712\"\nsynopsis: \"LR(1) parser generator\"\nmaintainer: \"francois.pottier@inria.fr\"\nauthors: [\n  \"François Pottier <francois.pottier@inria.fr>\"\n  \"Yann Régis-Gianas <yrg@pps.univ-paris-diderot.fr>\"\n]\nhomepage: \"http://gallium.inria.fr/~fpottier/menhir/\"\nbug-reports: \"menhir@inria.fr\"\ndepends: [\n  \"ocaml\" {>= \"4.02\"}\n  \"ocamlfind\"\n  \"ocamlbuild\" {build}\n]\nbuild: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"PREFIX=%{prefix}%\"\n  \"USE_OCAMLFIND=true\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ninstall: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"install\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\nremove: [\n  make\n  \"-f\"\n  \"Makefile\"\n  \"uninstall\"\n  \"PREFIX=%{prefix}%\"\n  \"docdir=%{doc}%/menhir\"\n  \"libdir=%{lib}%/menhir\"\n  \"mandir=%{man}%/man1\"\n]\ndev-repo: \"git+https://gitlab.inria.fr/fpottier/menhir.git\"\nurl {\n  src: \"http://gallium.inria.fr/~fpottier/menhir/menhir-20170712.tar.gz\"\n  checksum: \"md5=85a5c2aef1d3f2224dab7c53d79892e5\"\n}",
           "override": {
             "build": [
               [
                 "bash", "-c",
-                "#{os == 'windows' ? 'patch -p1 < menhir-20171013.patch' : 'true'}"
+                "#{os == 'windows' ? 'patch -p1 < menhir-20170712.patch' : 'true'}"
               ],
               [
                 "make", "-f", "Makefile", "PREFIX=#{self.install}",
@@ -1260,7 +1251,7 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
         "@opam/jbuilder@opam:transition", "@opam/lwt@opam:3.3.0",
-        "@opam/ssl@opam:0.5.6", "ocaml@4.6.6"
+        "@opam/ssl@github:bryphe/ocaml-ssl#8a4ac6a", "ocaml@4.6.6"
       ]
     },
     "@opam/lwt_react@opam:1.1.1": {
@@ -1612,55 +1603,6 @@
         }
       },
       "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
-    },
-    "@opam/conf-pkg-config@opam:1.1": {
-      "record": {
-        "name": "@opam/conf-pkg-config",
-        "version": "opam:1.1",
-        "source": "no-source:",
-        "files": [],
-        "opam": {
-          "name": "conf-pkg-config",
-          "version": "1.1",
-          "opam":
-            "opam-version: \"2.0\"\nname: \"conf-pkg-config\"\nversion: \"1.1\"\nsynopsis: \"Virtual package relying on pkg-config installation\"\ndescription: \"\"\"\nThis package can only install if the pkg-config package is installed\non the system.\"\"\"\nmaintainer: \"unixjunkie@sdf.org\"\nauthors: \"Francois Berenger\"\nlicense: \"GPL\"\nhomepage: \"http://www.freedesktop.org/wiki/Software/pkg-config/\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nflags: light-uninstall\nbuild: [\"pkg-config\" \"--help\"]\ninstall:\n  [\"ln\" \"-s\" \"/usr/local/bin/pkgconf\" \"%{bin}%/pkg-config\"] {os = \"openbsd\"}\nremove: [\"rm\" \"-f\" \"%{bin}%/pkg-config\"] {os = \"openbsd\"}\npost-messages:\n  \"conf-pkg-config: A symlink to /usr/local/bin/pkgconf has been installed in the OPAM bin directory (%{bin}%) on your PATH as 'pkg-config'. This is necessary for correct operation.\"\n    {os = \"openbsd\"}\ndepexts: [\n  [\"pkg-config\"] {os-distribution = \"debian\"}\n  [\"pkg-config\"] {os-distribution = \"ubuntu\"}\n  [\"pkg-config\"] {os-distribution = \"archlinux\"}\n  [\"pkgconfig\"] {os-distribution = \"fedora\"}\n  [\"pkgconfig\"] {os-distribution = \"centos\"}\n  [\"pkgconfig\"] {os-distribution = \"mageia\"}\n  [\"pkgconfig\"] {os-distribution = \"rhel\"}\n  [\"pkgconfig\"] {os-distribution = \"oraclelinux\"}\n  [\"pkgconfig\"] {os-distribution = \"alpine\"}\n  [\"devel/pkgconf\"] {os = \"freebsd\"}\n  [\"devel/pkgconf\"] {os = \"openbsd\"}\n  [\"pkg-config\"] {os = \"macos\" & os-distribution = \"homebrew\"}\n  [\"pkgconf\"] {os = \"freebsd\"}\n]",
-          "override": {
-            "dependencies": {
-              "yarn-pkg-config":
-                "github:esy-ocaml/yarn-pkg-config#d488cd9321cd5036bd36ec96744ce78c5d45fc49"
-            }
-          }
-        }
-      },
-      "dependencies": [
-        "@esy-ocaml/substs@0.0.1",
-        "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#d488cd9321cd5036bd36ec96744ce78c5d45fc49"
-      ]
-    },
-    "@opam/conf-openssl@opam:1": {
-      "record": {
-        "name": "@opam/conf-openssl",
-        "version": "opam:1",
-        "source": "no-source:",
-        "files": [
-          {
-            "name": "osx-build.sh",
-            "content":
-              "#!/bin/sh\n\nif [ -d \"/usr/local/opt/openssl/\" ]; then\n  # Homebrew\n  PKG_CONFIG_PATH=/usr/local/opt/openssl/lib/pkgconfig pkg-config openssl\nelse\n  # MacPorts\n  PKG_CONFIG_PATH=/opt/local/lib/pkgconfig pkg-config openssl\nfi\n",
-            "perm": 493
-          }
-        ],
-        "opam": {
-          "name": "conf-openssl",
-          "version": "1",
-          "opam":
-            "opam-version: \"2.0\"\nname: \"conf-openssl\"\nversion: \"1\"\nsynopsis: \"Virtual package relying on an OpenSSL system installation\"\ndescription:\n  \"This package can only install if OpenSSL is installed on the system.\"\nmaintainer: \"David Sheets <sheets@alum.mit.edu>\"\nauthors: \"The OpenSSL Project\"\nlicense: \"Apache-1.0\"\nhomepage: \"https://www.openssl.org/\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\ndepends: [\n  \"conf-pkg-config\" {build}\n]\nbuild: [\n  [\"pkg-config\" \"openssl\"]\n    {os != \"macos\" & os != \"freebsd\" & os != \"openbsd\" & os != \"netbsd\"}\n  [\"./osx-build.sh\"] {os = \"macos\"}\n]\ndepexts: [\n  [\"libssl-dev\"] {os-distribution = \"debian\"}\n  [\"libssl-dev\"] {os-distribution = \"ubuntu\"}\n  [\"openssl-devel\"] {os-distribution = \"centos\"}\n  [\"openssl-devel\"] {os-distribution = \"oraclelinux\"}\n  [\"openssl-devel\"] {os-distribution = \"fedora\"}\n  [\"openssl\"] {os = \"macos\" & os-distribution = \"homebrew\"}\n  [\"openssl\"] {os = \"macos\" & os-distribution = \"macports\"}\n  [\"libressl-dev\"] {os-distribution = \"alpine\"}\n  [\"openssl\"] {os-distribution = \"nixos\"}\n  [\"openssl\"] {os-distribution = \"archlinux\"}\n  [\"libopenssl-devel\"] {os-distribution = \"opensuse\"}\n]\nextra-files: [\"osx-build.sh\" \"md5=351f350c49d98ef4b77037c9ed277d52\"]",
-          "override": null
-        }
-      },
-      "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/conf-pkg-config@opam:1.1"
-      ]
     },
     "@opam/conf-m4@opam:1": {
       "record": {
@@ -2061,7 +2003,7 @@
       },
       "dependencies": [
         "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
-        "@opam/dune@opam:1.3.0", "@opam/menhir@opam:20171013",
+        "@opam/dune@opam:1.3.0", "@opam/menhir@opam:20170712",
         "@opam/merlin-extend@opam:0.3",
         "@opam/ocaml-migrate-parsetree@opam:1.1.0",
         "@opam/ocamlbuild@opam:0.12.0", "@opam/ocamlfind@opam:1.8.0",

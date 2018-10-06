@@ -33,7 +33,8 @@
   },
   "homepage": "https://github.com/fastpack/fastpack#readme",
   "resolutions": {
-    "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323"
+    "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
+    "@opam/ssl": "github:bryphe/ocaml-ssl#8a4ac6a"
   },
   "dependencies": {
     "@esy-ocaml/esy-installer": "*",
