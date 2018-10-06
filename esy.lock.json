@@ -930,6 +930,11 @@
             "name": "ocplib-endian-0.8.patch",
             "content":
               "--- ./myocamlbuild.ml\n+++ ./myocamlbuild.ml\n@@ -573,6 +573,24 @@\n    Add a dependency after dropping support for 4.01 and earlier. *)\n let dispatch_cppo = function\n   | After_rules -> begin\n+    let is_directory s =\n+      let slen = String.length s in\n+      let s =\n+        if Sys.os_type <> \"Win32\" || slen < 2 then\n+          s\n+        else\n+          match s.[slen-1] with\n+          | '\\\\' | '/' ->\n+              if slen <> 3 || s.[1] <> ':' then\n+                String.sub s 0 (slen -1)\n+              else\n+                (match s.[0] with\n+                | 'A' .. 'Z' | 'a' .. 'z' -> s\n+                | _ -> String.sub s 0 (slen -1))\n+          | _ -> s\n+\t    in\n+      Pathname.is_directory s\n+    in\n       let cppo_rules ext =\n         let dep   = \"%(name).cppo\"-.-ext\n         and prod1 = \"%(name: <*> and not <*.cppo>)\"-.-ext\n@@ -591,11 +609,11 @@\n       pflag [\"cppo\"] \"cppo_D\" (fun s -> S [A \"-D\"; A s]) ;\n       pflag [\"cppo\"] \"cppo_U\" (fun s -> S [A \"-U\"; A s]) ;\n       pflag [\"cppo\"] \"cppo_I\" (fun s ->\n-        if Pathname.is_directory s then S [A \"-I\"; P s]\n+        if is_directory s then S [A \"-I\"; P s]\n         else S [A \"-I\"; P (Pathname.dirname s)]\n       ) ;\n       pdep [\"cppo\"] \"cppo_I\" (fun s ->\n-        if Pathname.is_directory s then [] else [s]) ;\n+        if is_directory s then [] else [s]) ;\n       flag [\"cppo\"; \"cppo_q\"] (A \"-q\") ;\n       flag [\"cppo\"; \"cppo_s\"] (A \"-s\") ;\n       flag [\"cppo\"; \"cppo_n\"] (A \"-n\") ;\n"
+          },
+          {
+            "name": "esy-flexdll.patch",
+            "content":
+              "--- ./setup.ml\n+++ ./setup.ml\n@@ -3926,7 +3926,7 @@\n          in\n            match lst with\n              | line :: _ ->\n-                 Scanf.sscanf line \"FlexDLL version %s\" (fun ver -> ver)\n+                 Scanf.sscanf line \"[ESY FORK] FlexDLL version %s\" (fun ver -> ver)\n              | [] ->\n                  raise Not_found)\n \n"
           }
         ],
         "opam": {
@@ -942,6 +947,10 @@
               [
                 "bash", "-c",
                 "#{os == 'windows' ? 'patch -p1 < ocplib-endian-0.8.patch' : 'true'}"
+              ],
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < esy-flexdll.patch' : 'true'}"
               ],
               [
                 "ocaml", "setup.ml", "-configure", "--disable-debug",
