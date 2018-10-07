@@ -96,6 +96,7 @@ module Preprocessor = {
   let print = (ppf, (_, opt)) => Format.fprintf(ppf, "%s", toString(opt));
 };
 
+
 type t = {
   entryPoints: list(string),
   outputDir: string,
@@ -344,6 +345,7 @@ let term = {
     let docv = "COMMAND";
     Arg.(value & opt_all(string, []) & info(["postprocess"], ~docv, ~doc));
   };
+
 
   let reportT = {
     let doc = "Output packer statistics";
