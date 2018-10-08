@@ -107,7 +107,7 @@ module Serve = {
         {
           let (broadcastToWebsocket, devserver) =
             FastpackServer.Devserver.start(
-              ~port=3000,
+              ~port=options.port,
               ~outputDir=options.outputDir,
               ~debug=options.debug,
               (),
