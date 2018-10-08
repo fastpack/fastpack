@@ -17,7 +17,7 @@ let createCallback =
 };
 
 let start = (~port=3000, ~outputDir, ~debug, ()) => {
-  Printf.sprintf("Listening on port %d...", port) |> print_endline;
+  Printf.sprintf("Server running at http://localhost:%d", port) |> print_endline;
 
   let (broadcastToWebsocket, websocketHandler) =
     WebsocketHandler.makeHandler(~debug, ());
