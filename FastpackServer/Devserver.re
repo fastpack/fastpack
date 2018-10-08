@@ -17,7 +17,10 @@ let createCallback =
 };
 
 let start = (~port=3000, ~outputDir, ~debug, ()) => {
-  Printf.sprintf("Server running at http://localhost:%d", port) |> print_endline;
+  let url = "http://localhost:" ++ string_of_int(port);
+  let urlWithColor =
+    FastpackUtil.Colors.print_with_color(~font=Bold, url, Cyan);
+  Printf.sprintf("Server running at %s", urlWithColor) |> print_endline;
 
   let (broadcastToWebsocket, websocketHandler) =
     WebsocketHandler.makeHandler(~debug, ());
