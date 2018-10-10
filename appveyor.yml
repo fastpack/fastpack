@@ -13,6 +13,7 @@ install:
     - appveyor-retry esy install
 
 build_script:
+    - node scripts/gen_link_flags.js
     - esy build
 
 test: off
