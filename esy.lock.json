@@ -1,5 +1,5 @@
 {
-  "hash": "b48e5845b3029fd20e175901dae08155",
+  "hash": "95bf476d1b0d719ccb4038720901f19f",
   "root": "root@path:./package.json",
   "node": {
     "root@path:./package.json": {
@@ -11,7 +11,6 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.0",
         "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
         "@esy-ocaml/rtop@3.3.0", "@fastpack/flow_parser@0.81.0",
         "@opam/cmdliner@opam:1.0.2", "@opam/cohttp@opam:1.1.1",
@@ -429,34 +428,24 @@
         "ocaml@github:esy-ocaml/ocaml#1933caa"
       ]
     },
-    "@opam/seq@opam:base": {
+    "@opam/seq@opam:0.1": {
       "record": {
         "name": "@opam/seq",
-        "version": "opam:base",
-        "source": "no-source:",
-        "files": [
-          {
-            "name": "seq.install",
-            "content": "lib:[\n  \"META.seq\" {\"META\"}\n]\n",
-            "perm": 438
-          },
-          {
-            "name": "META.seq",
-            "content":
-              "name=\"seq\"\nversion=\"[distributed with OCaml 4.07 or above]\"\ndescription=\"dummy backward-compatibility package for iterators\"\nrequires=\"\"\n",
-            "perm": 438
-          }
-        ],
+        "version": "opam:0.1",
+        "source":
+          "archive:https://github.com/c-cube/seq/archive/0.1.tar.gz#md5:0e87f9709541ed46ecb6f414bc31458c",
+        "files": [],
         "opam": {
           "name": "seq",
-          "version": "base",
+          "version": "0.1",
           "opam":
-            "opam-version: \"2.0\"\nname: \"seq\"\nversion: \"base\"\nsynopsis:\n  \"Compatibility package for OCaml's standard iterator type starting from 4.07.\"\nmaintainer: \" \"\nauthors: \" \"\nhomepage: \" \"\nbug-reports: \"https://caml.inria.fr/mantis/main_page.php\"\ndepends: [\n  \"ocaml\" {>= \"4.07.0\"}\n]\ndev-repo: \"git+https://github.com/ocaml/ocaml.git\"\nextra-files: [\n  [\"seq.install\" \"md5=026b31e1df290373198373d5aaa26e42\"]\n  [\"META.seq\" \"md5=b33c8a1a6c7ed797816ce27df4855107\"]\n]",
+            "opam-version: \"2.0\"\nname: \"seq\"\nversion: \"0.1\"\nsynopsis:\n  \"Compatibility package for OCaml's standard iterator type starting from 4.07.\"\nmaintainer: \"simon.cruanes.2007@m4x.org\"\nauthors: \"Simon Cruanes\"\nlicense: \"GPL\"\ntags: [\"iterator\" \"seq\" \"pure\" \"list\" \"compatibility\" \"cascade\"]\nhomepage: \"https://github.com/c-cube/seq/\"\nbug-reports: \"https://github.com/c-cube/seq/issues\"\ndepends: [\n  \"ocaml\" {< \"4.07.0\"}\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n]\nflags: light-uninstall\nbuild: [make \"build\"]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"seq\"]\ndev-repo: \"git+https://github.com/c-cube/seq.git\"\nurl {\n  src: \"https://github.com/c-cube/seq/archive/0.1.tar.gz\"\n  checksum: \"md5=0e87f9709541ed46ecb6f414bc31458c\"\n}",
           "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "ocaml@github:esy-ocaml/ocaml#1933caa"
+        "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
+        "@opam/ocamlfind@opam:1.8.0", "ocaml@github:esy-ocaml/ocaml#1933caa"
       ]
     },
     "@opam/sedlex@opam:1.99.4": {
@@ -539,7 +528,7 @@
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
-        "@opam/seq@opam:base", "ocaml@github:esy-ocaml/ocaml#1933caa"
+        "@opam/seq@opam:0.1", "ocaml@github:esy-ocaml/ocaml#1933caa"
       ]
     },
     "@opam/ppxlib@opam:0.3.1": {
@@ -2012,7 +2001,7 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.0", "@opam/dune@opam:1.3.0",
+        "@esy-ocaml/esy-installer@0.0.1", "@opam/dune@opam:1.3.0",
         "@opam/ocaml-migrate-parsetree@opam:1.1.0",
         "@opam/ppx_deriving@opam:4.2.1", "@opam/ppx_gen_rec@opam:1.0.0",
         "@opam/ppx_tools_versioned@opam:5.2", "@opam/sedlex@opam:1.99.4",
@@ -2040,7 +2029,7 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.0",
+        "@esy-ocaml/esy-installer@0.0.1",
         "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
         "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
         "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3",
@@ -2058,7 +2047,7 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.0", "@esy-ocaml/substs@0.0.1",
+        "@esy-ocaml/esy-installer@0.0.1", "@esy-ocaml/substs@0.0.1",
         "@opam/dune@opam:1.3.0", "@opam/menhir@opam:20171013",
         "@opam/merlin-extend@opam:0.3",
         "@opam/ocaml-migrate-parsetree@opam:1.1.0",
@@ -2066,12 +2055,12 @@
         "@opam/result@opam:1.3", "@opam/utop@opam:2.2.0"
       ]
     },
-    "@esy-ocaml/esy-installer@0.0.0": {
+    "@esy-ocaml/esy-installer@0.0.1": {
       "record": {
         "name": "@esy-ocaml/esy-installer",
-        "version": "0.0.0",
+        "version": "0.0.1",
         "source":
-          "archive:https://registry.npmjs.org/@esy-ocaml/esy-installer/-/esy-installer-0.0.0.tgz#sha1:6b0e2bd4ee43531ac74793fe55cfcc3aca197a66",
+          "archive:https://registry.npmjs.org/@esy-ocaml/esy-installer/-/esy-installer-0.0.1.tgz#sha1:420c65f7e5f9bafa3da578532c352acdf00837aa",
         "files": [],
         "opam": null
       },

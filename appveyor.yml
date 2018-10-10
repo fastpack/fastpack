@@ -15,5 +15,6 @@ install:
 build_script:
     - node scripts/gen_link_flags.js
     - esy build
+    - _build/install/default/bin/fpack.exe --version
 
 test: off
