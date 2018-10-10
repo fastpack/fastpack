@@ -936,7 +936,7 @@
           {
             "name": "esy-fix.patch",
             "content":
-              "--- setup.ml\n+++ setup.ml\n@@ -6331,9 +6331,7 @@\n           [\n             \"-classic-display\";\n             \"-no-log\";\n-            \"-no-links\";\n-            \"-install-lib-dir\";\n-            (Filename.concat (standard_library ()) \"ocamlbuild\")\n+            \"-no-links\"\n           ]\n         else\n           [];\n",
+              "--- ./setup.ml\n+++ ./setup.ml\n@@ -6331,9 +6331,7 @@\n           [\n             \"-classic-display\";\n             \"-no-log\";\n-            \"-no-links\";\n-            \"-install-lib-dir\";\n-            (Filename.concat (standard_library ()) \"ocamlbuild\")\n+            \"-no-links\"\n           ]\n         else\n           [];\n",
             "perm": 438
           }
         ],
