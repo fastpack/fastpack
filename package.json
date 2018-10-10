@@ -33,10 +33,11 @@
   },
   "homepage": "https://github.com/fastpack/fastpack#readme",
   "resolutions": {
+    "ocaml": "github:esy-ocaml/ocaml#1933caa",
     "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
     "@opam/ssl": "github:bryphe/ocaml-ssl#8a4ac6a",
     "@opam/re": "1.8.0",
-    "@opam/ocplib-endian": "link:../ocplib-endian/opam"
+    "@opam/ocplib-endian": "github:bryphe/ocplib-endian#d6fcf88"
   },
   "dependencies": {
     "@esy-ocaml/esy-installer": "*",
