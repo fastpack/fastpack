@@ -1,5 +1,5 @@
 {
-  "hash": "f66a6f28cdee503e06eb00eca249bf76",
+  "hash": "8fce006fe772de4880338db0e2f7ebcf",
   "root": "root@path:./package.json",
   "node": {
     "root@path:./package.json": {
@@ -49,11 +49,11 @@
       },
       "dependencies": []
     },
-    "esy-openssl@github:bryphe/esy-openssl#7debb25": {
+    "esy-openssl@github:bryphe/esy-openssl#c85e208": {
       "record": {
         "name": "esy-openssl",
-        "version": "github:bryphe/esy-openssl#7debb25",
-        "source": "github:bryphe/esy-openssl#7debb25",
+        "version": "github:bryphe/esy-openssl#c85e208",
+        "source": "github:bryphe/esy-openssl#c85e208",
         "files": [],
         "opam": null
       },
@@ -348,17 +348,17 @@
         "@opam/jbuilder@opam:transition", "ocaml@4.6.7"
       ]
     },
-    "@opam/ssl@github:bryphe/ocaml-ssl#8a4ac6a": {
+    "@opam/ssl@github:bryphe/ocaml-ssl#0922e94": {
       "record": {
         "name": "@opam/ssl",
-        "version": "github:bryphe/ocaml-ssl#8a4ac6a",
-        "source": "github:bryphe/ocaml-ssl#8a4ac6a",
+        "version": "github:bryphe/ocaml-ssl#0922e94",
+        "source": "github:bryphe/ocaml-ssl#0922e94",
         "files": [],
         "opam": null
       },
       "dependencies": [
         "@opam/base-unix@opam:base", "@opam/dune@opam:1.3.0",
-        "esy-openssl@github:bryphe/esy-openssl#7debb25"
+        "esy-openssl@github:bryphe/esy-openssl#c85e208"
       ]
     },
     "@opam/sexplib0@opam:v0.11.0": {
@@ -1313,7 +1313,7 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
         "@opam/jbuilder@opam:transition", "@opam/lwt@opam:3.3.0",
-        "@opam/ssl@github:bryphe/ocaml-ssl#8a4ac6a", "ocaml@4.6.7"
+        "@opam/ssl@github:bryphe/ocaml-ssl#0922e94", "ocaml@4.6.7"
       ]
     },
     "@opam/lwt_react@opam:1.1.1": {
