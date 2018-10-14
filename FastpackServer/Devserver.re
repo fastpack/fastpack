@@ -16,8 +16,8 @@ let createCallback =
   };
 };
 
-let start = (~port=3000, ~outputDir, ~debug, ()) => {
-  let url = "http://localhost:" ++ string_of_int(port);
+let start = (~config: Config.t, ~outputDir, ~debug, ()) => {
+  let url = "http://localhost:" ++ string_of_int(config.port);
   let urlWithColor =
     FastpackUtil.Colors.print_with_color(~font=Bold, url, Cyan);
   Printf.sprintf("Server running at %s", urlWithColor) |> print_endline;
@@ -27,7 +27,7 @@ let start = (~port=3000, ~outputDir, ~debug, ()) => {
 
   let server =
     Cohttp_lwt_unix.Server.create(
-      ~mode=`TCP(`Port(port)),
+      ~mode=`TCP(`Port(config.port)),
       Cohttp_lwt_unix.Server.make(
         ~callback=createCallback(~outputDir, ~websocketHandler),
         (),

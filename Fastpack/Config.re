@@ -105,7 +105,6 @@ type t = {
   nodeModulesPaths: list(string),
   outputDir: string,
   outputFilename: string,
-  port: int,
   postprocess: list(string),
   preprocess: list(Preprocessor.t),
   projectRootDir: string,
@@ -127,7 +126,6 @@ let create =
       ~target,
       ~cache,
       ~preprocess,
-      ~port,
       ~postprocess,
       ~report,
       ~debug,
@@ -174,7 +172,6 @@ let create =
     nodeModulesPaths,
     outputDir,
     outputFilename,
-    port,
     postprocess,
     preprocess,
     projectRootDir,
@@ -195,7 +192,6 @@ let term = {
         nodeModulesPaths,
         outputDir,
         outputFilename,
-        port,
         postprocess,
         preprocess,
         projectRootDir,
@@ -212,7 +208,6 @@ let term = {
       ~nodeModulesPaths,
       ~outputDir,
       ~outputFilename,
-      ~port,
       ~postprocess,
       ~preprocess=List.map(snd, preprocess),
       ~projectRootDir,
@@ -319,12 +314,6 @@ let term = {
     Arg.(value & vflag(Cache.Use, [disable]));
   };
 
-  let portT = {
-    let doc = "Port for development server to listen on";
-    let docv = "NUMBER";
-    Arg.( value & opt(int, 3000) & info(["p", "port"], ~docv, ~doc));
-  }
-
   let preprocessT = {
     let preprocess = Arg.conv(Preprocessor.(parse, print));
 
@@ -381,7 +370,6 @@ let term = {
     $ nodeModulesPathsT
     $ outputDirT
     $ outputFilenameT
-    $ portT
     $ postprocessT
     $ preprocessT
     $ projectRootDirT
