@@ -62,6 +62,9 @@ COMMANDS
        watch
            watch for file changes and rebuild the bundle
 
+       worker
+           worker subprocess (do not use directly)
+
 ARGUMENTS
        ENTRY POINTS
            Entry points. Default: ['.']
@@ -74,8 +77,8 @@ OPTIONS
            Build bundle for development
 
        --dry-run
-           Run all the build operations without storing the bundle in the
-           file system
+           Run all the build operations without storing the bundle in the file
+           system
 
        --mock=PACKAGE[:SUBSTITUTE]
            Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is
@@ -93,6 +96,9 @@ OPTIONS
 
        -o DIR, --output=DIR (absent=./bundle)
            Output Directory. The target bundle will be DIR/index.js.
+
+       -p NUMBER, --port=NUMBER (absent=3000)
+           Port for development server to listen on
 
        --postprocess=COMMAND
            Apply shell command on a bundle file. The content of the bundle
