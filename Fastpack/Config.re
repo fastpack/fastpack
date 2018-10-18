@@ -97,20 +97,20 @@ module Preprocessor = {
 };
 
 type t = {
+  cache: Cache.t,
+  debug: bool,
   entryPoints: list(string),
+  mock: list((string, Mock.t)),
+  mode: Mode.t,
+  nodeModulesPaths: list(string),
   outputDir: string,
   outputFilename: string,
-  mode: Mode.t,
-  mock: list((string, Mock.t)),
-  nodeModulesPaths: list(string),
+  postprocess: list(string),
+  preprocess: list(Preprocessor.t),
   projectRootDir: string,
+  report: Reporter.t,
   resolveExtension: list(string),
   target: Target.t,
-  cache: Cache.t,
-  preprocess: list(Preprocessor.t),
-  postprocess: list(string),
-  report: Reporter.t,
-  debug: bool,
 };
 
 let create =
@@ -164,56 +164,56 @@ let create =
          }
        );
   {
+    cache,
+    debug,
     entryPoints,
+    mock,
+    mode,
+    nodeModulesPaths,
     outputDir,
     outputFilename,
-    mode,
-    mock,
-    nodeModulesPaths,
+    postprocess,
+    preprocess,
     projectRootDir,
+    report,
     resolveExtension,
     target,
-    cache,
-    preprocess,
-    postprocess,
-    report,
-    debug,
   };
 };
 
 let term = {
   let run =
       (
+        cache,
+        debug,
         entryPoints,
+        mock,
+        mode,
+        nodeModulesPaths,
         outputDir,
         outputFilename,
-        mode,
-        mock,
-        nodeModulesPaths,
+        postprocess,
+        preprocess,
         projectRootDir,
+        report,
         resolveExtension,
         target,
-        cache,
-        preprocess,
-        postprocess,
-        report,
-        debug,
       ) =>
     create(
+      ~cache,
+      ~debug,
       ~entryPoints,
+      ~mock=List.map(snd, mock),
+      ~mode,
+      ~nodeModulesPaths,
       ~outputDir,
       ~outputFilename,
-      ~mode,
-      ~mock=List.map(snd, mock),
-      ~nodeModulesPaths,
+      ~postprocess,
+      ~preprocess=List.map(snd, preprocess),
       ~projectRootDir,
+      ~report,
       ~resolveExtension,
       ~target,
-      ~cache,
-      ~preprocess=List.map(snd, preprocess),
-      ~postprocess,
-      ~report,
-      ~debug,
     );
 
   let entryPointsT = {
@@ -362,19 +362,19 @@ let term = {
 
   Term.(
     const(run)
+    $ cacheT
+    $ debugT
     $ entryPointsT
+    $ mockT
+    $ modeT
+    $ nodeModulesPathsT
     $ outputDirT
     $ outputFilenameT
-    $ modeT
-    $ mockT
-    $ nodeModulesPathsT
+    $ postprocessT
+    $ preprocessT
     $ projectRootDirT
+    $ reportT
     $ resolveExtensionT
     $ targetT
-    $ cacheT
-    $ preprocessT
-    $ postprocessT
-    $ reportT
-    $ debugT
   );
 };
