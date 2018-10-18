@@ -35,7 +35,6 @@
   "resolutions": {
     "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
     "@opam/ssl": "github:bryphe/ocaml-ssl#0922e94",
-    "@opam/re": "1.8.0",
     "@esy-ocaml/esy-installer": "0.0.1"
   },
   "dependencies": {
