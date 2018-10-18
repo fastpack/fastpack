@@ -1,5 +1,5 @@
 {
-  "hash": "8fce006fe772de4880338db0e2f7ebcf",
+  "hash": "c921c22ae14963aecebdab9d1d894e96",
   "root": "root@path:./package.json",
   "node": {
     "root@path:./package.json": {
@@ -13,13 +13,13 @@
       "dependencies": [
         "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
         "@esy-ocaml/rtop@3.3.0", "@fastpack/flow_parser@0.81.0",
-        "@opam/cmdliner@opam:1.0.2", "@opam/cohttp@opam:1.1.1",
+        "@opam/cmdliner@opam:1.0.2", "@opam/cohttp@opam:1.0.0",
         "@opam/containers@opam:1.3", "@opam/fileutils@opam:0.5.3",
         "@opam/fmt@opam:0.8.5", "@opam/jbuilder@opam:transition",
         "@opam/logs@opam:0.6.2", "@opam/lwt@opam:3.3.0",
-        "@opam/merlin@opam:3.2.1", "@opam/ppx_deriving@opam:4.2.1",
+        "@opam/merlin@opam:3.2.2", "@opam/ppx_deriving@opam:4.2.1",
         "@opam/ppx_expect@opam:v0.11.1", "@opam/ppx_let@opam:v0.11.0",
-        "@opam/re@opam:1.8.0", "@opam/sequence@opam:1.1",
+        "@opam/re@opam:1.7.1", "@opam/sequence@opam:1.1",
         "@opam/utop@opam:2.2.0", "@opam/websocket-lwt@opam:2.11",
         "@opam/yojson@opam:1.4.0", "ocaml@4.6.7", "refmterr@3.1.7"
       ]
@@ -35,7 +35,7 @@
       },
       "dependencies": [
         "@esy-ocaml/reason@github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
-        "@opam/jbuilder@opam:transition", "@opam/re@opam:1.8.0"
+        "@opam/jbuilder@opam:transition", "@opam/re@opam:1.7.1"
       ]
     },
     "ocaml@4.6.7": {
@@ -159,7 +159,7 @@
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/astring@opam:0.8.3",
-        "@opam/base64@opam:2.2.0", "@opam/cohttp@opam:1.1.1",
+        "@opam/base64@opam:2.2.0", "@opam/cohttp@opam:1.0.0",
         "@opam/jbuilder@opam:transition", "@opam/ocplib-endian@opam:1.0",
         "ocaml@4.6.7"
       ]
@@ -203,7 +203,7 @@
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
-        "@opam/ocamlfind@opam:1.8.0", "@opam/topkg@opam:0.9.1",
+        "@opam/ocamlfind@opam:1.8.0", "@opam/topkg@opam:1.0.0",
         "@opam/uchar@opam:0.0.2", "ocaml@4.6.7"
       ]
     },
@@ -241,31 +241,31 @@
         "@esy-ocaml/substs@0.0.1", "@opam/base-threads@opam:base",
         "@opam/base-unix@opam:base", "@opam/camomile@opam:1.0.1",
         "@opam/cppo@opam:1.6.5", "@opam/jbuilder@opam:transition",
-        "@opam/lambda-term@opam:1.12.0", "@opam/lwt@opam:3.3.0",
+        "@opam/lambda-term@opam:1.13", "@opam/lwt@opam:3.3.0",
         "@opam/lwt_react@opam:1.1.1", "@opam/ocamlfind@opam:1.8.0",
         "@opam/react@opam:1.2.1", "ocaml@4.6.7"
       ]
     },
-    "@opam/uri@opam:1.9.7": {
+    "@opam/uri@opam:1.9.6": {
       "record": {
         "name": "@opam/uri",
-        "version": "opam:1.9.7",
+        "version": "opam:1.9.6",
         "source":
-          "archive:https://github.com/mirage/ocaml-uri/releases/download/v1.9.7/uri-1.9.7.tbz#md5:2fb8da55f99a529bcb211a1d99822419",
+          "archive:https://github.com/mirage/ocaml-uri/releases/download/v1.9.6/uri-1.9.6.tbz#md5:a6c4fbbe8e3fd84059fac7bd7bc7b3d2",
         "files": [],
         "opam": {
           "name": "uri",
-          "version": "1.9.7",
+          "version": "1.9.6",
           "opam":
-            "opam-version: \"2.0\"\nname: \"uri\"\nversion: \"1.9.7\"\nsynopsis: \"An RFC3986 URI/URL parsing library\"\ndescription: \"\"\"\nThis is an OCaml implementation of the [RFC3986](http://tools.ietf.org/html/rfc3986) specification \nfor parsing URI or URLs.\"\"\"\nmaintainer: \"sheets@alum.mit.edu\"\nauthors: [\"Anil Madhavapeddy\" \"David Sheets\" \"Rudi Grinberg\"]\nlicense: \"ISC\"\ntags: [\"url\" \"uri\" \"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-uri\"\nbug-reports: \"https://github.com/mirage/ocaml-uri/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n  \"ounit\" {with-test & >= \"1.0.2\"}\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"re\" {>= \"1.7.2\"}\n  \"sexplib\" {>= \"v0.9.0\"}\n  \"stringext\" {>= \"1.4.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-uri.git\"\nurl {\n  src:\n    \"https://github.com/mirage/ocaml-uri/releases/download/v1.9.7/uri-1.9.7.tbz\"\n  checksum: \"md5=2fb8da55f99a529bcb211a1d99822419\"\n}",
+            "opam-version: \"2.0\"\nname: \"uri\"\nversion: \"1.9.6\"\nsynopsis: \"An RFC3986 URI/URL parsing library\"\ndescription: \"\"\"\nThis is an OCaml implementation of the [RFC3986](http://tools.ietf.org/html/rfc3986) specification \nfor parsing URI or URLs.\"\"\"\nmaintainer: \"sheets@alum.mit.edu\"\nauthors: [\"Anil Madhavapeddy\" \"David Sheets\" \"Rudi Grinberg\"]\nlicense: \"ISC\"\ntags: [\"url\" \"uri\" \"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-uri\"\nbug-reports: \"https://github.com/mirage/ocaml-uri/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"base-bytes\"\n  \"jbuilder\" {build & >= \"1.0+beta7\"}\n  \"ounit\" {with-test & >= \"1.0.2\"}\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"re\"\n  \"sexplib\" {>= \"v0.9.0\"}\n  \"stringext\" {>= \"1.4.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-uri.git\"\nurl {\n  src:\n    \"https://github.com/mirage/ocaml-uri/releases/download/v1.9.6/uri-1.9.6.tbz\"\n  checksum: \"md5=a6c4fbbe8e3fd84059fac7bd7bc7b3d2\"\n}",
           "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
-        "@opam/ppx_sexp_conv@opam:v0.11.2", "@opam/re@opam:1.8.0",
-        "@opam/sexplib@opam:v0.11.0", "@opam/stringext@opam:1.5.0",
-        "ocaml@4.6.7"
+        "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
+        "@opam/jbuilder@opam:transition", "@opam/ppx_sexp_conv@opam:v0.11.2",
+        "@opam/re@opam:1.7.1", "@opam/sexplib@opam:v0.11.0",
+        "@opam/stringext@opam:1.5.0", "ocaml@4.6.7"
       ]
     },
     "@opam/uchar@opam:0.0.2": {
@@ -288,18 +288,18 @@
         "ocaml@4.6.7"
       ]
     },
-    "@opam/topkg@opam:0.9.1": {
+    "@opam/topkg@opam:1.0.0": {
       "record": {
         "name": "@opam/topkg",
-        "version": "opam:0.9.1",
+        "version": "opam:1.0.0",
         "source":
-          "archive:http://erratique.ch/software/topkg/releases/topkg-0.9.1.tbz#md5:8978a0595db1a22e4251ec62735d4b84",
+          "archive:http://erratique.ch/software/topkg/releases/topkg-1.0.0.tbz#md5:e3d76bda06bf68cb5853caf6627da603",
         "files": [],
         "opam": {
           "name": "topkg",
-          "version": "0.9.1",
+          "version": "1.0.0",
           "opam":
-            "opam-version: \"2.0\"\nname: \"topkg\"\nversion: \"0.9.1\"\nsynopsis: \"The transitory OCaml software packager\"\ndescription: \"\"\"\nTopkg is a packager for distributing OCaml software. It provides an\nAPI to describe the files a package installs in a given build\nconfiguration and to specify information about the package's\ndistribution, creation and publication procedures.\n\nThe optional topkg-care package provides the `topkg` command line tool\nwhich helps with various aspects of a package's life cycle: creating\nand linting a distribution, releasing it on the WWW, publish its\ndocumentation, add it to the OCaml opam repository, etc.\n\nTopkg is distributed under the ISC license and has **no**\ndependencies. This is what your packages will need as a *build*\ndependency.\n\nTopkg-care is distributed under the ISC license it depends on\n[fmt][fmt], [logs][logs], [bos][bos], [cmdliner][cmdliner],\n[webbrowser][webbrowser] and `opam-format`.\n\n[fmt]: http://erratique.ch/software/fmt\n[logs]: http://erratique.ch/software/logs\n[bos]: http://erratique.ch/software/bos\n[cmdliner]: http://erratique.ch/software/cmdliner\n[webbrowser]: http://erratique.ch/software/webbrowser\"\"\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"packaging\" \"ocamlbuild\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/topkg\"\ndoc: \"http://erratique.ch/software/topkg/doc\"\nbug-reports: \"https://github.com/dbuenzli/topkg/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.01.0\"}\n  \"ocamlfind\" {build & >= \"1.6.1\"}\n  \"ocamlbuild\"\n  \"result\"\n]\nbuild: [\n  \"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pkg-name\" name \"--dev-pkg\" \"%{pinned}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/topkg.git\"\nurl {\n  src: \"http://erratique.ch/software/topkg/releases/topkg-0.9.1.tbz\"\n  checksum: \"md5=8978a0595db1a22e4251ec62735d4b84\"\n}",
+            "opam-version: \"2.0\"\nname: \"topkg\"\nversion: \"1.0.0\"\nsynopsis: \"The transitory OCaml software packager\"\ndescription: \"\"\"\nTopkg is a packager for distributing OCaml software. It provides an\nAPI to describe the files a package installs in a given build\nconfiguration and to specify information about the package's\ndistribution, creation and publication procedures.\n\nThe optional topkg-care package provides the `topkg` command line tool\nwhich helps with various aspects of a package's life cycle: creating\nand linting a distribution, releasing it on the WWW, publish its\ndocumentation, add it to the OCaml opam repository, etc.\n\nTopkg is distributed under the ISC license and has **no**\ndependencies. This is what your packages will need as a *build*\ndependency.\n\nTopkg-care is distributed under the ISC license it depends on\n[fmt][fmt], [logs][logs], [bos][bos], [cmdliner][cmdliner],\n[webbrowser][webbrowser] and `opam-format`.\n\n[fmt]: http://erratique.ch/software/fmt\n[logs]: http://erratique.ch/software/logs\n[bos]: http://erratique.ch/software/bos\n[cmdliner]: http://erratique.ch/software/cmdliner\n[webbrowser]: http://erratique.ch/software/webbrowser\"\"\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"packaging\" \"ocamlbuild\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/topkg\"\ndoc: \"http://erratique.ch/software/topkg/doc\"\nbug-reports: \"https://github.com/dbuenzli/topkg/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.01.0\"}\n  \"ocamlfind\" {build & >= \"1.6.1\"}\n  \"ocamlbuild\"\n  \"result\"\n]\nbuild: [\n  \"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pkg-name\" name \"--dev-pkg\" \"%{pinned}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/topkg.git\"\nurl {\n  src: \"http://erratique.ch/software/topkg/releases/topkg-1.0.0.tbz\"\n  checksum: \"md5=e3d76bda06bf68cb5853caf6627da603\"\n}",
           "override": null
         }
       },
@@ -357,7 +357,7 @@
         "opam": null
       },
       "dependencies": [
-        "@opam/base-unix@opam:base", "@opam/dune@opam:1.3.0",
+        "@opam/base-unix@opam:base", "@opam/dune@opam:1.4.0",
         "esy-openssl@github:bryphe/esy-openssl#c85e208"
       ]
     },
@@ -423,26 +423,6 @@
         "ocaml@4.6.7"
       ]
     },
-    "@opam/seq@opam:0.1": {
-      "record": {
-        "name": "@opam/seq",
-        "version": "opam:0.1",
-        "source":
-          "archive:https://github.com/c-cube/seq/archive/0.1.tar.gz#md5:0e87f9709541ed46ecb6f414bc31458c",
-        "files": [],
-        "opam": {
-          "name": "seq",
-          "version": "0.1",
-          "opam":
-            "opam-version: \"2.0\"\nname: \"seq\"\nversion: \"0.1\"\nsynopsis:\n  \"Compatibility package for OCaml's standard iterator type starting from 4.07.\"\nmaintainer: \"simon.cruanes.2007@m4x.org\"\nauthors: \"Simon Cruanes\"\nlicense: \"GPL\"\ntags: [\"iterator\" \"seq\" \"pure\" \"list\" \"compatibility\" \"cascade\"]\nhomepage: \"https://github.com/c-cube/seq/\"\nbug-reports: \"https://github.com/c-cube/seq/issues\"\ndepends: [\n  \"ocaml\" {< \"4.07.0\"}\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n]\nflags: light-uninstall\nbuild: [make \"build\"]\ninstall: [make \"install\"]\nremove: [\"ocamlfind\" \"remove\" \"seq\"]\ndev-repo: \"git+https://github.com/c-cube/seq.git\"\nurl {\n  src: \"https://github.com/c-cube/seq/archive/0.1.tar.gz\"\n  checksum: \"md5=0e87f9709541ed46ecb6f414bc31458c\"\n}",
-          "override": null
-        }
-      },
-      "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
-        "@opam/ocamlfind@opam:1.8.0", "ocaml@4.6.7"
-      ]
-    },
     "@opam/sedlex@opam:1.99.4": {
       "record": {
         "name": "@opam/sedlex",
@@ -502,27 +482,48 @@
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
-        "@opam/ocamlfind@opam:1.8.0", "@opam/topkg@opam:0.9.1", "ocaml@4.6.7"
+        "@opam/ocamlfind@opam:1.8.0", "@opam/topkg@opam:1.0.0", "ocaml@4.6.7"
       ]
     },
-    "@opam/re@opam:1.8.0": {
+    "@opam/re@opam:1.7.1": {
       "record": {
         "name": "@opam/re",
-        "version": "opam:1.8.0",
+        "version": "opam:1.7.1",
         "source":
-          "archive:https://github.com/ocaml/ocaml-re/releases/download/1.8.0/re-1.8.0.tbz#md5:765f6f8d3e6ab200866e719ed7e5178d",
-        "files": [],
+          "archive:https://github.com/ocaml/ocaml-re/archive/1.7.1.tar.gz#md5:0e45743512b7ab5e6b175f955dc72002",
+        "files": [
+          {
+            "name": "patch-oasis-re.1.7.1",
+            "content":
+              "--- ./Makefile\n+++ ./Makefile\n@@ -1,5 +1,5 @@\n # OASIS_START\n-# DO NOT EDIT (digest: 0ea630b0d23ed49c1bf5c457a3a51866)\n+# DO NOT EDIT (digest: fb216f2fc077c903356ab6df5e6bad1c)\n \n SETUP = ./setup.exe\n \n@@ -39,7 +39,7 @@\n \n setup.exe: setup.ml\n \tocamlfind ocamlopt -o $@ setup.ml || ocamlfind ocamlc -o $@ setup.ml || true\n-\t$(RM) setup.cmi setup.cmo setup.cmx setup.o\n+\t$(RM) setup.cmi setup.cmo setup.cmx setup.o setup.obj\n \n .PHONY: build doc test all install uninstall reinstall clean distclean configure\n \n--- ./configure\n+++ ./configure\n@@ -1,7 +1,7 @@\n #!/bin/sh\n \n # OASIS_START\n-# DO NOT EDIT (digest: 67dd0def14e1d99625d2485f6a4d5df1)\n+# DO NOT EDIT (digest: de002b19d5202b7eeca1f5805c9fae87)\n set -e\n \n FST=true\n@@ -25,7 +25,7 @@\n \n if [ ! -e setup.exe ] || [ _oasis -nt setup.exe ] || [ setup.ml -nt setup.exe ] || [ configure -nt setup.exe ]; then\n   ocamlfind ocamlopt -o setup.exe setup.ml || ocamlfind ocamlc -o setup.exe setup.ml || exit 1\n-  rm -f setup.cmi setup.cmo setup.cmx setup.o\n+  rm -f setup.cmi setup.cmo setup.cmx setup.o setup.obj\n fi\n ./setup.exe -configure \"$@\"\n # OASIS_STOP\n--- ./myocamlbuild.ml\n+++ ./myocamlbuild.ml\n@@ -1,5 +1,5 @@\n (* OASIS_START *)\n-(* DO NOT EDIT (digest: 31ff86081d6e2ccabfd4e54152c24ad6) *)\n+(* DO NOT EDIT (digest: 0459fd541f7ba7d272ec912eb2888aa2) *)\n module OASISGettext = struct\n (* # 22 \"src/oasis/OASISGettext.ml\" *)\n \n@@ -177,6 +177,28 @@\n     else\n       s\n \n+  let exists f str =\n+    let rec iter i =\n+      if i < 0 then\n+        false\n+      else if f str.[i] then\n+        true\n+      else\n+        iter (pred i)\n+    in\n+      iter (String.length str - 1)\n+\n+  let is_digit c =\n+    '0' <= c && c <= '9'\n+\n+  let is_alpha c =\n+    ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')\n+\n+  let is_whitespace =\n+    function\n+      | ' ' | '\\r' | '\\n' | '\\t' -> true\n+      |  _  -> false\n+\n end\n \n module OASISUtils = struct\n@@ -440,7 +462,7 @@\n end\n \n \n-# 443 \"myocamlbuild.ml\"\n+# 465 \"myocamlbuild.ml\"\n module BaseEnvLight = struct\n (* # 22 \"src/base/BaseEnvLight.ml\" *)\n \n@@ -520,7 +542,7 @@\n end\n \n \n-# 523 \"myocamlbuild.ml\"\n+# 545 \"myocamlbuild.ml\"\n module MyOCamlbuildFindlib = struct\n (* # 22 \"src/plugins/ocamlbuild/MyOCamlbuildFindlib.ml\" *)\n \n@@ -597,7 +619,9 @@\n     with Not_found -> s\n \n   (* ocamlfind command *)\n-  let ocamlfind x = S[Sh (exec_from_conf \"ocamlfind\"); x]\n+  let ocamlfind x = S[Sh (\n+    Ocamlbuild_pack.Shell.quote_filename_if_needed\n+      (exec_from_conf \"ocamlfind\") ); x]\n \n   (* This lists all supported packages. *)\n   let find_packages () =\n@@ -878,7 +902,7 @@\n end\n \n \n-# 881 \"myocamlbuild.ml\"\n+# 905 \"myocamlbuild.ml\"\n open Ocamlbuild_plugin;;\n let package_default =\n   {\n@@ -903,6 +927,6 @@\n \n let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;\n \n-# 907 \"myocamlbuild.ml\"\n+# 931 \"myocamlbuild.ml\"\n (* OASIS_STOP *)\n Ocamlbuild_plugin.dispatch dispatch_default;;\n--- ./setup.ml\n+++ ./setup.ml\n@@ -1,7 +1,7 @@\n (* setup.ml generated for the first time by OASIS v0.2.1~alpha1 *)\n \n (* OASIS_START *)\n-(* DO NOT EDIT (digest: 1144d4ff151620f5dbdaa12075aff0a5) *)\n+(* DO NOT EDIT (digest: 697b96250d03e6e95a14d1cf9ea91659) *)\n (*\n    Regenerated by OASIS v0.4.7\n    Visit http://oasis.forge.ocamlcore.org for more information and\n@@ -184,6 +184,28 @@\n     else\n       s\n \n+  let exists f str =\n+    let rec iter i =\n+      if i < 0 then\n+        false\n+      else if f str.[i] then\n+        true\n+      else\n+        iter (pred i)\n+    in\n+      iter (String.length str - 1)\n+\n+  let is_digit c =\n+    '0' <= c && c <= '9'\n+\n+  let is_alpha c =\n+    ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')\n+\n+  let is_whitespace =\n+    function\n+      | ' ' | '\\r' | '\\n' | '\\t' -> true\n+      |  _  -> false\n+\n end\n \n module OASISUtils = struct\n@@ -459,6 +481,118 @@\n \n   module Unix = OASISUnixPath\n \n+  let bash_cmd = ref ( fun () -> \"\" )\n+\n+  let use_bash () = ( !bash_cmd () ) <> \"\"\n+\n+\n+  (* generic quote and unixquote are taken from ocaml source *)\n+  let generic_quote quotequote s =\n+    let l = String.length s in\n+    let b = Buffer.create (l + 20) in\n+      Buffer.add_char b '\\'';\n+      for i = 0 to l - 1 do\n+        if s.[i] = '\\'' then\n+          Buffer.add_string b quotequote\n+        else\n+          Buffer.add_char b  s.[i]\n+      done;\n+      Buffer.add_char b '\\'';\n+      Buffer.contents b\n+\n+  let unixquote = generic_quote \"'\\\\''\"\n+\n+  let win = Sys.os_type = \"Win32\"\n+\n+  let quote str =\n+    if win && use_bash () then\n+      unixquote str\n+    else\n+      quote str\n+\n+  (* uniform_path (only called, if Sys.os_type = \"Win32\")\n+   * - enforces uniform path seperators\n+   * - strips trailing slashes (exceptions in case of C:\\ and / )\n+   * - removes (some) unnecessary file components like ./././\n+   *)\n+\n+  let get_naccu accu str first pos =\n+    (* I assume c//d is identic to c/d\n+     * the only exception (Network devices \\\\xyz\\asdf)\n+     * is covered in uniform_path\n+     *)\n+    if first = pos then\n+      accu\n+    else\n+      let nlen = pos - first in\n+      let nstr = String.sub str first nlen in\n+        (* test/././ is the same as test *)\n+        if nlen = 1 && nstr = \".\" then\n+          accu\n+        (* a/b/../ is the same as a *)\n+        else if nlen = 2 && nstr = \"..\" then\n+          match accu with\n+            | []      -> [ nstr ]\n+            | \"..\"::_ -> nstr::accu\n+            | hd::tl  -> tl\n+        else\n+          nstr::accu\n+\n+  let is_path_sep = function\n+    | '\\\\' | '/' -> true\n+    | _ -> false\n+\n+\n+  let uniform_path path_sep = function\n+    | \"\" -> \"\" (* Raise an exception? Or an possible intermediate result?\n+               * Filename.basename and dirname also don't raise exceptions *)\n+    | str ->\n+        let rec iter accu str len first pos =\n+          if pos >= len then\n+            List.rev (get_naccu accu str first pos)\n+          else\n+            let next = succ pos in\n+              match is_path_sep str.[pos] with\n+                | true -> iter (get_naccu accu str first pos) str len next next\n+                | false -> iter accu str len first next\n+        in\n+          let is_unix_root = is_path_sep str.[0] in\n+          let len = String.length str in\n+          let next_sep = len > 1 && is_path_sep str.[1] in\n+          let is_network_root = is_unix_root && next_sep in\n+          let is_currel = str.[0] = '.' && ( next_sep || len = 1 ) in\n+          let l = iter [] str len 0 0 in\n+          (* Trailing slashes are normally stripped.\n+           * This is not possible in case of root folders\n+           * Sys.file_exists \"C:\" is false, Sys.file_exists \"C:\\\\\" true\n+           *)\n+          let l_min =\n+            match l with\n+              | [] -> [ \"\" ]\n+              | _ -> l\n+          in\n+          let l =\n+            if is_network_root then\n+              \"\"::\"\"::l_min\n+            else if is_unix_root then\n+              \"\"::l_min\n+            else if is_currel then\n+              \".\"::l\n+            else\n+              match l with\n+                | s :: [] ->\n+                    (* root folders like C:\\ *)\n+                    if String.length s = 2 && s.[1] = ':' &&\n+                      len > 2 && is_path_sep str.[2]\n+                    then\n+                      s :: [ \"\" ]\n+                    else\n+                      l\n+                | _ -> l\n+          in\n+            String.concat path_sep l\n+\n+\n \n   let make =\n     function\n@@ -472,22 +606,31 @@\n     match Sys.os_type with\n     | \"Unix\" | \"Cygwin\" -> ufn\n     | \"Win32\" ->\n-      make\n-        (List.map\n-           (fun p ->\n-              if p = Unix.current_dir_name then\n-                current_dir_name\n-              else if p = Unix.parent_dir_name then\n-                parent_dir_name\n+      let path_sep =\n+        if use_bash () then\n+          \"/\"\n               else\n-                p)\n-           (OASISString.nsplit ufn '/'))\n+          \"\\\\\"\n+      in\n+      uniform_path path_sep ufn\n     | os_type ->\n       OASISUtils.failwithf\n         (f_ \"Don't know the path format of os_type %S when translating unix \\\n              filename. %S\")\n         os_type ufn\n \n+  (* see findlib's src/findlib/frontend.ml for details *)\n+  let ocamlfind_unquote dir =\n+    match Sys.os_type with\n+    | \"Cygwin\"\n+    | \"Win32\" ->\n+      let len = String.length dir in\n+      if len < 3 || dir.[0] <> '\"' || dir.[len - 1] <> '\"' ||\n+         String.contains dir ' ' = false then\n+        dir\n+      else\n+        String.sub dir 1 (len - 2)\n+    | _ -> dir\n \n end\n \n@@ -1068,8 +1211,8 @@\n \n \n   (* Range of allowed characters *)\n-  let is_digit c = '0' <= c && c <= '9'\n-  let is_alpha c = ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z')\n+  let is_digit = OASISString.is_digit\n+  let is_alpha = OASISString.is_alpha\n   let is_special = function | '.' | '+' | '-' | '~' -> true | _ -> false\n \n \n@@ -2875,26 +3018,218 @@\n   open OASISUtils\n   open OASISMessage\n \n+  (* In general, there is no chance to quote properly with the current\n+   * settings. ( This is only a problem, if BaseCustom.run is used (e.g\n+   * test commands, PreConfigure,....). Most of the time, OASISExec.run\n+   * is used with enabled quoting.)\n+   *\n+   * \"$rm\" should ideally expand to 'rm -f' (no quotes), but \"$test_exec\"\n+   * should ideally expand to '\"C:\\Program Files\\dir\\test.exe\"' (with\n+   * quotes). Paths with spaces are common on Windows, so this problem\n+   * can't be ignored.\n+   *\n+   * Using a command with additional parameters is quite useful, not only\n+   * for trivial cases like $rm. You could add an additional parameter\n+   * for $make in order to use a special compatibility mode, on windows\n+   * you can use it to inform ocaml that a certain program is a shell\n+   * script ('sh.exe pcre-config').\n+   *\n+   * An additional parameter (e.g. $rm_switches) would be ugly,\n+   * especially for *nix users, who don't use space characters in their\n+   * installation paths anyway.\n+   *\n+   * I use the following workaround, which should work most of the time:\n+   *\n+   * - if cmd doesn't contains spaces or other suspicious characters, it\n+   * can be quoted in the usual way (not ambigous, I think)\n+   *\n+   * - if cmd does contain spaces, a file with this name exists, and the\n+   * beginning of cmd looks like a absolute pathname\n+   * ('\\\\test\\dir\\foo.exe' or \"C:\\\\sa df\\\\foo.exe\" - not \"foo.exe\" ), I\n+   * will also quote it. (ambigous, there could be \"C:\\bin\\rm.exe\" and\n+   * \"C:\\bin\\rm -f.exe\").  Relative filenames are not considered, because\n+   * I assume the source code folder contains only well named files and\n+   * relative paths like \"../../make.exe\" are uncommon (autoconf even\n+   * rejects them) *)\n+\n+\n+  (* stricter settings as for regular windows batch lines\n+   * necessary because of shell comannds like:\n+   *   LC_ALL=C make ....\n+   *)\n+  let is_dubious_char = function\n+    | '+' | '~' | ':' | '.' | '-' | '_' | '/' | '\\\\' -> false\n+    | c ->\n+      OASISString.is_digit c = false &&\n+      OASISString.is_alpha c = false\n+\n+\n+  let win_quote_needed str =\n+    let f = function\n+      (* this list is not exhaustive. Feel free to added common chars, that\n+       * can be passed to cmd.exe without quoting *)\n+      | 'a' .. 'z'  | 'A' .. 'Z' | '0' .. '9'\n+      | '_' | '-' | '~' | '.' | ':' | ',' | '\\\\' -> false\n+      | _ -> true\n+    in\n+      str = \"\" || OASISString.exists f str\n+\n+  let is_simple_command str =\n+    String.length str > 0 &&\n+    not (OASISString.exists is_dubious_char str)\n+\n+  let is_path_sep = function\n+    | '/' | '\\\\' -> true\n+    | _ -> false\n+\n+  let starts_with_absolute_path cmd =\n+    let len = String.length cmd in\n+      if len < 3 then\n+        false\n+      else\n+        let c0 = cmd.[0] in\n+        let c1 = cmd.[1] in\n+          if is_path_sep c0 && is_path_sep c1 then (* network devices: \"//\" *)\n+            true\n+          else if len = 3 then\n+            false\n+          else  (* C:\\.... *)\n+            OASISString.is_alpha c0 && c1 = ':' && is_path_sep cmd.[2]\n+\n+  let exe_exts = lazy\n+    begin\n+      let exts =\n+        try\n+          OASISString.nsplit\n+            (Sys.getenv \"PATHEXT\")\n+            ';'\n+        with\n+          | Not_found -> []\n+      in\n+      let exts' =\n+        List.filter\n+          ( fun a -> a <> \"\" && a.[0] = '.' && a <> \".exe\" )\n+          (List.map OASISString.lowercase_ascii exts) (* windows file system doesn't care *)\n+      in\n+        \".exe\"::exts' (* .exe first, most common *)\n+    end\n+\n+  let exe_file_exists fln =\n+    Sys.file_exists fln ||\n+    List.exists\n+      (fun a -> Sys.file_exists ( fln ^ a ) )\n+      (Lazy.force exe_exts)\n+\n+\n+  let quote_anyway cmd =\n+    if Sys.os_type <> \"Win32\" then (* workaround for windows only *)\n+      false\n+    else if is_simple_command cmd then\n+      true\n+    else\n+      OASISString.exists OASISString.is_whitespace cmd &&\n+        starts_with_absolute_path cmd &&\n+        exe_file_exists cmd\n+\n+\n+  let run_bash ~ctxt ?f_exit_code ?(quote=true) cmd args =\n+    let fn = Filename.temp_file \"oasis-\" \".sh\" in\n+    let fn_deleted = ref false in\n+      try\n+        begin\n+          let ch = open_out_bin fn in\n+          let ch_closed = ref false in\n+            try\n+              begin\n+                let cmd =\n+                  if quote || quote_anyway cmd then\n+                    OASISHostPath.quote (OASISHostPath.of_unix cmd)\n+                  else\n+                    cmd\n+                in\n+                  output_string ch cmd;\n+                  List.iter\n+                    ( fun s -> output_char ch ' '; output_string ch s )\n+                    args ;\n+                  output_char ch '\\n';\n+                  ch_closed:=true ;\n+                  close_out ch;\n+                  let bash = !OASISHostPath.bash_cmd () in\n+                  let add_quotes = ref false in\n+                  let shell_cmd =\n+                    if Sys.os_type <> \"Win32\" then\n+                      Filename.quote bash\n+                    else\n+                      if win_quote_needed bash = false then\n+                        bash\n+                      else\n+                        begin\n+                          add_quotes := true;\n+                          Filename.quote bash\n+                        end\n+                  in\n+                  let cmdline_orig = String.concat \" \" (cmd :: args) in\n+                  let cmdline =\n+                    let s = shell_cmd ^ \" \" ^ (Filename.quote fn) in\n+                      if !add_quotes then\n+                        \"\\\"\" ^ s ^ \"\\\"\"\n+                      else\n+                        s\n+                  in\n+                    info ~ctxt (f_ \"Running command '%s'\") cmdline_orig;\n+                    let ret = Sys.command cmdline in\n+                      fn_deleted := true;\n+                      Sys.remove fn;\n+                      match f_exit_code, ret with\n+                        | None, 0 -> ()\n+                        | None, i ->\n+                            failwithf\n+                              (f_ \"Command '%s' terminated with error code %d\")\n+                              cmdline_orig i\n+                        | Some f, i ->\n+                            f i\n+              end\n+            with\n+              | x when !ch_closed = false ->\n+                  close_out_noerr ch;\n+                  raise x\n+        end\n+      with\n+        | x when !fn_deleted = false ->\n+            (try Sys.remove fn with _ -> () ) ;\n+            raise x\n \n   (* TODO: I don't like this quote, it is there because $(rm) foo expands to\n    * 'rm -f' foo...\n   *)\n-  let run ~ctxt ?f_exit_code ?(quote=true) cmd args =\n+  let run_default ~ctxt ?f_exit_code ?(quote=true) cmd args =\n+    let add_quotes = ref false in\n     let cmd =\n-      if quote then\n+      if quote || quote_anyway cmd then\n         if Sys.os_type = \"Win32\" then\n-          if String.contains cmd ' ' then\n-            (* Double the 1st double quote... win32... sigh *)\n-            \"\\\"\"^(Filename.quote cmd)\n-          else\n+          begin\n+            if win_quote_needed cmd = false then\n             cmd\n         else\n+              begin\n+                (* Double the 1st double quote... win32... sigh *)\n+                (* Above comment ist false. The whole string must be quoted.\n+                 * However, an error is only triggered, if args contains also\n+                 * quoted parameters *)\n+                add_quotes := true;\n+                Filename.quote cmd\n+              end\n+          end\n+        else\n           Filename.quote cmd\n       else\n         cmd\n     in\n     let cmdline =\n-      String.concat \" \" (cmd :: args)\n+      let s = String.concat \" \" (cmd :: args) in\n+        match !add_quotes with\n+          | true -> \"\\\"\" ^ s ^ \"\\\"\"\n+          | false -> s\n     in\n     info ~ctxt (f_ \"Running command '%s'\") cmdline;\n     match f_exit_code, Sys.command cmdline with\n@@ -2906,6 +3241,13 @@\n       | Some f, i ->\n         f i\n \n+  let run ~ctxt ?f_exit_code ?quote cmd args =\n+    if OASISHostPath.use_bash () &&\n+       (Sys.os_type <> \"Win32\" || not (Filename.check_suffix cmd \".bat\"))\n+    then\n+      run_bash ~ctxt ?f_exit_code ?quote cmd args\n+    else\n+      run_default ~ctxt ?f_exit_code ?quote cmd args\n \n   let run_read_output ~ctxt ?f_exit_code cmd args =\n     let fn =\n@@ -3016,7 +3358,7 @@\n     ) alternatives\n \n \n-  let which ~ctxt prg =\n+  let which ?(plain=false) ?ctxt prg =\n     let path_sep =\n       match Sys.os_type with\n         | \"Win32\" ->\n@@ -3028,11 +3370,19 @@\n     let exec_ext =\n       match Sys.os_type with\n         | \"Win32\" ->\n-          \"\" :: (OASISString.nsplit (Sys.getenv \"PATHEXT\") path_sep)\n+          \"\" :: (List.map\n+                   OASISString.lowercase_ascii\n+                   (OASISString.nsplit (Sys.getenv \"PATHEXT\") path_sep))\n         | _ ->\n           [\"\"]\n     in\n+    let p =\n     find_file ~case_sensitive:false [path_lst; [prg]] exec_ext\n+    in\n+    if plain then\n+      p\n+    else\n+      OASISHostPath.of_unix p\n \n \n   (**/**)\n@@ -3049,35 +3399,54 @@\n       dn\n \n \n-  let q = Filename.quote\n+  let q s = OASISHostPath.quote (OASISHostPath.of_unix s)\n   (**/**)\n \n-\n   let cp ~ctxt ?(recurse=false) src tgt =\n     if recurse then\n-      match Sys.os_type with\n-        | \"Win32\" ->\n-          OASISExec.run ~ctxt\n-            \"xcopy\" [q src; q tgt; \"/E\"]\n-        | _ ->\n-          OASISExec.run ~ctxt\n-            \"cp\" [\"-r\"; q src; q tgt]\n+      (*\n+        'xcopy /E' and 'cp -r' don't have the same semantic!\n+        -dir2 does exist:\n+          xcopy dir dir2 /E -> copys content of dir into dir2 (dir2/dir doesn't exist!)\n+          cp -r dir dir2    -> copys dir to dir2 (dir2/dir does exist!)\n+        -dir2 doesn't exist:\n+          xcopy dir dir2 /E -> request on command line, if dir2 is an directory or file.\n+          cp -r dir dir2    -> dir and dir2 have the same content (dir2/dir doesn't exist)\n+        Probably, there are even more differences,....\n+      *)\n+      if Sys.os_type = \"Win32\" && OASISHostPath.use_bash () = false then\n+        let tgt_real =\n+          if Sys.file_exists tgt = false then\n+            begin\n+              OASISExec.run ~ctxt \"md\" [q tgt];\n+              tgt\n+            end\n     else\n-      OASISExec.run ~ctxt\n-        (match Sys.os_type with\n-          | \"Win32\" -> \"copy\"\n-          | _ -> \"cp\")\n-        [q src; q tgt]\n-\n+            let base = Filename.basename src in\n+            if base = \".\" then\n+              tgt\n+            else\n+              let tgt_real = Filename.concat tgt base in\n+              if Sys.file_exists tgt_real = false then\n+                OASISExec.run ~ctxt \"md\" [q tgt_real];\n+              tgt_real\n+        in\n+        OASISExec.run ~ctxt \"xcopy\" [q src; q tgt_real; \"/E\" ; \"/Q\" ; \"/Y\"]\n+      else\n+        OASISExec.run ~ctxt \"cp\" [\"-r\"; q src; q tgt]\n+    else if Sys.os_type = \"Win32\" && OASISHostPath.use_bash () = false then\n+      OASISExec.run ~ctxt \"copy\" [q src; q tgt ; \"/Y\"]\n+    else\n+      OASISExec.run ~ctxt \"cp\" [q src; q tgt]\n \n   let mkdir ~ctxt tgt =\n     OASISExec.run ~ctxt\n-      (match Sys.os_type with\n-        | \"Win32\" -> \"md\"\n-        | _ -> \"mkdir\")\n+      ( if Sys.os_type = \"Win32\" && not (OASISHostPath.use_bash ()) then\n+          \"md\"\n+        else\n+          \"mkdir\" )\n       [q tgt]\n \n-\n   let rec mkdir_parent ~ctxt f tgt =\n     let tgt =\n       fix_dir tgt\n@@ -3103,10 +3472,9 @@\n \n   let rmdir ~ctxt tgt =\n     if Sys.readdir tgt = [||] then begin\n-      match Sys.os_type with\n-        | \"Win32\" ->\n+      if Sys.os_type = \"Win32\" && OASISHostPath.use_bash () = false then\n           OASISExec.run ~ctxt \"rd\" [q tgt]\n-        | _ ->\n+      else\n           OASISExec.run ~ctxt \"rm\" [\"-r\"; q tgt]\n     end else begin\n       OASISMessage.error ~ctxt\n@@ -3160,7 +3528,7 @@\n end\n \n \n-# 3163 \"setup.ml\"\n+# 3531 \"setup.ml\"\n module BaseEnvLight = struct\n (* # 22 \"src/base/BaseEnvLight.ml\" *)\n \n@@ -3240,7 +3608,7 @@\n end\n \n \n-# 3243 \"setup.ml\"\n+# 3611 \"setup.ml\"\n module BaseContext = struct\n (* # 22 \"src/base/BaseContext.ml\" *)\n \n@@ -3331,7 +3699,7 @@\n   let var_lxr = Genlex.make_lexer []\n \n \n-  let rec var_expand str =\n+  let rec var_expand ?(quoted=false) str =\n     let buff =\n       Buffer.create ((String.length str) * 2)\n     in\n@@ -3359,7 +3727,11 @@\n              | [Genlex.Ident \"ocaml_escaped\"; Genlex.String s] ->\n                String.escaped s\n              | [Genlex.Ident nm] ->\n-               var_get nm\n+                 let s = var_get nm in\n+                 if quoted then\n+                   OASISHostPath.quote s\n+                 else\n+                   s\n              | _ ->\n                failwithf\n                  (f_ \"Unknown expression '%s' in variable expansion of %s.\")\n@@ -3897,9 +4269,11 @@\n     in\n     let findlib_dir pkg =\n       let dir =\n+        OASISHostPath.of_unix (\n+          OASISHostPath.ocamlfind_unquote (\n         OASISExec.run_read_one_line ~ctxt:!BaseContext.default\n           (ocamlfind ())\n-          [\"query\"; \"-format\"; \"%d\"; pkg]\n+              [\"query\"; \"-format\"; \"%d\"; pkg] ) )\n       in\n       if Sys.file_exists dir && Sys.is_directory dir then\n         dir\n@@ -4029,6 +4403,9 @@\n       match nm with\n         | \"ocaml_version\" ->\n           \"version\", chop_version_suffix\n+        | \"standard_library\"\n+        | \"standard_library_default\" ->\n+            nm, ( fun x -> OASISHostPath.of_unix x)\n         | _ -> nm, (fun x -> x)\n     in\n     var_redefine\n@@ -4168,15 +4545,43 @@\n \n \n   let (/) a b =\n-    if os_type () = Sys.os_type then\n+    let os = os_type () in\n+    if os = Sys.os_type then\n+      if Sys.os_type = \"Win32\" && OASISHostPath.use_bash () then\n+        OASISUnixPath.concat a b\n+      else\n       Filename.concat a b\n-    else if os_type () = \"Unix\" || os_type () = \"Cygwin\" then\n+    else if os = \"Unix\" || os = \"Cygwin\" then\n       OASISUnixPath.concat a b\n     else\n-      OASISUtils.failwithf (f_ \"Cannot handle os_type %s filename concat\")\n-        (os_type ())\n+      OASISUtils.failwithf (f_ \"Cannot handle os_type %s filename concat\") os\n   (**/**)\n \n+  let auto_bash =\n+    lazy (\n+      try\n+        let bash = OASISFileUtil.which ~plain:true \"bash\" in\n+        let sh = Filename.concat (Filename.dirname bash) \"sh.exe\" in\n+        if Sys.file_exists sh then\n+          sh\n+        else\n+          bash\n+      with\n+      | Not_found | Sys_error _ -> \"\" )\n+\n+  let auto_bash () =\n+    if Sys.os_type <> \"Win32\" then\n+      \"\"\n+    else\n+      Lazy.force auto_bash\n+\n+  let bash_cmd =\n+    var_define\n+     ~short_desc:(fun () -> s_ \"Enforced bash shell:\")\n+      ~cli:CLIAuto\n+      ~arg_help:\"program\"\n+      \"use_bash\"\n+      auto_bash\n \n   let prefix =\n     p \"prefix\"\n@@ -4184,10 +4589,30 @@\n       (fun () ->\n          match os_type () with\n            | \"Win32\" ->\n+            let getenv w =\n+              try\n+                Some(Sys.getenv w)\n+              with\n+              | Not_found -> None\n+            in\n+            let s =\n+              if Sys.word_size = 64 then\n+                getenv \"ProgramW6432\"\n+              else\n+                None\n+            in\n+            let s =\n+              if s = None then\n+                getenv \"PROGRAMFILES\"\n+              else\n+                s\n+            in\n              let program_files =\n-               Sys.getenv \"PROGRAMFILES\"\n+              match s with\n+              | None -> \"C:\\\\Program Files\"\n+              | Some x -> x\n              in\n-             program_files/(pkg_name ())\n+            OASISHostPath.of_unix (program_files/(pkg_name ()))\n            | _ ->\n              \"/usr/local\")\n \n@@ -4273,7 +4698,15 @@\n   let docdir =\n     p \"docdir\"\n       (fun () -> s_ \"Documentation root\")\n-      (fun () -> \"$datarootdir\"/\"doc\"/\"$pkg_name\")\n+      (fun () ->\n+        (* TODO: (Windows only?) \"$pkg_name\" is not always substituted\n+         * (at least if datarootdir contains spaces or other garbage)\n+         * I haven't looked up why.\n+         *)\n+        match os_type () with\n+          | \"Win32\" -> \"$datarootdir\"/\"doc\"/ ( pkg_name () )\n+          | _ -> \"$datarootdir\"/\"doc\"/\"$pkg_name\"\n+      )\n \n \n   let htmldir =\n@@ -4347,9 +4780,10 @@\n       ~short_desc:(fun () -> s_ \"Remove a file.\")\n       \"rm\"\n       (fun () ->\n-         match os_type () with\n-           | \"Win32\" -> \"del\"\n-           | _ -> \"rm -f\")\n+         if not (OASISHostPath.use_bash ()) && os_type () = \"Win32\" then\n+           \"del\"\n+         else\n+           \"rm -f\" )\n \n \n   let rmdir =\n@@ -4357,9 +4791,10 @@\n       ~short_desc:(fun () -> s_ \"Remove a directory.\")\n       \"rmdir\"\n       (fun () ->\n-         match os_type () with\n-           | \"Win32\" -> \"rd\"\n-           | _ -> \"rm -rf\")\n+         if not (OASISHostPath.use_bash ()) && os_type () = \"Win32\" then\n+           \"rd\"\n+         else\n+           \"rm -rf\")\n \n \n   let debug =\n@@ -4423,14 +4858,26 @@\n            let has_native_dynlink =\n              let ocamlfind = ocamlfind () in\n              try\n-               let fn =\n+               (* -format %d/%a doesn't work, because ocamlfind quotes %d\n+                  * and %a separatly *)\n+               let fn1 =\n+                 OASISHostPath.ocamlfind_unquote (\n+                   OASISExec.run_read_one_line\n+                     ~ctxt:!BaseContext.default\n+                     ocamlfind\n+                     [\"query\"; \"-predicates\"; \"native\"; \"dynlink\";\n+                      \"-format\"; \"%d\"] )\n+               in\n+               let fn2 =\n+                 OASISHostPath.ocamlfind_unquote (\n                  OASISExec.run_read_one_line\n                    ~ctxt:!BaseContext.default\n                    ocamlfind\n                    [\"query\"; \"-predicates\"; \"native\"; \"dynlink\";\n-                    \"-format\"; \"%d/%a\"]\n+                      \"-format\"; \"%a\"]\n+                 )\n                in\n-               Sys.file_exists fn\n+               fn1 <> \"\" && fn2 <> \"\" && Sys.file_exists (Filename.concat fn1 fn2)\n              with _ ->\n                false\n            in\n@@ -4457,6 +4904,8 @@\n     rpkg := Some pkg;\n     List.iter (fun f -> f pkg.oasis_version) !var_cond\n \n+  let () =\n+    OASISHostPath.bash_cmd := bash_cmd\n end\n \n module BaseFileAB = struct\n@@ -4757,7 +5206,7 @@\n     OASISExec.run ~ctxt:!BaseContext.default ~quote:false\n       (var_expand cmd)\n       (List.map\n-         var_expand\n+         (var_expand ~quoted:true)\n          (args @ (Array.to_list extra_args)))\n \n \n@@ -5031,9 +5480,27 @@\n \n   let configure ~ctxt t args =\n     (* Run configure *)\n+\n+    (* use-bash is an exception. It's already needed to run the\n+       pre-configure script. *)\n+    let rec f = function\n+      | [] ->\n+        begin\n+          try\n+            let x = Sys.getenv \"USE_BASH\" in\n+              OASISHostPath.bash_cmd := (fun () -> x);\n+          with\n+            _ -> ()\n+        end\n+      | \"--use-bash\"::x::_ ->\n+          OASISHostPath.bash_cmd := (fun () -> x);\n+      | _::tl -> f tl\n+    in\n+      f (Array.to_list args);\n     BaseCustom.hook\n       t.package.conf_custom\n       (fun () ->\n+           OASISHostPath.bash_cmd := BaseStandardVar.bash_cmd;\n          (* Reload if preconf has changed it *)\n          begin\n            try\n@@ -5663,7 +6130,7 @@\n end\n \n \n-# 5666 \"setup.ml\"\n+# 6133 \"setup.ml\"\n module InternalConfigurePlugin = struct\n (* # 22 \"src/plugins/internal/InternalConfigurePlugin.ml\" *)\n \n@@ -5943,12 +6410,21 @@\n   let install_findlib_ev = \"install-findlib\"\n \n \n-  (* TODO: this can be more generic and used elsewhere. *)\n-  let win32_max_command_line_length = 8000\n-\n-\n   let split_install_command ocamlfind findlib_name meta files =\n-    if Sys.os_type = \"Win32\" then\n+    if Sys.os_type <> \"Win32\" then\n+      [\"install\" :: findlib_name :: meta :: files]\n+    else\n+      let f s =\n+        OASISHostPath.quote ( OASISHostPath.of_unix s )\n+      in\n+      let files = List.map f files in\n+      let meta = f meta  in\n+      let win32_max_command_line_length =\n+        if OASISHostPath.use_bash () = false then\n+          7900\n+        else\n+          30000\n+      in\n       (* Arguments for the first command: *)\n       let first_args = [\"install\"; findlib_name; meta] in\n       (* Arguments for remaining commands: *)\n@@ -6006,10 +6482,11 @@\n                     let cmds = split other_args others in\n                     cmd :: cmds\n       in\n+      if files = [] then\n+        [ first_args ]\n+      else\n       (* The first command does not use -add: *)\n       split first_args files\n-    else\n-      [\"install\" :: findlib_name :: meta :: files]\n \n \n   let install =\n@@ -6469,7 +6946,7 @@\n end\n \n \n-# 6472 \"setup.ml\"\n+# 6949 \"setup.ml\"\n module OCamlbuildCommon = struct\n (* # 22 \"src/plugins/ocamlbuild/OCamlbuildCommon.ml\" *)\n \n@@ -6842,7 +7319,7 @@\n end\n \n \n-# 6845 \"setup.ml\"\n+# 7322 \"setup.ml\"\n module CustomPlugin = struct\n (* # 22 \"src/plugins/custom/CustomPlugin.ml\" *)\n \n@@ -6974,7 +7451,7 @@\n end\n \n \n-# 6977 \"setup.ml\"\n+# 7454 \"setup.ml\"\n open OASISTypes;;\n \n let setup_t =\n@@ -9939,7 +10416,7 @@\n \n let setup () = BaseSetup.setup setup_t;;\n \n-# 9943 \"setup.ml\"\n+# 10420 \"setup.ml\"\n let setup_t = BaseCompat.Compat_0_4.adapt_setup_t setup_t\n open BaseCompat.Compat_0_4\n (* OASIS_STOP *)\n",
+            "perm": 438
+          }
+        ],
         "opam": {
           "name": "re",
-          "version": "1.8.0",
+          "version": "1.7.1",
           "opam":
-            "opam-version: \"2.0\"\nname: \"re\"\nversion: \"1.8.0\"\nsynopsis: \"RE is a regular expression library for OCaml\"\ndescription: \"\"\"\nPure OCaml regular expressions with:\n* Perl-style regular expressions (module Re.Perl)\n* Posix extended regular expressions (module Re.Posix)\n* Emacs-style regular expressions (module Re.Emacs)\n* Shell-style file globbing (module Re.Glob)\n* Compatibility layer for OCaml's built-in Str module (module Re.Str)\"\"\"\nmaintainer: \"rudi.grinberg@gmail.com\"\nauthors: [\n  \"Jerome Vouillon\"\n  \"Thomas Gazagnaire\"\n  \"Anil Madhavapeddy\"\n  \"Rudi Grinberg\"\n  \"Gabriel Radanne\"\n]\nlicense: \"LGPL-2.0 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocaml-re\"\nbug-reports: \"https://github.com/ocaml/ocaml-re/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02.3\"}\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"ounit\" {with-test}\n  \"seq\"\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-n\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/ocaml/ocaml-re.git\"\nurl {\n  src:\n    \"https://github.com/ocaml/ocaml-re/releases/download/1.8.0/re-1.8.0.tbz\"\n  checksum: \"md5=765f6f8d3e6ab200866e719ed7e5178d\"\n}",
-          "override": null
+            "opam-version: \"2.0\"\nname: \"re\"\nversion: \"1.7.1\"\nsynopsis: \"RE is a regular expression library for OCaml\"\ndescription: \"\"\"\nPure OCaml regular expressions with:\n* Perl-style regular expressions (module Re_perl)\n* Posix extended regular expressions (module Re_posix)\n* Emacs-style regular expressions (module Re_emacs)\n* Shell-style file globbing (module Re_glob)\n* Compatibility layer for OCaml's built-in Str module (module Re_str)\"\"\"\nmaintainer: \"jerome.vouillon@pps.univ-paris-diderot.fr\"\nauthors: [\"Jerome Vouillon\" \"Thomas Gazagnaire\" \"Anil Madhavapeddy\"]\nlicense: \"LGPL-2.0 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocaml-re\"\nbug-reports: \"https://github.com/ocaml/ocaml-re/issues\"\ndepends: [\n  \"ocaml\"\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"base-bytes\"\n]\nflags: light-uninstall\nbuild: [\n  [\"ocaml\" \"setup.ml\" \"-configure\" \"--prefix\" prefix]\n  [\"ocaml\" \"setup.ml\" \"-build\"]\n  [\"ocaml\" \"setup.ml\" \"-doc\"] {with-doc}\n]\ninstall: [\"ocaml\" \"setup.ml\" \"-install\"]\nremove: [\"ocamlfind\" \"remove\" \"re\"]\ndev-repo: \"git+https://github.com/ocaml/ocaml-re.git\"\nurl {\n  src: \"https://github.com/ocaml/ocaml-re/archive/1.7.1.tar.gz\"\n  checksum: \"md5=0e45743512b7ab5e6b175f955dc72002\"\n}",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < patch-oasis-re.1.7.1' : 'true'}"
+              ],
+              [
+                "ocaml", "setup.ml", "-configure", "--prefix",
+                "#{self.install}"
+              ],
+              [ "ocaml", "setup.ml", "-build" ]
+            ],
+            "install": [ [ "ocaml", "setup.ml", "-install" ] ]
+          }
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
-        "@opam/seq@opam:0.1", "ocaml@4.6.7"
+        "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
+        "@opam/ocamlbuild@opam:0.12.0", "@opam/ocamlfind@opam:1.8.0",
+        "ocaml@4.6.7"
       ]
     },
     "@opam/ppxlib@opam:0.3.1": {
@@ -767,7 +768,7 @@
         "@opam/ppx_inline_test@opam:v0.11.0",
         "@opam/ppx_sexp_conv@opam:v0.11.2",
         "@opam/ppx_variants_conv@opam:v0.11.1", "@opam/ppxlib@opam:0.3.1",
-        "@opam/re@opam:1.8.0", "@opam/stdio@opam:v0.11.0", "ocaml@4.6.7"
+        "@opam/re@opam:1.7.1", "@opam/stdio@opam:v0.11.0", "ocaml@4.6.7"
       ]
     },
     "@opam/ppx_deriving@opam:4.2.1": {
@@ -1100,7 +1101,7 @@
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/dune@opam:1.3.0",
+        "@esy-ocaml/substs@0.0.1", "@opam/dune@opam:1.4.0",
         "@opam/result@opam:1.3", "ocaml@4.6.7"
       ]
     },
@@ -1215,23 +1216,23 @@
         "@opam/ocamlfind@opam:1.8.0", "ocaml@4.6.7"
       ]
     },
-    "@opam/merlin@opam:3.2.1": {
+    "@opam/merlin@opam:3.2.2": {
       "record": {
         "name": "@opam/merlin",
-        "version": "opam:3.2.1",
+        "version": "opam:3.2.2",
         "source":
-          "archive:https://github.com/ocaml/merlin/releases/download/v3.2.1/merlin-v3.2.1.tbz#md5:d8fd6f9b3addf8d92bfc28277b04a6ba",
+          "archive:https://github.com/ocaml/merlin/releases/download/v3.2.2/merlin-v3.2.2.tbz#md5:ede35b65f8ac9c440cfade5445662c54",
         "files": [],
         "opam": {
           "name": "merlin",
-          "version": "3.2.1",
+          "version": "3.2.2",
           "opam":
-            "opam-version: \"2.0\"\nname: \"merlin\"\nversion: \"3.2.1\"\nsynopsis: \"Installation with Opam\"\ndescription: \"\"\"\nIf you have a working [Opam](https://opam.ocaml.org/) installation, Merlin is only two commands away:\n\n```shell\nopam install merlin\nopam user-setup install\n```\n\n[opam-user-setup](https://github.com/OCamlPro/opam-user-setup) takes care of configuring Emacs and Vim to make best use of your current install.\n\nYou can also [configure the editor](#editor-setup) yourself, if you prefer.\"\"\"\nmaintainer: \"defree@gmail.com\"\nauthors: \"The Merlin team\"\nhomepage: \"https://github.com/ocaml/merlin\"\nbug-reports: \"https://github.com/ocaml/merlin/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02.1\" & < \"4.08\"}\n  \"dune\" {build}\n  \"ocamlfind\" {>= \"1.5.2\"}\n  \"yojson\"\n  \"craml\" {with-test}\n]\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"dune\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\npost-messages:\n  \"\"\"\nmerlin installed.\n\nQuick setup for VIM\n-------------------\nAppend this to your .vimrc to add merlin to vim's runtime-path:\n  let g:opamshare = substitute(system('opam config var share'),'\\\\n$','','''')\n  execute \"set rtp+=\" . g:opamshare . \"/merlin/vim\"\n\nAlso run the following line in vim to index the documentation:\n  :execute \"helptags \" . g:opamshare . \"/merlin/vim/doc\"\n\nQuick setup for EMACS\n-------------------\nAdd opam emacs directory to your load-path by appending this to your .emacs:\n  (let ((opam-share (ignore-errors (car (process-lines \"opam\" \"config\" \"var\" \"share\")))))\n   (when (and opam-share (file-directory-p opam-share))\n    ;; Register Merlin\n    (add-to-list 'load-path (expand-file-name \"emacs/site-lisp\" opam-share))\n    (autoload 'merlin-mode \"merlin\" nil t nil)\n    ;; Automatically start it in OCaml buffers\n    (add-hook 'tuareg-mode-hook 'merlin-mode t)\n    (add-hook 'caml-mode-hook 'merlin-mode t)\n    ;; Use opam switch to lookup ocamlmerlin binary\n    (setq merlin-command 'opam)))\n\nTake a look at https://github.com/ocaml/merlin for more information\n\nQuick setup with opam-user-setup\n--------------------------------\n\nOpam-user-setup support Merlin.\n\n  $ opam user-setup install\n\nshould take care of basic setup.\nSee https://github.com/OCamlPro/opam-user-setup\"\"\"\n    {success & !user-setup:installed}\ndev-repo: \"git+https://github.com/ocaml/merlin.git\"\nurl {\n  src:\n    \"https://github.com/ocaml/merlin/releases/download/v3.2.1/merlin-v3.2.1.tbz\"\n  checksum: \"md5=d8fd6f9b3addf8d92bfc28277b04a6ba\"\n}",
+            "opam-version: \"2.0\"\nname: \"merlin\"\nversion: \"3.2.2\"\nsynopsis: \"Installation with Opam\"\ndescription: \"\"\"\nIf you have a working [Opam](https://opam.ocaml.org/) installation, Merlin is only two commands away:\n\n```shell\nopam install merlin\nopam user-setup install\n```\n\n[opam-user-setup](https://github.com/OCamlPro/opam-user-setup) takes care of configuring Emacs and Vim to make best use of your current install.\n\nYou can also [configure the editor](#editor-setup) yourself, if you prefer.\"\"\"\nmaintainer: \"defree@gmail.com\"\nauthors: \"The Merlin team\"\nhomepage: \"https://github.com/ocaml/merlin\"\nbug-reports: \"https://github.com/ocaml/merlin/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02.1\" & < \"4.08\"}\n  \"dune\" {build}\n  \"ocamlfind\" {>= \"1.5.2\"}\n  \"yojson\"\n  \"craml\" {with-test}\n]\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n]\npost-messages:\n  \"\"\"\nmerlin installed.\n\nQuick setup for VIM\n-------------------\nAppend this to your .vimrc to add merlin to vim's runtime-path:\n  let g:opamshare = substitute(system('opam config var share'),'\\\\n$','','''')\n  execute \"set rtp+=\" . g:opamshare . \"/merlin/vim\"\n\nAlso run the following line in vim to index the documentation:\n  :execute \"helptags \" . g:opamshare . \"/merlin/vim/doc\"\n\nQuick setup for EMACS\n-------------------\nAdd opam emacs directory to your load-path by appending this to your .emacs:\n  (let ((opam-share (ignore-errors (car (process-lines \"opam\" \"config\" \"var\" \"share\")))))\n   (when (and opam-share (file-directory-p opam-share))\n    ;; Register Merlin\n    (add-to-list 'load-path (expand-file-name \"emacs/site-lisp\" opam-share))\n    (autoload 'merlin-mode \"merlin\" nil t nil)\n    ;; Automatically start it in OCaml buffers\n    (add-hook 'tuareg-mode-hook 'merlin-mode t)\n    (add-hook 'caml-mode-hook 'merlin-mode t)\n    ;; Use opam switch to lookup ocamlmerlin binary\n    (setq merlin-command 'opam)))\n\nTake a look at https://github.com/ocaml/merlin for more information\n\nQuick setup with opam-user-setup\n--------------------------------\n\nOpam-user-setup support Merlin.\n\n  $ opam user-setup install\n\nshould take care of basic setup.\nSee https://github.com/OCamlPro/opam-user-setup\"\"\"\n    {success & !user-setup:installed}\ndev-repo: \"git+https://github.com/ocaml/merlin.git\"\nurl {\n  src:\n    \"https://github.com/ocaml/merlin/releases/download/v3.2.2/merlin-v3.2.2.tbz\"\n  checksum: \"md5=ede35b65f8ac9c440cfade5445662c54\"\n}",
           "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/dune@opam:1.3.0",
+        "@esy-ocaml/substs@0.0.1", "@opam/dune@opam:1.4.0",
         "@opam/ocamlfind@opam:1.8.0", "@opam/yojson@opam:1.4.0",
         "ocaml@4.6.7"
       ]
@@ -1336,6 +1337,26 @@
         "@opam/lwt@opam:3.3.0", "@opam/react@opam:1.2.1", "ocaml@4.6.7"
       ]
     },
+    "@opam/lwt_log@opam:1.0.0": {
+      "record": {
+        "name": "@opam/lwt_log",
+        "version": "opam:1.0.0",
+        "source":
+          "archive:https://github.com/ocsigen/lwt/archive/3.2.0.tar.gz#md5:cf4256845e18c4d0f39afa7b32b3d6fe",
+        "files": [],
+        "opam": {
+          "name": "lwt_log",
+          "version": "1.0.0",
+          "opam":
+            "opam-version: \"2.0\"\nname: \"lwt_log\"\nversion: \"1.0.0\"\nsynopsis: \"Lwt logging library (deprecated)\"\nmaintainer: \"Anton Bachin <antonbachin@yahoo.com>\"\nauthors: [\"Shawn Wagner\" \"Jérémie Dimino\"]\nlicense: \"LGPL\"\nhomepage: \"https://github.com/ocsigen/lwt\"\ndoc: \"https://ocsigen.org/lwt/api/Lwt_log\"\nbug-reports: \"https://github.com/ocsigen/lwt/issues\"\ndepends: [\n  \"ocaml\"\n  \"jbuilder\" {build}\n  \"lwt\" {< \"4.0.0\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/ocsigen/lwt.git\"\nurl {\n  src: \"https://github.com/ocsigen/lwt/archive/3.2.0.tar.gz\"\n  checksum: \"md5=cf4256845e18c4d0f39afa7b32b3d6fe\"\n}",
+          "override": null
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition",
+        "@opam/lwt@opam:3.3.0", "ocaml@4.6.7"
+      ]
+    },
     "@opam/lwt@opam:3.3.0": {
       "record": {
         "name": "@opam/lwt",
@@ -1377,29 +1398,44 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
         "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3",
-        "@opam/topkg@opam:0.9.1", "ocaml@4.6.7"
+        "@opam/topkg@opam:1.0.0", "ocaml@4.6.7"
       ]
     },
-    "@opam/lambda-term@opam:1.12.0": {
+    "@opam/lambda-term@opam:1.13": {
       "record": {
         "name": "@opam/lambda-term",
-        "version": "opam:1.12.0",
+        "version": "opam:1.13",
         "source":
-          "archive:https://github.com/diml/lambda-term/releases/download/1.12.0/lambda-term-1.12.0.tbz#md5:5eaf97fc02e89d29a5f9e58d074e9a6a",
-        "files": [],
+          "archive:https://github.com/diml/lambda-term/releases/download/1.13/lambda-term-1.13.tbz#md5:c13826a97014d4d573b927b623c7e043",
+        "files": [
+          {
+            "name": "lambda-term-1.13.patch",
+            "content":
+              "--- ./src/lTerm_windows_stubs.c\n+++ ./src/lTerm_windows_stubs.c\n@@ -16,7 +16,6 @@\n \n #if defined(_WIN32) || defined(_WIN64)\n \n-#include <windows.h>\n #include <lwt_unix.h>\n \n /* +-----------------------------------------------------------------+\n@@ -140,15 +139,7 @@\n   }\n }\n \n-CAMLprim value lt_windows_read_console_input_job(value val_fd)\n-{\n-  LWT_UNIX_INIT_JOB(job, read_console_input, 0);\n-  job->handle = Handle_val(val_fd);\n-  job->error_code = 0;\n-  CAMLreturn(lwt_unix_alloc_job(&(job->job)));\n-}\n-\n-static value result_read_console_input_result(struct job_read_console_input *job)\n+static value result_read_console_input(struct job_read_console_input *job)\n {\n   INPUT_RECORD input;\n   DWORD cks, bs;\n@@ -163,23 +154,23 @@\n     win32_maperr(error_code);\n     uerror(\"ReadConsoleInput\", Nothing);\n   }\n-  switch (input->EventType) {\n+  switch (input.EventType) {\n   case KEY_EVENT: {\n     result = caml_alloc(1, 0);\n     x = caml_alloc_tuple(4);\n     Field(result, 0) = x;\n-    cks = input->Event.KeyEvent.dwControlKeyState;\n+    cks = input.Event.KeyEvent.dwControlKeyState;\n     Field(x, 0) = Val_bool((cks & LEFT_CTRL_PRESSED) | (cks & RIGHT_CTRL_PRESSED));\n     Field(x, 1) = Val_bool((cks & LEFT_ALT_PRESSED) | (cks & RIGHT_ALT_PRESSED));\n     Field(x, 2) = Val_bool(cks & SHIFT_PRESSED);\n-    code = input->Event.KeyEvent.wVirtualKeyCode;\n+    code = input.Event.KeyEvent.wVirtualKeyCode;\n     for (i = 0; i < sizeof(code_table)/sizeof(code_table[0]); i++)\n       if (code == code_table[i]) {\n         Field(x, 3) = Val_int(i);\n         CAMLreturn(result);\n       }\n     y = caml_alloc_tuple(1);\n-    Field(y, 0) = Val_int(input->Event.KeyEvent.uChar.UnicodeChar);\n+    Field(y, 0) = Val_int(input.Event.KeyEvent.uChar.UnicodeChar);\n     Field(x, 3) = y;\n     CAMLreturn(result);\n   }\n@@ -187,13 +178,13 @@\n     result = caml_alloc(1, 1);\n     x = caml_alloc_tuple(6);\n     Field(result, 0) = x;\n-    cks = input->Event.MouseEvent.dwControlKeyState;\n+    cks = input.Event.MouseEvent.dwControlKeyState;\n     Field(x, 0) = Val_bool((cks & LEFT_CTRL_PRESSED) | (cks & RIGHT_CTRL_PRESSED));\n     Field(x, 1) = Val_bool((cks & LEFT_ALT_PRESSED) | (cks & RIGHT_ALT_PRESSED));\n     Field(x, 2) = Val_bool(cks & SHIFT_PRESSED);\n-    Field(x, 4) = Val_int(input->Event.MouseEvent.dwMousePosition.Y);\n-    Field(x, 5) = Val_int(input->Event.MouseEvent.dwMousePosition.X);\n-    bs = input->Event.MouseEvent.dwButtonState;\n+    Field(x, 4) = Val_int(input.Event.MouseEvent.dwMousePosition.Y);\n+    Field(x, 5) = Val_int(input.Event.MouseEvent.dwMousePosition.X);\n+    bs = input.Event.MouseEvent.dwButtonState;\n     if (bs & FROM_LEFT_1ST_BUTTON_PRESSED)\n       Field(x, 3) = Val_int(0);\n     else if (bs & FROM_LEFT_2ND_BUTTON_PRESSED)\n@@ -212,6 +203,14 @@\n   CAMLreturn(Val_int(0));\n }\n \n+CAMLprim value lt_windows_read_console_input_job(value val_fd)\n+{\n+  LWT_UNIX_INIT_JOB(job, read_console_input, 0);\n+  job->handle = Handle_val(val_fd);\n+  job->error_code = 0;\n+  return (lwt_unix_alloc_job(&(job->job)));\n+}\n+\n /* +-----------------------------------------------------------------+\n    | Console informations                                            |\n    +-----------------------------------------------------------------+ */\n",
+            "perm": 438
+          }
+        ],
         "opam": {
           "name": "lambda-term",
-          "version": "1.12.0",
+          "version": "1.13",
           "opam":
-            "opam-version: \"2.0\"\nname: \"lambda-term\"\nversion: \"1.12.0\"\nsynopsis: \"Terminal manipulation library for OCaml\"\ndescription: \"\"\"\nLambda-term is a cross-platform library for manipulating the terminal. It\nprovides an abstraction for keys, mouse events, colors, as well as a set of\nwidgets to write curses-like applications. The main objective of lambda-term is\nto provide a higher level functional interface to terminal manipulation than,\nfor example, ncurses, by providing a native OCaml interface instead of bindings\nto a C library. Lambda-term integrates with zed to provide text edition\nfacilities in console applications.\"\"\"\nmaintainer: \"jeremie@dimino.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/diml/lambda-term\"\nbug-reports: \"https://github.com/diml/lambda-term/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02.3\"}\n  \"lwt\" {>= \"2.7.0\" & < \"4.0.0\"}\n  \"react\"\n  \"zed\" {>= \"1.2\"}\n  \"camomile\" {>= \"0.8.6\"}\n  \"lwt_react\"\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git://github.com/diml/lambda-term.git\"\nurl {\n  src:\n    \"https://github.com/diml/lambda-term/releases/download/1.12.0/lambda-term-1.12.0.tbz\"\n  checksum: \"md5=5eaf97fc02e89d29a5f9e58d074e9a6a\"\n}",
-          "override": null
+            "opam-version: \"2.0\"\nname: \"lambda-term\"\nversion: \"1.13\"\nsynopsis: \"Terminal manipulation library for OCaml\"\ndescription: \"\"\"\nLambda-term is a cross-platform library for manipulating the terminal. It\nprovides an abstraction for keys, mouse events, colors, as well as a set of\nwidgets to write curses-like applications. The main objective of lambda-term is\nto provide a higher level functional interface to terminal manipulation than,\nfor example, ncurses, by providing a native OCaml interface instead of bindings\nto a C library. Lambda-term integrates with zed to provide text edition\nfacilities in console applications.\"\"\"\nmaintainer: \"jeremie@dimino.org\"\nauthors: \"Jérémie Dimino\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/diml/lambda-term\"\nbug-reports: \"https://github.com/diml/lambda-term/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02.3\"}\n  \"lwt\" {>= \"2.7.0\"}\n  \"lwt_log\"\n  \"react\"\n  \"zed\" {>= \"1.2\"}\n  \"camomile\" {>= \"0.8.6\"}\n  \"lwt_react\"\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git://github.com/diml/lambda-term.git\"\nurl {\n  src:\n    \"https://github.com/diml/lambda-term/releases/download/1.13/lambda-term-1.13.tbz\"\n  checksum: \"md5=c13826a97014d4d573b927b623c7e043\"\n}",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < lambda-term-1.13.patch' : 'true'}"
+              ],
+              [ "jbuilder", "build", "-p", "lambda-term", "-j", "4" ]
+            ]
+          }
         }
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/camomile@opam:1.0.1",
         "@opam/jbuilder@opam:transition", "@opam/lwt@opam:3.3.0",
-        "@opam/lwt_react@opam:1.1.1", "@opam/react@opam:1.2.1",
-        "@opam/zed@opam:1.6", "ocaml@4.6.7"
+        "@opam/lwt_log@opam:1.0.0", "@opam/lwt_react@opam:1.1.1",
+        "@opam/react@opam:1.2.1", "@opam/zed@opam:1.6", "ocaml@4.6.7"
       ]
     },
     "@opam/jsonm@opam:1.0.1": {
@@ -1419,7 +1455,7 @@
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
-        "@opam/ocamlfind@opam:1.8.0", "@opam/topkg@opam:0.9.1",
+        "@opam/ocamlfind@opam:1.8.0", "@opam/topkg@opam:1.0.0",
         "@opam/uchar@opam:0.0.2", "@opam/uutf@opam:1.0.1", "ocaml@4.6.7"
       ]
     },
@@ -1438,7 +1474,7 @@
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/dune@opam:1.3.0", "ocaml@4.6.7"
+        "@esy-ocaml/substs@0.0.1", "@opam/dune@opam:1.4.0", "ocaml@4.6.7"
       ]
     },
     "@opam/ipaddr@opam:2.8.0": {
@@ -1500,7 +1536,7 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
         "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3",
-        "@opam/topkg@opam:0.9.1", "@opam/uchar@opam:0.0.2", "ocaml@4.6.7"
+        "@opam/topkg@opam:1.0.0", "@opam/uchar@opam:0.0.2", "ocaml@4.6.7"
       ]
     },
     "@opam/fileutils@opam:0.5.3": {
@@ -1566,18 +1602,18 @@
         "ocaml@4.6.7"
       ]
     },
-    "@opam/dune@opam:1.3.0": {
+    "@opam/dune@opam:1.4.0": {
       "record": {
         "name": "@opam/dune",
-        "version": "opam:1.3.0",
+        "version": "opam:1.4.0",
         "source":
-          "archive:https://github.com/ocaml/dune/releases/download/1.3.0/dune-1.3.0.tbz#md5:d7c926bd6b7549cb54d5463aaccf0c91",
+          "archive:https://github.com/ocaml/dune/releases/download/1.4.0/dune-1.4.0.tbz#md5:dc862e5d821ff4d8bef16a78bd472431",
         "files": [],
         "opam": {
           "name": "dune",
-          "version": "1.3.0",
+          "version": "1.4.0",
           "opam":
-            "opam-version: \"2.0\"\nname: \"dune\"\nversion: \"1.3.0\"\nsynopsis: \"Fast, portable and opinionated build system\"\ndescription: \"\"\"\ndune is a build system that was designed to simplify the release of\nJane Street packages. It reads metadata from \"dune\" files following a\nvery simple s-expression syntax.\n\ndune is fast, it has very low-overhead and support parallel builds on\nall platforms. It has no system dependencies, all you need to build\ndune and packages using dune is OCaml. You don't need or make or bash\nas long as the packages themselves don't use bash explicitly.\n\ndune supports multi-package development by simply dropping multiple\nrepositories into the same directory.\n\nIt also supports multi-context builds, such as building against\nseveral opam roots/switches simultaneously. This helps maintaining\npackages across several versions of OCaml and gives cross-compilation\nfor free.\"\"\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02\"}\n]\nconflicts: [\n  \"jbuilder\" {!= \"transition\"}\n]\nbuild: [\n  [\"ocaml\" \"configure.ml\" \"--libdir\" lib] {opam-version < \"2\"}\n  [\"ocaml\" \"bootstrap.ml\"]\n  [\"./boot.exe\" \"--release\" \"--subst\"] {pinned}\n  [\"./boot.exe\" \"--release\" \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/ocaml/dune.git\"\nurl {\n  src: \"https://github.com/ocaml/dune/releases/download/1.3.0/dune-1.3.0.tbz\"\n  checksum: \"md5=d7c926bd6b7549cb54d5463aaccf0c91\"\n}",
+            "opam-version: \"2.0\"\nname: \"dune\"\nversion: \"1.4.0\"\nsynopsis: \"Fast, portable and opinionated build system\"\ndescription: \"\"\"\ndune is a build system that was designed to simplify the release of\nJane Street packages. It reads metadata from \"dune\" files following a\nvery simple s-expression syntax.\n\ndune is fast, it has very low-overhead and support parallel builds on\nall platforms. It has no system dependencies, all you need to build\ndune and packages using dune is OCaml. You don't need or make or bash\nas long as the packages themselves don't use bash explicitly.\n\ndune supports multi-package development by simply dropping multiple\nrepositories into the same directory.\n\nIt also supports multi-context builds, such as building against\nseveral opam roots/switches simultaneously. This helps maintaining\npackages across several versions of OCaml and gives cross-compilation\nfor free.\"\"\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.02\"}\n]\nconflicts: [\n  \"jbuilder\" {!= \"transition\"}\n]\nbuild: [\n  [\"ocaml\" \"configure.ml\" \"--libdir\" lib] {opam-version < \"2\"}\n  [\"ocaml\" \"bootstrap.ml\"]\n  [\"./boot.exe\" \"--release\" \"--subst\"] {pinned}\n  [\"./boot.exe\" \"--release\" \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/ocaml/dune.git\"\nurl {\n  src: \"https://github.com/ocaml/dune/releases/download/1.4.0/dune-1.4.0.tbz\"\n  checksum: \"md5=dc862e5d821ff4d8bef16a78bd472431\"\n}",
           "override": {
             "build": [
               [ "ocaml", "bootstrap.ml" ],
@@ -1599,14 +1635,14 @@
           "name": "cppo_ocamlbuild",
           "version": "1.6.0",
           "opam":
-            "opam-version: \"2.0\"\nname: \"cppo_ocamlbuild\"\nversion: \"1.6.0\"\nsynopsis: \"ocamlbuild support for cppo, OCaml-friendly source preprocessor\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"http://mjambon.com/cppo.html\"\nbug-reports: \"https://github.com/mjambon/cppo/issues\"\ndepends: [\n  \"ocaml\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"ocamlbuild\"\n  \"cppo\" {>= \"1.6.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mjambon/cppo.git\"\nurl {\n  src: \"https://github.com/mjambon/cppo/archive/v1.6.0.tar.gz\"\n  checksum: \"md5=aee411b3546bc5d198c71ae9185cade4\"\n}",
+            "opam-version: \"2.0\"\nname: \"cppo_ocamlbuild\"\nversion: \"1.6.0\"\nsynopsis: \"ocamlbuild support for cppo, OCaml-friendly source preprocessor\"\nmaintainer: \"martin@mjambon.com\"\nauthors: \"Martin Jambon\"\nlicense: \"BSD-3-Clause\"\nhomepage: \"http://mjambon.com/cppo.html\"\nbug-reports: \"https://github.com/mjambon/cppo/issues\"\ndepends: [\n  \"ocaml\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"ocamlbuild\"\n  \"ocamlfind\"\n  \"cppo\" {>= \"1.6.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mjambon/cppo.git\"\nurl {\n  src: \"https://github.com/mjambon/cppo/archive/v1.6.0.tar.gz\"\n  checksum: \"md5=aee411b3546bc5d198c71ae9185cade4\"\n}",
           "override": null
         }
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/cppo@opam:1.6.5",
         "@opam/jbuilder@opam:transition", "@opam/ocamlbuild@opam:0.12.0",
-        "ocaml@4.6.7"
+        "@opam/ocamlfind@opam:1.8.0", "ocaml@4.6.7"
       ]
     },
     "@opam/cppo@opam:1.6.5": {
@@ -1701,7 +1737,7 @@
         "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
         "@opam/conduit-lwt@opam:1.1.0", "@opam/ipaddr@opam:2.8.0",
         "@opam/jbuilder@opam:transition", "@opam/lwt@opam:3.3.0",
-        "@opam/ppx_sexp_conv@opam:v0.11.2", "@opam/uri@opam:1.9.7",
+        "@opam/ppx_sexp_conv@opam:v0.11.2", "@opam/uri@opam:1.9.6",
         "ocaml@4.6.7"
       ]
     },
@@ -1738,7 +1774,7 @@
           "name": "conduit",
           "version": "1.1.0",
           "opam":
-            "opam-version: \"2.0\"\nname: \"conduit\"\nversion: \"1.1.0\"\nsynopsis: \"An OCaml network connection establishment library\"\ndescription: \"\"\"\n[![Build Status](https://travis-ci.org/mirage/ocaml-conduit.svg?branch=master)](https://travis-ci.org/mirage/ocaml-conduit)\n\nThe `conduit` library takes care of establishing and listening for \nTCP and SSL/TLS connections for the Lwt and Async libraries.\n\nThe reason this library exists is to provide a degree of abstraction\nfrom the precise SSL library used, since there are a variety of ways\nto bind to a library (e.g. the C FFI, or the Ctypes library), as well\nas well as which library is used (just OpenSSL for now).\n\nBy default, OpenSSL is used as the preferred connection library, but\nyou can force the use of the pure OCaml TLS stack by setting the\nenvironment variable `CONDUIT_TLS=native` when starting your program.\n\nThe opam packages available are:\n\n- `conduit`: the main `Conduit` module\n- `conduit-lwt`: the portable Lwt implementation\n- `conduit-lwt-unix`: the Lwt/Unix implementation\n- `conduit-async` the Jane Street Async implementation\n- `mirage-conduit`: the MirageOS compatible implementation\n\n### Debugging\n\nSome of the `Lwt_unix`-based modules use a non-empty `CONDUIT_DEBUG`\nenvironment variable to output debugging information to standard error.\nJust set this variable when running the program to see what URIs\nare being resolved to.\n\n### Further Informartion\n\n* **API Docs:** http://docs.mirage.io/\n* **WWW:** https://github.com/mirage/ocaml-conduit\n* **E-mail:** <mirageos-devel@lists.xenproject.org>\n* **Bugs:** https://github.com/mirage/ocaml-conduit/issues\"\"\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\" \"Thomas Leonard\" \"Thomas Gazagnaire\" \"Rudi Grinberg\"\n]\nlicense: \"ISC\"\ntags: \"org:mirage\"\nhomepage: \"https://github.com/mirage/ocaml-conduit\"\nbug-reports: \"https://github.com/mirage/ocaml-conduit/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"ppx_sexp_conv\"\n  \"sexplib\"\n  \"astring\"\n  \"uri\"\n  \"result\"\n  \"logs\" {>= \"0.5.0\"}\n  \"ipaddr\" {>= \"2.5.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name \"--name\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-conduit.git\"\nurl {\n  src:\n    \"https://github.com/mirage/ocaml-conduit/releases/download/v1.1.0/conduit-1.1.0.tbz\"\n  checksum: \"md5=eb1d02c80d06ef812d97dc1ab588b597\"\n}",
+            "opam-version: \"2.0\"\nname: \"conduit\"\nversion: \"1.1.0\"\nsynopsis: \"An OCaml network connection establishment library\"\ndescription: \"\"\"\n[![Build Status](https://travis-ci.org/mirage/ocaml-conduit.svg?branch=master)](https://travis-ci.org/mirage/ocaml-conduit)\n\nThe `conduit` library takes care of establishing and listening for \nTCP and SSL/TLS connections for the Lwt and Async libraries.\n\nThe reason this library exists is to provide a degree of abstraction\nfrom the precise SSL library used, since there are a variety of ways\nto bind to a library (e.g. the C FFI, or the Ctypes library), as well\nas well as which library is used (just OpenSSL for now).\n\nBy default, OpenSSL is used as the preferred connection library, but\nyou can force the use of the pure OCaml TLS stack by setting the\nenvironment variable `CONDUIT_TLS=native` when starting your program.\n\nThe opam packages available are:\n\n- `conduit`: the main `Conduit` module\n- `conduit-lwt`: the portable Lwt implementation\n- `conduit-lwt-unix`: the Lwt/Unix implementation\n- `conduit-async` the Jane Street Async implementation\n- `mirage-conduit`: the MirageOS compatible implementation\n\n### Debugging\n\nSome of the `Lwt_unix`-based modules use a non-empty `CONDUIT_DEBUG`\nenvironment variable to output debugging information to standard error.\nJust set this variable when running the program to see what URIs\nare being resolved to.\n\n### Further Informartion\n\n* **API Docs:** http://docs.mirage.io/\n* **WWW:** https://github.com/mirage/ocaml-conduit\n* **E-mail:** <mirageos-devel@lists.xenproject.org>\n* **Bugs:** https://github.com/mirage/ocaml-conduit/issues\"\"\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\" \"Thomas Leonard\" \"Thomas Gazagnaire\" \"Rudi Grinberg\"\n]\nlicense: \"ISC\"\ntags: \"org:mirage\"\nhomepage: \"https://github.com/mirage/ocaml-conduit\"\nbug-reports: \"https://github.com/mirage/ocaml-conduit/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"jbuilder\" {build & >= \"1.0+beta9\"}\n  \"ppx_sexp_conv\"\n  \"sexplib\"\n  \"astring\"\n  \"uri\" {< \"2.0.0\"}\n  \"result\"\n  \"logs\" {>= \"0.5.0\"}\n  \"ipaddr\" {>= \"2.5.0\"}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name \"--name\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-conduit.git\"\nurl {\n  src:\n    \"https://github.com/mirage/ocaml-conduit/releases/download/v1.1.0/conduit-1.1.0.tbz\"\n  checksum: \"md5=eb1d02c80d06ef812d97dc1ab588b597\"\n}",
           "override": null
         }
       },
@@ -1747,7 +1783,7 @@
         "@opam/ipaddr@opam:2.8.0", "@opam/jbuilder@opam:transition",
         "@opam/logs@opam:0.6.2", "@opam/ppx_sexp_conv@opam:v0.11.2",
         "@opam/result@opam:1.3", "@opam/sexplib@opam:v0.11.0",
-        "@opam/uri@opam:1.9.7", "ocaml@4.6.7"
+        "@opam/uri@opam:1.9.6", "ocaml@4.6.7"
       ]
     },
     "@opam/cohttp-lwt-unix@opam:1.1.1": {
@@ -1761,14 +1797,14 @@
           "name": "cohttp-lwt-unix",
           "version": "1.1.1",
           "opam":
-            "opam-version: \"2.0\"\nname: \"cohttp-lwt-unix\"\nversion: \"1.1.1\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"dune\" {build & >= \"1.1.0\"}\n  \"conduit-lwt-unix\" {>= \"1.0.3\"}\n  \"cmdliner\"\n  \"magic-mime\"\n  \"logs\"\n  \"fmt\" {>= \"0.8.2\"}\n  \"cohttp-lwt\"\n  \"lwt\" {>= \"3.0.0\"}\n  \"base-unix\"\n  \"ounit\" {with-test}\n]\nconflicts: [\n  \"lwt\" {< \"2.5.0\"}\n]\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"dune\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"\nurl {\n  src: \"https://github.com/mirage/ocaml-cohttp/archive/v1.1.1.tar.gz\"\n  checksum: [\n    \"md5=8ad6bb9dffd346bd88e556fc3cffafae\"\n    \"sha512=a5f7275c22866d24aa8e81687f7bad52e75872d655816b514996335053b5a2de9cc34f68bd077ad4059ff16b6ed3e76c02ef7f7b2e699472e42689643ade89f1\"\n  ]\n}",
+            "opam-version: \"2.0\"\nname: \"cohttp-lwt-unix\"\nversion: \"1.1.1\"\nsynopsis: \"An OCaml library for HTTP clients and servers\"\ndescription: \"\"\"\n[![Join the chat at https://gitter.im/mirage/ocaml-cohttp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mirage/ocaml-cohttp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)\n\nCohttp is an OCaml library for creating HTTP daemons. It has a portable\nHTTP parser, and implementations using various asynchronous programming\nlibraries:\n\n* `Cohttp_lwt_unix` uses the [Lwt](https://ocsigen.org/lwt/) library, and\n  specifically the UNIX bindings.\n* `Cohttp_async` uses the [Async](https://realworldocaml.org/v1/en/html/concurrent-programming-with-async.html)\n  library.\n* `Cohttp_lwt` exposes an OS-independent Lwt interface, which is used\n  by the [Mirage](https://mirage.io/) interface to generate standalone\n  microkernels (use the cohttp-mirage subpackage).\n* `Cohttp_lwt_xhr` compiles to a JavaScript module that maps the Cohttp\n  calls to XMLHTTPRequests.  This is used to compile OCaml libraries like\n  the GitHub bindings to JavaScript and still run efficiently.\n\nYou can implement other targets using the parser very easily. Look at the `IO`\nsignature in `lib/s.mli` and implement that in the desired backend.\n\nYou can activate some runtime debugging by setting `COHTTP_DEBUG` to any\nvalue, and all requests and responses will be written to stderr.  Further\ndebugging of the connection layer can be obtained by setting `CONDUIT_DEBUG`\nto any value.\"\"\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"dune\" {build & >= \"1.1.0\"}\n  \"conduit-lwt-unix\" {>= \"1.0.3\"}\n  \"cmdliner\"\n  \"magic-mime\"\n  \"logs\"\n  \"fmt\" {>= \"0.8.2\"}\n  \"cohttp-lwt\"\n  \"lwt\" {>= \"3.0.0\"}\n  \"base-unix\"\n  \"ounit\" {with-test}\n]\nconflicts: [\n  \"lwt\" {< \"2.5.0\"}\n]\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"dune\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"\nurl {\n  src: \"https://github.com/mirage/ocaml-cohttp/archive/v1.1.1.tar.gz\"\n  checksum: [\n    \"md5=8ad6bb9dffd346bd88e556fc3cffafae\"\n    \"sha512=a5f7275c22866d24aa8e81687f7bad52e75872d655816b514996335053b5a2de9cc34f68bd077ad4059ff16b6ed3e76c02ef7f7b2e699472e42689643ade89f1\"\n  ]\n}",
           "override": null
         }
       },
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-unix@opam:base",
         "@opam/cmdliner@opam:1.0.2", "@opam/cohttp-lwt@opam:1.1.1",
-        "@opam/conduit-lwt-unix@opam:1.2.0", "@opam/dune@opam:1.3.0",
+        "@opam/conduit-lwt-unix@opam:1.2.0", "@opam/dune@opam:1.4.0",
         "@opam/fmt@opam:0.8.5", "@opam/logs@opam:0.6.2",
         "@opam/lwt@opam:3.3.0", "@opam/magic-mime@opam:1.1.0", "ocaml@4.6.7"
       ]
@@ -1784,39 +1820,40 @@
           "name": "cohttp-lwt",
           "version": "1.1.1",
           "opam":
-            "opam-version: \"2.0\"\nname: \"cohttp-lwt\"\nversion: \"1.1.1\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"dune\" {build & >= \"1.1.0\"}\n  \"cohttp\" {>= \"1.0.0\"}\n  \"lwt\"\n  \"sexplib\"\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n]\nconflicts: [\n  \"lwt\" {< \"2.5.0\"}\n]\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"dune\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"\nurl {\n  src: \"https://github.com/mirage/ocaml-cohttp/archive/v1.1.1.tar.gz\"\n  checksum: [\n    \"md5=8ad6bb9dffd346bd88e556fc3cffafae\"\n    \"sha512=a5f7275c22866d24aa8e81687f7bad52e75872d655816b514996335053b5a2de9cc34f68bd077ad4059ff16b6ed3e76c02ef7f7b2e699472e42689643ade89f1\"\n  ]\n}",
+            "opam-version: \"2.0\"\nname: \"cohttp-lwt\"\nversion: \"1.1.1\"\nsynopsis: \"An OCaml library for HTTP clients and servers\"\ndescription: \"\"\"\n[![Join the chat at https://gitter.im/mirage/ocaml-cohttp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mirage/ocaml-cohttp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)\n\nCohttp is an OCaml library for creating HTTP daemons. It has a portable\nHTTP parser, and implementations using various asynchronous programming\nlibraries:\n\n* `Cohttp_lwt_unix` uses the [Lwt](https://ocsigen.org/lwt/) library, and\n  specifically the UNIX bindings.\n* `Cohttp_async` uses the [Async](https://realworldocaml.org/v1/en/html/concurrent-programming-with-async.html)\n  library.\n* `Cohttp_lwt` exposes an OS-independent Lwt interface, which is used\n  by the [Mirage](https://mirage.io/) interface to generate standalone\n  microkernels (use the cohttp-mirage subpackage).\n* `Cohttp_lwt_xhr` compiles to a JavaScript module that maps the Cohttp\n  calls to XMLHTTPRequests.  This is used to compile OCaml libraries like\n  the GitHub bindings to JavaScript and still run efficiently.\n\nYou can implement other targets using the parser very easily. Look at the `IO`\nsignature in `lib/s.mli` and implement that in the desired backend.\n\nYou can activate some runtime debugging by setting `COHTTP_DEBUG` to any\nvalue, and all requests and responses will be written to stderr.  Further\ndebugging of the connection layer can be obtained by setting `CONDUIT_DEBUG`\nto any value.\"\"\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"dune\" {build & >= \"1.1.0\"}\n  \"cohttp\" {>= \"1.0.0\"}\n  \"lwt\"\n  \"sexplib\"\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n]\nconflicts: [\n  \"lwt\" {< \"2.5.0\"}\n]\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"dune\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"\nurl {\n  src: \"https://github.com/mirage/ocaml-cohttp/archive/v1.1.1.tar.gz\"\n  checksum: [\n    \"md5=8ad6bb9dffd346bd88e556fc3cffafae\"\n    \"sha512=a5f7275c22866d24aa8e81687f7bad52e75872d655816b514996335053b5a2de9cc34f68bd077ad4059ff16b6ed3e76c02ef7f7b2e699472e42689643ade89f1\"\n  ]\n}",
           "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/cohttp@opam:1.1.1",
-        "@opam/dune@opam:1.3.0", "@opam/lwt@opam:3.3.0",
+        "@esy-ocaml/substs@0.0.1", "@opam/cohttp@opam:1.0.0",
+        "@opam/dune@opam:1.4.0", "@opam/lwt@opam:3.3.0",
         "@opam/ppx_sexp_conv@opam:v0.11.2", "@opam/sexplib@opam:v0.11.0",
         "ocaml@4.6.7"
       ]
     },
-    "@opam/cohttp@opam:1.1.1": {
+    "@opam/cohttp@opam:1.0.0": {
       "record": {
         "name": "@opam/cohttp",
-        "version": "opam:1.1.1",
+        "version": "opam:1.0.0",
         "source":
-          "archive:https://github.com/mirage/ocaml-cohttp/archive/v1.1.1.tar.gz#md5:8ad6bb9dffd346bd88e556fc3cffafae",
+          "archive:https://github.com/mirage/ocaml-cohttp/releases/download/v1.0.0/cohttp-1.0.0.tbz#md5:756f590576d4a60ce2382ef89274b44b",
         "files": [],
         "opam": {
           "name": "cohttp",
-          "version": "1.1.1",
+          "version": "1.0.0",
           "opam":
-            "opam-version: \"2.0\"\nname: \"cohttp\"\nversion: \"1.1.1\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"dune\" {build & >= \"1.1.0\"}\n  \"re\" {>= \"1.7.2\"}\n  \"uri\" {>= \"1.9.0\"}\n  \"fieldslib\"\n  \"sexplib\"\n  \"ppx_fields_conv\" {>= \"v0.9.0\"}\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"stringext\"\n  \"base64\" {>= \"2.0.0\"}\n  \"fmt\" {with-test}\n  \"jsonm\" {build}\n  \"alcotest\" {with-test}\n]\nbuild: [\n  [\"dune\" \"subst\"] {pinned}\n  [\"dune\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"dune\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"\nurl {\n  src: \"https://github.com/mirage/ocaml-cohttp/archive/v1.1.1.tar.gz\"\n  checksum: [\n    \"md5=8ad6bb9dffd346bd88e556fc3cffafae\"\n    \"sha512=a5f7275c22866d24aa8e81687f7bad52e75872d655816b514996335053b5a2de9cc34f68bd077ad4059ff16b6ed3e76c02ef7f7b2e699472e42689643ade89f1\"\n  ]\n}",
+            "opam-version: \"2.0\"\nname: \"cohttp\"\nversion: \"1.0.0\"\nsynopsis: \"An OCaml library for HTTP clients and servers\"\ndescription: \"\"\"\n[![Join the chat at https://gitter.im/mirage/ocaml-cohttp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mirage/ocaml-cohttp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)\n\nCohttp is an OCaml library for creating HTTP daemons. It has a portable\nHTTP parser, and implementations using various asynchronous programming\nlibraries:\n\n* `Cohttp_lwt_unix` uses the [Lwt](http://ocsigen.org/lwt) library, and\n  specifically the UNIX bindings.\n* `Cohttp_async` uses the [Async](https://realworldocaml.org/v1/en/html/concurrent-programming-with-async.html)\n  library.\n* `Cohttp_lwt` exposes an OS-independent Lwt interface, which is used\n  by the [Mirage](http://www.openmirage.org) interface\n  to generate standalone microkernels use the cohttp-mirage subpackage.\n* `Cohttp_lwt_xhr` compiles to a JavaScript module that maps the Cohttp\n   calls to XMLHTTPRequests.  This is used to compile OCaml libraries like\n   the GitHub bindings to JavaScript and still run efficiently.\n\nYou can implement other targets using the parser very easily. Look at the `IO`\nsignature in `lib/s.mli` and implement that in the desired backend.\n\nYou can activate some runtime debugging by setting `COHTTP_DEBUG` to any\nvalue, and all requests and responses will be written to stderr.  Further\ndebugging of the connection layer can be obtained by setting `CONDUIT_DEBUG`\nto any value.\"\"\"\nmaintainer: \"anil@recoil.org\"\nauthors: [\n  \"Anil Madhavapeddy\"\n  \"Stefano Zacchiroli\"\n  \"David Sheets\"\n  \"Thomas Gazagnaire\"\n  \"David Scott\"\n  \"Rudi Grinberg\"\n  \"Andy Ray\"\n]\nlicense: \"ISC\"\ntags: [\"org:mirage\" \"org:xapi-project\"]\nhomepage: \"https://github.com/mirage/ocaml-cohttp\"\nbug-reports: \"https://github.com/mirage/ocaml-cohttp/issues\"\ndepends: [\n  \"ocaml\" {>= \"4.03.0\"}\n  \"base-bytes\"\n  \"jbuilder\" {build & >= \"1.0+beta10\"}\n  \"re\"\n  \"uri\" {>= \"1.9.0\" & < \"2.0.0\"}\n  \"fieldslib\"\n  \"sexplib\"\n  \"ppx_fields_conv\" {>= \"v0.9.0\"}\n  \"ppx_sexp_conv\" {>= \"v0.9.0\"}\n  \"stringext\"\n  \"base64\" {>= \"2.0.0\"}\n  \"fmt\" {with-test}\n  \"jsonm\" {build}\n  \"alcotest\" {with-test}\n]\nbuild: [\n  [\"jbuilder\" \"subst\" \"-p\" name] {pinned}\n  [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\n  [\"jbuilder\" \"runtest\" \"-p\" name \"-j\" jobs] {with-test}\n]\ndev-repo: \"git+https://github.com/mirage/ocaml-cohttp.git\"\nurl {\n  src:\n    \"https://github.com/mirage/ocaml-cohttp/releases/download/v1.0.0/cohttp-1.0.0.tbz\"\n  checksum: \"md5=756f590576d4a60ce2382ef89274b44b\"\n}",
           "override": null
         }
       },
       "dependencies": [
-        "@esy-ocaml/substs@0.0.1", "@opam/base64@opam:2.2.0",
-        "@opam/dune@opam:1.3.0", "@opam/fieldslib@opam:v0.11.0",
-        "@opam/jsonm@opam:1.0.1", "@opam/ppx_fields_conv@opam:v0.11.0",
-        "@opam/ppx_sexp_conv@opam:v0.11.2", "@opam/re@opam:1.8.0",
+        "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
+        "@opam/base64@opam:2.2.0", "@opam/fieldslib@opam:v0.11.0",
+        "@opam/jbuilder@opam:transition", "@opam/jsonm@opam:1.0.1",
+        "@opam/ppx_fields_conv@opam:v0.11.0",
+        "@opam/ppx_sexp_conv@opam:v0.11.2", "@opam/re@opam:1.7.1",
         "@opam/sexplib@opam:v0.11.0", "@opam/stringext@opam:1.5.0",
-        "@opam/uri@opam:1.9.7", "ocaml@4.6.7"
+        "@opam/uri@opam:1.9.6", "ocaml@4.6.7"
       ]
     },
     "@opam/cmdliner@opam:1.0.2": {
@@ -1837,7 +1874,7 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
         "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3",
-        "@opam/topkg@opam:0.9.1", "ocaml@4.6.7"
+        "@opam/topkg@opam:1.0.0", "ocaml@4.6.7"
       ]
     },
     "@opam/camomile@opam:1.0.1": {
@@ -2005,7 +2042,7 @@
       "dependencies": [
         "@esy-ocaml/substs@0.0.1", "@opam/base-bytes@opam:base",
         "@opam/ocamlbuild@opam:0.12.0", "@opam/ocamlfind@opam:1.8.0",
-        "@opam/topkg@opam:0.9.1", "ocaml@4.6.7"
+        "@opam/topkg@opam:1.0.0", "ocaml@4.6.7"
       ]
     },
     "@fastpack/flow_parser@0.81.0": {
@@ -2018,7 +2055,7 @@
         "opam": null
       },
       "dependencies": [
-        "@esy-ocaml/esy-installer@0.0.1", "@opam/dune@opam:1.3.0",
+        "@esy-ocaml/esy-installer@0.0.1", "@opam/dune@opam:1.4.0",
         "@opam/ocaml-migrate-parsetree@opam:1.1.0",
         "@opam/ppx_deriving@opam:4.2.1", "@opam/ppx_gen_rec@opam:1.0.0",
         "@opam/ppx_tools_versioned@opam:5.2", "@opam/sedlex@opam:1.99.4",
@@ -2065,7 +2102,7 @@
       },
       "dependencies": [
         "@esy-ocaml/esy-installer@0.0.1", "@esy-ocaml/substs@0.0.1",
-        "@opam/dune@opam:1.3.0", "@opam/menhir@opam:20171013",
+        "@opam/dune@opam:1.4.0", "@opam/menhir@opam:20171013",
         "@opam/merlin-extend@opam:0.3",
         "@opam/ocaml-migrate-parsetree@opam:1.1.0",
         "@opam/ocamlbuild@opam:0.12.0", "@opam/ocamlfind@opam:1.8.0",
