@@ -36,7 +36,7 @@ jobs:
     displayName: replace commit
   - script: npm install -g yarn
     displayName: install Yarn
-  - script: npm install -g esy@0.2.11
+  - script: npm install -g esy@0.3.4
     displayName: install esy
   - script: make install
     displayName: make install
