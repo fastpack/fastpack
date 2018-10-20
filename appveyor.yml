@@ -16,7 +16,6 @@ build_script:
     - node scripts/gen_link_flags.js
     - esy build
     # Copy over dynamic libs for SSL (libcrypto & libssl)
-    - esy b ./scripts/copy_ssl_runtime_win.sh
     - _build\install\default\bin\fpack.exe --version
 
 test: off
