@@ -23,10 +23,13 @@
   "homepage": "https://github.com/fastpack/fastpack#readme",
   "resolutions": {
     "@esy-ocaml/reason":
-      "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323"
+      "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
+    "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
+    "@opam/ssl": "github:bryphe/ocaml-ssl#1a1f737",
+    "@esy-ocaml/esy-installer": "0.0.1",
+    "esy-cmake": "github:bryphe/esy-cmake#5a40a8e"
   },
   "dependencies": {
-    "@esy-ocaml/esy-installer": "*",
     "@esy-ocaml/reason": "*",
     "@esy-ocaml/rtop": "3.3.0",
     "@fastpack/flow_parser": "0.81.0",
@@ -50,6 +53,7 @@
     "chalk": "^2.4.1",
     "fs-extra": "^7.0.0",
     "ocaml": "~4.6.1",
-    "refmterr": "*"
+    "refmterr": "*",
+    "esy-cmake": "*"
   }
 }
