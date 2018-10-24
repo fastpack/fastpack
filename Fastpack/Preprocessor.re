@@ -53,7 +53,7 @@ module NodeServer = {
             | '.' => executable
             | _ =>
               switch (
-                Re.exec_opt(Re_posix.compile_pat("/|\\\\"), executable)
+                Re.exec_opt(Re.Posix.compile_pat("/|\\\\"), executable)
               ) {
               | Some(_) => executable
               | None => FileUtil.which(Sys.argv[0])

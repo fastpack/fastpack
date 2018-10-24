@@ -16,7 +16,7 @@ module Parser = FastpackUtil.Parser;
 module Scope = FastpackUtil.Scope;
 module Visit = FastpackUtil.Visit;
 
-let re_name = Re_posix.compile_pat("[^A-Za-z0-9_]+");
+let re_name = Re.Posix.compile_pat("[^A-Za-z0-9_]+");
 
 let to_eval = s => {
   let json = Yojson.to_string(`String(s));

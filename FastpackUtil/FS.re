@@ -55,7 +55,7 @@ let try_dir = dir =>
   };
 
 let pat_text_ext =
-  Re_posix.compile_pat("\\.(js|jsx|mjs|ts|tsx|css|sass|scss|less)$");
+  Re.Posix.compile_pat("\\.(js|jsx|mjs|ts|tsx|css|sass|scss|less)$");
 let is_text_file = filename =>
   switch (Re.exec_opt(pat_text_ext, filename)) {
   | Some(_) => true

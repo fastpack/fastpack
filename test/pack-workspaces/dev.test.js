@@ -1,5 +1,8 @@
-cd app
-$FPACK index.js \
+const path = require("path");
+const appDir = path.join(__dirname, "app");
+module.exports = ({ bundle }) =>
+  bundle(`
+fpack index.js \
   --dev \
   --no-cache \
   --project-root="../" \
@@ -8,3 +11,4 @@ $FPACK index.js \
   --preprocess="builtin-transpile:builtin" \
   --nm ./nm \
   --nm node_modules
+`, {cwd: appDir});
