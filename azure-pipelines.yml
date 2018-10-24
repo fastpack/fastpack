@@ -9,6 +9,9 @@ jobs:
   pool:
     vmImage: 'Ubuntu 16.04'
   steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '8.9'
   - script: |
       sed -i \
         -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
@@ -28,6 +31,9 @@ jobs:
   variables:
     TRAVIS_OS_NAME: osx
   steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '8.9'
   - script: |
       sed \
         -i '' \
