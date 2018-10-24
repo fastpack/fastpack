@@ -3,8 +3,17 @@ const { spawnSync } = require("child_process");
 const path = require("path");
 const chalk = require("chalk");
 
-const SAVE_SNAPSHOT_MODE = false;
-const NO_COLOR = process.env.NO_COLOR;
+let args = process.argv.slice(2);
+
+const SAVE_SNAPSHOT_MODE = args.indexOf("--train") !== -1;
+const NO_COLOR = args.indexOf("--no-color") !== -1;
+const PATTERNS = args
+  .filter(arg => arg !== "--train" && arg !== "--no-color")
+  .map(pattern => new RegExp(pattern));
+const matchPatterns = fn =>
+  PATTERNS.length === 0
+    ? true
+    : PATTERNS.reduce((result, pattern) => result || pattern.test(fn), false);
 
 const repoRoot = path.dirname(__dirname);
 const sandbox = path.join(repoRoot, ".sandbox");
@@ -85,7 +94,7 @@ function Test(testPath) {
   }
 
   const start = () => {
-    process.stdout.write(`${chalk.blue(name)} `);
+    process.stdout.write(`${chalk.cyan(name)} `);
   };
 
   const mark = result => {
@@ -171,11 +180,15 @@ Check test: ${name}
 
   let f = require(testPath);
   this.run = () => {
+    if (!matchPatterns(name)) {
+      return;
+    }
     try {
       fs.removeSync(path.join(workingDir, ".cache"));
       fs.removeSync(path.join(workingDir, "node_modules", ".cache"));
       start();
       f({
+        outputDir: sandboxOutputDir,
         fpack: (cmd, opts = {}) =>
           fpack(cmd, { cwd: workingDir, outputDir: sandboxOutputDir, ...opts }),
         bundle: (cmd, opts = {}) =>
@@ -241,6 +254,25 @@ function runAll(testPaths) {
     let test = new Test(testPath);
     test.run();
   });
+
+  let { total, failed } = Object.keys(all).reduce(
+    (acc, key) => ({
+      total: acc.total + 1,
+      failed: acc.failed + (all[key] ? 0 : 1)
+    }),
+    { total: 0, failed: 0 }
+  );
+
+  let [colorFunc, code] =
+    failed > 0 ? [chalk.red, 1] : [chalk.green, 0];
+  console.log(`
+${colorFunc(`Total: ${total}. Failed: ${failed}. `)}${
+    PATTERNS.length
+      ? chalk.yellow("Selected tests only, consider running all the tests")
+      : ""
+  }
+`);
+  process.exit(code);
 }
 
 function collect(dir) {
