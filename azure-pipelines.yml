@@ -34,13 +34,12 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '8.9'
-  # TODO: Bring this back
-  # - script: |
-  #     sed \
-  #       -i '' \
-  #       -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
-  #       Fastpack/Version.re
-  #   displayName: replace commit
+  - script: |
+      sed \
+        -i '' \
+        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
+        Fastpack/Version.re
+    displayName: replace commit
   - script: npm install -g yarn
     displayName: install Yarn
   - script: npm install -g esy@0.3.4
@@ -67,12 +66,13 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '8.9'
-  - script: |
-      sed \
-        -i '' \
-        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
-        Fastpack/Version.re
-    displayName: replace commit
+  # TODO: Bring back with cross-platform strategy
+  # - script: |
+  #     sed \
+  #       -i '' \
+  #       -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
+  #       Fastpack/Version.re
+  #   displayName: replace commit
   - script: npm install -g yarn
     displayName: install Yarn
   - script: npm install -g esy@0.3.4
