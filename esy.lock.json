@@ -1,5 +1,5 @@
 {
-  "hash": "89917940ea2084ba3eed02916176c07a",
+  "hash": "5f1bc6a0524b7df2080270a17823101b",
   "root": "root@path:./package.json",
   "node": {
     "universalify@0.1.2": {
@@ -43,8 +43,7 @@
         "@opam/ppx_expect@opam:v0.11.1", "@opam/ppx_let@opam:v0.11.0",
         "@opam/re@opam:1.7.3", "@opam/sequence@opam:1.1",
         "@opam/utop@opam:2.2.0", "@opam/websocket-lwt@opam:2.11",
-        "@opam/yojson@opam:1.4.0", "chalk@2.4.1",
-        "esy-cmake@github:bryphe/esy-cmake#5a40a8e", "fs-extra@7.0.0",
+        "@opam/yojson@opam:1.4.0", "chalk@2.4.1", "fs-extra@7.0.0",
         "ocaml@4.6.7", "refmterr@3.1.9"
       ]
     },
