@@ -1,10 +1,10 @@
 const fs = require("fs");
 const path = require("path");
- const writeLinkFile = (opts) => {
-    fs.writeFileSync(path.join(__dirname, "..", "bin", "link_flags"), opts);
+const writeLinkFile = opts => {
+  fs.writeFileSync(path.join(__dirname, "..", "bin", "link_flags"), opts);
 };
 
-switch(process.platform) {
+switch (process.platform) {
   case "linux":
     writeLinkFile("(-ccopt -static)");
     break;

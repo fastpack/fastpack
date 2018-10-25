@@ -4,7 +4,7 @@ b: build
 
 # this generates the flags needed for building the static binary on linux
 bin/link_flags:
-	@node scripts/gen_link_flags.js > bin/link_flags
+	@node scripts/gen_link_flags.js
 
 build: bin/link_flags
 	@esy build
