@@ -1,1 +1,0 @@
-$FPACK --dev path.js

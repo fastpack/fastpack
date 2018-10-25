@@ -18,7 +18,7 @@ module Visit = FastpackUtil.Visit;
 exception Rebuild(string, Module.location);
 
 let debug = Logs.debug;
-let re_name = Re_posix.compile_pat("[^A-Za-z0-9_]+");
+let re_name = Re.Posix.compile_pat("[^A-Za-z0-9_]+");
 
 type dependencies =
   | NoDependendencies

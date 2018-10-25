@@ -1,1 +1,0 @@
-FPACK_FORCE_TTY=true $FPACK --dev index.js

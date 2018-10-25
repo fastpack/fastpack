@@ -1,2 +1,0 @@
-
-$FPACK --dev index.js

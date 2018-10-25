@@ -78,8 +78,8 @@ module Preprocessor = {
       };
 
     let pattern =
-      try (Re_posix.compile_pat(pattern_s)) {
-      | Re_posix.Parse_error =>
+      try (Re.Posix.compile_pat(pattern_s)) {
+      | Re.Posix.Parse_error =>
         raise(Failure("Pattern regexp parse error. Use POSIX syntax"))
       };
 

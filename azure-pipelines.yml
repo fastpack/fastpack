@@ -9,6 +9,9 @@ jobs:
   pool:
     vmImage: 'Ubuntu 16.04'
   steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '8.9'
   - script: |
       sed -i \
         -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
@@ -28,6 +31,9 @@ jobs:
   variables:
     TRAVIS_OS_NAME: osx
   steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '8.9'
   - script: |
       sed \
         -i '' \
@@ -36,7 +42,7 @@ jobs:
     displayName: replace commit
   - script: npm install -g yarn
     displayName: install Yarn
-  - script: npm install -g esy@0.2.11
+  - script: npm install -g esy@0.3.4
     displayName: install esy
   - script: make install
     displayName: make install
