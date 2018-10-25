@@ -89,7 +89,7 @@ jobs:
     displayName: node scripts/gen_link_flags
   - script: esy build
     displayName: esy build
-  - script: _build/install/default/bin/fpack.exe --version
+  - script: _build\install\default\bin\fpack.exe --version
     displayName: test binary
   - task: PublishBuildArtifacts@1
     inputs:
