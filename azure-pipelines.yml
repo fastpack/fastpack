@@ -59,10 +59,47 @@ jobs:
       artifactName: 'vendor-darwin-fpack.exe'
       pathToPublish: '_build/default/bin/fpack.exe'
 
+- job: Windows
+  pool:
+    vmImage: 'vs2017-win2016'
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '8.9'
+  - script: |
+      sed \
+        -i '' \
+        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
+        Fastpack/Version.re
+    displayName: replace commit
+  - script: npm install -g yarn
+    displayName: install Yarn
+  - script: npm install -g esy@0.3.4
+    displayName: install esy
+  - script: esy install
+    displayName: esy install
+    continueOnError: true
+  - script: esy install
+    displayName: esy install
+    continueOnError: true
+  - script: esy install
+    displayName: esy install
+  - script: node scripts/gen_link_flags.js
+    displayName: node scripts/gen_link_flags
+  - script: esy build
+    displayName: esy build
+  - script: _build/install/default/bin/fpack.exe --version
+    displayName: test binary
+  - task: PublishBuildArtifacts@1
+    inputs:
+      artifactName: 'vendor-windows-fpack.exe'
+      pathToPublish: '_build/default/bin/fpack.exe'
+
 - job: Package
   dependsOn:
   - Linux
   - MacOS
+  - Windows
   condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
   pool:
     vmImage: 'Ubuntu 16.04'
@@ -81,6 +118,13 @@ jobs:
       downloadPath: .
   - script: cp -R vendor-linux-fpack.exe/fpack.exe dist/vendor-linux
     displayName: copy linux binary
+  - task: DownloadBuildArtifacts@0
+    displayName: download windows binary
+    inputs:
+      artifactName: 'vendor-windows-fpack.exe'
+      downloadPath: .
+  - script: cp -R vendor-windows-fpack.exe/fpack.exe dist/vendor-windows
+    displayName: copy windows binary
   - script: cp -R node-service dist
     displayName: copy node-service
   - task: PublishBuildArtifacts@1
