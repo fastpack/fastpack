@@ -25,7 +25,7 @@
     "@esy-ocaml/reason":
       "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
     "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
-    "esy-libressl": "github:esy-packages/esy-libressl#af9db71",
+    "esy-libressl": "github:esy-packages/esy-libressl#bdf7ada",
     "@opam/ssl": "github:bryphe/ocaml-ssl#1a1f737",
     "@esy-ocaml/esy-installer": "0.0.1",
     "esy-cmake": "github:esy-packages/esy-cmake#bd54461"
