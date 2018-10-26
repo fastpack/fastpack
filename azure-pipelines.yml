@@ -12,10 +12,8 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '8.9'
-  - script: |
-      sed -i \
-        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
-        Fastpack/Version.re
+  - script: node scripts/replaceCommitVersion.js
+    displayName: replace commit
   - script: docker build -t alpine-fastpack linux-build
     displayName: 'docker build'
   - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration && make build && ldd _build/default/bin/fpack.exe'
@@ -34,11 +32,7 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '8.9'
-  - script: |
-      sed \
-        -i '' \
-        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
-        Fastpack/Version.re
+  - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
   - script: npm install -g yarn
     displayName: install Yarn
@@ -66,13 +60,8 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '8.9'
-  # TODO: Bring back with cross-platform strategy
-  # - script: |
-  #     sed \
-  #       -i '' \
-  #       -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
-  #       Fastpack/Version.re
-  #   displayName: replace commit
+  - script: node scripts/replaceCommitVersion.js
+    displayName: replace commit
   - script: npm install -g yarn
     displayName: install Yarn
   - script: npm install -g esy@0.3.4
@@ -87,8 +76,11 @@ jobs:
     displayName: esy install
   - script: node scripts/gen_link_flags.js
     displayName: node scripts/gen_link_flags
-  - script: esy build
-    displayName: esy build
+  - script: esy b jbuilder build --dev bin/fpack.exe
+    displayName: build-dev
+  - script: esy jbuilder runtest --dev --diff-command "git --no-pager diff --no-index --color"
+    displayName: unit test
+  # TODO: remove the next line when integration tests are done
   - script: _build\install\default\bin\fpack.exe --version
     displayName: test binary
   - task: PublishBuildArtifacts@1
