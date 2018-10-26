@@ -18,24 +18,10 @@ train: build-dev
 	@esy jbuilder runtest --auto-promote --dev --diff-command "git --no-pager diff --no-index --color"
 
 setup-test:
-	cd test && for TEST in `ls`; \
-	   do [ -d "$$TEST" ] \
-	      && [ -f "$$TEST/package.json" ] \
-		  && echo "Test: $$TEST" \
-		  && cd "$$TEST" \
-		  && yarn \
-		  && cd ..; \
-		done \
-	|| echo "Setup tests: done"
+	@node scripts/setupTest.js
 
 clean-test:
-	cd test && for TEST in `ls`; \
-	   do [ -d "$$TEST" ] \
-		  && [ -f "$$TEST/package.json" ] \
-	      && [ -d "$$TEST/node_modules" ] \
-		  && rm -rf "$$TEST/node_modules"; \
-		done \
-	|| echo "Cleanup tests: done"
+	@node scripts/cleanTest.js
 
 test-integration: build-dev
 	@node scripts/test $(pattern)
