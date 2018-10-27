@@ -482,7 +482,7 @@
         "name": "@opam/ssl",
         "version": "opam:0.5.6",
         "source":
-          "archive:https://github.com/savonet/ocaml-ssl/archive/v0.5.6.tar.gz#md5:500b0bb7af4a736255ce706cc8e26762",
+          "archive:https://github.com/savonet/ocaml-ssl/archive/0.5.6.tar.gz#md5:500b0bb7af4a736255ce706cc8e26762",
         "files": [],
         "opam": {
           "name": "ssl",
