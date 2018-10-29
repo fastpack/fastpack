@@ -123,7 +123,6 @@ module Serve = {
             );
           let textReporter = Reporter.Text.make();
           let reportOk = (~message, ~start_time, ~files, ctx) => {
-            print_endline("success");
             let%lwt () =
               Reporter.reportOk(
                 ~message,
@@ -141,7 +140,6 @@ module Serve = {
           };
 
           let reportError = (~error, ctx) => {
-            print_endline("error");
             let%lwt () = Reporter.reportError(~error, ~ctx, textReporter);
             Yojson.Basic.(
               `Assoc([
