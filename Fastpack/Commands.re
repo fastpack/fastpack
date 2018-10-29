@@ -118,7 +118,7 @@ module Serve = {
               ~sourceDir="./public",
               ~outputDir=options.outputDir,
               ~outputFilename=options.outputFilename,
-              ~port=3000,
+              ~port=serverConfig.port,
               (),
             );
           let textReporter = Reporter.Text.make();
