@@ -194,6 +194,7 @@ if(!global.Buffer) {
         let%lwt () = emit(m.Module.source);
         let%lwt () =
           location_str
+          |> String.replace(~sub="\\", ~by="/")
           |> Printf.sprintf("\\n//# sourceURL=fpack:///%s\");")
           |> emit;
 
@@ -256,13 +257,14 @@ if(!global.Buffer) {
 };
 
 let emit = (ctx: Context.t, start_time) => {
-  let (temp_file, _) =
+  let (temp_file, oc) =
     Filename.open_temp_file(
       ~perms=0o644,
       ~temp_dir=ctx.output_dir,
       ".fpack",
       ".bundle.js",
     );
+  close_out(oc);
 
   Lwt.finalize(
     () => {
