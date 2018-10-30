@@ -81,17 +81,16 @@ module NodeServer = {
         Logs.debug(x =>
           x("process created: %s %s ", fpack_binary_path, fpack_root)
         );
-        let cmd =
-          Printf.sprintf(
-            "node %s %s %s",
-            List.fold_left(
-              FilePath.concat,
-              fpack_root,
-              ["node-service", "index.js"],
-            ),
-            node_output_dir^,
-            node_project_root^,
-          );
+        let cmd = [|
+          "node",
+          List.fold_left(
+            FilePath.concat,
+            fpack_root,
+            ["node-service", "index.js"],
+          ),
+          node_output_dir^,
+          node_project_root^,
+        |];
 
         Process.start(cmd) |> Lwt.return;
       },
@@ -128,7 +127,8 @@ module NodeServer = {
     Lwt_pool.use(
       pool,
       process => {
-        let%lwt () = Process.write(Yojson.to_string(message) ++ "\n", process);
+        let%lwt () =
+          Process.write(Yojson.to_string(message) ++ "\n", process);
         let%lwt line = Process.readLine(process);
         open Yojson.Safe.Util;
         let data = Yojson.Safe.from_string(line);

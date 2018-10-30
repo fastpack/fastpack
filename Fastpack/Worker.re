@@ -676,7 +676,7 @@ let start = (~project_root, ~output_dir, ()) => {
                 source
                 ++ Printf.sprintf(
                      "\\n//# sourceURL=fpack:///%s",
-                     location_str,
+                     location_str |> String.replace(~sub="\\", ~by="/"),
                    ),
               static_dependencies,
               dynamic_dependencies,
@@ -689,7 +689,8 @@ let start = (~project_root, ~output_dir, ()) => {
           );
         },
         fun
-        | Flow_parser.Parse_error.Error(args) => Lwt.return(ParseError(args))
+        | Flow_parser.Parse_error.Error(args) =>
+          Lwt.return(ParseError(args))
         | Scope.ScopeError(reason) => Lwt.return(ScopeError(reason))
         | Preprocessor.Error(message) =>
           Lwt.return(PreprocessorError(message))
@@ -717,14 +718,13 @@ module Reader = {
         () => {
           Logs.debug(x => x("reader created"));
 
-          let cmd =
-            Printf.sprintf(
-              "%s worker --project-root='%s' --output='%s'",
-              Environment.getExecutable(),
-              project_root,
-              output_dir,
-            );
-          Process.start(cmd) |> Lwt.return;
+          Process.start([|
+            Environment.getExecutable(),
+            "worker",
+            "--project-root=" ++ project_root,
+            "--output=" ++ output_dir,
+          |])
+          |> Lwt.return;
         },
       ),
   };
