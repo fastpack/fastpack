@@ -78,8 +78,10 @@ jobs:
     displayName: node scripts/gen_link_flags
   - script: esy b jbuilder build --dev bin/fpack.exe
     displayName: build-dev
-  - script: esy b jbuilder runtest --dev --diff-command "git --no-pager diff --no-index --color"
-    displayName: unit test
+  - script: node scripts/setupTest.js
+    displayName: setup tests
+  - script: node scripts/test.js --no-color utf8 raw cra
+    displayName: Some integration tests
   # TODO: remove the next line when integration tests are done
   - script: _build\install\default\bin\fpack.exe --version
     displayName: test binary
