@@ -54,6 +54,8 @@ let request_to_string = req =>
     )
   };
 
+let reAbsPathWin32 = Re.Posix.compile_pat("^[A-Za-z]:");
+
 let normalize_request = (~basedir: string, request) =>
   Run.Syntax.(
     if (Module.is_internal(request)) {
@@ -64,7 +66,18 @@ let normalize_request = (~basedir: string, request) =>
       | _ =>
         switch (request.[0]) {
         | '.' => return(PathRequest(FS.abs_path(basedir, request)))
-        | '/' => return(PathRequest(request))
+        | '/' =>
+          if (Sys.win32) {
+            error(Printf.sprintf("Bad absolute path request: %s", request));
+          } else {
+            return(PathRequest(request));
+          }
+        | '\\' =>
+          if (Sys.win32) {
+            return(PathRequest(request));
+          } else {
+            error(Printf.sprintf("Bad absolute path request: %s", request));
+          }
         | '@' =>
           switch (String.split_on_char('/', request)) {
           | []
@@ -81,13 +94,17 @@ let normalize_request = (~basedir: string, request) =>
             )
           }
         | _ =>
-          switch (String.split_on_char('/', request)) {
-          | [] => error("Bad package request")
-          | [package] => return(PackageRequest((package, None)))
-          | [package, ...rest] =>
-            return(
-              PackageRequest((package, Some(String.concat("/", rest)))),
-            )
+          if (Sys.win32 && Re.exec_opt(reAbsPathWin32, request) != None) {
+            return(PathRequest(request));
+          } else {
+            switch (String.split_on_char('/', request)) {
+            | [] => error("Bad package request")
+            | [package] => return(PackageRequest((package, None)))
+            | [package, ...rest] =>
+              return(
+                PackageRequest((package, Some(String.concat("/", rest)))),
+              )
+            };
           }
         }
       };
