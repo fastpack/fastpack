@@ -67,7 +67,14 @@ let normalize_request = (~basedir: string, request) =>
       | "" => error("Empty request")
       | _ =>
         switch (request.[0]) {
-        | '.' => return(PathRequest(FS.abs_path(basedir, request)))
+        | '.' =>
+          if (Sys.win32) {
+            return(
+              PathRequest(FS.abs_path(basedir, request) |> fixBackSlash),
+            );
+          } else {
+            return(PathRequest(FS.abs_path(basedir, request)));
+          }
         | '/' =>
           if (Sys.win32) {
             error(Printf.sprintf("Bad absolute path request: %s", request));
