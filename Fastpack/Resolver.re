@@ -238,6 +238,12 @@ let resolve = (~basedir, request, resolver) => {
     };
 
   let rec resolve_file = (~try_directory=true, path) => {
+    let path =
+      if (Sys.win32) {
+        fixBackSlash(path);
+      } else {
+        path;
+      };
     open RunAsync.Syntax;
     let rec resolve' = extensions =>
       switch (extensions) {
