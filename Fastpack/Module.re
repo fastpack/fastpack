@@ -86,6 +86,7 @@ let allowed_chars =
   |> CM.add('.', "DOT$$")
   |> CM.add('-', "$$_$$")
   |> CM.add('/', "$")
+  |> CM.add('\\', "$")
   |> CM.add('=', "$$E$$")
   |> CM.add('?', "$$Q$$")
   |> CM.add('!', "$$B$$");
