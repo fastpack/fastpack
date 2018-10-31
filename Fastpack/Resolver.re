@@ -56,6 +56,8 @@ let request_to_string = req =>
 
 let reAbsPathWin32 = Re.Posix.compile_pat("^[A-Za-z]:");
 
+let fixBackSlash = String.replace(~which=`All, ~sub="/", ~by="\\");
+
 let normalize_request = (~basedir: string, request) =>
   Run.Syntax.(
     if (Module.is_internal(request)) {
@@ -74,7 +76,7 @@ let normalize_request = (~basedir: string, request) =>
           }
         | '\\' =>
           if (Sys.win32) {
-            return(PathRequest(request));
+            return(PathRequest(request |> fixBackSlash));
           } else {
             error(Printf.sprintf("Bad absolute path request: %s", request));
           }
@@ -340,6 +342,7 @@ let resolve = (~basedir, request, resolver) => {
     | None => resolved
     | Some(filename) => withDependencies([filename], resolved)
     };
+
   let rec resolve_simple_request = (~seen=RequestSet.empty, ~basedir, request) => {
     open RunAsync.Syntax;
     let%bind normalized_request =
