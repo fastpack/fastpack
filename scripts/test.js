@@ -130,7 +130,7 @@ Check test: ${name}
   };
 
   const expectBundle = result => {
-    if (result.code !== 0) {
+    if (!result.code && result.stderr) {
       markError("Error, unexpected stderr");
       process.stdout.write(result.stderr);
       process.stdout.write("\n");
