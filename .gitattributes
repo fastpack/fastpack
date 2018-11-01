@@ -6,3 +6,4 @@ text eol=lf
 *.sass text eol=lf
 *.md text eol=lf
 *.txt text eol=lf
+*.svg text eol=lf
