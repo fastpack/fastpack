@@ -5,3 +5,4 @@ text eol=lf
 *.less text eol=lf
 *.sass text eol=lf
 *.md text eol=lf
+*.txt text eol=lf
