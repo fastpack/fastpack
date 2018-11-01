@@ -80,15 +80,12 @@ jobs:
     displayName: build-dev
   - script: node scripts/setupTest.js
     displayName: setup tests
-  - script: node scripts/test.js --no-color utf8 raw cra
+  - script: node scripts/test.js --no-color utf8 raw
     displayName: Some integration tests
     continueOnError: true
-  - script: node scripts/test.js --no-color utf8 raw cra
+  - script: node scripts/test.js --no-color utf8 raw
     displayName: Some integration tests (retry)
     continueOnError: true
-  # TODO: remove the next line when integration tests are done
-  - script: _build\install\default\bin\fpack.exe --version
-    displayName: test binary
   - task: PublishBuildArtifacts@1
     inputs:
       artifactName: 'vendor-windows-fpack.exe'
