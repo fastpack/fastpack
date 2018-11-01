@@ -25,7 +25,7 @@ function exe(cmd, opts) {
     cwd: opts.cwd,
     env: opts.env,
     shell: true,
-    timeout: 5000
+    timeout: 15000
   });
   return {
     stdout: stdout instanceof Buffer ? stdout.toString() : stdout,
@@ -130,7 +130,7 @@ Check test: ${name}
   };
 
   const expectBundle = result => {
-    if (!result.code && result.stderr) {
+    if (result.code !== 0) {
       markError("Error, unexpected stderr");
       process.stdout.write(result.stderr);
       process.stdout.write("\n");
