@@ -1,0 +1,8 @@
+(executable
+  (name discover)
+  (modules Discover)
+  (libraries dune.configurator))
+
+(rule
+  (targets fpack.flags)
+  (action (run ./discover.exe)))
