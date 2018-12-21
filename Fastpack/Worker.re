@@ -732,10 +732,14 @@ module Reader = {
   let finalize = reader => Lwt_pool.clear(reader.workerPool);
 
   let read = (~location, ~source, reader) => {
+    let location_str = Module.location_to_string(location);
     let%lwt response: Lwt.t(response) =
       Lwt_pool.use(
         reader.workerPool,
-        Process.writeAndReadValue({location, source}),
+        Process.writeAndReadValue(
+          ~msg="READING: " ++ location_str,
+          {location, source},
+        ),
       );
 
     switch (response) {
