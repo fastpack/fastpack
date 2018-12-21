@@ -1,5 +1,5 @@
 opam-version: "2.0"
-version: "3.3.0"
+version: "4.1.0"
 maintainer: [
   "Anton Bachin <antonbachin@yahoo.com>"
   "Mauricio Fernandez <mfp@acm.org>"
@@ -15,31 +15,20 @@ bug-reports: "https://github.com/ocsigen/lwt/issues"
 license: "LGPL with OpenSSL linking exception"
 dev-repo: "git+https://github.com/ocsigen/lwt.git"
 build: [
-  [
-    "ocaml"
-    "src/util/configure.ml"
-    "-use-libev"
-    "%{conf-libev:installed}%"
-    "-use-camlp4"
-    "%{camlp4:installed}%"
-  ]
-  ["jbuilder" "build" "-p" name "-j" jobs]
-  ["ocaml" "src/util/install_filter.ml"]
-  ["jbuilder" "runtest" "-p" name] {with-test}
+  [ "ocaml" "src/util/configure.ml" "-use-libev" "%{conf-libev:installed}%" ]
+  [ "jbuilder" "build" "-p" name "-j" jobs ]
 ]
+
 depends: [
   "ocaml" {>= "4.02.0"}
   "cppo" {build & >= "1.1.0"}
   "jbuilder" {build & >= "1.0+beta14"}
   "ocamlfind" {build & >= "1.7.3-1"}
-  "ocaml-migrate-parsetree"
-  "ppx_tools_versioned" {>= "5.0.1"}
   "result"
 ]
 depopts: [
   "base-threads"
   "base-unix"
-  "camlp4"
   "conf-libev"
 ]
 # In practice, Lwt requires OCaml >= 4.02.3, as that is a constraint of the
@@ -66,6 +55,6 @@ conflicts: [
   "ocaml-variants" {= "4.02.1+BER"}
 ]
 url {
-  src: "https://github.com/ocsigen/lwt/archive/3.3.0.tar.gz"
-  checksum: "md5=47bdf4b429da94419941ebe4354f505f"
+  src: "https://github.com/ocsigen/lwt/archive/4.1.0.tar.gz"
+  checksum: "md5=e919bee206f18b3d49250ecf9584fde7"
 }

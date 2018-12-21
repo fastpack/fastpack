@@ -5,4 +5,4 @@
   (public_name FastpackUtil)
   (libraries (lwt.unix fileutils yojson containers str flow_parser logs logs.cli logs.lwt fmt re re.posix))
   (flags (:standard "-open" "Containers"))
-  (preprocess (pps (lwt.ppx)))))
+  (preprocess (pps (lwt_ppx)))))
