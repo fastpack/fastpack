@@ -65,16 +65,38 @@ let writeAndReadValue = (~msg=?, value, process) => {
     failwith(prefix);
   };
 
-  Lwt.pick([Lwt_io.atomic(
-    chOut =>
-      Lwt_io.atomic(
-        chIn => {
-          let%lwt () = Lwt_io.write_value(chOut, value);
-          let%lwt output = Lwt_io.read_value(chIn);
-          Lwt.return(output);
-        },
-        process.chIn,
-      ),
-    process.chOut,
-  ), exit ()]);
+  Lwt.pick([
+    {
+      let%lwt () = Lwt_io.write_value(process.chOut, value);
+      let%lwt output = Lwt_io.read_value(process.chIn);
+      Lwt.return(output);
+    },
+    exit(),
+  ]);
 };
+
+/* let writeAndReadValue = (~msg=?, value, process) => { */
+/*   let prefix = */
+/*     switch (msg) { */
+/*     | Some(s) => s */
+/*     | None => "no msg" */
+/*     }; */
+
+/*   let exit = () => { */
+/*     let%lwt () = Lwt_unix.sleep(2.5); */
+/*     failwith(prefix); */
+/*   }; */
+
+/*   Lwt.pick([Lwt_io.atomic( */
+/*     chOut => */
+/*       Lwt_io.atomic( */
+/*         chIn => { */
+/*           let%lwt () = Lwt_io.write_value(chOut, value); */
+/*           let%lwt output = Lwt_io.read_value(chIn); */
+/*           Lwt.return(output); */
+/*         }, */
+/*         process.chIn, */
+/*       ), */
+/*     process.chOut, */
+/*   ), exit ()]); */
+/* }; */
