@@ -7,6 +7,7 @@ type t = {
 };
 
 exception NotRunning(string);
+/* exception CannotRead */
 
 let start = cmd => {
   let (fp_in, process_out) = Unix.pipe();
@@ -52,8 +53,19 @@ let readLine = process =>
     process.chIn,
   );
 
-let writeAndReadValue = (value, process) =>
-  Lwt_io.atomic(
+let writeAndReadValue = (~msg=?, value, process) => {
+  let prefix =
+    switch (msg) {
+    | Some(s) => s
+    | None => "no msg"
+    };
+
+  let exit = () => {
+    let%lwt () = Lwt_unix.sleep(2.5);
+    failwith(prefix);
+  };
+
+  Lwt.pick([Lwt_io.atomic(
     chOut =>
       Lwt_io.atomic(
         chIn => {
@@ -64,4 +76,5 @@ let writeAndReadValue = (value, process) =>
         process.chIn,
       ),
     process.chOut,
-  );
+  ), exit ()]);
+};
