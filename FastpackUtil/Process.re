@@ -10,16 +10,16 @@ exception NotRunning(string);
 /* exception CannotRead */
 
 let start = cmd => {
-  let (fp_in, process_out) = Unix.pipe();
-  let (process_in, fp_out) = Unix.pipe();
-  let chIn = Lwt_io.of_unix_fd(~mode=Lwt_io.Input, fp_in);
-  let chOut = Lwt_io.of_unix_fd(~mode=Lwt_io.Output, fp_out);
+  let (fp_in, process_out) = Lwt_unix.pipe();
+  let (process_in, fp_out) = Lwt_unix.pipe();
+  let chIn = Lwt_io.of_fd(~mode=Lwt_io.Input, fp_in);
+  let chOut = Lwt_io.of_fd(~mode=Lwt_io.Output, fp_out);
   let process =
     Lwt_process.(
       open_process_none(
         ~env=Unix.environment(),
-        ~stdin=`FD_move(process_in),
-        ~stdout=`FD_move(process_out),
+        ~stdin=`FD_move(Lwt_unix.unix_file_descr(process_in)),
+        ~stdout=`FD_move(Lwt_unix.unix_file_descr(process_out)),
         ~stderr=`Dev_null,
         ("", cmd),
       )
@@ -29,7 +29,7 @@ let start = cmd => {
     process,
     chIn,
     chOut,
-    descr: [fp_in, fp_out],
+    descr: [Lwt_unix.unix_file_descr(fp_in), Lwt_unix.unix_file_descr(fp_out)],
   };
 };
 
