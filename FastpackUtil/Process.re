@@ -3,6 +3,7 @@ type t = {
   process: Lwt_process.process_none,
   chIn: Lwt_io.channel(Lwt_io.input),
   chOut: Lwt_io.channel(Lwt_io.output),
+  descr: list(Unix.file_descr),
 };
 
 exception NotRunning(string);
@@ -19,13 +20,20 @@ let start = cmd => {
         ~stdin=`FD_move(process_in),
         ~stdout=`FD_move(process_out),
         ~stderr=`Dev_null,
-        shell(cmd),
+        ("", cmd),
       )
     );
-  {cmd, process, chIn, chOut};
+  {
+    cmd: String.concat(" ", Array.to_list(cmd)),
+    process,
+    chIn,
+    chOut,
+    descr: [fp_in, fp_out],
+  };
 };
 
-let finalize = ({process, _}: t) => {
+let finalize = ({process, descr, _}: t) => {
+  List.iter(Unix.close, descr);
   process#terminate;
   process#close |> ignore;
   Lwt.return_unit;

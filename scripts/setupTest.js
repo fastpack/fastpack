@@ -10,7 +10,10 @@ fs.readdirSync(testDir).forEach(test => {
     let packageJson = path.join(testPath, "package.json");
     if (fs.existsSync(packageJson)) {
       console.log(`Installing ${testPath}`);
-      let { status, stdout, stderr } = spawnSync("yarn", [], { cwd: testPath });
+      let { status, stdout, stderr } = spawnSync("yarn", [], {
+        cwd: testPath,
+        shell: true
+      });
       if (status !== 0) {
         process.stderr.write(stderr);
         process.exit(1);

@@ -43,11 +43,7 @@ let location_to_string = (~base_dir=None, location) => {
   let filename_to_string = filename =>
     switch (base_dir) {
     | None => filename
-    | Some(base_dir) =>
-      switch (filename.[0]) {
-      | '/' => FS.relative_path(base_dir, filename)
-      | _ => filename
-      }
+    | Some(base_dir) => FS.relative_path(base_dir, filename)
     };
 
   switch (location) {
@@ -90,6 +86,7 @@ let allowed_chars =
   |> CM.add('.', "DOT$$")
   |> CM.add('-', "$$_$$")
   |> CM.add('/', "$")
+  |> CM.add('\\', "$")
   |> CM.add('=', "$$E$$")
   |> CM.add('?', "$$Q$$")
   |> CM.add('!', "$$B$$");

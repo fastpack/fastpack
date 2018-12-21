@@ -25,7 +25,7 @@ function exe(cmd, opts) {
     cwd: opts.cwd,
     env: opts.env,
     shell: true,
-    timeout: 5000
+    timeout: 15000
   });
   return {
     stdout: stdout instanceof Buffer ? stdout.toString() : stdout,

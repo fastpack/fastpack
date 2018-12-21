@@ -54,6 +54,10 @@ let request_to_string = req =>
     )
   };
 
+let reAbsPathWin32 = Re.Posix.compile_pat("^[A-Za-z]:");
+
+let fixBackSlash = String.replace(~which=`All, ~sub="/", ~by="\\");
+
 let normalize_request = (~basedir: string, request) =>
   Run.Syntax.(
     if (Module.is_internal(request)) {
@@ -63,8 +67,26 @@ let normalize_request = (~basedir: string, request) =>
       | "" => error("Empty request")
       | _ =>
         switch (request.[0]) {
-        | '.' => return(PathRequest(FS.abs_path(basedir, request)))
-        | '/' => return(PathRequest(request))
+        | '.' =>
+          if (Sys.win32) {
+            return(
+              PathRequest(FS.abs_path(basedir, request) |> fixBackSlash),
+            );
+          } else {
+            return(PathRequest(FS.abs_path(basedir, request)));
+          }
+        | '/' =>
+          if (Sys.win32) {
+            error(Printf.sprintf("Bad absolute path request: %s", request));
+          } else {
+            return(PathRequest(request));
+          }
+        | '\\' =>
+          if (Sys.win32) {
+            return(PathRequest(request |> fixBackSlash));
+          } else {
+            error(Printf.sprintf("Bad absolute path request: %s", request));
+          }
         | '@' =>
           switch (String.split_on_char('/', request)) {
           | []
@@ -81,13 +103,17 @@ let normalize_request = (~basedir: string, request) =>
             )
           }
         | _ =>
-          switch (String.split_on_char('/', request)) {
-          | [] => error("Bad package request")
-          | [package] => return(PackageRequest((package, None)))
-          | [package, ...rest] =>
-            return(
-              PackageRequest((package, Some(String.concat("/", rest)))),
-            )
+          if (Sys.win32 && Re.exec_opt(reAbsPathWin32, request) != None) {
+            return(PathRequest(request));
+          } else {
+            switch (String.split_on_char('/', request)) {
+            | [] => error("Bad package request")
+            | [package] => return(PackageRequest((package, None)))
+            | [package, ...rest] =>
+              return(
+                PackageRequest((package, Some(String.concat("/", rest)))),
+              )
+            };
           }
         }
       };
@@ -212,6 +238,12 @@ let resolve = (~basedir, request, resolver) => {
     };
 
   let rec resolve_file = (~try_directory=true, path) => {
+    let path =
+      if (Sys.win32) {
+        fixBackSlash(path);
+      } else {
+        path;
+      };
     open RunAsync.Syntax;
     let rec resolve' = extensions =>
       switch (extensions) {
@@ -323,6 +355,7 @@ let resolve = (~basedir, request, resolver) => {
     | None => resolved
     | Some(filename) => withDependencies([filename], resolved)
     };
+
   let rec resolve_simple_request = (~seen=RequestSet.empty, ~basedir, request) => {
     open RunAsync.Syntax;
     let%bind normalized_request =

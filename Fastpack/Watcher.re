@@ -155,7 +155,7 @@ let start_watchman = root => {
     ])
     |> Yojson.to_string;
 
-  let cmd = "watchman --no-save-state -j --no-pretty -p";
+  let cmd = [|"watchman", "--no-save-state", "-j", "--no-pretty", "-p"|];
   let process = Process.start(cmd);
   /* TODO: validate if process is started at all */
   let%lwt () = Process.write(subscribe_message ++ "\n", process);
