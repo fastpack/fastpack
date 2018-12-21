@@ -1,0 +1,21 @@
+opam-version: "2.0"
+maintainer: "Marshall Roch <mroch@fb.com>"
+authors: ["Marshall Roch <mroch@fb.com>"]
+homepage: "https://github.com/flowtype/ocaml-ppx_gen_rec"
+doc: "https://github.com/flowtype/ocaml-ppx_gen_rec"
+license: "MIT"
+dev-repo: "git+https://github.com/flowtype/ocaml-ppx_gen_rec.git"
+bug-reports: "https://github.com/flowtype/ocaml-ppx_gen_rec/issues"
+depends: [
+  "ocaml"
+  "jbuilder" {build & >= "1.0+beta7"}
+  "ocaml-migrate-parsetree"
+]
+build: [["jbuilder" "build" "-p" name "-j" jobs]]
+synopsis:
+  "A ppx rewriter that transforms a recursive module expression into a `struct`."
+url {
+  src:
+    "https://github.com/flowtype/ocaml-ppx_gen_rec/releases/download/v1.0.0/ppx_gen_rec-1.0.0.tbz"
+  checksum: "md5=e4cdce94fd2c264f7d74fdb7146dda99"
+}

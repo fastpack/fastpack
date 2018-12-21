@@ -1,0 +1,29 @@
+opam-version: "2.0"
+maintainer: "Alain Frisch <alain.frisch@lexifi.com>"
+authors: [
+  "Alain Frisch <alain.frisch@lexifi.com>"
+]
+build: [ [make "all"]  [make "opt"] ]
+install: [make "install"]
+remove: [["ocamlfind" "remove" "sedlex"]]
+depends: [
+  "ocaml" {>= "4.03.0"}
+  "ocamlfind" {build}
+  "ppx_tools_versioned" {< "5.2.1"}
+  "ocaml-migrate-parsetree"
+  "gen"
+]
+homepage: "https://github.com/ocaml-community/sedlex"
+bug-reports: "https://github.com/ocaml-community/sedlex/issues"
+license: "MIT"
+dev-repo: "git+https://github.com/ocaml-community/sedlex.git"
+synopsis: "unicode-friendly lexer generator"
+description: """
+sedlex is a lexer generator for OCaml, similar to ocamllex, but
+supporting Unicode.  Contrary to ocamllex, lexer specifications for
+sedlex are embedded in regular OCaml source files."""
+flags: light-uninstall
+url {
+  src: "https://github.com/ocaml-community/sedlex/archive/v1.99.4.tar.gz"
+  checksum: "md5=f621d80e36cda2548528766f31b16b12"
+}

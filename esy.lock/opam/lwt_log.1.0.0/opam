@@ -1,0 +1,28 @@
+opam-version: "2.0"
+version: "1.0.0"
+maintainer: [
+  "Anton Bachin <antonbachin@yahoo.com>"
+]
+authors: [
+  "Shawn Wagner"
+  "Jérémie Dimino"
+]
+homepage: "https://github.com/ocsigen/lwt"
+doc: "https://ocsigen.org/lwt/api/Lwt_log"
+dev-repo: "git+https://github.com/ocsigen/lwt.git"
+bug-reports: "https://github.com/ocsigen/lwt/issues"
+license: "LGPL"
+
+depends: [
+  "ocaml"
+  "jbuilder" {build}
+  "lwt" {< "4.0.0"}
+]
+build: [
+  ["jbuilder" "build" "-p" name "-j" jobs]
+]
+synopsis: "Lwt logging library (deprecated)"
+url {
+  src: "https://github.com/ocsigen/lwt/archive/3.2.0.tar.gz"
+  checksum: "md5=cf4256845e18c4d0f39afa7b32b3d6fe"
+}

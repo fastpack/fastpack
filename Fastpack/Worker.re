@@ -703,7 +703,7 @@ let start = (~project_root, ~output_dir, ()) => {
     process();
   };
 
-  Lwt.finalize(() => process(), () => Preprocessor.finalize(preprocessor));
+  Lwt.finalize(process, () => Preprocessor.finalize(preprocessor));
 };
 
 module Reader = {
