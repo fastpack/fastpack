@@ -18,16 +18,16 @@ train: build-dev
 	@esy jbuilder runtest --auto-promote --dev --diff-command "git --no-pager diff --no-index --color"
 
 setup-test:
-	@node scripts/setupTest.js
+	@esy node scripts/setupTest.js
 
 clean-test:
-	@node scripts/cleanTest.js
+	@esy node scripts/cleanTest.js
 
 test-integration: build-dev
-	@node scripts/test $(pattern)
+	@node -r ./_esy/default/pnp.js scripts/test $(pattern)
 
 train-integration: build-dev
-	@node scripts/test --train $(pattern)
+	@node -r ./_esy/default/pnp.js scripts/test --train $(pattern)
 
 test-server:
 	cd test && node server.js
@@ -38,4 +38,4 @@ clean: clean-test
 	@rm -rf _build/ node_modules/
 
 bump-version:
-	@node scripts/bump_version.js
+	@esy node scripts/bump_version.js
