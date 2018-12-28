@@ -1,3 +1,8 @@
+const SKIP_WIN32 = {
+  "pack-less/dev.test.js": true
+};
+
+
 const fs = require("fs-extra");
 const { spawnSync } = require("child_process");
 const path = require("path");
@@ -193,6 +198,11 @@ Check test: ${name}
   };
 
   let f = require(testPath);
+
+  if (process.platform === 'win32' && SKIP_WIN32[name]) {
+    f = () => markOk("SKIPPED on Windows");
+  }
+
   this.run = () => {
     if (!matchPatterns(name)) {
       return;
