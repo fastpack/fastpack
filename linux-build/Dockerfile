@@ -36,5 +36,5 @@ RUN apk add cmake
 COPY shasum /usr/bin
 RUN chmod +x /usr/bin/shasum
 
-RUN npm install --global --unsafe-perm=true esy@0.3.4
+RUN npm install --global --unsafe-perm=true esy@0.4.9
 RUN npm install --global --unsafe-perm=true yarn
