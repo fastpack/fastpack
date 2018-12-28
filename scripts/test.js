@@ -20,6 +20,16 @@ const sandbox = path.join(repoRoot, ".sandbox");
 fs.ensureDirSync(sandbox);
 fs.emptyDirSync(sandbox);
 
+function fixOutput(s) {
+  let ret = s.replace(new RegExp(repoRoot, "g"), "/...");
+  if (process.platform === "win32") {
+    let repoRootJson = repoRoot.replace(/\\/g, "\\\\");
+    ret = ret.replace(new RegExp(repoRootJson, "g"), "/...");
+    ret = ret.replace(/\\/g, "/");
+  }
+  return ret;
+}
+
 function exe(cmd, opts) {
   let { status, stdout, stderr } = spawnSync(cmd, [], {
     cwd: opts.cwd,
@@ -152,7 +162,7 @@ Check test: ${name}
       fs.emptyDirSync(sandboxOutputDir);
       fs.writeFileSync(
         path.join(sandboxOutputDir, "stderr.txt"),
-        result.stderr.replace(new RegExp(repoRoot, "g"), "/...")
+        fixOutput(result.stderr)
       );
       if (!previousResult || SAVE_SNAPSHOT_MODE) {
         saveSnapshot();
@@ -168,7 +178,7 @@ Check test: ${name}
     fs.emptyDirSync(sandboxOutputDir);
     fs.writeFileSync(
       path.join(sandboxOutputDir, "result.txt"),
-      result.replace(new RegExp(repoRoot, "g"), "/...")
+      fixOutput(result)
     );
     if (!previousResult || SAVE_SNAPSHOT_MODE) {
       saveSnapshot();
@@ -263,8 +273,7 @@ function runAll(testPaths) {
     { total: 0, failed: 0 }
   );
 
-  let [colorFunc, code] =
-    failed > 0 ? [chalk.red, 1] : [chalk.green, 0];
+  let [colorFunc, code] = failed > 0 ? [chalk.red, 1] : [chalk.green, 0];
   console.log(`
 ${colorFunc(`Total: ${total}. Failed: ${failed}. `)}${
     PATTERNS.length
