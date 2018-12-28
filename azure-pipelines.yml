@@ -74,10 +74,6 @@ jobs:
     continueOnError: true
   - script: esy install
     displayName: esy install
-  - script: node scripts/gen_link_flags.js
-    displayName: node scripts/gen_link_flags
-  - script: node scripts/gen_c_link_flags.js
-    displayName: node scripts/gen_c_link_flags
   - script: esy b jbuilder build --dev bin/fpack.exe
     displayName: build-dev
   - script: node -r ./_esy/default/pnp.js scripts/setupTest.js
