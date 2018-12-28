@@ -1,5 +1,5 @@
 const SKIP_WIN32 = {
-  "pack-less/dev.test.js": true
+  "pack-less\\dev.test.js": true
 };
 
 
