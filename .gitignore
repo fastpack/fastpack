@@ -17,4 +17,5 @@ test/watch/*.json
 test/watch/bundle
 *.install
 bin/link_flags
+FastpackUtil/c_link_flags
 .sandbox

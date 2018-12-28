@@ -6,18 +6,32 @@ var outputDir = process.argv[2];
 var projectRoot = process.argv[3];
 var stdin = process.stdin;
 
+if (process.platform === "win32" && process.env["FASTPACK_PARENT_PID"]) {
+  const parentPid = Number(process.env["FASTPACK_PARENT_PID"]);
+
+  if (typeof parentPid === "number" && !isNaN(parentPid)) {
+    setInterval(function() {
+      try {
+        process.kill(parentPid, 0); // throws an exception if the main process doesn't exist anymore.
+      } catch (e) {
+        process.exit();
+      }
+    }, 200);
+  }
+}
+
 module.paths = process
-    .cwd()
-    // collect self and parents
-    .split(path.sep)
-    .map((_, index, array) => array.slice(0, index + 1))
-    // append node_modules to each path
-    .map(chunks => [...chunks, "node_modules"].join(path.sep))
-    // sort from the deepest to the root
-    .reverse()
-    // exclude paths outside of project root
-    .filter(item => item.includes(projectRoot))
-    .concat(module.paths);
+  .cwd()
+  // collect self and parents
+  .split(path.sep)
+  .map((_, index, array) => array.slice(0, index + 1))
+  // append node_modules to each path
+  .map(chunks => [...chunks, "node_modules"].join(path.sep))
+  // sort from the deepest to the root
+  .reverse()
+  // exclude paths outside of project root
+  .filter(item => item.includes(projectRoot))
+  .concat(module.paths);
 
 var fromFile = path.join(process.cwd(), "noop.js");
 function resolve(request) {

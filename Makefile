@@ -6,10 +6,13 @@ b: build
 bin/link_flags:
 	@esy node scripts/gen_link_flags.js
 
-build: bin/link_flags
+FastpackUtil/c_link_flags:
+	@esy node scripts/gen_c_link_flags.js
+
+build: bin/link_flags FastpackUtil/c_link_flags
 	@esy build
 
-build-dev: bin/link_flags
+build-dev: bin/link_flags FastpackUtil/c_link_flags
 	@esy b refmterr jbuilder build --dev bin/fpack.exe
 
 install:
