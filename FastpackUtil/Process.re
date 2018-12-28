@@ -11,16 +11,13 @@ exception NotRunning(string);
 
 external pid_of_handle: int => int = "pid_of_handle";
 
-let addPid = env =>
-  switch (Sys.win32) {
-  | false => env
-  | true =>
-    let var = "FASTPACK_PARENT_PID";
-    Array.concat([
-      Array.filter(String.mem(~start=0, ~sub=var ++ "="), env),
-      [|Printf.sprintf("%s=%d", var, pid_of_handle(Unix.getpid()))|],
-    ]);
-  };
+let addPid = env => {
+  let var = "FASTPACK_PARENT_PID";
+  Array.concat([
+    Array.filter(v => !String.mem(~start=0, ~sub=var ++ "=", v), env),
+    [|Printf.sprintf("%s=%d", var, pid_of_handle(Unix.getpid()))|],
+  ]);
+};
 
 let start = cmd => {
   let (fp_in, process_out) = Lwt_unix.pipe();
