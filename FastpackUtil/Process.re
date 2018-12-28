@@ -9,6 +9,19 @@ type t = {
 exception NotRunning(string);
 /* exception CannotRead */
 
+external pid_of_handle: int => int = "pid_of_handle";
+
+let addPid = env =>
+  switch (Sys.win32) {
+  | false => env
+  | true =>
+    let var = "FASTPACK_PARENT_PID";
+    Array.concat([
+      Array.filter(String.mem(~start=0, ~sub=var ++ "="), env),
+      [|Printf.sprintf("%s=%d", var, pid_of_handle(Unix.getpid()))|],
+    ]);
+  };
+
 let start = cmd => {
   let (fp_in, process_out) = Lwt_unix.pipe();
   let (process_in, fp_out) = Lwt_unix.pipe();
@@ -17,7 +30,7 @@ let start = cmd => {
   let process =
     Lwt_process.(
       open_process_none(
-        ~env=Unix.environment(),
+        ~env=addPid(Unix.environment()),
         ~stdin=`FD_move(Lwt_unix.unix_file_descr(process_in)),
         ~stdout=`FD_move(Lwt_unix.unix_file_descr(process_out)),
         ~stderr=`Dev_null,
@@ -29,7 +42,10 @@ let start = cmd => {
     process,
     chIn,
     chOut,
-    descr: [Lwt_unix.unix_file_descr(fp_in), Lwt_unix.unix_file_descr(fp_out)],
+    descr: [
+      Lwt_unix.unix_file_descr(fp_in),
+      Lwt_unix.unix_file_descr(fp_out),
+    ],
   };
 };
 
