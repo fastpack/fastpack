@@ -4,10 +4,10 @@ b: build
 
 # this generates the flags needed for building the static binary on linux
 bin/link_flags:
-	@esy x node scripts/gen_link_flags.js
+	@node scripts/gen_link_flags.js
 
 FastpackUtil/c_link_flags:
-	@esy x node scripts/gen_c_link_flags.js
+	@node scripts/gen_c_link_flags.js
 
 build: bin/link_flags FastpackUtil/c_link_flags
 	@esy build
