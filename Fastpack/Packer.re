@@ -1,5 +1,5 @@
 module FS = FastpackUtil.FS;
-module StringSet = Set.Make(String);
+module StringSet = Set.Make(CCString);
 
 type t = {
   current_dir: string,
@@ -27,7 +27,7 @@ let make = (~reporter=None, config: Config.t) => {
            Lwt.return(
              "./"
              ++ FS.relative_path(current_dir, abs_path)
-             |> String.replace(~sub="\\", ~by="/"),
+             |> CCString.replace(~sub="\\", ~by="/"),
            )
          | _ => Lwt.return(entry_point)
          };

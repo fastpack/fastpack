@@ -227,7 +227,7 @@ let transpile = (_, program) => {
               loc,
               E.Literal({
                 value: Ast.Literal.String(value),
-                raw: "'" ++ String.replace(~sub="'", ~by="\\'", raw) ++ "'",
+                raw: "'" ++ CCString.replace(~sub="'", ~by="\\'", raw) ++ "'",
               }),
             ));
           | Fragment(fragment) => Some((loc, transpile_fragment(fragment)))

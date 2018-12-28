@@ -100,7 +100,7 @@ let make = (load: load) =>
         );
       {
         files: FSCache.ofPersistent(files),
-        modules: Hashtbl.of_list(modules),
+        modules: CCHashtbl.of_list(modules),
         loaded: load,
         save: Filename(filename),
       }
@@ -174,7 +174,7 @@ let save = cache =>
           ~flags=[],
           {
             files: FSCache.toPersistent(cache.files),
-            modules: Hashtbl.to_list(cache.modules),
+            modules: CCHashtbl.to_list(cache.modules),
           },
         )
       );

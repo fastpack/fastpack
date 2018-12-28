@@ -1,8 +1,8 @@
 open Lwt.Infix;
 module FS = FastpackUtil.FS;
 module Process = FastpackUtil.Process;
-module M = Map.Make(String);
-module StringSet = Set.Make(String);
+module M = CCMap.Make(CCString);
+module StringSet = Set.Make(CCString);
 
 type t = {
   watch: unit => Lwt.t(unit),

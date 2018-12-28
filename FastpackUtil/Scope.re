@@ -5,7 +5,7 @@ module F = Ast.Function;
 module P = Ast.Pattern;
 module L = Ast.Literal;
 module SL = Ast.StringLiteral;
-module M = Map.Make(String);
+module M = CCMap.Make(CCString);
 
 type scope_type =
   | BlockScope
@@ -220,7 +220,7 @@ let names_of_node = ((_, node): S.t(Loc.t, Loc.t)) => {
           (name, Import({remote: None, source}), false),
         ]
       | Some(S.ImportDeclaration.ImportNamedSpecifiers(specifiers)) =>
-        List.filter_map(
+        CCList.filter_map(
           ({S.ImportDeclaration.kind, local, remote}) =>
             switch (kind) {
             | Some(S.ImportDeclaration.ImportValue)

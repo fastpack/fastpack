@@ -10,7 +10,7 @@ type request =
   | InternalRequest(string);
 
 module RequestMap =
-  Map.Make({
+  CCMap.Make({
     type t = request;
     let compare = compare_request;
   });
@@ -56,7 +56,7 @@ let request_to_string = req =>
 
 let reAbsPathWin32 = Re.Posix.compile_pat("^[A-Za-z]:");
 
-let fixBackSlash = String.replace(~which=`All, ~sub="/", ~by="\\");
+let fixBackSlash = CCString.replace(~which=`All, ~sub="/", ~by="\\");
 
 let normalize_request = (~basedir: string, request) =>
   Run.Syntax.(

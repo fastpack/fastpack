@@ -1,4 +1,4 @@
-module M = Map.Make(String);
+module M = CCMap.Make(CCString);
 module Scope = FastpackUtil.Scope;
 
 type export = {

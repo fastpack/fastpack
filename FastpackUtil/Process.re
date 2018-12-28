@@ -14,7 +14,7 @@ external pid_of_handle: int => int = "pid_of_handle";
 let addPid = env => {
   let var = "FASTPACK_PARENT_PID";
   Array.concat([
-    Array.filter(v => !String.mem(~start=0, ~sub=var ++ "=", v), env),
+    CCArray.filter(v => !CCString.mem(~start=0, ~sub=var ++ "=", v), env),
     [|Printf.sprintf("%s=%d", var, pid_of_handle(Unix.getpid()))|],
   ]);
 };

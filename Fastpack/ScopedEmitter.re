@@ -194,7 +194,7 @@ if(!global.Buffer) {
         let%lwt () = emit(m.Module.source);
         let%lwt () =
           location_str
-          |> String.replace(~sub="\\", ~by="/")
+          |> CCString.replace(~sub="\\", ~by="/")
           |> Printf.sprintf("\\n//# sourceURL=fpack:///%s\");")
           |> emit;
 

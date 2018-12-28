@@ -26,7 +26,7 @@ let transpile = (_context, program) => {
     module C = Ast.Class;
     let (body_loc, {C.Body.body}) = cls.body;
     let body =
-      List.filter_map(
+      CCList.filter_map(
         el =>
           switch (el) {
           | C.Body.Property((

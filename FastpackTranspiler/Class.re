@@ -40,7 +40,7 @@ module Transform = {
   let undecorate_methods = ({C.body: (body_loc, {body}), _} as cls) => {
     let methods =
       body
-      |> List.filter_map(m =>
+      |> CCList.filter_map(m =>
            switch (m) {
            | C.Body.Method((loc, m)) =>
              Some(C.Body.Method((loc, {...m, decorators: []})))
@@ -68,7 +68,7 @@ module Transform = {
       );
 
     let (props, statics) =
-      List.partition_map(
+      CCList.partition_map(
         element =>
           switch (element) {
           | C.Body.Property((_, {static, key, value, _})) =>
@@ -83,7 +83,7 @@ module Transform = {
       );
 
     let decorators =
-      List.filter_map(
+      CCList.filter_map(
         m =>
           switch (m) {
           | C.Body.Method((
@@ -119,7 +119,7 @@ module Transform = {
         let insert_after_super = stmts => {
           let (take, drop) =
             stmts
-            |> List.take_drop_while(stmt =>
+            |> CCList.take_drop_while(stmt =>
                  switch (stmt) {
                  | (
                      _,
@@ -140,7 +140,7 @@ module Transform = {
         };
 
         let constructor =
-          List.head_opt @@
+          CCList.head_opt @@
           List.filter(((_, el)) =>
             switch (el) {
             | C.Body.Method((_, {kind: C.Method.Constructor, _})) => true
@@ -264,9 +264,9 @@ module Transform = {
 
         let (body_loc, _) = cls.body;
         let body =
-          List.take(take, methods)
+          CCList.take(take, methods)
           @ [constructor]
-          @ List.drop(drop, methods);
+          @ CCList.drop(drop, methods);
 
         {...cls, body: (body_loc, {body: body})};
       };

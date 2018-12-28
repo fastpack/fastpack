@@ -1,4 +1,4 @@
-module M = Map.Make(String);
+module M = CCMap.Make(CCString);
 
 type t = {
   filename: option(string),

@@ -69,7 +69,7 @@ let to_dependency_map: t => Lwt.t(Module.DependencyMap.t(Module.t));
 
 /* let get_static_chain: (t, Module.t) => list(Module.t); */
 
-let get_files: t => Set.Make(String).t;
+let get_files: t => Set.Make(CCString).t;
 
 /** Return a list of modules which depend on any of filename supplied */
 

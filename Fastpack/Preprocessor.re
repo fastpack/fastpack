@@ -137,13 +137,13 @@ module NodeServer = {
           member("dependencies", data)
           |> to_list
           |> List.map(to_string_option)
-          |> List.filter_map(item => item);
+          |> CCList.filter_map(item => item);
 
         let files =
           member("files", data)
           |> to_list
           |> List.map(to_string_option)
-          |> List.filter_map(item => item);
+          |> CCList.filter_map(item => item);
 
         switch (source) {
         | None =>
@@ -182,7 +182,7 @@ let run = (location, source, preprocessor: t) =>
       | [] => chain
       | _ =>
         let (loaders, rest) =
-          preprocessors |> List.take_drop_while(p => p != "builtin");
+          preprocessors |> CCList.take_drop_while(p => p != "builtin");
 
         switch (loaders) {
         | [] => make_chain(List.tl(rest), [builtin, ...chain])

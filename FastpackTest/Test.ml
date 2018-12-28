@@ -11,7 +11,7 @@ let get_test_path name =
   FS.abs_path project_path ("./test/" ^ name)
 
 let cleanup_project_path =
-  String.replace ~which:`All ~sub:project_path ~by:"/..."
+  CCString.replace ~which:`All ~sub:project_path ~by:"/..."
 
 
 let test f filename =

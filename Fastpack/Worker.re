@@ -1,6 +1,6 @@
 module MLSet = Module.LocationSet;
 module StringSet = Set.Make(String);
-module M = Map.Make(String);
+module M = CCMap.Make(CCString);
 
 module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
@@ -676,7 +676,7 @@ let start = (~project_root, ~output_dir, ()) => {
                 source
                 ++ Printf.sprintf(
                      "\\n//# sourceURL=fpack:///%s",
-                     location_str |> String.replace(~sub="\\", ~by="/"),
+                     location_str |> CCString.replace(~sub="\\", ~by="/"),
                    ),
               static_dependencies,
               dynamic_dependencies,

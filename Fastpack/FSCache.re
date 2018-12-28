@@ -22,7 +22,7 @@ let invalidate = (filename, cache) =>
 
 let withLock = (filename, cache, f) => {
   let lock =
-    Hashtbl.get_or_add(cache.locks, ~k=filename, ~f=_ => Lwt_mutex.create());
+    CCHashtbl.get_or_add(cache.locks, ~k=filename, ~f=_ => Lwt_mutex.create());
   Lwt_mutex.with_lock(lock, f);
 };
 
@@ -141,14 +141,14 @@ let readExisting = (filename, cache) =>
 
 type persistent = list((string, option(entry)));
 let toPersistent = cache =>
-  Hashtbl.map_list(
+  CCHashtbl.map_list(
     (filename, (_, entry)) => (filename, entry),
     cache.entries,
   );
 
 let ofPersistent = data => {
   let entries =
-    Hashtbl.of_list(
+    CCHashtbl.of_list(
       List.map(((filename, entry)) => (filename, (false, entry)), data),
     );
   make'(~entries=Some(entries), ());

@@ -77,7 +77,7 @@ let location_to_string = (~base_dir=None, location) => {
   };
 };
 
-module CM = Map.Make(Char);
+module CM = CCMap.Make(CCChar);
 
 let allowed_chars =
   CM.empty
@@ -109,7 +109,7 @@ let make_id = (base_dir, location) =>
             || code == 36  /* $ */
             || code == 95) {
           /* _ */
-          String.of_char(c);
+          CCString.of_char(c);
         } else {
           switch (CM.get(c, allowed_chars)) {
           | Some(s) => s
@@ -119,7 +119,7 @@ let make_id = (base_dir, location) =>
       };
 
       s
-      |> String.to_array
+      |> CCString.to_array
       |> Array.to_list
       |> List.map(fix_char)
       |> String.concat("");
@@ -130,7 +130,7 @@ let make_id = (base_dir, location) =>
       | "builtin" => "builtin"
       | _ =>
         let suf = ".js";
-        String.(
+        CCString.(
           (
             if (suffix(~suf, s)) {
               sub(s, 0, length(s) - length(suf));
@@ -179,7 +179,7 @@ module Dependency = {
 };
 
 module DependencyMap =
-  Map.Make({
+  CCMap.Make({
     type t = Dependency.t;
     let compare = Pervasives.compare;
   });
