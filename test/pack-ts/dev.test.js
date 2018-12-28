@@ -1,3 +1,3 @@
 module.exports = ({bundle}) => bundle(`
-fpack index.ts --dev --preprocess='\\.ts$:ts-loader'
+fpack index.ts --dev --preprocess=\\.ts$:ts-loader
 `);
