@@ -21,13 +21,17 @@ fs.ensureDirSync(sandbox);
 fs.emptyDirSync(sandbox);
 
 function fixOutput(s) {
-  let ret = s.replace(new RegExp(repoRoot, "g"), "/...");
   if (process.platform === "win32") {
-    let repoRootJson = repoRoot.replace(/\\/g, "\\\\");
-    ret = ret.replace(new RegExp(repoRootJson, "g"), "/...");
-    ret = ret.replace(/\\/g, "/");
+    let repoRootQuoted = repoRoot.replace(/\\/g, "\\\\");
+    let repoRootQuotedJson = repoRoot.replace(/\\/g, "\\\\\\\\");
+    let ret = s.replace(new RegExp(repoRootQuoted, "g"), "/...");
+    ret = ret.replace(new RegExp(repoRootQuotedJson, "g"), "/...");
+    ret = ret.replace(/\\+/g, "/");
+    return ret;
   }
-  return ret;
+  else {
+    return s.replace(new RegExp(repoRoot, "g"), "/...");
+  }
 }
 
 function exe(cmd, opts) {
