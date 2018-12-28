@@ -6,45 +6,31 @@ build:
 	@esy build
 
 build-dev:
-	@esy b refmterr jbuilder build --dev bin/fpack.exe
+	@esy b refmterr dune build bin/fpack.exe
 
 install:
 	@esy install
 
 test: build-dev
-	@esy jbuilder runtest --dev --diff-command "git --no-pager diff --no-index --color"
+	@esy dune runtest --diff-command "git --no-pager diff --no-index --color"
 
 train: build-dev
-	@esy jbuilder runtest --auto-promote --dev --diff-command "git --no-pager diff --no-index --color"
+	@esy dune runtest --auto-promote --diff-command "git --no-pager diff --no-index --color"
 
 setup-test:
-	cd test && for TEST in `ls`; \
-	   do [ -d "$$TEST" ] \
-	      && [ -f "$$TEST/package.json" ] \
-		  && echo "Test: $$TEST" \
-		  && cd "$$TEST" \
-		  && yarn \
-		  && cd ..; \
-		done \
-	|| echo "Setup tests: done"
+	@esy x node scripts/setupTest.js
 
 clean-test:
-	cd test && for TEST in `ls`; \
-	   do [ -d "$$TEST" ] \
-		  && [ -f "$$TEST/package.json" ] \
-	      && [ -d "$$TEST/node_modules" ] \
-		  && rm -rf "$$TEST/node_modules"; \
-		done \
-	|| echo "Cleanup tests: done"
+	@esy x node scripts/cleanTest.js
 
 test-integration: build-dev
-	@node scripts/test $(pattern)
+	@node -r ./_esy/default/pnp.js scripts/test $(pattern)
 
 train-integration: build-dev
-	@node scripts/test --train $(pattern)
+	@node -r ./_esy/default/pnp.js scripts/test --train $(pattern)
 
 test-server:
-	cd test && node server.js
+	cd test && esy x node server.js
 
 bootstrap: install build setup-test
 
@@ -52,4 +38,4 @@ clean: clean-test
 	@rm -rf _build/ node_modules/
 
 bump-version:
-	@node scripts/bump_version.js
+	@esy x node scripts/bump_version.js

@@ -47,7 +47,7 @@ let resolve = (ctx: Context.t, request: Module.Dependency.t) => {
 let is_json = (location: Module.location) =>
   switch (location) {
   | Module.File({filename: Some(filename), preprocessors: []}) =>
-    String.suffix(~suf=".json", filename)
+    CCString.suffix(~suf=".json", filename)
   | _ => false
   };
 
@@ -184,7 +184,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
           let content =
             if (content_length > 2) {
               if (content.[0] == '#' && content.[1] == '!') {
-                let nl_index = String.find(~sub="\n", content);
+                let nl_index = CCString.find(~sub="\n", content);
                 String.sub(content, nl_index, content_length - nl_index);
               } else {
                 content;

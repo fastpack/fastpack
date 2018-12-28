@@ -1,3 +1,3 @@
 module.exports = ({bundle}) => bundle(`
-fpack index.js --dev --preprocess='^\\.*'
+fpack index.js --dev --preprocess=^\\.*
 `);

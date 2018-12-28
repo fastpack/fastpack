@@ -3,29 +3,51 @@ type t = {
   process: Lwt_process.process_none,
   chIn: Lwt_io.channel(Lwt_io.input),
   chOut: Lwt_io.channel(Lwt_io.output),
+  descr: list(Unix.file_descr),
 };
 
 exception NotRunning(string);
+/* exception CannotRead */
+
+external pid_of_handle: int => int = "pid_of_handle";
+
+let addPid = env => {
+  let var = "FASTPACK_PARENT_PID";
+  Array.concat([
+    CCArray.filter(v => !CCString.mem(~start=0, ~sub=var ++ "=", v), env),
+    [|Printf.sprintf("%s=%d", var, pid_of_handle(Unix.getpid()))|],
+  ]);
+};
 
 let start = cmd => {
-  let (fp_in, process_out) = Unix.pipe();
-  let (process_in, fp_out) = Unix.pipe();
-  let chIn = Lwt_io.of_unix_fd(~mode=Lwt_io.Input, fp_in);
-  let chOut = Lwt_io.of_unix_fd(~mode=Lwt_io.Output, fp_out);
+  let (fp_in, process_out) = Lwt_unix.pipe();
+  let (process_in, fp_out) = Lwt_unix.pipe();
+  let chIn = Lwt_io.of_fd(~mode=Lwt_io.Input, fp_in);
+  let chOut = Lwt_io.of_fd(~mode=Lwt_io.Output, fp_out);
   let process =
     Lwt_process.(
       open_process_none(
-        ~env=Unix.environment(),
-        ~stdin=`FD_move(process_in),
-        ~stdout=`FD_move(process_out),
+        ~env=addPid(Unix.environment()),
+        ~stdin=`FD_move(Lwt_unix.unix_file_descr(process_in)),
+        ~stdout=`FD_move(Lwt_unix.unix_file_descr(process_out)),
         ~stderr=`Dev_null,
-        shell(cmd),
+        ("", cmd),
       )
     );
-  {cmd, process, chIn, chOut};
+  {
+    cmd: String.concat(" ", Array.to_list(cmd)),
+    process,
+    chIn,
+    chOut,
+    descr: [
+      Lwt_unix.unix_file_descr(fp_in),
+      Lwt_unix.unix_file_descr(fp_out),
+    ],
+  };
 };
 
-let finalize = ({process, _}: t) => {
+let finalize = ({process, descr, _}: t) => {
+  List.iter(Unix.close, descr);
   process#terminate;
   process#close |> ignore;
   Lwt.return_unit;
@@ -44,16 +66,50 @@ let readLine = process =>
     process.chIn,
   );
 
-let writeAndReadValue = (value, process) =>
-  Lwt_io.atomic(
-    chOut =>
-      Lwt_io.atomic(
-        chIn => {
-          let%lwt () = Lwt_io.write_value(chOut, value);
-          let%lwt output = Lwt_io.read_value(chIn);
-          Lwt.return(output);
-        },
-        process.chIn,
-      ),
-    process.chOut,
-  );
+let writeAndReadValue = (~msg=?, value, process) => {
+  let prefix =
+    switch (msg) {
+    | Some(s) => s
+    | None => "no msg"
+    };
+
+  let exit = () => {
+    let%lwt () = Lwt_unix.sleep(2.5);
+    failwith(prefix);
+  };
+
+  Lwt.pick([
+    {
+      let%lwt () = Lwt_io.write_value(process.chOut, value);
+      let%lwt output = Lwt_io.read_value(process.chIn);
+      Lwt.return(output);
+    },
+    exit(),
+  ]);
+};
+
+/* let writeAndReadValue = (~msg=?, value, process) => { */
+/*   let prefix = */
+/*     switch (msg) { */
+/*     | Some(s) => s */
+/*     | None => "no msg" */
+/*     }; */
+
+/*   let exit = () => { */
+/*     let%lwt () = Lwt_unix.sleep(2.5); */
+/*     failwith(prefix); */
+/*   }; */
+
+/*   Lwt.pick([Lwt_io.atomic( */
+/*     chOut => */
+/*       Lwt_io.atomic( */
+/*         chIn => { */
+/*           let%lwt () = Lwt_io.write_value(chOut, value); */
+/*           let%lwt output = Lwt_io.read_value(chIn); */
+/*           Lwt.return(output); */
+/*         }, */
+/*         process.chIn, */
+/*       ), */
+/*     process.chOut, */
+/*   ), exit ()]); */
+/* }; */

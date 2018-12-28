@@ -1,8 +1,0 @@
-(jbuild_version 1)
-
-(library
- ((name        FastpackTranspiler)
-  (public_name FastpackTranspiler)
-  (libraries (FastpackUtil lwt.unix fileutils yojson))
-  (flags (:standard "-open" "Containers"))
-  (preprocess (pps (lwt.ppx)))))

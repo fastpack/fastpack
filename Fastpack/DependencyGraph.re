@@ -1,4 +1,4 @@
-module StringSet = Set.Make(String);
+module StringSet = Set.Make(CCString);
 exception Cycle(list(string));
 
 type t = {
@@ -45,7 +45,7 @@ let lookup_dependencies = (~kind, graph, m: Module.t) => {
 
 let to_dependency_map = graph => {
   let to_pairs =
-    Hashtbl.map_list((_, (dep, location)) =>
+    CCHashtbl.map_list((_, (dep, location)) =>
       switch (lookup_module(graph, location)) {
       | None => failwith("not good at all, unknown location")
       | Some(m) => (dep, m)
@@ -157,7 +157,7 @@ let cleanup = (graph, emitted_modules) => {
 let length = graph => Hashtbl.length(graph.modules);
 
 let modules = graph =>
-  Hashtbl.to_seq(graph.modules)
+  CCHashtbl.to_seq(graph.modules)
   |> Sequence.map(((k, m)) => (k, Lazy.force(m)));
 
 let ensureModule = (graph, location, makeModule) =>

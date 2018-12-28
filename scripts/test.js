@@ -1,3 +1,8 @@
+const SKIP_WIN32 = {
+  "pack-less\\dev.test.js": true
+};
+
+
 const fs = require("fs-extra");
 const { spawnSync } = require("child_process");
 const path = require("path");
@@ -20,12 +25,26 @@ const sandbox = path.join(repoRoot, ".sandbox");
 fs.ensureDirSync(sandbox);
 fs.emptyDirSync(sandbox);
 
+function fixOutput(s) {
+  if (process.platform === "win32") {
+    let repoRootQuoted = repoRoot.replace(/\\/g, "\\\\");
+    let repoRootQuotedJson = repoRoot.replace(/\\/g, "\\\\\\\\");
+    let ret = s.replace(new RegExp(repoRootQuoted, "g"), "/...");
+    ret = ret.replace(new RegExp(repoRootQuotedJson, "g"), "/...");
+    ret = ret.replace(/\\+/g, "/");
+    return ret;
+  }
+  else {
+    return s.replace(new RegExp(repoRoot, "g"), "/...");
+  }
+}
+
 function exe(cmd, opts) {
   let { status, stdout, stderr } = spawnSync(cmd, [], {
     cwd: opts.cwd,
     env: opts.env,
     shell: true,
-    timeout: 5000
+    timeout: 15000
   });
   return {
     stdout: stdout instanceof Buffer ? stdout.toString() : stdout,
@@ -152,7 +171,7 @@ Check test: ${name}
       fs.emptyDirSync(sandboxOutputDir);
       fs.writeFileSync(
         path.join(sandboxOutputDir, "stderr.txt"),
-        result.stderr.replace(new RegExp(repoRoot, "g"), "/...")
+        fixOutput(result.stderr)
       );
       if (!previousResult || SAVE_SNAPSHOT_MODE) {
         saveSnapshot();
@@ -168,7 +187,7 @@ Check test: ${name}
     fs.emptyDirSync(sandboxOutputDir);
     fs.writeFileSync(
       path.join(sandboxOutputDir, "result.txt"),
-      result.replace(new RegExp(repoRoot, "g"), "/...")
+      fixOutput(result)
     );
     if (!previousResult || SAVE_SNAPSHOT_MODE) {
       saveSnapshot();
@@ -179,6 +198,11 @@ Check test: ${name}
   };
 
   let f = require(testPath);
+
+  if (process.platform === 'win32' && SKIP_WIN32[name]) {
+    f = () => markOk("SKIPPED on Windows");
+  }
+
   this.run = () => {
     if (!matchPatterns(name)) {
       return;
@@ -263,8 +287,7 @@ function runAll(testPaths) {
     { total: 0, failed: 0 }
   );
 
-  let [colorFunc, code] =
-    failed > 0 ? [chalk.red, 1] : [chalk.green, 0];
+  let [colorFunc, code] = failed > 0 ? [chalk.red, 1] : [chalk.green, 0];
   console.log(`
 ${colorFunc(`Total: ${total}. Failed: ${failed}. `)}${
     PATTERNS.length

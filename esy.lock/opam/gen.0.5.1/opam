@@ -1,0 +1,29 @@
+opam-version: "2.0"
+maintainer: "simon.cruanes.2007@m4x.org"
+authors: "Simon Cruanes"
+homepage: "https://github.com/c-cube/gen/"
+bug-reports: "https://github.com/c-cube/gen/issues"
+doc: "http://cedeela.fr/~simon/software/gen/"
+tags: ["gen" "iterator" "iter" "fold"]
+dev-repo: "git+https://github.com/c-cube/gen.git"
+build: [
+  ["jbuilder" "build" "-p" name]
+  ["jbuilder" "runtest"] {with-test}
+  ["jbuilder" "build" "@doc"] {with-doc}
+]
+depends: [
+  "ocaml"
+  "jbuilder" {build}
+  "base-bytes"
+  "odoc" {with-doc}
+  "qtest" {with-test}
+  "qcheck" {with-test}
+]
+synopsis: "Simple and efficient iterators (modules Gen and GenLabels)."
+description: """
+Now provides additional modules GenClone and GenMList for lower-level control
+over persistency and duplication of iterators."""
+url {
+  src: "https://github.com/c-cube/gen/archive/0.5.1.tar.gz"
+  checksum: "md5=4fb545ddde26dd084f01210681df4c14"
+}

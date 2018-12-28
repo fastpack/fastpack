@@ -22,7 +22,7 @@ let invalidate = (filename, cache) =>
 
 let withLock = (filename, cache, f) => {
   let lock =
-    Hashtbl.get_or_add(cache.locks, ~k=filename, ~f=_ => Lwt_mutex.create());
+    CCHashtbl.get_or_add(cache.locks, ~k=filename, ~f=_ => Lwt_mutex.create());
   Lwt_mutex.with_lock(lock, f);
 };
 
@@ -79,8 +79,16 @@ let exists = (filename, cache) =>
   };
 
 let read = (filename, cache) => {
+  let readBinary = filename => {
+    let%lwt length = Lwt_io.file_length(filename);
+    let ch = open_in_bin(filename);
+    let content = really_input_string(ch, Int64.to_int(length));
+    close_in_noerr(ch);
+    Lwt.return(content);
+  };
   let read' = (filename, entry) => {
-    let%lwt content = Lwt_io.(with_file(~mode=Input, filename, read));
+    /* let%lwt content = Lwt_io.(with_file(~mode=Input, filename, read)); */
+    let%lwt content = readBinary(filename);
     Hashtbl.replace(
       cache.entries,
       filename,
@@ -108,7 +116,8 @@ let read = (filename, cache) => {
     | None =>
       switch%lwt (Lwt_unix.stat(filename)) {
       | stats =>
-        let%lwt content = Lwt_io.(with_file(~mode=Input, filename, read));
+        /* let%lwt content = Lwt_io.(with_file(~mode=Input, filename, read)); */
+        let%lwt content = readBinary(filename);
         Hashtbl.replace(
           cache.entries,
           filename,
@@ -132,14 +141,14 @@ let readExisting = (filename, cache) =>
 
 type persistent = list((string, option(entry)));
 let toPersistent = cache =>
-  Hashtbl.map_list(
+  CCHashtbl.map_list(
     (filename, (_, entry)) => (filename, entry),
     cache.entries,
   );
 
 let ofPersistent = data => {
   let entries =
-    Hashtbl.of_list(
+    CCHashtbl.of_list(
       List.map(((filename, entry)) => (filename, (false, entry)), data),
     );
   make'(~entries=Some(entries), ());

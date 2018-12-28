@@ -320,7 +320,7 @@ let print =
     if (with_scope) {
       let ctx = {...ctx, scope: get_scope(ctx.scope)};
       let scope_str = Scope.scope_to_str(~sep, ctx.scope);
-      let lines = String.lines(scope_str);
+      let lines = CCString.lines(scope_str);
       let emit_scope_str =
         if (List.length(lines) > 1) {
           ctx => {

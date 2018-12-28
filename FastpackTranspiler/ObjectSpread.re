@@ -282,7 +282,7 @@ module TranspileObjectSpreadRest = {
 
         let (properties, spread) =
           properties
-          |> List.partition_map(
+          |> CCList.partition_map(
                fun
                | P.Object.Property((
                    _,

@@ -6,7 +6,7 @@
 type t = {
   filename: option(string),
   entry_point: string,
-  browser_shim: Map.Make(String).t(browser_shim),
+  browser_shim: CCMap.Make(CCString).t(browser_shim),
 }
 and browser_shim =
   | Shim(string)

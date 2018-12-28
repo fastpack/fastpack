@@ -1,5 +1,5 @@
 module FS = FastpackUtil.FS;
-module StringSet = Set.Make(String);
+module StringSet = Set.Make(CCString);
 
 type t = {
   current_dir: string,
@@ -24,7 +24,11 @@ let make = (~reporter=None, config: Config.t) => {
          let abs_path = FS.abs_path(current_dir, entry_point);
          switch%lwt (FS.stat_option(abs_path)) {
          | Some({st_kind: Unix.S_REG, _}) =>
-           Lwt.return("./" ++ FS.relative_path(current_dir, abs_path))
+           Lwt.return(
+             "./"
+             ++ FS.relative_path(current_dir, abs_path)
+             |> CCString.replace(~sub="\\", ~by="/"),
+           )
          | _ => Lwt.return(entry_point)
          };
        });
@@ -129,7 +133,15 @@ let make = (~reporter=None, config: Config.t) => {
   });
 };
 
-let rec pack = (~dryRun=false, ~current_location, ~graph, ~initial, ~start_time, packer) => {
+let rec pack =
+        (
+          ~dryRun=false,
+          ~current_location,
+          ~graph,
+          ~initial,
+          ~start_time,
+          packer,
+        ) => {
   let {current_dir, config, cache, _} = packer;
   let message =
     if (initial) {

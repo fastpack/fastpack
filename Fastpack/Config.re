@@ -58,7 +58,7 @@ module Preprocessor = {
       | [pattern_s, ...rest] =>
         let processors =
           String.(rest |> concat(":") |> split_on_char('!'))
-          |> List.filter_map(s => {
+          |> CCList.filter_map(s => {
                let s = String.trim(s);
                s == "" ?
                  None :

@@ -1,0 +1,7 @@
+(executable
+  (name fpack)
+  (public_name fpack)
+  (package Fastpack)
+  (libraries FastpackUtil Fastpack FastpackTranspiler cmdliner lwt.unix sedlex fileutils yojson containers logs logs.fmt logs.lwt ppx_expect.evaluator ppx_inline_test.runner.lib)
+  (link_flags (:include config/link_flags.sexp))
+  (preprocess (pps lwt_ppx)) )

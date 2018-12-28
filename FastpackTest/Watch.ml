@@ -1,7 +1,7 @@
 open Test
 open Fastpack
 open Lwt.Infix
-module StringSet = Set.Make(String)
+module StringSet = Set.Make(CCString)
 
 let re_modules = Re.Posix.compile_pat "^.+\\$fp\\$main'\\);.+\\(\\{"
 let run_with ~test_name ~cmd ~files f =

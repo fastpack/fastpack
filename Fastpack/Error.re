@@ -57,7 +57,7 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
   let startLine = max(0, loc.start.line - 2);
   let endLine = min(List.length(lines), loc._end.line + 1);
   let codeframe =
-    List.filter_map(
+    CCList.filter_map(
       ((i, line)) =>
         if (startLine <= i && i <= endLine) {
           Some((i, line));
@@ -73,7 +73,7 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
     List.map(
       ((i, line)) => {
         let isErrorLine = loc.start.line <= i && i <= loc._end.line;
-        let lineNo = String.pad(maxDigits, string_of_int(i));
+        let lineNo = CCString.pad(maxDigits, string_of_int(i));
         switch (isErrorLine, isTTY) {
         | (false, _) => lineNo ++ " │ " ++ line
         | (true, false) =>
@@ -81,9 +81,9 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
             loc.start.column + 1,
             loc._end.column - loc.start.column,
           );
-          let whitespaceBeforeBar = String.repeat(" ", maxDigits + 1);
-          let whitespaceAfterBar = String.repeat(" ", offset);
-          let carets = String.repeat("^", length);
+          let whitespaceBeforeBar = CCString.repeat(" ", maxDigits + 1);
+          let whitespaceAfterBar = CCString.repeat(" ", offset);
+          let carets = CCString.repeat("^", length);
           lineNo
           ++ " │ "
           ++ line
@@ -105,7 +105,7 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
               x("e: %s ... colo: %s", error_substring, colored_error)
             );
             let colored_line =
-              String.replace(~sub=error_substring, ~by=colored_error, line);
+              CCString.replace(~sub=error_substring, ~by=colored_error, line);
             print_with_color(lineNo, Red) ++ " │ " ++ colored_line;
           } else {
             line;
@@ -256,7 +256,7 @@ let to_string = (package_dir, error) =>
     Printf.sprintf("Dependency cycle detected:\n\t%s\n") @@
     String.concat("\n\t") @@
     List.map(
-      filename => String.replace(~sub=package_dir ++ "/", ~by="", filename),
+      filename => CCString.replace(~sub=package_dir ++ "/", ~by="", filename),
       filenames,
     )
 

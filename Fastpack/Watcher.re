@@ -1,8 +1,8 @@
 open Lwt.Infix;
 module FS = FastpackUtil.FS;
 module Process = FastpackUtil.Process;
-module M = Map.Make(String);
-module StringSet = Set.Make(String);
+module M = CCMap.Make(CCString);
+module StringSet = Set.Make(CCString);
 
 type t = {
   watch: unit => Lwt.t(unit),
@@ -155,7 +155,7 @@ let start_watchman = root => {
     ])
     |> Yojson.to_string;
 
-  let cmd = "watchman --no-save-state -j --no-pretty -p";
+  let cmd = [|"watchman", "--no-save-state", "-j", "--no-pretty", "-p"|];
   let process = Process.start(cmd);
   /* TODO: validate if process is started at all */
   let%lwt () = Process.write(subscribe_message ++ "\n", process);

@@ -30,10 +30,11 @@ RUN apk add patch
 RUN apk add libressl
 RUN apk add libressl-dev
 RUN apk add git
+RUN apk add cmake
 
 # esy uses this
 COPY shasum /usr/bin
 RUN chmod +x /usr/bin/shasum
 
-RUN npm install --global --unsafe-perm=true esy@0.3.4
+RUN npm install --global --unsafe-perm=true esy@0.4.9
 RUN npm install --global --unsafe-perm=true yarn

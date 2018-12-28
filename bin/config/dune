@@ -4,5 +4,5 @@
   (libraries dune.configurator))
 
 (rule
-  (targets fpack.flags)
+  (targets link_flags.sexp)
   (action (run ./discover.exe)))

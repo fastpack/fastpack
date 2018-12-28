@@ -100,7 +100,7 @@ let make = (load: load) =>
         );
       {
         files: FSCache.ofPersistent(files),
-        modules: Hashtbl.of_list(modules),
+        modules: CCHashtbl.of_list(modules),
         loaded: load,
         save: Filename(filename),
       }
@@ -153,13 +153,14 @@ let save = cache =>
     let tempDir = FilePath.dirname(filename);
     let suffix = FilePath.basename(filename);
     let%lwt () = FS.makedirs(tempDir);
-    let (tempFile, _) =
+    let (tempFile, oc) =
       Filename.open_temp_file(
         ~perms=0o644,
         ~temp_dir=tempDir,
         ".fpack",
         suffix,
       );
+    close_out(oc);
 
     let%lwt () =
       Lwt_io.with_file(
@@ -173,7 +174,7 @@ let save = cache =>
           ~flags=[],
           {
             files: FSCache.toPersistent(cache.files),
-            modules: Hashtbl.to_list(cache.modules),
+            modules: CCHashtbl.to_list(cache.modules),
           },
         )
       );

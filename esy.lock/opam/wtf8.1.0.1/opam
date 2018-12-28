@@ -1,0 +1,23 @@
+opam-version: "2.0"
+maintainer: "Marshall Roch <mroch@fb.com>"
+authors: ["Marshall Roch <mroch@fb.com>"]
+homepage: "https://github.com/flowtype/ocaml-wtf8"
+doc: "https://github.com/flowtype/ocaml-wtf8"
+license: "MIT"
+dev-repo: "git+https://github.com/flowtype/ocaml-wtf8.git"
+bug-reports: "https://github.com/flowtype/ocaml-wtf8/issues"
+depends: [
+  "ocaml" {>= "4.01.0"}
+  "jbuilder" {build & >= "1.0+beta7"}
+]
+build: [
+  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["jbuilder" "runtest" "-p" name "-j" jobs] {with-test}
+]
+synopsis: "Encoder and decoder for WTF-8"
+description: "WTF-8 is a superset of UTF-8 that allows unpaired surrogates."
+url {
+  src:
+    "https://github.com/flowtype/ocaml-wtf8/releases/download/v1.0.1/wtf8-1.0.1.tbz"
+  checksum: "md5=843fb4ee0d36b22c4ad1f2fb28afe8f8"
+}

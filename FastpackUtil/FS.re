@@ -22,10 +22,7 @@ let relative_path = (dir, filename) => {
   if (relative == "") {
     filename;
   } else {
-    switch (relative.[0]) {
-    | '.' => filename /* no single root */
-    | _ => relative
-    };
+    relative
   };
 };
 

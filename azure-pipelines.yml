@@ -12,10 +12,8 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '8.9'
-  - script: |
-      sed -i \
-        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
-        Fastpack/Version.re
+  - script: node scripts/replaceCommitVersion.js
+    displayName: replace commit
   - script: docker build -t alpine-fastpack linux-build
     displayName: 'docker build'
   - script: docker run --rm --mount src=`pwd`,target=/fastpack,type=bind alpine-fastpack /bin/bash -c 'cd /fastpack && make install && make test && make setup-test && make test-integration && make build && ldd _build/default/bin/fpack.exe'
@@ -34,15 +32,11 @@ jobs:
   - task: NodeTool@0
     inputs:
       versionSpec: '8.9'
-  - script: |
-      sed \
-        -i '' \
-        -e "s/%%COMMIT%%/$(git log --pretty=format:'%h' -n 1)/g" \
-        Fastpack/Version.re
+  - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
   - script: npm install -g yarn
     displayName: install Yarn
-  - script: npm install -g esy@0.3.4
+  - script: npm install -g esy@0.4.9
     displayName: install esy
   - script: make install
     displayName: make install
@@ -59,10 +53,47 @@ jobs:
       artifactName: 'vendor-darwin-fpack.exe'
       pathToPublish: '_build/default/bin/fpack.exe'
 
+- job: Windows
+  pool:
+    vmImage: 'vs2017-win2016'
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '8.9'
+  - script: node scripts/replaceCommitVersion.js
+    displayName: replace commit
+  - script: npm install -g yarn
+    displayName: install Yarn
+  - script: npm install -g esy@0.4.9
+    displayName: install esy
+  - script: esy install
+    displayName: esy install
+    continueOnError: true
+  - script: esy install
+    displayName: esy install
+    continueOnError: true
+  - script: esy install
+    displayName: esy install
+  - script: esy b jbuilder build --dev bin/fpack.exe
+    displayName: build-dev
+  - script: node -r ./_esy/default/pnp.js scripts/setupTest.js
+    displayName: setup tests
+  - script: node -r ./_esy/default/pnp.js scripts/test.js --no-color
+    displayName: Some integration tests
+    continueOnError: true
+  - script: node -r ./_esy/default/pnp.js scripts/test.js --no-color
+    displayName: Some integration tests (retry)
+    continueOnError: true
+  - task: PublishBuildArtifacts@1
+    inputs:
+      artifactName: 'vendor-windows-fpack.exe'
+      pathToPublish: '_build/default/bin/fpack.exe'
+
 - job: Package
   dependsOn:
   - Linux
   - MacOS
+  - Windows
   condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
   pool:
     vmImage: 'Ubuntu 16.04'
@@ -81,6 +112,13 @@ jobs:
       downloadPath: .
   - script: cp -R vendor-linux-fpack.exe/fpack.exe dist/vendor-linux
     displayName: copy linux binary
+  - task: DownloadBuildArtifacts@0
+    displayName: download windows binary
+    inputs:
+      artifactName: 'vendor-windows-fpack.exe'
+      downloadPath: .
+  - script: cp -R vendor-windows-fpack.exe/fpack.exe dist/vendor-windows
+    displayName: copy windows binary
   - script: cp -R node-service dist
     displayName: copy node-service
   - task: PublishBuildArtifacts@1

@@ -1,6 +1,6 @@
 module MLSet = Module.LocationSet;
 module StringSet = Set.Make(String);
-module M = Map.Make(String);
+module M = CCMap.Make(CCString);
 
 module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
@@ -676,7 +676,7 @@ let start = (~project_root, ~output_dir, ()) => {
                 source
                 ++ Printf.sprintf(
                      "\\n//# sourceURL=fpack:///%s",
-                     location_str,
+                     location_str |> CCString.replace(~sub="\\", ~by="/"),
                    ),
               static_dependencies,
               dynamic_dependencies,
@@ -689,7 +689,8 @@ let start = (~project_root, ~output_dir, ()) => {
           );
         },
         fun
-        | Flow_parser.Parse_error.Error(args) => Lwt.return(ParseError(args))
+        | Flow_parser.Parse_error.Error(args) =>
+          Lwt.return(ParseError(args))
         | Scope.ScopeError(reason) => Lwt.return(ScopeError(reason))
         | Preprocessor.Error(message) =>
           Lwt.return(PreprocessorError(message))
@@ -703,7 +704,7 @@ let start = (~project_root, ~output_dir, ()) => {
     process();
   };
 
-  Lwt.finalize(() => process(), () => Preprocessor.finalize(preprocessor));
+  Lwt.finalize(process, () => Preprocessor.finalize(preprocessor));
 };
 
 module Reader = {
@@ -717,14 +718,13 @@ module Reader = {
         () => {
           Logs.debug(x => x("reader created"));
 
-          let cmd =
-            Printf.sprintf(
-              "%s worker --project-root='%s' --output='%s'",
-              Environment.getExecutable(),
-              project_root,
-              output_dir,
-            );
-          Process.start(cmd) |> Lwt.return;
+          Process.start([|
+            Environment.getExecutable(),
+            "worker",
+            "--project-root=" ++ project_root,
+            "--output=" ++ output_dir,
+          |])
+          |> Lwt.return;
         },
       ),
   };
@@ -732,10 +732,14 @@ module Reader = {
   let finalize = reader => Lwt_pool.clear(reader.workerPool);
 
   let read = (~location, ~source, reader) => {
+    let location_str = Module.location_to_string(location);
     let%lwt response: Lwt.t(response) =
       Lwt_pool.use(
         reader.workerPool,
-        Process.writeAndReadValue({location, source}),
+        Process.writeAndReadValue(
+          ~msg="READING: " ++ location_str,
+          {location, source},
+        ),
       );
 
     switch (response) {
