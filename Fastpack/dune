@@ -1,0 +1,9 @@
+(library
+ (name        Fastpack)
+  (public_name Fastpack)
+  (modules (:standard \ ("FlatPacker" FlatEmitter)))
+  (library_flags (-linkall))
+  (libraries sequence FastpackUtil FastpackTranspiler lwt.unix logs logs.lwt fileutils yojson containers str flow_parser re re.posix logs.fmt)
+  (flags (:standard "-open" "Containers"))
+  (preprocess (pps lwt_ppx ppx_let ppx_deriving.std))
+)

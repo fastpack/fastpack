@@ -1,5 +1,5 @@
 {
-  "checksum": "cb6fb6a48dc04984d6aec55f02c32cd8",
+  "checksum": "04a3dff78e8c18b99866270e3ae16424",
   "root": "fastpack@link:./package.json",
   "node": {
     "universalify@0.1.2@d41d8cd9": {
@@ -152,10 +152,9 @@
         "@opam/ppx_deriving@opam:4.2.1@7927b93a",
         "@opam/merlin@opam:3.2.2@829ee6dd",
         "@opam/lwt_ppx@opam:1.2.1@db1172a7", "@opam/lwt@opam:4.1.0@111fc2bf",
-        "@opam/logs@opam:0.6.2@8f7a792d",
-        "@opam/jbuilder@opam:transition@58bdfe0a",
-        "@opam/fmt@opam:0.8.5@01e38a4e",
+        "@opam/logs@opam:0.6.2@8f7a792d", "@opam/fmt@opam:0.8.5@01e38a4e",
         "@opam/fileutils@opam:0.5.3@fe7de19d",
+        "@opam/dune@opam:1.6.2@7b47a809",
         "@opam/containers@opam:1.3@cb05edca",
         "@opam/cmdliner@opam:1.0.2@b29b7491",
         "@fastpack/flow_parser@0.81.0@d41d8cd9",

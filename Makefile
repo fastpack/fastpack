@@ -6,16 +6,16 @@ build:
 	@esy build
 
 build-dev:
-	@esy b refmterr jbuilder build --dev bin/fpack.exe
+	@esy b refmterr dune build bin/fpack.exe
 
 install:
 	@esy install
 
 test: build-dev
-	@esy jbuilder runtest --dev --diff-command "git --no-pager diff --no-index --color"
+	@esy dune runtest --diff-command "git --no-pager diff --no-index --color"
 
 train: build-dev
-	@esy jbuilder runtest --auto-promote --dev --diff-command "git --no-pager diff --no-index --color"
+	@esy dune runtest --auto-promote --diff-command "git --no-pager diff --no-index --color"
 
 setup-test:
 	@esy x node scripts/setupTest.js
