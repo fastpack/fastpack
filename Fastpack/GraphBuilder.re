@@ -362,6 +362,12 @@ let build = (ctx: Context.t) => {
             let%lwt (dynamic_dependencies, build_dependencies) =
               collect_dependencies(dynamic_dependencies, build_dependencies);
 
+            DependencyGraph.add_build_dependencies(
+              ctx.graph,
+              M.bindings(build_dependencies) |> List.map(fst),
+              m.location,
+            );
+
             Lwt.return({
               ...m,
               static_dependencies: List.rev(static_dependencies),

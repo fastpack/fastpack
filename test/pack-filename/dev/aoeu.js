@@ -75,16 +75,19 @@ if(!global.Buffer) {
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
+/* !s: a.js */
 "a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nexports.default = x => x;\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");
 },
 d: {}
 },
+/* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a"}
 },
+/* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
 },

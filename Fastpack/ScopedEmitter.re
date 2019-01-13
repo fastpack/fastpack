@@ -184,9 +184,14 @@ if(!global.Buffer) {
             ~base_dir=Some(ctx.project_root),
             m.location,
           );
+        let short_str = Module.location_to_short_string(
+            ~base_dir=Some(ctx.project_root),
+            m.location,
+          );
         let%lwt () =
           Printf.sprintf(
-            "%s:{m:function(module, exports, __fastpack_require__, __fastpack_import__) {\n",
+            "/* !s: %s */\n%s:{m:function(module, exports, __fastpack_require__, __fastpack_import__) {\n",
+            short_str,
             Yojson.to_string(`String(m.id)),
           )
           |> emit;

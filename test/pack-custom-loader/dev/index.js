@@ -75,26 +75,31 @@ if(!global.Buffer) {
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
     ({
+/* !s: no filename */
 "custom$$_$$loaderDOT$$js$$B$$":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" + \"empty\" + \". Query: .</div>\";\nmodule.exports = {};\n  \n//# sourceURL=fpack:///custom-loader.js!\n//# sourceURL=fpack:///custom-loader.js!");
 },
 d: {}
 },
+/* !s: no filename */
 "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" + \"empty\" + \". Query: ?bool=true.</div>\";\nmodule.exports = {};\n  \n//# sourceURL=fpack:///custom-loader.js?bool=true!\n//# sourceURL=fpack:///custom-loader.js?bool=true!");
 },
 d: {}
 },
+/* !s: index.js */
 "custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" + \"not empty\" + \". Query: ?bool=true.</div>\";\nmodule.exports = {};\n  \n//# sourceURL=fpack:///custom-loader.js?bool=true!index.js\n//# sourceURL=fpack:///custom-loader.js?bool=true!index.js");
 },
 d: {}
 },
+/* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\n__fastpack_require__(\"./custom-loader!\");\n\n__fastpack_require__(\"./custom-loader?bool=true!\");\n\n__fastpack_require__(\"./custom-loader?bool=true!./index.js\");\n\n\n\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"./custom-loader!":"custom$$_$$loaderDOT$$js$$B$$","./custom-loader?bool=true!":"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$","./custom-loader?bool=true!./index.js":"custom$$_$$loaderDOT$$js$$Q$$bool$$E$$true$$B$$index"}
 },
+/* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
 },

@@ -17,12 +17,19 @@ let rec setInterval = (ms, f) => {
 let abs_path = (dir, filename) =>
   FilePath.reduce(~no_symlink=true) @@ FilePath.make_absolute(dir, filename);
 
+let rec readlink = filename =>
+  switch%lwt (Lwt_unix.readlink(filename)) {
+  | value => readlink(abs_path(FilePath.dirname(filename), value))
+  | exception (Unix.Unix_error(Unix.EINVAL, "readlink", _)) =>
+    Lwt.return(filename)
+  };
+
 let relative_path = (dir, filename) => {
   let relative = FilePath.make_relative(dir, filename);
   if (relative == "") {
     filename;
   } else {
-    relative
+    relative;
   };
 };
 
