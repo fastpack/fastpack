@@ -152,7 +152,7 @@ module NodeServer = {
           Lwt.fail(Error(error));
         | Some(source) =>
           /* Logs.debug(x => x("SOURCE: %s", source)); */
-          Lwt.return((source, dependencies, files))
+          Lwt.return(((source, None), dependencies, files))
         };
       },
     );
@@ -174,7 +174,7 @@ let run = (location, source, preprocessor: t) =>
       Error.ie(
         "Unexpeceted absence of source for main / builtin / empty module",
       )
-    | Some(source) => Lwt.return((source, [], []))
+    | Some(source) => Lwt.return((source, None, [], []))
     }
   | Module.File({filename, preprocessors, _}) =>
     let rec make_chain = (preprocessors, chain) =>
@@ -218,19 +218,19 @@ let run = (location, source, preprocessor: t) =>
         preprocessors,
       );
 
-    let%lwt (source, deps, files) =
+    let%lwt (source, parsedSource, deps, files) =
       Lwt_list.fold_left_s(
-        ((source, deps, files), process) => {
-          let%lwt (source, more_deps, more_files) = process(source);
-          Lwt.return((Some(source), deps @ more_deps, files @ more_files));
+        ((source, _, deps, files), process) => {
+          let%lwt ((source, parsedSource), more_deps, more_files) = process(source);
+          Lwt.return((Some(source), parsedSource, deps @ more_deps, files @ more_files));
         },
-        (source, [], []),
+        (source, None, [], []),
         make_chain(preprocessors, []),
       );
 
     switch (source) {
     | None => Error.ie("Unexpected absence of source after processing")
-    | Some(source) => Lwt.return((source, deps, files))
+    | Some(source) => Lwt.return((source, parsedSource, deps, files))
     };
   };
 

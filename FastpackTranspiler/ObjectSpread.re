@@ -68,7 +68,7 @@ module Helper = {
         E.Expression(empty_object_literal),
         ...List.rev(arguments),
       ],
-      targs: None
+      targs: None,
     }),
   );
 
@@ -146,7 +146,13 @@ module TranspileObjectSpreadRest = {
   module Pattern = {
     type item =
       | Assign((P.t'(Loc.t, Loc.t), E.t(Loc.t, Loc.t)))
-      | Omit((P.t'(Loc.t, Loc.t), E.t(Loc.t, Loc.t), list(E.t(Loc.t, Loc.t))));
+      | Omit(
+          (
+            P.t'(Loc.t, Loc.t),
+            E.t(Loc.t, Loc.t),
+            list(E.t(Loc.t, Loc.t)),
+          ),
+        );
 
     type t = {
       before: list(item),
@@ -563,7 +569,10 @@ module TranspileObjectSpreadRest = {
 
   module VariableDeclaration = {
     let test =
-        (~with_init=true, {declarations, _}: S.VariableDeclaration.t(Loc.t, Loc.t)) => {
+        (
+          ~with_init=true,
+          {declarations, _}: S.VariableDeclaration.t(Loc.t, Loc.t),
+        ) => {
       let test_declaration =
           ((_, {S.VariableDeclaration.Declarator.id, init})) =>
         switch (with_init, id, init) {
@@ -882,23 +891,24 @@ module TranspileObjectSpreadRest = {
   };
 };
 
-let transpile = ({Context.require_runtime, _} as context, program) => {
-  let map_statement = ({AstMapper.scope, _}, (loc, node): S.t(Loc.t, Loc.t)) => {
+let transpile = ({Context.require_runtime, _} as context, program, modified) => {
+  let map_statement =
+      ({AstMapper.scope, _}, (loc, node): S.t(Loc.t, Loc.t)) => {
     module T = TranspileObjectSpreadRest;
     let node =
       switch (node) {
       | S.VariableDeclaration(d) when T.VariableDeclaration.test(d) =>
         require_runtime();
-        S.VariableDeclaration(
+        (Loc.none, S.VariableDeclaration(
           T.VariableDeclaration.transpile(context, scope, d),
-        );
+        ));
 
       /* Only consider initdeclaration here
        * expression is handled in `map_expression`*/
       | S.For({init: Some(S.For.InitDeclaration((_, decl))), _} as node)
           when T.VariableDeclaration.test(decl) =>
         require_runtime();
-        S.For({
+        (Loc.none, S.For({
           ...node,
           init:
             Some(
@@ -907,52 +917,51 @@ let transpile = ({Context.require_runtime, _} as context, program) => {
                 T.VariableDeclaration.transpile(context, scope, decl),
               )),
             ),
-        });
+        }));
 
       | S.ForIn(for_) when T.ForIn.test(for_) =>
         require_runtime();
-        T.ForIn.transpile(context, scope, for_);
+        (Loc.none, T.ForIn.transpile(context, scope, for_));
 
       | S.ForOf(for_) when T.ForOf.test(for_) =>
         require_runtime();
-        T.ForOf.transpile(context, scope, for_);
+        (Loc.none, T.ForOf.transpile(context, scope, for_));
 
       | S.Try({handler: Some(handler), _} as stmt) when T.Try.test(handler) =>
         require_runtime();
-        S.Try({
+        (Loc.none, S.Try({
           ...stmt,
           handler: Some(T.Try.transpile(context, scope, handler)),
-        });
+        }));
 
-      | _ => node
+      | _ => (loc, node)
       };
 
-    [(loc, node)];
+    [node];
   };
 
-  let map_expression = ({AstMapper.scope, _}, (loc, node): E.t(Loc.t, Loc.t)) => {
-    let node =
+  let map_expression =
+      ({AstMapper.scope, _}, (loc, node): E.t(Loc.t, Loc.t)) => {
       switch (node) {
       | E.Object(obj) when TranspileObjectSpread.test(obj) =>
         require_runtime();
-        snd(TranspileObjectSpread.transpile(obj));
+        (Loc.none, snd(TranspileObjectSpread.transpile(obj)));
       | E.Assignment({operator: E.Assignment.Assign, _} as obj)
           when TranspileObjectSpreadRest.Assignment.test(obj) =>
         require_runtime();
-        snd(
+        (Loc.none, snd(
           TranspileObjectSpreadRest.Assignment.transpile(context, scope, obj),
-        );
-      | node => node
+        ));
+      | node => (loc, node)
       };
 
-    (loc, node);
   };
 
   let map_function = ({AstMapper.scope, _}, (loc, func)) =>
     if (TranspileObjectSpreadRest.Function.test(func)) {
       require_runtime();
       (
-        loc,
+        Loc.none,
         TranspileObjectSpreadRest.Function.transpile(context, scope, func),
       );
     } else {
@@ -966,5 +975,5 @@ let transpile = ({Context.require_runtime, _} as context, program) => {
     map_function,
   };
 
-  AstMapper.map(mapper, program);
+  AstMapper.map(~modified, mapper, program);
 };

@@ -29,10 +29,10 @@ let print ~with_scope source =
   let result = FastpackUtil.Printer.print ~with_scope program in
   result
 
-let transpile =
+let transpile source =
   FastpackTranspiler.transpile_source [
     FastpackTranspiler.StripFlow.transpile;
     FastpackTranspiler.ReactJSX.transpile;
     FastpackTranspiler.Class.transpile;
     FastpackTranspiler.ObjectSpread.transpile;
-  ]
+  ] source |> fst

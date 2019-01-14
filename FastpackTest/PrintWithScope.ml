@@ -32,7 +32,7 @@ function F(a, b, c)/* SCOPE: a -> Argument [7:11 - 7:12], b -> Argument [7:14 - 
   let c = 2;
   
 }
-let f = (x, y, z)/* SCOPE: x -> Argument [10:9 - 10:10], y -> Argument [10:11 - 10:12], z -> Argument [10:13 - 10:14] */ => x + y + z;
+;let f = (x, y, z)/* SCOPE: x -> Argument [10:9 - 10:10], y -> Argument [10:11 - 10:12], z -> Argument [10:13 - 10:14] */ => x + y + z;
 let f1 = (x, y, z)/* SCOPE: x -> Argument [11:10 - 11:11], y -> Argument [11:12 - 11:13], z -> Argument [11:14 - 11:15] */ => {/* SCOPE:  */
   
     return x;
@@ -69,10 +69,10 @@ export function exportF()/* SCOPE:  */ {/* SCOPE:  */
   
 }
 ;
-export class exportC {
+;export class exportC {
   
 };
-export let exportVar = 25;
+;export let exportVar = 25;
 ;
 export { a, a1 as A1 };
 // re-exports are not getting into scope
@@ -82,7 +82,7 @@ export default function doSomethingUseful()/* SCOPE:  */ {/* SCOPE:  */
   
 }
 ;
-let {z1: z11, z2, z3} = {};
+;let {z1: z11, z2, z3} = {};
 for (let p in {a: 1})/* SCOPE: p -> Let [45:9 - 45:10] */
   {/* SCOPE:  */
   

@@ -96,9 +96,12 @@ let start = (~project_root, ~output_dir, ()) => {
     List.fold_left(import_or_export, Module.CJS, stmts);
   };
 
-  let analyze = (location, source) => {
+  let analyze = (location, source, parsedSource) => {
     let ((_, stmts, _) as program, _) =
-      FastpackUtil.Parser.parse_source(source);
+      switch (parsedSource) {
+      | Some(parsed) => (parsed, [])
+      | None => FastpackUtil.Parser.parse_source(source)
+      };
 
     let workspace = ref(Workspace.of_string(source));
     let {
@@ -129,7 +132,7 @@ let start = (~project_root, ~output_dir, ()) => {
       Printf.sprintf("__fastpack_require__(\"%s\")", request);
 
     let fastpack_import = request =>
-      Printf.sprintf("__fastpack_import__(/* \"%s\")", request);
+      Printf.sprintf("__fastpack_import__(\"%s\")", request);
 
     let rec avoid_name_collision = (~n=0, name) => {
       let name =
@@ -652,7 +655,7 @@ let start = (~project_root, ~output_dir, ()) => {
               ~base_dir=Some(project_root),
               location,
             );
-          let%lwt (source, build_dependencies, files) =
+          let%lwt (source, parsedSource, build_dependencies, files) =
             Preprocessor.run(location, source, preprocessor);
           let (
             workspace,
@@ -662,7 +665,7 @@ let start = (~project_root, ~output_dir, ()) => {
             exports,
             module_type,
           ) =
-            analyze(location, source);
+            analyze(location, source, parsedSource);
           let%lwt source =
             Workspace.write(
               ~modify=to_eval,

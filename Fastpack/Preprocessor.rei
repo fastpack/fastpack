@@ -9,6 +9,13 @@ let make: (
 
 let run:
   (Module.location, option(string), t)
-  => Lwt.t((string, list(string), list(string)))
+  => Lwt.t((
+      string,
+      option(Flow_parser.Flow_ast.program(Flow_parser.Loc.t, Flow_parser.Loc.t)),
+      list(string),
+      list(string)
+      ))
 
 let finalize: t => Lwt.t(unit);
+
+/* let builtin: option(string) => Lwt.t((string, list(string), list(string))); */

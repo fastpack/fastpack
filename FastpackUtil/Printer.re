@@ -377,7 +377,7 @@ let print =
       ctx |> emit_comments(loc) |> push_parent_stmt((loc, statement));
     let ctx =
       switch (statement) {
-      | S.Empty => ctx
+      | S.Empty => ctx |> emit(";")
 
       | S.Block(block) => ctx |> emit_block((loc, block))
 

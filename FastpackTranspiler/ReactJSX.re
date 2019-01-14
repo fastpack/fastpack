@@ -6,7 +6,7 @@ module I = Ast.Identifier;
 
 module AstMapper = FastpackUtil.AstMapper;
 
-let transpile = (_, program) => {
+let transpile = (_, program, modified) => {
   let null_expression = (
     Loc.none,
     E.Literal({value: Ast.Literal.Null, raw: "null"}),
@@ -86,7 +86,7 @@ let transpile = (_, program) => {
             E.Expression(empty_object_literal),
             ...List.rev(arguments),
           ],
-          targs: None
+          targs: None,
         }),
       );
 
@@ -271,7 +271,7 @@ let transpile = (_, program) => {
           transpile_attributes(attributes),
           ...transpile_children(children),
         ],
-        targs: None
+        targs: None,
       });
     }
     and transpile_fragment =
@@ -299,21 +299,18 @@ let transpile = (_, program) => {
           }),
         ),
         arguments: [name, E.Expression(null_expression), ...elements],
-        targs: None
+        targs: None,
       });
     };
 
-    let node =
-      switch (node) {
-      | E.JSXElement(element) => transpile_element(element)
-      | E.JSXFragment(fragment) => transpile_fragment(fragment)
-      | node => node
-      };
-
-    (loc, node);
+    switch (node) {
+    | E.JSXElement(element) => (Loc.none, transpile_element(element))
+    | E.JSXFragment(fragment) => (Loc.none, transpile_fragment(fragment))
+    | node => (loc, node)
+    };
   };
 
   let mapper = {...AstMapper.default_mapper, map_expression};
 
-  AstMapper.map(mapper, program);
+  AstMapper.map(~modified, mapper, program);
 };

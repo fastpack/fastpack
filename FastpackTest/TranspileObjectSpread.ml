@@ -57,27 +57,27 @@ var {outer: {inner: {three}}} = defunct,
 var test = {foo: {bar: {baz: {a: {x: 1, y: 2, z: 3}}}}};
 var {foo: {bar: {baz: {a: {x}}}}} = test,
   other = $__fpack__.omitProps(test.foo.bar.baz.a, ["x"]);
-/* Own */
-// Produce tmp_name for the expression
-var __fpack__8 = {a: 1, b: 2, c: 3},
+var __fpack__8 = (/* Own */
+  // Produce tmp_name for the expression
+  {a: 1, b: 2, c: 3}),
   {a} = __fpack__8,
   b = $__fpack__.omitProps(__fpack__8, ["a"]);
-// Drop pattern entirely
 var xx = $__fpack__.omitProps(z.x, []),
   yy = $__fpack__.omitProps(z.y, []),
   zz = $__fpack__.omitProps(z, ["x", "y"]);
-// Make sure to transpile inside the expression using the same scope
-var __fpack__10 = (function () {
+var __fpack__10 = (// Drop pattern entirely
+  // Make sure to transpile inside the expression using the same scope
+  (function () {
     let __fpack__9 = {a: 1, b: 2, c: 3},
       {a} = __fpack__9,
       b = $__fpack__.omitProps(__fpack__9, ["a"]);
     return b;
     
   }
-  )(),
+  )()),
   x = $__fpack__.omitProps(__fpack__10, []);
-// Computed property handling
-var __fpack__11 = {a: {b: 2, c: 3}},
+var __fpack__11 = (// Computed property handling
+  {a: {b: 2, c: 3}}),
   __fpack__12 = (function () {
     return "a";
     
@@ -130,7 +130,7 @@ function ff(__fpack__17) {
   let a = $__fpack__.omitProps(__fpack__17, []);
   
 }
-let f1 = function (__fpack__18) {
+;let f1 = function (__fpack__18) {
     let b = $__fpack__.omitProps(__fpack__18, []);
     
   }
@@ -153,7 +153,7 @@ function f5(a, __fpack__21, __fpack__22) {
     g = $__fpack__.omitProps(__fpack__22.d.e.f, []);
   
 }
-let f6 = (__fpack__23, c, __fpack__24) => {
+;let f6 = (__fpack__23, c, __fpack__24) => {
     let {a} = __fpack__23,
       b = $__fpack__.omitProps(__fpack__23, ["a"]),
       f = $__fpack__.omitProps(__fpack__24.d.e, []);
@@ -165,17 +165,17 @@ let f6 = (__fpack__23, c, __fpack__24) => {
 function f7(a, ...b) {
   
 }
-function f8(a, ...__fpack__25) {
+;function f8(a, ...__fpack__25) {
   let {b} = __fpack__25,
     c = $__fpack__.omitProps(__fpack__25, ["b"]);
   
 }
-function f9(a, __fpack__26, ...__fpack__27) {
+;function f9(a, __fpack__26, ...__fpack__27) {
   let c = $__fpack__.omitProps(__fpack__26.b, []),
     d = $__fpack__.omitProps(__fpack__27, []);
   
 }
-// basic for loop
+;// basic for loop
 for (p = (() => {
   let __fpack__28 = {x: 1, a: 2};
   ({x} = __fpack__28);
@@ -191,8 +191,8 @@ for (var __fpack__29 = {x: 1, a: 2}, {x} = __fpack__29, y = $__fpack__.omitProps
   {
     
   }
-// for in
-for (let __fpack__30 in iterator)
+for (let __fpack__30 in (// for in
+iterator))
   {
     let {x} = __fpack__30,
       y = $__fpack__.omitProps(__fpack__30, ["x"]);
@@ -218,8 +218,8 @@ for (var __fpack__33 in iterator)
     console.log(x);
     
   }
-// for of
-for (let __fpack__34 of iterator)
+for (let __fpack__34 of (// for of
+iterator))
   {
     let {x} = __fpack__34,
       y = $__fpack__.omitProps(__fpack__34, ["x"]);
@@ -245,8 +245,8 @@ for (var __fpack__37 of iterator)
     console.log(x);
     
   }
-// try
-try {
+try // try
+{
   throw {x: 1, y: 2, z: 3};
   
 } catch (__fpack__38) {

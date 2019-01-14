@@ -27,13 +27,13 @@ function foo(numVal = 2) {
 ({xxx: 0, yyy: "hey"});
 (xxx => xxx + 1);
 (xxx, yyy);
-/* Babel:  def-site-variance */
-class C1 {
+class /* Babel:  def-site-variance */
+C1 {
   
 }function f() {
   
 }
-class C2 {
+;;;;;;;;;;;;;class C2 {
   
 }class C3 {
   
@@ -42,18 +42,18 @@ var a;
 var a;
 var a;
 var a;
-/* Babel: strip-array-types */
+;/* Babel: strip-array-types */
 var a;
 var a;
 var a;
 var a;
 var a;
 var a;
-/* Babel: strip-declare-exports */
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;class /* Babel: strip-declare-exports */
 /* Babel: strip-declare-module */
 /* Babel: strip-declare-statements */
 /* Babel: strip-interfaces-module-and-script */
-class Foo {
+Foo {
   
 }class Foo2 extends Bar {
   
@@ -82,7 +82,7 @@ var a = [];
 var a = [foo];
 var a = [123];
 var a = [123, "duck"];
-/* Babel: strip-type-alias*/
+;;;;;/* Babel: strip-type-alias*/
 /* Babel: strip-type-annotations */
 function foo(numVal) {
   
@@ -266,11 +266,11 @@ var a;
 var a;
 var identity;
 var identity;
-import type from "foo";
+;;;import type from "foo";
 import type2, {foo3} from "bar";
-import {V1} from "foo";
-import {V4} from "foo";
-import 'foo';
+;;;import {V1} from "foo";
+;import {V4} from "foo";
+;;import 'foo';
 export { x };
 export function getIteratorFn(maybeIterable) {
   return null;

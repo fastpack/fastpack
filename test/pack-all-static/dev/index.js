@@ -89,7 +89,7 @@ d: {"./b":"b"}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("const a = __fastpack_require__(\"./a\");\n\n(function() {\n  __fastpack_import__(/* \"./b\").then(b => {\n    console.log('b in promise');\n    b();\n  })\n\n  let b = __fastpack_require__(\"./b\");\n  a();\n  console.log('b in index');\n  b();\n})();\n\n/*\n$ node <bundle.js>\nside effect of b\nb in a\nb\nb in index\nb\nb in promise\nb\n*/\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("const a = __fastpack_require__(\"./a\");\n\n(function() {\n  __fastpack_import__(\"./b\").then(b => {\n    console.log('b in promise');\n    b();\n  })\n\n  let b = __fastpack_require__(\"./b\");\n  a();\n  console.log('b in index');\n  b();\n})();\n\n/*\n$ node <bundle.js>\nside effect of b\nb in a\nb\nb in index\nb\nb in promise\nb\n*/\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a","./b":"b","./b":"b"}
 },

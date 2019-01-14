@@ -119,7 +119,7 @@ d: {"./x":"x","./x":"x","./x":"x","./x":"x","./yz":"yz"}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./yz\");\n\n__fastpack_require__(\"./yz_reimport.js\");\n\nconst _1__cjs = __fastpack_require__(\"./cjs\");\n\n\n\n\nconst util = __fastpack_require__(\"./util\");\n\nif (true) {\n  let yz = __fastpack_import__(/* \"./yz\");\n}\nelse {\n  (__fastpack_require__.default(_1__cjs))();\n}\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./yz\");\n\n__fastpack_require__(\"./yz_reimport.js\");\n\nconst _1__cjs = __fastpack_require__(\"./cjs\");\n\n\n\n\nconst util = __fastpack_require__(\"./util\");\n\nif (true) {\n  let yz = __fastpack_import__(\"./yz\");\n}\nelse {\n  (__fastpack_require__.default(_1__cjs))();\n}\n\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
 },
 d: {"./yz":"yz","./yz_reimport.js":"yz_reimport","./cjs":"cjs","./util":"util","./yz":"yz"}
 },

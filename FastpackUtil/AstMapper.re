@@ -15,6 +15,7 @@ type ctx = {
   handler: mapper,
   scope: Scope.t,
   parents: list(APS.parent),
+  modifyTree: bool => unit,
 }
 and mapper = {
   map_statement:
@@ -257,7 +258,13 @@ and map_statement = (ctx, (loc, statement)) => {
     };
   };
 
-  ctx.handler.map_statement(ctx, (loc, statement));
+  let stmts' = ctx.handler.map_statement(ctx, (loc, statement));
+  let () =
+    switch (stmts') {
+    | [(loc, _)] => ctx.modifyTree(loc == Loc.none)
+    | _ => ctx.modifyTree(true)
+    };
+  stmts';
 }
 and map_class = (ctx, {Class.body: (body_loc, {body}), extends, _} as n) =>
   /*** TODO: handle `classDecorators` */
@@ -470,7 +477,9 @@ and map_expression = (ctx, (loc, expression)) => {
     };
   };
 
-  ctx.handler.map_expression(ctx, (loc, expression));
+  let (loc, expr') = ctx.handler.map_expression(ctx, (loc, expression));
+  let () = ctx.modifyTree(loc == Loc.none);
+  (loc, expr');
 }
 and map_pattern = (ctx, (loc, pattern)) => {
   let pattern =
@@ -523,7 +532,9 @@ and map_pattern = (ctx, (loc, pattern)) => {
     | node => node
     };
 
-  ctx.handler.map_pattern(ctx, (loc, pattern));
+  let (loc, pattern') = ctx.handler.map_pattern(ctx, (loc, pattern));
+  let () = ctx.modifyTree(loc == Loc.none);
+  (loc, pattern');
 }
 and map_pattern_property_key = (ctx, key) =>
   switch (key) {
@@ -596,7 +607,9 @@ and map_function =
     Function.{...f, params: (params_loc, {params, rest}), body};
   };
 
-  ctx.handler.map_function(ctx, (loc, f));
+  let (loc, f') = ctx.handler.map_function(ctx, (loc, f));
+  let () = ctx.modifyTree(loc == Loc.none);
+  (loc, f');
 }
 and map_function_body = (ctx, body) =>
   switch (body) {
@@ -639,13 +652,15 @@ and map_expression_or_spread = (ctx, item) =>
     Expression.Spread((loc, {argument: argument}));
   };
 
-let map = (handler, (loc, statements, comments)) => {
+let map = (~modified=false, handler, (loc, statements, comments)) => {
+  let modified = ref(modified);
   let ctx = {
     scope: fst @@ Scope.of_program(statements),
     parents: [],
     handler,
+    modifyTree: value => modified := modified^ || value,
   };
 
   let statements = map_statements(ctx, statements);
-  (loc, statements, comments);
+  ((loc, statements, comments), modified^);
 };
