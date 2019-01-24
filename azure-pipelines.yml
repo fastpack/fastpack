@@ -34,7 +34,7 @@ jobs:
       versionSpec: '8.9'
   - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
-  - script: npm install -g yarn
+  - script: npm install -g yarn@1.12.3
     displayName: install Yarn
   - script: npm install -g esy@0.4.9
     displayName: install esy
@@ -62,7 +62,7 @@ jobs:
       versionSpec: '8.9'
   - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
-  - script: npm install -g yarn
+  - script: npm install -g yarn@1.12.3
     displayName: install Yarn
   - script: npm install -g esy@0.4.9
     displayName: install esy
