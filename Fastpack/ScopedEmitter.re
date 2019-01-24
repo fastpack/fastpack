@@ -184,14 +184,15 @@ if(!global.Buffer) {
             ~base_dir=Some(ctx.project_root),
             m.location,
           );
-        let short_str = Module.location_to_short_string(
+        let short_str =
+          Module.location_to_short_string(
             ~base_dir=Some(ctx.project_root),
             m.location,
           );
         let%lwt () =
           Printf.sprintf(
             "/* !s: %s */\n%s:{m:function(module, exports, __fastpack_require__, __fastpack_import__) {\n",
-            short_str,
+            CCString.replace(~sub="\\", ~by="/", short_str),
             Yojson.to_string(`String(m.id)),
           )
           |> emit;
@@ -297,8 +298,5 @@ let emit = (ctx: Context.t, start_time) => {
 
 let update_graph = (ctx: Context.t, start_time) => {
   let%lwt (emitted_modules, _) = run(start_time, ctx, Lwt_io.null);
-  Lwt.return((
-    emitted_modules,
-    [{Reporter.name: "dry-run", size: 0}],
-  ));
+  Lwt.return((emitted_modules, [{Reporter.name: "dry-run", size: 0}]));
 };
