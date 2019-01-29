@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: a.js */
 "a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nfunction a1() {return 'a1'};Object.defineProperty(exports, \"a1\", {enumerable: true, get: function() {return a1;}});;\nfunction a2() {return 'a2'};Object.defineProperty(exports, \"a2\", {enumerable: true, get: function() {return a2;}});;\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");

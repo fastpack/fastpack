@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: log1.js */
 "logSourceDOT$$js$$B$$log1":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\n\n  exports.default = function () {console.log(\"\\nexport default function() { console.log(1); }\\n\")};\n  \n//# sourceURL=fpack:///logSource.js!log1.js\n//# sourceURL=fpack:///logSource.js!log1.js");

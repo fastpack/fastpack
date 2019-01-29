@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: logo.svg */
 "NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports = \"./5d5d9eefa31e5e13a6610d9fa7a283bb.svg\";\n//# sourceURL=fpack:///node_modules/file-loader/dist/cjs.js?publicPath=./!logo.svg\n//# sourceURL=fpack:///node_modules/file-loader/dist/cjs.js?publicPath=./!logo.svg");

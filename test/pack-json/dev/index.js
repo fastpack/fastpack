@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: data.json */
 "dataDOT$$json":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports = {\"hello\": \"world!\"}\n;\n//# sourceURL=fpack:///data.json");

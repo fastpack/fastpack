@@ -74,18 +74,18 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
-/* !s: b.js */
-"b":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("console.log('side effect of b');\nmodule.exports = function() {console.log('b')};\n\n//# sourceURL=fpack:///b.js\n//# sourceURL=fpack:///b.js");
-},
-d: {}
-},
+({
 /* !s: a.js */
 "a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("const b = __fastpack_require__(\"./b\");\n\nmodule.exports = function() {\n  console.log('b in a');\n  b();\n};\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");
 },
 d: {"./b":"b"}
+},
+/* !s: b.js */
+"b":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("console.log('side effect of b');\nmodule.exports = function() {console.log('b')};\n\n//# sourceURL=fpack:///b.js\n//# sourceURL=fpack:///b.js");
+},
+d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {

@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: render.ts */
 "NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("\"use strict\";\nfunction render() {\n    document.body.innerHTML = \"<h1> Hello World from TypeScript!</h1>\";\n}\nmodule.exports = render;\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!render.ts\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!render.ts");

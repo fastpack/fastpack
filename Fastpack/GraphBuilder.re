@@ -257,8 +257,9 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
       let%lwt files =
         Lwt_list.map_s(
           filename => {
+            /* TODO: No point in keeping these files in cache */
             let%lwt content = Cache.File.readExisting(filename, ctx.cache);
-            Lwt.return((filename, content));
+            Lwt.return((FS.relative_path(ctx.tmpOutputDir, filename), content));
           },
           files,
         );

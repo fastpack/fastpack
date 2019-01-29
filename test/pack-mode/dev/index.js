@@ -74,16 +74,16 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
-/* !s: dev.js */
-"dev":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports = {dev: true};\n\n//# sourceURL=fpack:///dev.js\n//# sourceURL=fpack:///dev.js");
-},
-d: {}
-},
+({
 /* !s: prod.js */
 "prod":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports = {prod: true};\n\n//# sourceURL=fpack:///prod.js\n//# sourceURL=fpack:///prod.js");
+},
+d: {}
+},
+/* !s: dev.js */
+"dev":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports = {dev: true};\n\n//# sourceURL=fpack:///dev.js\n//# sourceURL=fpack:///dev.js");
 },
 d: {}
 },

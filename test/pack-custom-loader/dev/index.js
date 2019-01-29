@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: no filename */
 "custom$$_$$loaderDOT$$js$$B$$":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("\ndocument.body.innerHTML = document.body.innerHTML\n+ \"<div>Source: \" + \"empty\" + \". Query: .</div>\";\nmodule.exports = {};\n  \n//# sourceURL=fpack:///custom-loader.js!\n//# sourceURL=fpack:///custom-loader.js!");

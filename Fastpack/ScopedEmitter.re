@@ -245,7 +245,7 @@ module Bundle = {
 let emit_module_files = (ctx: Context.t, m: Module.t) =>
   Lwt_list.iter_s(
     ((filename, content)) => {
-      let path = FS.abs_path(ctx.output_dir, filename);
+      let path = FS.abs_path(ctx.tmpOutputDir, filename);
       let%lwt () = FS.makedirs(FilePath.dirname(path));
       Lwt_io.(
         with_file(

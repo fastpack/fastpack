@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: x.js */
 "x":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nexports.default = \"x exported\";\nconst x = \"x\";;Object.defineProperty(exports, \"x\", {enumerable: true, get: function() {return x;}});\n\n//# sourceURL=fpack:///x.js\n//# sourceURL=fpack:///x.js");

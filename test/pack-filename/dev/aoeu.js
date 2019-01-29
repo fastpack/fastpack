@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: a.js */
 "a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nexports.default = x => x;\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");

@@ -74,25 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
-/* !s: z.js */
-"z":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nexports.default = 1;\n\n//# sourceURL=fpack:///z.js\n//# sourceURL=fpack:///z.js");
-},
-d: {}
-},
-/* !s: y.js */
-"y":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nexports.default = 1;\n\nlet a = 1;;Object.defineProperty(exports, \"a\", {enumerable: true, get: function() {return a;}});\n\nfunction updateA (newA) {\n  a = newA;\n};Object.defineProperty(exports, \"updateA\", {enumerable: true, get: function() {return updateA;}});\n\n//# sourceURL=fpack:///y.js\n//# sourceURL=fpack:///y.js");
-},
-d: {}
-},
-/* !s: yz.js */
-"yz":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n\nconst _1__z = __fastpack_require__(\"./z\");Object.defineProperty(exports, \"Z\", {enumerable: true, get: function() {return _1__z;}});\nconst _2__y = __fastpack_require__(\"./y\");Object.assign(module.exports, __fastpack_require__.omitDefault(_2__y));\n\n//# sourceURL=fpack:///yz.js\n//# sourceURL=fpack:///yz.js");
-},
-d: {"./z":"z","./y":"y"}
-},
+({
 /* !s: yz_reimport.js */
 "yz_reimport":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nconst _1__y = __fastpack_require__(\"./y\");\nconst _2__z = __fastpack_require__(\"./z\");\n\n\n\nexports.default = {a: _1__y.a, updateA: _1__y.updateA, Z: (__fastpack_require__.default(_2__z))};\n\n//# sourceURL=fpack:///yz_reimport.js\n//# sourceURL=fpack:///yz_reimport.js");
@@ -110,6 +92,24 @@ d: {}
 eval("module.exports.__esModule = true;\nconst ZModule = __fastpack_require__(\"./z\");\n\n\n\nlet z = 1, zz = 1;\nObject.defineProperty(exports, \"z\", {enumerable: true, get: function() {return z;}});Object.defineProperty(exports, \"Z\", {enumerable: true, get: function() {return zz;}});\n\nlet x = 1, y = 2;;Object.defineProperty(exports, \"x\", {enumerable: true, get: function() {return x;}});Object.defineProperty(exports, \"y\", {enumerable: true, get: function() {return y;}});\n\n// export default function () {\n//   x = 1;\n// };\n// export default class {};\nclass F {}\nexports.default = F;\n;\n\nfunction updateX() {\n  x++;\n  console.log('updated X', x);\n};Object.defineProperty(exports, \"updateX\", {enumerable: true, get: function() {return updateX;}});\n\nconst _1__y = __fastpack_require__(\"./y\");Object.defineProperty(exports, \"X\", {enumerable: true, get: function() {return (__fastpack_require__.default(_1__y));}});Object.defineProperty(exports, \"xA\", {enumerable: true, get: function() {return _1__y.a;}});Object.defineProperty(exports, \"updateA\", {enumerable: true, get: function() {return _1__y.updateA;}});\nObject.defineProperty(exports, \"ZM\", {enumerable: true, get: function() {return (__fastpack_require__.default(ZModule));}});\n\n//# sourceURL=fpack:///x.js\n//# sourceURL=fpack:///x.js");
 },
 d: {"./z":"z","./y":"y","./z":"z"}
+},
+/* !s: z.js */
+"z":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nexports.default = 1;\n\n//# sourceURL=fpack:///z.js\n//# sourceURL=fpack:///z.js");
+},
+d: {}
+},
+/* !s: y.js */
+"y":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\nexports.default = 1;\n\nlet a = 1;;Object.defineProperty(exports, \"a\", {enumerable: true, get: function() {return a;}});\n\nfunction updateA (newA) {\n  a = newA;\n};Object.defineProperty(exports, \"updateA\", {enumerable: true, get: function() {return updateA;}});\n\n//# sourceURL=fpack:///y.js\n//# sourceURL=fpack:///y.js");
+},
+d: {}
+},
+/* !s: yz.js */
+"yz":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
+eval("module.exports.__esModule = true;\n\nconst _1__z = __fastpack_require__(\"./z\");Object.defineProperty(exports, \"Z\", {enumerable: true, get: function() {return _1__z;}});\nconst _2__y = __fastpack_require__(\"./y\");Object.assign(module.exports, __fastpack_require__.omitDefault(_2__y));\n\n//# sourceURL=fpack:///yz.js\n//# sourceURL=fpack:///yz.js");
+},
+d: {"./z":"z","./y":"y"}
 },
 /* !s: util.js */
 "util":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {

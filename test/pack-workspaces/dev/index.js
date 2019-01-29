@@ -74,7 +74,7 @@ if(!global.Buffer) {
   }
   return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
 })
-    ({
+({
 /* !s: nm/package-1/babel-transpile.js */
 "NM$$babel$$_$$loader$lib$indexDOT$$js$$B$$nm$package$$_$$1$babel$$_$$transpile":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
 eval("module.exports.__esModule = true;\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\nexports.default = class {\n  constructor() {\n    _defineProperty(this, \"field\", 'babel-transpile');\n  }\n\n}\n//# sourceURL=fpack:///node_modules/babel-loader/lib/index.js!nm/package-1/babel-transpile.js\n//# sourceURL=fpack:///node_modules/babel-loader/lib/index.js!nm/package-1/babel-transpile.js");
