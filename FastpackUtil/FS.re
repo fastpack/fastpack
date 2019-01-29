@@ -88,3 +88,41 @@ let copy_file = (~source, ~target, ()): Lwt.t(unit) => {
 
   Lwt.return();
 };
+
+let rec rmdir = dir => {
+  let%lwt files = Lwt_stream.to_list(Lwt_unix.files_of_directory(dir));
+  let%lwt () =
+    Lwt_list.iter_s(
+      filename =>
+        switch (filename) {
+        | "."
+        | ".." => Lwt.return_unit
+        | _ =>
+          let path = abs_path(dir, filename);
+          switch%lwt (Lwt_unix.stat(path)) {
+          | {st_kind: Lwt_unix.S_DIR, _} => rmdir(path)
+          | _ => Lwt_unix.unlink(path)
+          };
+        },
+      files,
+    );
+  Lwt_unix.rmdir(dir);
+};
+
+let makeTempDir = parent => {
+  Random.self_init();
+  let rec makeDir = () => {
+    let path =
+      abs_path(
+        parent,
+        ".fpack-" ++ Int64.(to_string(Random.int64(max_int))),
+      );
+    switch%lwt (stat_option(path)) {
+    | None =>
+      let%lwt () = makedirs(path);
+      Lwt.return(path);
+    | Some(_) => makeDir()
+    };
+  };
+  makeDir();
+};

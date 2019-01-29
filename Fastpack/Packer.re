@@ -3,6 +3,7 @@ module StringSet = Set.Make(CCString);
 
 type t = {
   current_dir: string,
+  tmpOutputDir: string,
   config: Config.t,
   entry_location: Module.location,
   reader: Worker.Reader.t,
@@ -35,23 +36,21 @@ let make = (~reporter=None, config: Config.t) => {
 
   let entry_location = Module.Main(entry_points);
 
-  /* TODO: the next line may not belong here */
-  /* TODO: also cleanup the directory before emitting, maybe? */
-  let%lwt () = FS.makedirs(config.outputDir);
+  let%lwt tmpOutputDir = FS.makeTempDir(Filename.dirname(config.outputDir));
 
   /* preprocessor */
   let%lwt preprocessor =
     Preprocessor.make(
       ~project_root=config.projectRootDir,
       ~current_dir,
-      ~output_dir=config.outputDir,
+      ~output_dir=tmpOutputDir,
       (),
     );
 
   let reader =
     Worker.Reader.make(
       ~project_root=config.projectRootDir,
-      ~output_dir=config.outputDir,
+      ~output_dir=tmpOutputDir,
       (),
     );
 
@@ -122,6 +121,7 @@ let make = (~reporter=None, config: Config.t) => {
 
   Lwt.return({
     current_dir,
+    tmpOutputDir,
     config,
     entry_location,
     reader,
@@ -142,7 +142,7 @@ let rec pack =
           ~start_time,
           packer,
         ) => {
-  let {current_dir, config, cache, _} = packer;
+  let {current_dir, tmpOutputDir, config, cache, _} = packer;
   let message =
     if (initial) {
       Printf.sprintf(
@@ -166,10 +166,12 @@ let rec pack =
       (),
     );
 
+  let%lwt () = FS.makedirs(tmpOutputDir);
   let ctx = {
     Context.project_root: config.projectRootDir,
     current_dir,
     project_package: packer.project_package,
+    tmpOutputDir,
     output_dir: config.outputDir,
     output_file: config.outputFilename,
     entry_location: packer.entry_location,
@@ -264,6 +266,7 @@ let rec pack =
     | exn => Lwt.fail(exn),
   );
 };
+
 let finalize = packer => {
   let {preprocessor, reader, _} = packer;
   let%lwt () = Preprocessor.finalize(preprocessor);

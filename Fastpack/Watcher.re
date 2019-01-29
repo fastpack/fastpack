@@ -35,6 +35,7 @@ let rebuild = (~filesChanged: StringSet.t, ~packer, prev_result) => {
     | Ok((ctx, filesWatched)) => (`Ok, ctx, filesWatched)
     };
 
+
   StringSet.iter(f => Cache.File.invalidate(f, ctx.cache), filesChanged);
   switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
   | [] => Lwt.return(prev_result)
@@ -59,13 +60,13 @@ let rebuild = (~filesChanged: StringSet.t, ~packer, prev_result) => {
       };
     let%lwt newResult =
       if (runPack) {
-          /* let%lwt () = Lwt_io.with_file( */
-          /*   ~mode=Lwt_io.Output, */
-          /*   ~perm=0o644, */
-          /*   ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR], */
-          /*   "watched.txt", */
-          /*   ch => Lwt_list.iter_s(f => Lwt_io.write_line(ch, f), StringSet.elements(filesWatched)), */
-          /* ); */
+        /* let%lwt () = Lwt_io.with_file( */
+        /*   ~mode=Lwt_io.Output, */
+        /*   ~perm=0o644, */
+        /*   ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR], */
+        /*   "watched.txt", */
+        /*   ch => Lwt_list.iter_s(f => Lwt_io.write_line(ch, f), StringSet.elements(filesWatched)), */
+        /* ); */
         Packer.pack(
           ~current_location,
           ~graph,
@@ -263,8 +264,25 @@ let make = (~packer=None, config: Config.t) => {
       ]);
     switch (nextResult) {
     | `FilesChanged(newFilenames) =>
+  Logs.debug(x =>
+    x(
+      "Changed: %s",
+      StringSet.elements(StringSet.union(filenames, newFilenames)) |> String.concat("\n"),
+    )
+  );
       tryRebuilding(StringSet.union(filenames, newFilenames), prevResult)
-    | `Rebuilt(result) => Lwt.return(result)
+    | `Rebuilt(result) =>
+      let watched = switch(result) {
+      | Ok((_, fs)) => fs
+      | Error((_, fs)) => fs
+      }
+  Logs.debug(x =>
+    x(
+      "Watched: %s",
+      StringSet.elements(watched) |> String.concat("\n"),
+    )
+  );
+       Lwt.return(result)
     };
   };
 

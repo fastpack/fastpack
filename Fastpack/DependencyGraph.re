@@ -3,19 +3,29 @@ exception Cycle(list(string));
 
 type t = {
   modules: Hashtbl.t(Module.location, Lazy.t(Lwt.t(Module.t))),
-  static_dependencies:
+  /**
+    x.js
+    import X from "./y";
+    x.js => (("x.js", "./y"), "y.js")
+  */
+  staticDeps:
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
-  dynamic_dependencies:
+  /**
+    x.js
+    import("./y");
+    x.js => (("x.js", "./y"), "y.js")
+  */
+  dynamicDeps:
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
-  build_dependencies: Hashtbl.t(string, Module.location),
+  buildDeps: Hashtbl.t(string, Module.location),
   parents: Hashtbl.t(Module.location, Module.LocationSet.t),
 };
 
 let empty = (~size=5000, ()) => {
   modules: Hashtbl.create(size),
-  static_dependencies: Hashtbl.create(size * 20),
-  dynamic_dependencies: Hashtbl.create(size * 20),
-  build_dependencies: Hashtbl.create(size * 5),
+  staticDeps: Hashtbl.create(size * 20),
+  dynamicDeps: Hashtbl.create(size * 20),
+  buildDeps: Hashtbl.create(size * 5),
   parents: Hashtbl.create(size * 20),
 };
 
@@ -30,11 +40,11 @@ let lookup_module = (graph, location) =>
 let lookup_dependencies = (~kind, graph, m: Module.t) => {
   let dependencies =
     switch (kind) {
-    | `Static => Hashtbl.find_all(graph.static_dependencies, m.location)
-    | `Dynamic => Hashtbl.find_all(graph.dynamic_dependencies, m.location)
+    | `Static => Hashtbl.find_all(graph.staticDeps, m.location)
+    | `Dynamic => Hashtbl.find_all(graph.dynamicDeps, m.location)
     | `All =>
-      Hashtbl.find_all(graph.static_dependencies, m.location)
-      @ Hashtbl.find_all(graph.dynamic_dependencies, m.location)
+      Hashtbl.find_all(graph.staticDeps, m.location)
+      @ Hashtbl.find_all(graph.dynamicDeps, m.location)
     };
 
   List.map(
@@ -58,8 +68,7 @@ let to_dependency_map = graph => {
       Module.DependencyMap.add(dep, m, dep_map) |> Lwt.return;
     },
     Module.DependencyMap.empty,
-    to_pairs(graph.static_dependencies)
-    @ to_pairs(graph.dynamic_dependencies),
+    to_pairs(graph.staticDeps) @ to_pairs(graph.dynamicDeps),
   );
 };
 
@@ -78,7 +87,7 @@ let get_module_parents = (graph, location) =>
 
 let add_build_dependencies = (graph, filenames, location) =>
   List.iter(
-    filename => Hashtbl.add(graph.build_dependencies, filename, location),
+    filename => Hashtbl.add(graph.buildDeps, filename, location),
     filenames,
   );
 
@@ -86,8 +95,8 @@ let add_dependency =
     (~kind, graph, m: Module.t, dep: (Module.Dependency.t, Module.location)) => {
   let dependencies =
     switch (kind) {
-    | `Static => graph.static_dependencies
-    | `Dynamic => graph.dynamic_dependencies
+    | `Static => graph.staticDeps
+    | `Dynamic => graph.dynamicDeps
     };
   Hashtbl.add(dependencies, m.location, dep);
 };
@@ -109,15 +118,15 @@ let remove_module = (graph, location: Module.location) => {
 
   Hashtbl.filter_map_inplace(remove, graph.modules);
   Hashtbl.filter_map_inplace(remove, graph.parents);
-  Hashtbl.filter_map_inplace(remove, graph.static_dependencies);
-  Hashtbl.filter_map_inplace(remove, graph.dynamic_dependencies);
-  Hashtbl.filter_map_inplace(remove_files, graph.build_dependencies);
+  Hashtbl.filter_map_inplace(remove, graph.staticDeps);
+  Hashtbl.filter_map_inplace(remove, graph.dynamicDeps);
+  Hashtbl.filter_map_inplace(remove_files, graph.buildDeps);
 };
 
 let get_files = graph =>
   Hashtbl.fold(
     (filename, _, set) => StringSet.add(filename, set),
-    graph.build_dependencies,
+    graph.buildDeps,
     StringSet.empty,
   );
 
@@ -127,7 +136,7 @@ let get_changed_module_locations = (graph, filenames) =>
       List.fold_left(
         (locations, location) => Module.LocationSet.add(location, locations),
         locations,
-        Hashtbl.find_all(graph.build_dependencies, filename),
+        Hashtbl.find_all(graph.buildDeps, filename),
       ),
     Module.LocationSet.empty,
     filenames,
@@ -142,15 +151,15 @@ let cleanup = (graph, emitted_modules) => {
       None;
     };
 
-  let () = Hashtbl.filter_map_inplace(keep, graph.modules);
-  let () = Hashtbl.filter_map_inplace(keep, graph.parents);
-  let () = Hashtbl.filter_map_inplace(keep, graph.static_dependencies);
-  let () = Hashtbl.filter_map_inplace(keep, graph.dynamic_dependencies);
-  let () =
-    Hashtbl.filter_map_inplace(
-      (_, location) => keep(location, location),
-      graph.build_dependencies,
-    );
+  Hashtbl.filter_map_inplace(keep, graph.modules);
+  Hashtbl.filter_map_inplace(keep, graph.parents);
+  Hashtbl.filter_map_inplace(keep, graph.staticDeps);
+  Hashtbl.filter_map_inplace(keep, graph.dynamicDeps);
+
+  Hashtbl.filter_map_inplace(
+    (_, location) => keep(location, location),
+    graph.buildDeps,
+  );
   graph;
 };
 
