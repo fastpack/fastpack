@@ -77,31 +77,31 @@ if(!global.Buffer) {
 ({
 /* !s: log1.js */
 "logSourceDOT$$js$$B$$log1":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n\n  exports.default = function () {console.log(\"\\nexport default function() { console.log(1); }\\n\")};\n  \n//# sourceURL=fpack:///logSource.js!log1.js\n//# sourceURL=fpack:///logSource.js!log1.js");
+eval("module.exports.__esModule = true;\n\n  exports.default = function () {console.log(\"\\nexport default function() { console.log(1); }\\n\")};\n  \n//# sourceURL=fpack:///logSource.js!log1.js
 },
 d: {}
 },
 /* !s: log2.js */
 "builtin$$B$$log2":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n\nexports.default = function() { console.log(2); }\n\n//# sourceURL=fpack:///builtin!log2.js\n//# sourceURL=fpack:///builtin!log2.js");
+eval("module.exports.__esModule = true;\n\nexports.default = function() { console.log(2); }\n\n//# sourceURL=fpack:///builtin!log2.js
 },
 d: {}
 },
 /* !s: log3.js */
 "builtin$$B$$log3":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n\nexports.default = function() { console.log(3); }\n\n//# sourceURL=fpack:///builtin!log3.js\n//# sourceURL=fpack:///builtin!log3.js");
+eval("module.exports.__esModule = true;\n\nexports.default = function() { console.log(3); }\n\n//# sourceURL=fpack:///builtin!log3.js
 },
 d: {}
 },
 /* !s: index.js */
 "builtin$$B$$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__log1 = __fastpack_require__(\"./log1\");\nconst _2__log2 = __fastpack_require__(\"./log2\");\nconst _3__log3 = __fastpack_require__(\"./log3\");\n\n\n\n\n\n(__fastpack_require__.default(_1__log1))();\n(__fastpack_require__.default(_2__log2))();\n(__fastpack_require__.default(_3__log3))();\n\n//# sourceURL=fpack:///builtin!index.js\n//# sourceURL=fpack:///builtin!index.js");
+eval("module.exports.__esModule = true;\nconst _1__log1 = __fastpack_require__(\"./log1\");\nconst _2__log2 = __fastpack_require__(\"./log2\");\nconst _3__log3 = __fastpack_require__(\"./log3\");\n\n\n\n\n\n(__fastpack_require__.default(_1__log1))();\n(__fastpack_require__.default(_2__log2))();\n(__fastpack_require__.default(_3__log3))();\n\n//# sourceURL=fpack:///builtin!index.js
 },
 d: {"./log1":"logSourceDOT$$js$$B$$log1","./log2":"builtin$$B$$log2","./log3":"builtin$$B$$log3"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main
 },
 d: {"./index.js":"builtin$$B$$index"}
 },

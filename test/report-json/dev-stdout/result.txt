@@ -1,1 +1,1 @@
-{"time":0.005,"files":[{"name":"/.../.sandbox/report-json---dev-stdout.test.js/index.js","size":3142}],"modules":["$fp$main","/.../test/report-json/dep1.js","/.../test/report-json/dep2.js","/.../test/report-json/index.js"],"message":" Cache: empty. Mode: development."}
+{"time":0.005,"files":[{"name":"/.../.sandbox/report-json---dev-stdout.test.js/index.js","size":3000}],"modules":["$fp$main","/.../test/report-json/dep1.js","/.../test/report-json/dep2.js","/.../test/report-json/index.js"],"message":" Cache: empty. Mode: development."}

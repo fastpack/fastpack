@@ -77,25 +77,25 @@ if(!global.Buffer) {
 ({
 /* !s: transpiler-runtime */
 "$fp$runtime":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("\n\nfunction applyDecorator(decorator, proto, property, descriptor) {\n  var ret = decorator(proto, property, descriptor);\n  // TODO: assert all descriptor properties;\n  return ret;\n}\n\nfunction decorateProperty(cls, property, decorators) {\n  var proto = cls.prototype;\n  var descriptor = Object.assign(\n    {},\n    Object.getOwnPropertyDescriptor(proto, property)\n  );\n\n  for(var i = 0, reversed = decorators.reverse(), l = reversed.length;\n      i < l;\n      i++) {\n    descriptor = applyDecorator(reversed[i], proto, property, descriptor);\n  }\n\n  Object.defineProperty(proto, property, descriptor);\n}\n\nmodule.exports = {\n  omitProps: function(target, props) {\n    var ret = {};\n    for(var prop in target) {\n      if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {\n        ret[prop] = target[prop];\n      }\n    }\n    return ret;\n  },\n\n  defineClass: function(cls, statics, classDecorators, propertyDecorators) {\n    for(var i = 0, l = propertyDecorators.length; i < l; i++) {\n      decorateProperty(cls,\n                       propertyDecorators[i].method,\n                       propertyDecorators[i].decorators);\n    }\n\n    for(var i = 0, l = statics.length; i < l; i++) {\n      Object.defineProperty(cls, statics[i].name, {\n        configurable: true,\n        enumerable: true,\n        writable: true,\n        value: statics[i].value\n      })\n    }\n\n    var _cls = cls;\n    classDecorators = classDecorators.reverse();\n    for(var i = 0; i < classDecorators.length; i++) {\n      _cls = classDecorators[i](_cls);\n    }\n    return _cls;\n  }\n};\n\n//# sourceURL=fpack:///$fp$runtime\n//# sourceURL=fpack:///$fp$runtime");
+eval("\n\nfunction applyDecorator(decorator, proto, property, descriptor) {\n  var ret = decorator(proto, property, descriptor);\n  // TODO: assert all descriptor properties;\n  return ret;\n}\n\nfunction decorateProperty(cls, property, decorators) {\n  var proto = cls.prototype;\n  var descriptor = Object.assign(\n    {},\n    Object.getOwnPropertyDescriptor(proto, property)\n  );\n\n  for(var i = 0, reversed = decorators.reverse(), l = reversed.length;\n      i < l;\n      i++) {\n    descriptor = applyDecorator(reversed[i], proto, property, descriptor);\n  }\n\n  Object.defineProperty(proto, property, descriptor);\n}\n\nmodule.exports = {\n  omitProps: function(target, props) {\n    var ret = {};\n    for(var prop in target) {\n      if(target.hasOwnProperty(prop) && props.indexOf(prop) == -1) {\n        ret[prop] = target[prop];\n      }\n    }\n    return ret;\n  },\n\n  defineClass: function(cls, statics, classDecorators, propertyDecorators) {\n    for(var i = 0, l = propertyDecorators.length; i < l; i++) {\n      decorateProperty(cls,\n                       propertyDecorators[i].method,\n                       propertyDecorators[i].decorators);\n    }\n\n    for(var i = 0, l = statics.length; i < l; i++) {\n      Object.defineProperty(cls, statics[i].name, {\n        configurable: true,\n        enumerable: true,\n        writable: true,\n        value: statics[i].value\n      })\n    }\n\n    var _cls = cls;\n    classDecorators = classDecorators.reverse();\n    for(var i = 0; i < classDecorators.length; i++) {\n      _cls = classDecorators[i](_cls);\n    }\n    return _cls;\n  }\n};\n\n//# sourceURL=fpack:///$fp$runtime
 },
 d: {}
 },
 /* !s: esm.js */
 "builtin$$B$$esm":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nexports.default = \"hello, world!\";\n\n//# sourceURL=fpack:///builtin!esm.js\n//# sourceURL=fpack:///builtin!esm.js");
+eval("module.exports.__esModule = true;\nexports.default = \"hello, world!\";\n\n//# sourceURL=fpack:///builtin!esm.js
 },
 d: {}
 },
 /* !s: index.js */
 "builtin$$B$$index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("const $__fpack__ = __fastpack_require__(\"$fp$runtime\");\nconst esm = __fastpack_require__(\"./esm\");\nconst {delimiter} = path,\n  rest = $__fpack__.omitProps(path, [\"delimiter\"]);\nconsole.log(path, module, delimiter, rest, esm);\n// The following test makes sure that builtin transpiler strips type annotations\n// from inside JSX\nconst Component = props => React.createElement(\"div\", null, item => {\n    \n  }\n  );\n\n//# sourceURL=fpack:///builtin!index.js\n//# sourceURL=fpack:///builtin!index.js");
+eval("const $__fpack__ = __fastpack_require__(\"$fp$runtime\");\nconst esm = __fastpack_require__(\"./esm\");\nconst {delimiter} = path,\n  rest = $__fpack__.omitProps(path, [\"delimiter\"]);\nconsole.log(path, module, delimiter, rest, esm);\n// The following test makes sure that builtin transpiler strips type annotations\n// from inside JSX\nconst Component = props => React.createElement(\"div\", null, item => {\n    \n  }\n  );\n\n//# sourceURL=fpack:///builtin!index.js
 },
 d: {"$fp$runtime":"$fp$runtime","./esm":"builtin$$B$$esm"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main
 },
 d: {"./index.js":"builtin$$B$$index"}
 },

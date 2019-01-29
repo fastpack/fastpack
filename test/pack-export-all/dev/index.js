@@ -77,25 +77,25 @@ if(!global.Buffer) {
 ({
 /* !s: dep.js */
 "dep":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst dep = () => {};;Object.defineProperty(exports, \"dep\", {enumerable: true, get: function() {return dep;}});\n\n//# sourceURL=fpack:///dep.js\n//# sourceURL=fpack:///dep.js");
+eval("module.exports.__esModule = true;\nconst dep = () => {};;Object.defineProperty(exports, \"dep\", {enumerable: true, get: function() {return dep;}});\n\n//# sourceURL=fpack:///dep.js
 },
 d: {}
 },
 /* !s: reexport.js */
 "reexport":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__dep_js = __fastpack_require__(\"./dep.js\");Object.assign(module.exports, __fastpack_require__.omitDefault(_1__dep_js));\n\n//# sourceURL=fpack:///reexport.js\n//# sourceURL=fpack:///reexport.js");
+eval("module.exports.__esModule = true;\nconst _1__dep_js = __fastpack_require__(\"./dep.js\");Object.assign(module.exports, __fastpack_require__.omitDefault(_1__dep_js));\n\n//# sourceURL=fpack:///reexport.js
 },
 d: {"./dep.js":"dep"}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\nconst _1__reexport_js = __fastpack_require__(\"./reexport.js\");\n\nconsole.log(_1__reexport_js.dep);\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("module.exports.__esModule = true;\nconst _1__reexport_js = __fastpack_require__(\"./reexport.js\");\n\nconsole.log(_1__reexport_js.dep);\n\n//# sourceURL=fpack:///index.js
 },
 d: {"./reexport.js":"reexport"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main
 },
 d: {"./index.js":"index"}
 },

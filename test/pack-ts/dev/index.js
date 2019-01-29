@@ -77,19 +77,19 @@ if(!global.Buffer) {
 ({
 /* !s: render.ts */
 "NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("\"use strict\";\nfunction render() {\n    document.body.innerHTML = \"<h1> Hello World from TypeScript!</h1>\";\n}\nmodule.exports = render;\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!render.ts\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!render.ts");
+eval("\"use strict\";\nfunction render() {\n    document.body.innerHTML = \"<h1> Hello World from TypeScript!</h1>\";\n}\nmodule.exports = render;\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!render.ts
 },
 d: {}
 },
 /* !s: index.ts */
 "NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("\"use strict\";\nexports.__esModule = true;\nvar render = __fastpack_require__(\"./render.ts\");\nrender();\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!index.ts\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!index.ts");
+eval("\"use strict\";\nexports.__esModule = true;\nvar render = __fastpack_require__(\"./render.ts\");\nrender();\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!index.ts
 },
 d: {"./render.ts":"NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.ts\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.ts\");\n\n\n\n//# sourceURL=fpack:///$fp$main
 },
 d: {"./index.ts":"NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts"}
 },

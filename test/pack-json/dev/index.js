@@ -77,25 +77,25 @@ if(!global.Buffer) {
 ({
 /* !s: data.json */
 "dataDOT$$json":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports = {\"hello\": \"world!\"}\n;\n//# sourceURL=fpack:///data.json");
+eval("module.exports = {\"hello\": \"world!\"}\n;
 },
 d: {}
 },
 /* !s: data.json */
 "NM$$raw$$_$$loader$indexDOT$$js$$B$$dataDOT$$json":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports = \"{\\\"hello\\\": \\\"world!\\\"}\\n\"\n//# sourceURL=fpack:///node_modules/raw-loader/index.js!data.json\n//# sourceURL=fpack:///node_modules/raw-loader/index.js!data.json");
+eval("module.exports = \"{\\\"hello\\\": \\\"world!\\\"}\\n\"\n//# sourceURL=fpack:///node_modules/raw-loader/index.js!data.json
 },
 d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("let obj = __fastpack_require__(\"./data.json\");\nlet str = __fastpack_require__(\"raw-loader!./data.json\");\n\nconsole.log(\"Object:\", obj);\nconsole.log(\"String:\", str);\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+eval("let obj = __fastpack_require__(\"./data.json\");\nlet str = __fastpack_require__(\"raw-loader!./data.json\");\n\nconsole.log(\"Object:\", obj);\nconsole.log(\"String:\", str);\n\n//# sourceURL=fpack:///index.js
 },
 d: {"./data.json":"dataDOT$$json","raw-loader!./data.json":"NM$$raw$$_$$loader$indexDOT$$js$$B$$dataDOT$$json"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main
 },
 d: {"./index.js":"index"}
 },

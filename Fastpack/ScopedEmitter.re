@@ -411,11 +411,6 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
                 (emittedModules, m) => {
                   let () = ensure_exports(m);
                   let%lwt () = emit_module_files(ctx, m);
-                  let location_str =
-                    Module.location_to_string(
-                      ~base_dir=Some(ctx.project_root),
-                      m.location,
-                    );
                   let short_str =
                     Module.location_to_short_string(
                       ~base_dir=Some(ctx.project_root),
@@ -430,11 +425,6 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
                     |> emit;
                   let%lwt () = emit("eval(\"");
                   let%lwt () = emit(m.Module.source);
-                  let%lwt () =
-                    location_str
-                    |> CCString.replace(~sub="\\", ~by="/")
-                    |> Printf.sprintf("\\n//# sourceURL=fpack:///%s\");")
-                    |> emit;
 
                   let%lwt jsonDependencies =
                     Lwt_list.map_s(
