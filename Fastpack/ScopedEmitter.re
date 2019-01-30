@@ -1,5 +1,6 @@
 module MDM = Module.DependencyMap;
 module MLSet = Module.LocationSet;
+module StringSet = Set.Make(String);
 module FS = FastpackUtil.FS;
 module Scope = FastpackUtil.Scope;
 
@@ -7,6 +8,7 @@ module Bundle = {
   type t = {
     locationToChunk: Hashtbl.t(Module.location, chunkName),
     chunks: Hashtbl.t(chunkName, chunk),
+    chunkDependency: Hashtbl.t(chunkName, string),
   }
   and chunkName =
     | Main
@@ -20,6 +22,7 @@ module Bundle = {
   let empty = () => {
     locationToChunk: Hashtbl.create(5000),
     chunks: Hashtbl.create(500),
+    chunkDependency: Hashtbl.create(500),
   };
 
   let nextChunkName = bundle => {
@@ -205,7 +208,7 @@ module Bundle = {
           ));
         };
     let%lwt (modules, chunkRequests, seen) = addModule(seen, entry);
-    Lwt.return((List.rev(modules), chunkRequests, seen))
+    Lwt.return((List.rev(modules), chunkRequests, seen));
   };
 
   let make = (graph: DependencyGraph.t, entry: Module.location) => {
@@ -240,6 +243,46 @@ module Bundle = {
 
   let foldChunks = (f, acc, bundle: t) =>
     Lwt_list.fold_left_s(f, acc, CCHashtbl.to_list(bundle.chunks));
+
+  let rec getChunkDependencies =
+          (~seen=StringSet.empty, chunkName: chunkName, bundle: t) =>
+    switch (Hashtbl.find_all(bundle.chunkDependency, chunkName)) {
+    | [] =>
+      switch (chunkName) {
+      | Main => failwith("Unexpected dependency on the main chunk")
+      | Named(name) =>
+        switch (Hashtbl.find_all(bundle.chunks, chunkName)) {
+        | [] => failwith("Unknown chunk: " ++ name)
+        | [{modules, dependencies, _}] =>
+          if (StringSet.mem(name, seen)) {
+            failwith("Chunk dependency cycle");
+          } else {
+            let seen = StringSet.add(name, seen);
+            let dependencies =
+              List.fold_left(
+                (set, dep) =>
+                  StringSet.union(
+                    set,
+                    StringSet.of_list(
+                      getChunkDependencies(~seen, Named(dep), bundle),
+                    ),
+                  ),
+                List.length(modules) > 0 ?
+                  StringSet.singleton(name) : StringSet.empty,
+                dependencies,
+              )
+              |> StringSet.elements;
+            List.iter(
+              dep => Hashtbl.add(bundle.chunkDependency, chunkName, dep),
+              dependencies,
+            );
+            dependencies;
+          }
+        | _ => failwith("Several chunks named: " ++ name)
+        }
+      }
+    | found => found
+    };
 };
 
 let emit_module_files = (ctx: Context.t, m: Module.t) =>
@@ -261,47 +304,43 @@ let emit_module_files = (ctx: Context.t, m: Module.t) =>
     m.files,
   );
 
-let to_eval = s => {
-  let json = Yojson.to_string(`String(s));
-  String.(sub(json, 1, length(json) - 2));
-};
-
 let runtimeMain = {|
 global = this;
 process = { env: {}, browser: true };
-if(!global.Buffer) {
-  global.Buffer = {isBuffer: false};
+if (!global.Buffer) {
+  global.Buffer = { isBuffer: false };
 }
 // This function is a modified version of the one created by the Webpack project
 (function(modules) {
   // The module cache
   var installedModules = {};
 
-  // The require function
   function __fastpack_require__(fromModule, request) {
-    var moduleId = fromModule === null ? request : modules[fromModule].d[request];
+    var moduleId =
+      fromModule === null ? request : modules[fromModule].d[request];
 
-    // Check if module is in cache
-    if(installedModules[moduleId]) {
+    if (installedModules[moduleId]) {
       return installedModules[moduleId].exports;
     }
-    // Create a new module (and put it into the cache)
-    var module = installedModules[moduleId] = {
+    var module = (installedModules[moduleId] = {
       id: moduleId,
       l: false,
       exports: {}
-    };
+    });
 
     var r = __fastpack_require__.bind(null, moduleId);
-    r.default = __fastpack_require__.default;
-    r.omitDefault = __fastpack_require__.omitDefault;
-    // Execute the module function
+    var helpers = Object.getOwnPropertyNames(__fastpack_require__.helpers);
+    for (var i = 0, l = helpers.length; i < l; i++) {
+      r[helpers[i]] = __fastpack_require__.helpers[helpers[i]];
+    }
+    r.imp = r.imp.bind(null, moduleId);
+    r.state = state;
     modules[moduleId].m.call(
       module.exports,
       module,
       module.exports,
       r,
-      __fastpack_import__.bind(null, moduleId)
+      r.imp
     );
 
     // Flag the module as loaded
@@ -311,40 +350,77 @@ if(!global.Buffer) {
     return module.exports;
   }
 
-  function __fastpack_import__(fromModule, request) {
-    if (!window.Promise) {
-      throw 'window.Promise is undefined, consider using a polyfill';
-    }
-    return new Promise(function(resolve, reject) {
-      try {
-        resolve(__fastpack_require__(fromModule, request));
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
+  var loadedChunks = {};
+  var state = {
+    publicPath: ""
+  };
 
-  __fastpack_require__.m = modules;
-  __fastpack_require__.c = installedModules;
-  __fastpack_require__.omitDefault = function(moduleVar) {
-    var keys = Object.keys(moduleVar);
-    var ret = {};
-    for(var i = 0, l = keys.length; i < l; i++) {
-      var key = keys[i];
-      if (key !== 'default') {
-        ret[key] = moduleVar[key];
+  window.__fastpack_update_modules__ = function(newModules) {
+    for (var id in newModules) {
+      if (modules[id]) {
+        throw new Error(
+          "Chunk tries to replace already existing module: " + id
+        );
+      } else {
+        modules[id] = newModules[id];
       }
     }
-    return ret;
-  }
-  __fastpack_require__.default = function(exports) {
-    return exports.__esModule ? exports.default : exports;
-  }
-  return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
+  };
+
+  __fastpack_require__.helpers = {
+    omitDefault: function(moduleVar) {
+      var keys = Object.keys(moduleVar);
+      var ret = {};
+      for (var i = 0, l = keys.length; i < l; i++) {
+        var key = keys[i];
+        if (key !== "default") {
+          ret[key] = moduleVar[key];
+        }
+      }
+      return ret;
+    },
+
+    default: function(exports) {
+      return exports.__esModule ? exports.default : exports;
+    },
+
+    imp: function(fromModule, request) {
+      if (!window.Promise) {
+        throw Error("window.Promise is undefined, consider using a polyfill");
+      }
+      var sourceModule = modules[fromModule];
+      var chunks = (sourceModule.c || {})[request] || [];
+      var promises = [];
+      for (var i = 0, l = chunks.length; i < l; i++) {
+        var js = chunks[i];
+        var p = loadedChunks[js];
+        if (!p) {
+          p = loadedChunks[js] = new Promise(function(resolve, reject) {
+            var script = document.createElement("script");
+            script.onload = function() {
+              resolve();
+            };
+            script.onerror = function() {
+              reject();
+              throw new Error("Script load error: " + script.src);
+            };
+            script.src = state.publicPath + chunks[i];
+            document.head.append(script);
+          });
+          promises.push(p);
+        }
+      }
+      return Promise.all(promises).then(function() {
+        return __fastpack_require__(fromModule, request);
+      });
+    }
+  };
+
+  return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 })
 |};
 
-let runtimeChunk = "chunk";
+let runtimeChunk = "window.__fastpack_update_modules__";
 
 let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => {
   let _st = start_time;
@@ -418,13 +494,14 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
                     );
                   let%lwt () =
                     Printf.sprintf(
-                      "/* !s: %s */\n%s:{m:function(module, exports, __fastpack_require__, __fastpack_import__) {\n",
+                      "/* !s: %s */\n%s:{m:function(module, exports, __fastpack_require__) {\n",
                       CCString.replace(~sub="\\", ~by="/", short_str),
                       Yojson.to_string(`String(m.id)),
                     )
                     |> emit;
                   let%lwt () = emit("eval(\"");
                   let%lwt () = emit(m.Module.source);
+                  let%lwt () = emit("\");");
 
                   let%lwt jsonDependencies =
                     Lwt_list.map_s(
@@ -442,11 +519,43 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
                       ),
                     );
 
+                  let chunkDependencies =
+                    CCList.filter_map(
+                      ((dep, _)) =>
+                        switch (MDM.get(dep, chunkRequests)) {
+                        | None => None
+                        | Some(chunkName) =>
+                          switch (
+                            Bundle.getChunkDependencies(chunkName, bundle)
+                          ) {
+                          | [] => None
+                          | deps =>
+                            Some((
+                              dep.Module.Dependency.request,
+                              `List(List.map(s => `String(s), deps)),
+                            ))
+                          }
+                        },
+                      DependencyGraph.lookup_dependencies(
+                        ~kind=`Dynamic,
+                        ctx.graph,
+                        m,
+                      ),
+                    );
+
+                  let chunkData =
+                    switch (chunkDependencies) {
+                    | [] => ""
+                    | _ =>
+                      ",\nc: " ++ Yojson.to_string(`Assoc(chunkDependencies))
+                    };
+
                   let%lwt () =
                     emit(
                       Printf.sprintf(
-                        "\n},\nd: %s",
+                        "\n},\nd: %s%s",
                         Yojson.to_string(`Assoc(jsonDependencies)),
+                        chunkData,
                       ),
                     );
                   let%lwt () = emit("\n},\n");

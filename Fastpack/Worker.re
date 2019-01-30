@@ -132,7 +132,7 @@ let start = (~project_root, ~output_dir, ()) => {
       Printf.sprintf("__fastpack_require__(\"%s\")", request);
 
     let fastpack_import = request =>
-      Printf.sprintf("__fastpack_import__(\"%s\")", request);
+      Printf.sprintf("__fastpack_require__.imp(\"%s\")", request);
 
     let rec avoid_name_collision = (~n=0, name) => {
       let name =
