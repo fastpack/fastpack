@@ -34,13 +34,13 @@ module Bundle = {
       (modules: list(Module.t), chunkName: chunkName, bundle: t) =>
     List.iter(
       m => {
-        let loc = Module.location_to_string(m.Module.location);
-        let cn =
-          switch (chunkName) {
-          | Named(name) => name
-          | Main => "main"
-          };
-        Logs.debug(x => x("Module %s => %s", loc, cn));
+        /* let loc = Module.location_to_string(m.Module.location); */
+        /* let cn = */
+        /*   switch (chunkName) { */
+        /*   | Named(name) => name */
+        /*   | Main => "main" */
+        /*   }; */
+        /* Logs.debug(x => x("Module %s => %s", loc, cn)); */
         Hashtbl.replace(bundle.locationToChunk, m.Module.location, chunkName);
       },
       modules,
@@ -175,7 +175,7 @@ module Bundle = {
                 | None => failwith("Should not happen")
                 | Some(m) =>
                   let%lwt m = m;
-                  Logs.debug(x => x("Dep: %s", m.Module.id));
+                  /* Logs.debug(x => x("Dep: %s", m.Module.id)); */
                   let%lwt (modules', chunkRequests', seen) =
                     addModule(seen, m.Module.location);
                   Lwt.return((
@@ -467,6 +467,7 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
          | _ => ()
          }
        );
+  Logs.debug(x => x("FOLDING CHUNKS"));
   Bundle.foldChunks(
     ((emittedFiles, emittedModules), (chunkName, chunk: Bundle.chunk)) => {
       let%lwt (emittedModules, filename, size) =
@@ -477,8 +478,8 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
             let%lwt () =
               emit(
                 switch (chunkName) {
-                | Bundle.Main => runtimeMain
-                | Bundle.Named(_) => runtimeChunk
+                | Bundle.Main =>   Logs.debug(x => x("chunk: main")); runtimeMain
+                | Bundle.Named(name) => Logs.debug(x => x("chunk: %s", name)); runtimeChunk
                 },
               );
             let%lwt () = emit("({\n");

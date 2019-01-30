@@ -74,7 +74,7 @@ let writeAndReadValue = (~msg=?, value, process) => {
     };
 
   let exit = () => {
-    let%lwt () = Lwt_unix.sleep(50.0);
+    let%lwt () = Lwt_unix.sleep(30.0);
     failwith(prefix);
   };
 
