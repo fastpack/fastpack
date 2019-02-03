@@ -1,4 +1,5 @@
 type t = {
+  config: Config.t,
   project_root: string,
   current_dir: string,
   project_package: Package.t,

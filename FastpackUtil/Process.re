@@ -66,8 +66,11 @@ let readLine = process =>
     process.chIn,
   );
 
+let writeValue = (value, process) =>
+  Lwt_io.write_value(process.chOut, value);
+
 let writeAndReadValue = (~msg=?, value, process) => {
-  let prefix =
+  let msg =
     switch (msg) {
     | Some(s) => s
     | None => "no msg"
@@ -75,7 +78,7 @@ let writeAndReadValue = (~msg=?, value, process) => {
 
   let exit = () => {
     let%lwt () = Lwt_unix.sleep(30.0);
-    failwith(prefix);
+    failwith(msg);
   };
 
   Lwt.pick([

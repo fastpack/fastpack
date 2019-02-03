@@ -304,7 +304,7 @@ let emit_module_files = (ctx: Context.t, m: Module.t) =>
     m.files,
   );
 
-let runtimeMain = {|
+let runtimeMain = publicPath => Printf.sprintf({|
 global = this;
 process = { env: {}, browser: true };
 if (!global.Buffer) {
@@ -352,7 +352,7 @@ if (!global.Buffer) {
 
   var loadedChunks = {};
   var state = {
-    publicPath: ""
+    publicPath: %s
   };
 
   window.__fastpack_update_modules__ = function(newModules) {
@@ -418,13 +418,12 @@ if (!global.Buffer) {
 
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 })
-|};
+|}, Yojson.to_string(`String(publicPath)));
 
 let runtimeChunk = "window.__fastpack_update_modules__";
 
 let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => {
   let _st = start_time;
-  let _req = chunkRequests;
   let%lwt dep_map = DependencyGraph.to_dependency_map(ctx.graph);
 
   let ensure_export_exists = (m: Module.t, name) =>
@@ -478,7 +477,7 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
             let%lwt () =
               emit(
                 switch (chunkName) {
-                | Bundle.Main =>   Logs.debug(x => x("chunk: main")); runtimeMain
+                | Bundle.Main =>   Logs.debug(x => x("chunk: main")); runtimeMain(ctx.config.publicPath)
                 | Bundle.Named(name) => Logs.debug(x => x("chunk: %s", name)); runtimeChunk
                 },
               );

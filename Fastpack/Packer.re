@@ -51,6 +51,7 @@ let make = (~reporter=None, config: Config.t) => {
     Worker.Reader.make(
       ~project_root=config.projectRootDir,
       ~output_dir=tmpOutputDir,
+      ~publicPath=config.publicPath,
       (),
     );
 
@@ -168,7 +169,8 @@ let rec pack =
 
   let%lwt () = FS.makedirs(tmpOutputDir);
   let ctx = {
-    Context.project_root: config.projectRootDir,
+    Context.config,
+    project_root: config.projectRootDir,
     current_dir,
     project_package: packer.project_package,
     tmpOutputDir,
