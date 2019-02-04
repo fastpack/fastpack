@@ -66,16 +66,19 @@ let readLine = process =>
     process.chIn,
   );
 
+let writeValue = (value, process) =>
+  Lwt_io.write_value(process.chOut, value);
+
 let writeAndReadValue = (~msg=?, value, process) => {
-  let prefix =
+  let msg =
     switch (msg) {
     | Some(s) => s
     | None => "no msg"
     };
 
   let exit = () => {
-    let%lwt () = Lwt_unix.sleep(5.0);
-    failwith(prefix);
+    let%lwt () = Lwt_unix.sleep(30.0);
+    failwith(msg);
   };
 
   Lwt.pick([
@@ -87,29 +90,3 @@ let writeAndReadValue = (~msg=?, value, process) => {
     exit(),
   ]);
 };
-
-/* let writeAndReadValue = (~msg=?, value, process) => { */
-/*   let prefix = */
-/*     switch (msg) { */
-/*     | Some(s) => s */
-/*     | None => "no msg" */
-/*     }; */
-
-/*   let exit = () => { */
-/*     let%lwt () = Lwt_unix.sleep(2.5); */
-/*     failwith(prefix); */
-/*   }; */
-
-/*   Lwt.pick([Lwt_io.atomic( */
-/*     chOut => */
-/*       Lwt_io.atomic( */
-/*         chIn => { */
-/*           let%lwt () = Lwt_io.write_value(chOut, value); */
-/*           let%lwt output = Lwt_io.read_value(chIn); */
-/*           Lwt.return(output); */
-/*         }, */
-/*         process.chIn, */
-/*       ), */
-/*     process.chOut, */
-/*   ), exit ()]); */
-/* }; */

@@ -59,13 +59,13 @@ let rebuild = (~filesChanged: StringSet.t, ~packer, prev_result) => {
       };
     let%lwt newResult =
       if (runPack) {
-          /* let%lwt () = Lwt_io.with_file( */
-          /*   ~mode=Lwt_io.Output, */
-          /*   ~perm=0o644, */
-          /*   ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR], */
-          /*   "watched.txt", */
-          /*   ch => Lwt_list.iter_s(f => Lwt_io.write_line(ch, f), StringSet.elements(filesWatched)), */
-          /* ); */
+        /* let%lwt () = Lwt_io.with_file( */
+        /*   ~mode=Lwt_io.Output, */
+        /*   ~perm=0o644, */
+        /*   ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR], */
+        /*   "watched.txt", */
+        /*   ch => Lwt_list.iter_s(f => Lwt_io.write_line(ch, f), StringSet.elements(filesWatched)), */
+        /* ); */
         Packer.pack(
           ~current_location,
           ~graph,
@@ -242,15 +242,27 @@ let make = (~packer=None, config: Config.t) => {
       )
     );
   let%lwt () = Lwt_io.(write(stdout, "(Ctrl+C to stop)\n"));
-  let ignoreFilename = filename =>
+  let ignoreFilename = (tmpOutputDir, filename) =>
     !FilePath.is_subdir(filename, config.outputDir)
+    && !FilePath.is_subdir(filename, tmpOutputDir)
+    && filename != tmpOutputDir
     && filename != config.outputDir;
 
   let rec tryRebuilding = (filenames, prevResult) => {
+    let {Context.tmpOutputDir, _} =
+      switch (prevResult) {
+      | Ok((ctx, _)) => ctx
+      | Error((ctx, _)) => ctx
+      };
     let%lwt nextResult =
       Lwt.pick([
         switch%lwt (
-          ask_watchman(started_process, link_map, link_paths, ignoreFilename)
+          ask_watchman(
+            started_process,
+            link_map,
+            link_paths,
+            ignoreFilename(tmpOutputDir),
+          )
         ) {
         | None => raise(Context.ExitError("No input from watchman"))
         | Some(filenames) => `FilesChanged(filenames) |> Lwt.return
@@ -263,8 +275,25 @@ let make = (~packer=None, config: Config.t) => {
       ]);
     switch (nextResult) {
     | `FilesChanged(newFilenames) =>
+      /* Logs.debug(x => */
+      /*   x( */
+      /*     "Changed: %s", */
+      /*     StringSet.elements(StringSet.union(filenames, newFilenames)) |> String.concat("\n"), */
+      /*   ) */
+      /* ); */
       tryRebuilding(StringSet.union(filenames, newFilenames), prevResult)
-    | `Rebuilt(result) => Lwt.return(result)
+    | `Rebuilt(result) =>
+      /* let watched = switch(result) { */
+      /* | Ok((_, fs)) => fs */
+      /* | Error((_, fs)) => fs */
+      /* } */
+      /* Logs.debug(x => */
+      /*   x( */
+      /*     "Watched: %s", */
+      /*     StringSet.elements(watched) |> String.concat("\n"), */
+      /*   ) */
+      /* ); */
+      Lwt.return(result)
     };
   };
 
@@ -290,9 +319,19 @@ let make = (~packer=None, config: Config.t) => {
     | Error(_) => Lwt.return_unit
     };
 
-  let rec watch = result =>
+  let rec watch = result => {
+    let {Context.tmpOutputDir, _} =
+      switch (result) {
+      | Ok((ctx, _)) => ctx
+      | Error((ctx, _)) => ctx
+      };
     switch%lwt (
-      ask_watchman(started_process, link_map, link_paths, ignoreFilename)
+      ask_watchman(
+        started_process,
+        link_map,
+        link_paths,
+        ignoreFilename(tmpOutputDir),
+      )
     ) {
     | None => Lwt.return_unit
     | Some(filenames) =>
@@ -300,6 +339,7 @@ let make = (~packer=None, config: Config.t) => {
       lastResult := result;
       watch(result);
     };
+  };
 
   /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
    * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763

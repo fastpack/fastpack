@@ -1,39 +1,40 @@
 
 global = this;
 process = { env: {}, browser: true };
-if(!global.Buffer) {
-  global.Buffer = {isBuffer: false};
+if (!global.Buffer) {
+  global.Buffer = { isBuffer: false };
 }
 // This function is a modified version of the one created by the Webpack project
 (function(modules) {
   // The module cache
   var installedModules = {};
 
-  // The require function
   function __fastpack_require__(fromModule, request) {
-    var moduleId = fromModule === null ? request : modules[fromModule].d[request];
+    var moduleId =
+      fromModule === null ? request : modules[fromModule].d[request];
 
-    // Check if module is in cache
-    if(installedModules[moduleId]) {
+    if (installedModules[moduleId]) {
       return installedModules[moduleId].exports;
     }
-    // Create a new module (and put it into the cache)
-    var module = installedModules[moduleId] = {
+    var module = (installedModules[moduleId] = {
       id: moduleId,
       l: false,
       exports: {}
-    };
+    });
 
     var r = __fastpack_require__.bind(null, moduleId);
-    r.default = __fastpack_require__.default;
-    r.omitDefault = __fastpack_require__.omitDefault;
-    // Execute the module function
+    var helpers = Object.getOwnPropertyNames(__fastpack_require__.helpers);
+    for (var i = 0, l = helpers.length; i < l; i++) {
+      r[helpers[i]] = __fastpack_require__.helpers[helpers[i]];
+    }
+    r.imp = r.imp.bind(null, moduleId);
+    r.state = state;
     modules[moduleId].m.call(
       module.exports,
       module,
       module.exports,
       r,
-      __fastpack_import__.bind(null, moduleId)
+      r.imp
     );
 
     // Flag the module as loaded
@@ -43,59 +44,96 @@ if(!global.Buffer) {
     return module.exports;
   }
 
-  function __fastpack_import__(fromModule, request) {
-    if (!window.Promise) {
-      throw 'window.Promise is undefined, consider using a polyfill';
-    }
-    return new Promise(function(resolve, reject) {
-      try {
-        resolve(__fastpack_require__(fromModule, request));
-      } catch (e) {
-        reject(e);
-      }
-    });
-  }
+  var loadedChunks = {};
+  var state = {
+    publicPath: ""
+  };
 
-  __fastpack_require__.m = modules;
-  __fastpack_require__.c = installedModules;
-  __fastpack_require__.omitDefault = function(moduleVar) {
-    var keys = Object.keys(moduleVar);
-    var ret = {};
-    for(var i = 0, l = keys.length; i < l; i++) {
-      var key = keys[i];
-      if (key !== 'default') {
-        ret[key] = moduleVar[key];
+  window.__fastpack_update_modules__ = function(newModules) {
+    for (var id in newModules) {
+      if (modules[id]) {
+        throw new Error(
+          "Chunk tries to replace already existing module: " + id
+        );
+      } else {
+        modules[id] = newModules[id];
       }
     }
-    return ret;
-  }
-  __fastpack_require__.default = function(exports) {
-    return exports.__esModule ? exports.default : exports;
-  }
-  return __fastpack_require__(null, __fastpack_require__.s = '$fp$main');
+  };
+
+  __fastpack_require__.helpers = {
+    omitDefault: function(moduleVar) {
+      var keys = Object.keys(moduleVar);
+      var ret = {};
+      for (var i = 0, l = keys.length; i < l; i++) {
+        var key = keys[i];
+        if (key !== "default") {
+          ret[key] = moduleVar[key];
+        }
+      }
+      return ret;
+    },
+
+    default: function(exports) {
+      return exports.__esModule ? exports.default : exports;
+    },
+
+    imp: function(fromModule, request) {
+      if (!window.Promise) {
+        throw Error("window.Promise is undefined, consider using a polyfill");
+      }
+      var sourceModule = modules[fromModule];
+      var chunks = (sourceModule.c || {})[request] || [];
+      var promises = [];
+      for (var i = 0, l = chunks.length; i < l; i++) {
+        var js = chunks[i];
+        var p = loadedChunks[js];
+        if (!p) {
+          p = loadedChunks[js] = new Promise(function(resolve, reject) {
+            var script = document.createElement("script");
+            script.onload = function() {
+              resolve();
+            };
+            script.onerror = function() {
+              reject();
+              throw new Error("Script load error: " + script.src);
+            };
+            script.src = state.publicPath + chunks[i];
+            document.head.append(script);
+          });
+          promises.push(p);
+        }
+      }
+      return Promise.all(promises).then(function() {
+        return __fastpack_require__(fromModule, request);
+      });
+    }
+  };
+
+  return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 })
-    ({
-/* !s: b.js */
-"b":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("console.log('side effect of b');\nmodule.exports = function() {console.log('b')};\n\n//# sourceURL=fpack:///b.js\n//# sourceURL=fpack:///b.js");
-},
-d: {}
-},
+({
 /* !s: a.js */
-"a":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("const b = __fastpack_require__(\"./b\");\n\nmodule.exports = function() {\n  console.log('b in a');\n  b();\n};\n\n//# sourceURL=fpack:///a.js\n//# sourceURL=fpack:///a.js");
+"a":{m:function(module, exports, __fastpack_require__) {
+eval("const b = __fastpack_require__(\"./b\");\n\nmodule.exports = function() {\n  console.log('b in a');\n  b();\n};\n\n//# sourceURL=fpack:///a.js");
 },
 d: {"./b":"b"}
 },
+/* !s: b.js */
+"b":{m:function(module, exports, __fastpack_require__) {
+eval("console.log('side effect of b');\nmodule.exports = function() {console.log('b')};\n\n//# sourceURL=fpack:///b.js");
+},
+d: {}
+},
 /* !s: index.js */
-"index":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("const a = __fastpack_require__(\"./a\");\n\n(function() {\n  __fastpack_import__(\"./b\").then(b => {\n    console.log('b in promise');\n    b();\n  })\n\n  let b = __fastpack_require__(\"./b\");\n  a();\n  console.log('b in index');\n  b();\n})();\n\n/*\n$ node <bundle.js>\nside effect of b\nb in a\nb\nb in index\nb\nb in promise\nb\n*/\n\n//# sourceURL=fpack:///index.js\n//# sourceURL=fpack:///index.js");
+"index":{m:function(module, exports, __fastpack_require__) {
+eval("const a = __fastpack_require__(\"./a\");\n\n(function() {\n  __fastpack_require__.imp(\"./b\").then(b => {\n    console.log('b in promise');\n    b();\n  })\n\n  let b = __fastpack_require__(\"./b\");\n  a();\n  console.log('b in index');\n  b();\n})();\n\n/*\n$ node <bundle.js>\nside effect of b\nb in a\nb\nb in index\nb\nb in promise\nb\n*/\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a","./b":"b","./b":"b"}
 },
 /* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__, __fastpack_import__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main\n//# sourceURL=fpack:///$fp$main");
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
 },

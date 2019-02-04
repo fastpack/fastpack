@@ -1,5 +1,5 @@
 
-let start: (~project_root: string, ~output_dir: string, unit) => Lwt.t('a);
+let start: unit => Lwt.t('a);
 
 type ok = {
   source: string,
@@ -14,7 +14,11 @@ type ok = {
 
 module Reader: {
   type t;
-  let make: (~project_root: string, ~output_dir: string, unit) => t;
+  let make: (
+    ~project_root: string,
+    ~output_dir: string,
+    ~publicPath: string,
+    unit) => t;
   let read:
     (~location: Module.location, ~source: option(string), t)
     => Lwt.t(result(ok, Error.reason));

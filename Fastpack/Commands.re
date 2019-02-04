@@ -173,14 +173,13 @@ module Watch = {
 };
 
 module Worker = {
-  let run = (options: Config.t) => {
-    let {Config.projectRootDir: project_root, outputDir: output_dir, _} = options;
-    Lwt_main.run(Worker.start(~project_root, ~output_dir, ()));
+  let run = () => {
+    Lwt_main.run(Worker.start());
   };
   let doc = "worker subprocess (do not use directly)";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term)),
+      Term.(const(run) $ const(())),
       Term.info("worker", ~doc, ~sdocs, ~exits),
     ));
 };

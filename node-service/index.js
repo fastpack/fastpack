@@ -6,7 +6,7 @@ var outputDir = process.argv[2];
 var projectRoot = process.argv[3];
 var stdin = process.stdin;
 
-if (process.platform === "win32" && process.env["FASTPACK_PARENT_PID"]) {
+if (process.env["FASTPACK_PARENT_PID"]) {
   const parentPid = Number(process.env["FASTPACK_PARENT_PID"]);
 
   if (typeof parentPid === "number" && !isNaN(parentPid)) {
