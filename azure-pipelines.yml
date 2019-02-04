@@ -94,7 +94,7 @@ jobs:
   - Linux
   - MacOS
   - Windows
-  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  condition: succeeded()
   pool:
     vmImage: 'Ubuntu 16.04'
   steps:
