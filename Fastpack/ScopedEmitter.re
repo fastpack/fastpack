@@ -489,7 +489,7 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
                   let%lwt () = emit_module_files(ctx, m);
                   let short_str =
                     Module.location_to_short_string(
-                      ~base_dir=Some(ctx.project_root),
+                      ~base_dir=Some(ctx.config.projectRootDir),
                       m.location,
                     );
                   let%lwt () =
@@ -594,7 +594,7 @@ let emit = (ctx: Context.t, start_time) => {
     let filename =
       switch (name) {
       | Bundle.Main =>
-        let filename = FS.relative_path(ctx.output_dir, ctx.output_file);
+        let filename = FS.relative_path(ctx.config.outputDir, ctx.config.outputFilename);
         FS.abs_path(ctx.tmpOutputDir, filename);
       | Bundle.Named(filename) => FS.abs_path(ctx.tmpOutputDir, filename)
       };
@@ -614,17 +614,17 @@ let emit = (ctx: Context.t, start_time) => {
       Logs.debug(x => x("AFTER EMIT"));
 
       let%lwt () =
-        switch%lwt (FS.stat_option(ctx.output_dir)) {
-        | Some({st_kind: Lwt_unix.S_DIR, _}) => FS.rmdir(ctx.output_dir)
-        | Some(_) => Lwt_unix.unlink(ctx.output_dir)
+        switch%lwt (FS.stat_option(ctx.config.outputDir)) {
+        | Some({st_kind: Lwt_unix.S_DIR, _}) => FS.rmdir(ctx.config.outputDir)
+        | Some(_) => Lwt_unix.unlink(ctx.config.outputDir)
         | None => Lwt.return_unit
         };
-      let%lwt () = Lwt_unix.rename(ctx.tmpOutputDir, ctx.output_dir);
+      let%lwt () = Lwt_unix.rename(ctx.tmpOutputDir, ctx.config.outputDir);
       let emittedFiles =
         List.map(
           ({Reporter.name, _} as f) => {
             ...f,
-            name: FS.abs_path(ctx.output_dir, Filename.basename(name)),
+            name: FS.abs_path(ctx.config.outputDir, Filename.basename(name)),
           },
           emittedFiles,
         );
@@ -641,7 +641,7 @@ let update_graph = (ctx: Context.t, start_time) => {
     let filename =
       switch (name) {
       | Bundle.Main =>
-        let filename = FS.relative_path(ctx.output_dir, ctx.output_file);
+        let filename = FS.relative_path(ctx.config.outputDir, ctx.config.outputFilename);
         FS.abs_path(ctx.tmpOutputDir, filename);
       | Bundle.Named(filename) => FS.abs_path(ctx.tmpOutputDir, filename)
       };

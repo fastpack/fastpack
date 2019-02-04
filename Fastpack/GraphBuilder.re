@@ -133,7 +133,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
 
     let m =
       Module.{
-        id: make_id(ctx.project_root, location),
+        id: make_id(ctx.config.projectRootDir, location),
         location,
         package,
         static_dependencies: [],
@@ -165,7 +165,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
         switch (filename) {
         | Some(filename) =>
           let%lwt _ =
-            if (!FilePath.is_subdir(filename, ctx.project_root)) {
+            if (!FilePath.is_subdir(filename, ctx.config.projectRootDir)) {
               Lwt.fail(
                 Context.PackError(ctx, CannotLeavePackageDir(filename)),
               );
@@ -294,7 +294,7 @@ let read_module = (~ctx: Context.t, location: Module.location) => {
 let build = (ctx: Context.t) => {
   /* TODO: handle this at a higher level, IllegalConfiguration error */
   let%lwt () =
-    if (ctx.Context.target == Target.ESM) {
+    if (ctx.Context.config.target == Target.ESM) {
       Lwt.fail(
         Context.PackError(
           ctx,

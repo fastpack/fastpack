@@ -170,18 +170,13 @@ let rec pack =
   let%lwt () = FS.makedirs(tmpOutputDir);
   let ctx = {
     Context.config,
-    project_root: config.projectRootDir,
     current_dir,
     project_package: packer.project_package,
     tmpOutputDir,
-    output_dir: config.outputDir,
-    output_file: config.outputFilename,
     entry_location: packer.entry_location,
     current_location:
       CCOpt.get_or(~default=packer.entry_location, current_location),
     stack: [],
-    mode: config.mode,
-    target: config.target,
     resolver,
     preprocessor: packer.preprocessor,
     reader: packer.reader,
