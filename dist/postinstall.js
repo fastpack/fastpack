@@ -2,7 +2,7 @@ var path = require("path");
 var fs = require("fs");
 var platform = process.platform;
 
-const targetPath = path.join(__dirname, "fpack");
+const targetPath = path.join(__dirname, "fpack.exe");
 
 function getPlatformBinaryPath(platform) {
   return path.join(__dirname, "vendor-" + platform, "fpack.exe");

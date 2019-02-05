@@ -1,4 +1,0 @@
-#!/bin/sh
-
-echo "Fastpack was not installed correctly"
-exit 1

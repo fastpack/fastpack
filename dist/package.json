@@ -3,7 +3,7 @@
   "version": "0.7.0",
   "description": "Pack JS code fast & easy.",
   "bin": {
-    "fpack": "fpack"
+    "fpack": "fpack.exe"
   },
   "scripts": {
     "postinstall": "node postinstall.js"
