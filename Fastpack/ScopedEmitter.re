@@ -33,7 +33,7 @@ module Bundle = {
   let updateLocationHash =
       (modules: list(Module.t), chunkName: chunkName, bundle: t) =>
     List.iter(
-      m => {
+      m =>
         /* let loc = Module.location_to_string(m.Module.location); */
         /* let cn = */
         /*   switch (chunkName) { */
@@ -41,8 +41,7 @@ module Bundle = {
         /*   | Main => "main" */
         /*   }; */
         /* Logs.debug(x => x("Module %s => %s", loc, cn)); */
-        Hashtbl.replace(bundle.locationToChunk, m.Module.location, chunkName);
-      },
+        Hashtbl.replace(bundle.locationToChunk, m.Module.location, chunkName),
       modules,
     );
 
@@ -304,7 +303,9 @@ let emit_module_files = (ctx: Context.t, m: Module.t) =>
     m.files,
   );
 
-let runtimeMain = publicPath => Printf.sprintf({|
+let runtimeMain = publicPath =>
+  Printf.sprintf(
+    {|
 global = this;
 process = { env: {}, browser: true };
 if (!global.Buffer) {
@@ -398,7 +399,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -418,7 +419,9 @@ if (!global.Buffer) {
 
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 })
-|}, Yojson.to_string(`String(publicPath)));
+|},
+    Yojson.to_string(`String(publicPath)),
+  );
 
 let runtimeChunk = "window.__fastpack_update_modules__";
 
@@ -477,8 +480,8 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
             let%lwt () =
               emit(
                 switch (chunkName) {
-                | Bundle.Main =>   Logs.debug(x => x("chunk: main")); runtimeMain(ctx.config.publicPath)
-                | Bundle.Named(name) => Logs.debug(x => x("chunk: %s", name)); runtimeChunk
+                | Bundle.Main => runtimeMain(ctx.config.publicPath)
+                | Bundle.Named(_name) => runtimeChunk
                 },
               );
             let%lwt () = emit("({\n");
@@ -530,10 +533,28 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
                           ) {
                           | [] => None
                           | deps =>
+                            let dirname = FilePath.dirname(chunkFilename);
+                            let prefix =
+                              FilePath.make_relative(
+                                ctx.tmpOutputDir,
+                                dirname,
+                              );
                             Some((
                               dep.Module.Dependency.request,
-                              `List(List.map(s => `String(s), deps)),
-                            ))
+                              `List(
+                                List.map(
+                                  s =>
+                                    `String(
+                                      CCString.replace(
+                                        ~sub="\\",
+                                        ~by="/",
+                                        prefix == "" ? s : prefix ++ "/" ++ s,
+                                      ),
+                                    ),
+                                  deps,
+                                ),
+                              ),
+                            ));
                           }
                         },
                       DependencyGraph.lookup_dependencies(
@@ -591,12 +612,19 @@ let emit = (ctx: Context.t, start_time) => {
     Bundle.make(ctx.graph, ctx.entry_location);
   Logs.debug(x => x("AFTER MAKING BUNDLE"));
   let withChunk = (name: Bundle.chunkName, f) => {
+    let (dirname, basename) = {
+      let filename =
+        FS.abs_path(
+          ctx.tmpOutputDir,
+          FS.relative_path(ctx.config.outputDir, ctx.config.outputFilename),
+        );
+      (FilePath.dirname(filename), FilePath.basename(filename));
+    };
+    let%lwt () = FS.makedirs(dirname);
     let filename =
       switch (name) {
-      | Bundle.Main =>
-        let filename = FS.relative_path(ctx.config.outputDir, ctx.config.outputFilename);
-        FS.abs_path(ctx.tmpOutputDir, filename);
-      | Bundle.Named(filename) => FS.abs_path(ctx.tmpOutputDir, filename)
+      | Bundle.Main => FS.abs_path(dirname, basename)
+      | Bundle.Named(filename) => FS.abs_path(dirname, filename)
       };
     Lwt_io.with_file(
       ~mode=Lwt_io.Output,
@@ -615,7 +643,8 @@ let emit = (ctx: Context.t, start_time) => {
 
       let%lwt () =
         switch%lwt (FS.stat_option(ctx.config.outputDir)) {
-        | Some({st_kind: Lwt_unix.S_DIR, _}) => FS.rmdir(ctx.config.outputDir)
+        | Some({st_kind: Lwt_unix.S_DIR, _}) =>
+          FS.rmdir(ctx.config.outputDir)
         | Some(_) => Lwt_unix.unlink(ctx.config.outputDir)
         | None => Lwt.return_unit
         };
@@ -641,7 +670,8 @@ let update_graph = (ctx: Context.t, start_time) => {
     let filename =
       switch (name) {
       | Bundle.Main =>
-        let filename = FS.relative_path(ctx.config.outputDir, ctx.config.outputFilename);
+        let filename =
+          FS.relative_path(ctx.config.outputDir, ctx.config.outputFilename);
         FS.abs_path(ctx.tmpOutputDir, filename);
       | Bundle.Named(filename) => FS.abs_path(ctx.tmpOutputDir, filename)
       };

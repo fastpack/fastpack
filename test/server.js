@@ -2,10 +2,9 @@ const http = require("http");
 const path = require("path");
 const fs = require("fs");
 
-const reBuild = /^build/;
-function findBundles() {
-  return fs.readdirSync(".").reduce((acc, file) => {
-    let absPath = path.join("./", file);
+function findBundles(dir) {
+  return fs.readdirSync(dir).reduce((acc, file) => {
+    let absPath = path.join(dir, file);
     if (file !== "node_modules" && fs.statSync(absPath).isDirectory()) {
       return fs.readdirSync(absPath).reduce((acc, file) => {
         let buildPath = path.join(absPath, file);
@@ -14,7 +13,11 @@ function findBundles() {
           file == "node_modules" ||
           file == "src" ||
           file.substr(0, 1) == "_" ||
-          !fs.existsSync(path.join(buildPath, "index.js"))
+          !fs.existsSync(
+            `${
+              buildPath.endsWith("/") ? buildPath.slice(0, -1) : buildPath
+            }.test.js`
+          )
         ) {
           return acc;
         } else {
@@ -40,17 +43,35 @@ function mainIndex() {
   `;
 }
 
-function buildIndex() {
+function buildIndex(indexJs) {
   return `
 <!DOCTYPE html>
 <html>
 <head><title>All Builds</title></head>
 <body>
 <div id="root"></div>
-<script type="text/javascript" src="./index.js"></script>
+<script type="text/javascript" src="./${indexJs}"></script>
 </body>
 </html>
   `;
+}
+
+function findIndexJs(dir) {
+  let indexJs = path.join(dir, "./index.js");
+  if (fs.existsSync(indexJs)) {
+    return indexJs;
+  }
+  let found = null;
+  fs.readdirSync(dir).forEach(f => {
+    if (found) {
+      return;
+    }
+    let absPath = path.join(dir, f);
+    if (fs.statSync(absPath).isDirectory()) {
+      found = findIndexJs(absPath);
+    }
+  });
+  return found;
 }
 
 http
@@ -58,16 +79,24 @@ http
     console.log(request.url);
 
     var filePath = "." + request.url;
-    if (filePath == "./") {
+    if (filePath === "./") {
       response.writeHead(200, { "Content-Type": "text/html" });
       response.end(mainIndex(), "utf-8");
       return;
     }
 
-    if (fs.existsSync(path.join(filePath, "index.js"))) {
-      response.writeHead(200, { "Content-Type": "text/html" });
-      response.end(buildIndex(), "utf-8");
-      return;
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      var testFile = `${
+        filePath.endsWith("/") ? filePath.slice(0, -1) : filePath
+      }.test.js`;
+      if (fs.existsSync(testFile)) {
+        var indexJs = findIndexJs(filePath);
+        if (indexJs) {
+          response.writeHead(200, { "Content-Type": "text/html" });
+          response.end(buildIndex(path.relative(filePath, indexJs)), "utf-8");
+          return;
+        }
+      }
     }
 
     var extname = String(path.extname(filePath)).toLowerCase();
@@ -112,4 +141,5 @@ http
     });
   })
   .listen(4321);
-console.log("Server running at http://127.0.0.1:4321/");
+
+console.log("Server is running at http://127.0.0.1:4321/");
