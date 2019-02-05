@@ -15,15 +15,6 @@ function movePlatformBinary(platform) {
 
 switch (platform) {
   case "win32":
-    console.warn("Windows is not supported natively yet.");
-    console.warn(
-      "You can try copying " +
-        getPlatformBinaryPath("linux") +
-        " to " +
-        targetPath +
-        " and use with WSL."
-    );
-    break;
   case "linux":
   case "darwin":
     movePlatformBinary(platform);
