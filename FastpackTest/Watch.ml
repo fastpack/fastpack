@@ -226,7 +226,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -368,7 +368,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -510,7 +510,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -673,7 +673,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -830,7 +830,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -987,7 +987,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -1144,7 +1144,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -1310,7 +1310,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -1482,7 +1482,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -1654,7 +1654,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -1809,7 +1809,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -2016,7 +2016,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -2156,7 +2156,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -2314,7 +2314,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -2468,7 +2468,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
@@ -2604,7 +2604,7 @@ if (!global.Buffer) {
           p = loadedChunks[js] = new Promise(function(resolve, reject) {
             var script = document.createElement("script");
             script.onload = function() {
-              resolve();
+              setTimeout(resolve);
             };
             script.onerror = function() {
               reject();
