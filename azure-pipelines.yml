@@ -123,8 +123,10 @@ jobs:
     displayName: copy node-service
   - script: chmod +x dist/vendor-*/*.exe
     displayName: add executable permissions
+  - script: "cp -R dist fpack && tar -czf fpack.tgz fpack"
+    displayName: create *.tgz to keep permissions
   - task: PublishBuildArtifacts@1
     inputs:
-      artifactName: fpack
-      pathToPublish: dist
+      artifactName: fpack.tgz
+      pathToPublish: fpack.tgz
 
