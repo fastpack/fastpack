@@ -49,7 +49,26 @@ NAME
        fpack - Pack JavaScript code into a single bundle
 
 SYNOPSIS
-       fpack [OPTION]... [ENTRY POINTS]...
+       fpack COMMAND ...
+
+COMMANDS
+       PLEASE NOTE: production mode is temporarily disabled. In the meantime,
+       please always use the `--development` flag.
+
+       build
+           rebuild the bundle on a file change
+
+       help
+           Show this message and exit
+
+       serve
+           watch for file changes, rebuild bundle & serve
+
+       watch
+           watch for file changes and rebuild the bundle
+
+       worker
+           worker subprocess (do not use directly)
 
 ARGUMENTS
        ENTRY POINTS
@@ -62,10 +81,9 @@ OPTIONS
        --development
            Build bundle for development
 
-       --help[=FMT] (default=auto)
-           Show this help in format FMT. The value FMT must be one of `auto',
-           `pager', `groff' or `plain'. With `auto', the format is `pager` or
-           `plain' whenever the TERM env var is `dumb' or undefined.
+       --dry-run
+           Run all the build operations without storing the bundle in the file
+           system
 
        --mock=PACKAGE[:SUBSTITUTE]
            Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is
@@ -83,6 +101,9 @@ OPTIONS
 
        -o DIR, --output=DIR (absent=./bundle)
            Output Directory. The target bundle will be DIR/index.js.
+
+       -p NUMBER, --port=NUMBER (absent=3000)
+           Port for development server to listen on
 
        --postprocess=COMMAND
            Apply shell command on a bundle file. The content of the bundle
@@ -102,6 +123,13 @@ OPTIONS
            are absolutely equal. An example of using the Webpack loader:
            '\.js$:babel-loader?filename=.babelrc'.
 
+       --project-root=PATH (absent=.)
+           Ancestor to which node_modules will be resolved.. Defaults to '.'
+
+       --public-path=URL
+           URL prefix to download the static assests and JavaScript chunks at
+           runtime. Points to the same location as --output-dir.
+
        --report=[ json ] (absent=text)
            Output packer statistics
 
@@ -114,12 +142,14 @@ OPTIONS
        --target=[ app | esm | cjs ] (absent=app)
            Deployment target.
 
+COMMON OPTIONS
+       --help[=FMT] (default=auto)
+           Show this help in format FMT. The value FMT must be one of `auto',
+           `pager', `groff' or `plain'. With `auto', the format is `pager` or
+           `plain' whenever the TERM env var is `dumb' or undefined.
+
        --version
            Show version information.
-
-       -w, --watch
-           Watch file changes and rebuild bundle
-
 ```
 
 ## Development

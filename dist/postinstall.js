@@ -2,7 +2,7 @@ var path = require("path");
 var fs = require("fs");
 var platform = process.platform;
 
-const targetPath = path.join(__dirname, "fpack");
+const targetPath = path.join(__dirname, "fpack.exe");
 
 function getPlatformBinaryPath(platform) {
   return path.join(__dirname, "vendor-" + platform, "fpack.exe");
@@ -15,15 +15,6 @@ function movePlatformBinary(platform) {
 
 switch (platform) {
   case "win32":
-    console.warn("Windows is not supported natively yet.");
-    console.warn(
-      "You can try copying " +
-        getPlatformBinaryPath("linux") +
-        " to " +
-        targetPath +
-        " and use with WSL."
-    );
-    break;
   case "linux":
   case "darwin":
     movePlatformBinary(platform);

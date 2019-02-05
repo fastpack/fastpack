@@ -277,6 +277,7 @@ let resolve = (~basedir, request, resolver) => {
         context,
         switch%lwt (Cache.File.stat(path, resolver.cache)) {
         | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) =>
+          let%lwt path = FS.readlink(path);
           withContext(
             "...yes.",
             {
@@ -291,7 +292,7 @@ let resolve = (~basedir, request, resolver) => {
               | false => resolve_file(~try_directory=false, path ++ "/index")
               };
             },
-          )
+          );
         | _ => withContext("...no.", error("Cannot resolve module"))
         },
       )
@@ -333,7 +334,9 @@ let resolve = (~basedir, request, resolver) => {
           withContext(
             context,
             switch%lwt (Cache.File.stat(path, resolver.cache)) {
-            | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) => return(path)
+            | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) =>
+              let%lwt path = FS.readlink(path);
+              return(path);
             | _ => withContext("...no.", exists'(rest))
             },
           )

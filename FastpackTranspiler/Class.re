@@ -321,7 +321,7 @@ module Transform = {
   };
 };
 
-let transpile = ({Context.require_runtime, _}, program) => {
+let transpile = ({Context.require_runtime, _}, program, modified) => {
   let map_expression = (_, (loc, node): E.t(Loc.t, Loc.t)) =>
     switch (node) {
     | E.Class(cls) =>
@@ -350,7 +350,7 @@ let transpile = ({Context.require_runtime, _}, program) => {
       switch (Transform.transform_class(cls)) {
       | (cls, _, [], [], []) => [
           (
-            loc,
+            Loc.none,
             S.ExportDefaultDeclaration({
               ...export,
               declaration:
@@ -367,7 +367,7 @@ let transpile = ({Context.require_runtime, _}, program) => {
           Transform.wrap_class(cls, statics, classDecorators, decorators)
           |> let_stmt(~loc=Loc.none, name),
           (
-            loc,
+            Loc.none,
             S.ExportDefaultDeclaration({
               ...export,
               declaration:
@@ -405,11 +405,11 @@ let transpile = ({Context.require_runtime, _}, program) => {
           switch (name) {
           | None => [
               (
-                loc,
+                Loc.none,
                 S.Expression({expression: transformed, directive: None}),
               ),
             ]
-          | Some((_, name)) => [let_stmt(~loc, name, transformed)]
+          | Some((_, name)) => [let_stmt(~loc=Loc.none, name, transformed)]
           };
         }
       }
@@ -418,5 +418,5 @@ let transpile = ({Context.require_runtime, _}, program) => {
 
   let mapper = {...AstMapper.default_mapper, map_statement, map_expression};
 
-  AstMapper.map(mapper, program);
+  AstMapper.map(~modified, mapper, program);
 };

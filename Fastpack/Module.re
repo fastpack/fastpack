@@ -39,6 +39,23 @@ let debug = Logs.debug;
  * = => $$E$$
  * */
 
+let location_to_short_string = (~base_dir=None, location) => {
+  let filename_to_string = filename =>
+    switch (base_dir) {
+    | None => filename
+    | Some(base_dir) => FS.relative_path(base_dir, filename)
+    };
+
+  switch(location) {
+  | Main(_) => "main"
+  | EmptyModule => "empty"
+  | Runtime => "transpiler-runtime"
+  | File({filename:  Some(filename), _}) => filename_to_string(filename)
+  | File({filename:  None, _}) => "no filename"
+  }
+
+}
+
 let location_to_string = (~base_dir=None, location) => {
   let filename_to_string = filename =>
     switch (base_dir) {

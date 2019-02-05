@@ -49,7 +49,7 @@ async function a() {
     {
       
     }
-  
+  ;
 }
 /* class decorators */
 @(f => f)
@@ -143,7 +143,7 @@ for (i = 1, l = list.length; i < l, l > 100; i++, l--)
   {
     
   }
-/*  Statement.Expression should be wrapped when the argument is:
+;/*  Statement.Expression should be wrapped when the argument is:
   * - class
   * - function
   * */
@@ -177,11 +177,11 @@ blurRadius: _propTypes.number, capInsets: (0, _propTypes.shape)({top: _propTypes
 export class CLS {
   
 };
-export function f() {
+;export function f() {
   
 }
 ;
-export var C1,
+;export var C1,
   C2;
 ;
 export let ya = 1,
@@ -198,7 +198,7 @@ export default function F() {
   
 }
 ;
-export const fff1 = x => ({"x": 1}[x]);
+;export const fff1 = x => ({"x": 1}[x]);
 ;
 export const fff2 = x => ({"x": x}.x);
 ;

@@ -23,6 +23,12 @@ let to_eval = s => {
   String.(sub(json, 1, length(json) - 2));
 };
 
+type init = {
+  project_root: string,
+  output_dir: string,
+  publicPath: string
+};
+
 type request = {
   location: Module.location,
   source: option(string),
@@ -46,7 +52,10 @@ and ok = {
   build_dependencies: list(string),
 };
 
-let start = (~project_root, ~output_dir, ()) => {
+let start = () => {
+    let%lwt init: Lwt.t(init) = Lwt_io.read_value(Lwt_io.stdin);
+    let {project_root, output_dir, _} = init;
+
   let%lwt preprocessor =
     Preprocessor.make(
       ~project_root,
@@ -96,9 +105,12 @@ let start = (~project_root, ~output_dir, ()) => {
     List.fold_left(import_or_export, Module.CJS, stmts);
   };
 
-  let analyze = (location, source) => {
+  let analyze = (location, source, parsedSource) => {
     let ((_, stmts, _) as program, _) =
-      FastpackUtil.Parser.parse_source(source);
+      switch (parsedSource) {
+      | Some(parsed) => (parsed, [])
+      | None => FastpackUtil.Parser.parse_source(source)
+      };
 
     let workspace = ref(Workspace.of_string(source));
     let {
@@ -129,7 +141,7 @@ let start = (~project_root, ~output_dir, ()) => {
       Printf.sprintf("__fastpack_require__(\"%s\")", request);
 
     let fastpack_import = request =>
-      Printf.sprintf("__fastpack_import__(/* \"%s\")", request);
+      Printf.sprintf("__fastpack_require__.imp(\"%s\")", request);
 
     let rec avoid_name_collision = (~n=0, name) => {
       let name =
@@ -600,6 +612,11 @@ let start = (~project_root, ~output_dir, ()) => {
                   remote,
                 )
               )
+            | None => switch(name) {
+              | "__webpack_public_path__" | "__public_path__" =>
+                patch_loc_with(loc, () => "__fastpack_require__.state.publicPath");
+              | _ => ()
+              }
             | _ => ()
             };
           Visit.Break;
@@ -652,7 +669,7 @@ let start = (~project_root, ~output_dir, ()) => {
               ~base_dir=Some(project_root),
               location,
             );
-          let%lwt (source, build_dependencies, files) =
+          let%lwt (source, parsedSource, build_dependencies, files) =
             Preprocessor.run(location, source, preprocessor);
           let (
             workspace,
@@ -662,7 +679,7 @@ let start = (~project_root, ~output_dir, ()) => {
             exports,
             module_type,
           ) =
-            analyze(location, source);
+            analyze(location, source, parsedSource);
           let%lwt source =
             Workspace.write(
               ~modify=to_eval,
@@ -710,7 +727,7 @@ let start = (~project_root, ~output_dir, ()) => {
 module Reader = {
   type t = {workerPool: Lwt_pool.t(Process.t)};
 
-  let make = (~project_root, ~output_dir, ()) => {
+  let make = (~project_root, ~output_dir, ~publicPath, ()) => {
     workerPool:
       Lwt_pool.create(
         Environment.getCPUCount(),
@@ -718,13 +735,13 @@ module Reader = {
         () => {
           Logs.debug(x => x("reader created"));
 
-          Process.start([|
+          let process = Process.start([|
             Environment.getExecutable(),
             "worker",
-            "--project-root=" ++ project_root,
-            "--output=" ++ output_dir,
-          |])
-          |> Lwt.return;
+          |]);
+          let init = {project_root, output_dir, publicPath};
+          let%lwt() = Process.writeValue(init, process);
+          Lwt.return(process);
         },
       ),
   };

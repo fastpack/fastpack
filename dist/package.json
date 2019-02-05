@@ -1,9 +1,9 @@
 {
-  "name": "fpack",
-  "version": "0.6.8",
-  "description": "Pack JS code into a single bundle fast & easy.",
+  "name": "fastpack",
+  "version": "0.7.0",
+  "description": "Pack JS code fast & easy.",
   "bin": {
-    "fpack": "fpack"
+    "fpack": "fpack.exe"
   },
   "scripts": {
     "postinstall": "node postinstall.js"

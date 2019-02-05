@@ -121,6 +121,10 @@ OPTIONS
        --project-root=PATH (absent=.)
            Ancestor to which node_modules will be resolved.. Defaults to '.'
 
+       --public-path=URL
+           URL prefix to download the static assests and JavaScript chunks at
+           runtime. Points to the same location as --output-dir.
+
        --report=[ json ] (absent=text)
            Output packer statistics
 

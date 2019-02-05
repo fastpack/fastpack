@@ -17,12 +17,19 @@ let rec setInterval = (ms, f) => {
 let abs_path = (dir, filename) =>
   FilePath.reduce(~no_symlink=true) @@ FilePath.make_absolute(dir, filename);
 
+let rec readlink = filename =>
+  switch%lwt (Lwt_unix.readlink(filename)) {
+  | value => readlink(abs_path(FilePath.dirname(filename), value))
+  | exception (Unix.Unix_error(Unix.EINVAL, "readlink", _)) =>
+    Lwt.return(filename)
+  };
+
 let relative_path = (dir, filename) => {
   let relative = FilePath.make_relative(dir, filename);
   if (relative == "") {
     filename;
   } else {
-    relative
+    relative;
   };
 };
 
@@ -80,4 +87,42 @@ let copy_file = (~source, ~target, ()): Lwt.t(unit) => {
   let%lwt () = Lwt_io.close(targetFile);
 
   Lwt.return();
+};
+
+let rec rmdir = dir => {
+  let%lwt files = Lwt_stream.to_list(Lwt_unix.files_of_directory(dir));
+  let%lwt () =
+    Lwt_list.iter_s(
+      filename =>
+        switch (filename) {
+        | "."
+        | ".." => Lwt.return_unit
+        | _ =>
+          let path = abs_path(dir, filename);
+          switch%lwt (Lwt_unix.stat(path)) {
+          | {st_kind: Lwt_unix.S_DIR, _} => rmdir(path)
+          | _ => Lwt_unix.unlink(path)
+          };
+        },
+      files,
+    );
+  Lwt_unix.rmdir(dir);
+};
+
+let makeTempDir = parent => {
+  Random.self_init();
+  let rec makeDir = () => {
+    let path =
+      abs_path(
+        parent,
+        ".fpack-" ++ Int64.(to_string(Random.int64(max_int))),
+      );
+    switch%lwt (stat_option(path)) {
+    | None =>
+      let%lwt () = makedirs(path);
+      Lwt.return(path);
+    | Some(_) => makeDir()
+    };
+  };
+  makeDir();
 };

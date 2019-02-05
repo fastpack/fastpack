@@ -105,6 +105,7 @@ type t = {
   nodeModulesPaths: list(string),
   outputDir: string,
   outputFilename: string,
+  publicPath: string,
   postprocess: list(string),
   preprocess: list(Preprocessor.t),
   projectRootDir: string,
@@ -118,6 +119,7 @@ let create =
       ~entryPoints,
       ~outputDir,
       ~outputFilename,
+      ~publicPath,
       ~mode,
       ~mock,
       ~nodeModulesPaths,
@@ -172,6 +174,7 @@ let create =
     nodeModulesPaths,
     outputDir,
     outputFilename,
+    publicPath,
     postprocess,
     preprocess,
     projectRootDir,
@@ -192,6 +195,7 @@ let term = {
         nodeModulesPaths,
         outputDir,
         outputFilename,
+        publicPath,
         postprocess,
         preprocess,
         projectRootDir,
@@ -208,6 +212,7 @@ let term = {
       ~nodeModulesPaths,
       ~outputDir,
       ~outputFilename,
+      ~publicPath,
       ~postprocess,
       ~preprocess=List.map(snd, preprocess),
       ~projectRootDir,
@@ -240,6 +245,17 @@ let term = {
     let docv = "NAME";
     Arg.(
       value & opt(string, "index.js") & info(["n", "name"], ~docv, ~doc)
+    );
+  };
+
+  let publicPathT = {
+    let doc =
+      "URL prefix to download the static assests and JavaScript chunks at runtime. "
+      ++ "Points to the same location as --output-dir.";
+
+    let docv = "URL";
+    Arg.(
+      value & opt(string, "") & info(["public-path"], ~docv, ~doc)
     );
   };
 
@@ -370,6 +386,7 @@ let term = {
     $ nodeModulesPathsT
     $ outputDirT
     $ outputFilenameT
+    $ publicPathT
     $ postprocessT
     $ preprocessT
     $ projectRootDirT

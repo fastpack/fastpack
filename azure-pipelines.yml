@@ -34,7 +34,7 @@ jobs:
       versionSpec: '8.9'
   - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
-  - script: npm install -g yarn
+  - script: npm install -g yarn@1.12.3
     displayName: install Yarn
   - script: npm install -g esy@0.4.9
     displayName: install esy
@@ -62,7 +62,7 @@ jobs:
       versionSpec: '8.9'
   - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
-  - script: npm install -g yarn
+  - script: npm install -g yarn@1.12.3
     displayName: install Yarn
   - script: npm install -g esy@0.4.9
     displayName: install esy
@@ -86,7 +86,7 @@ jobs:
     continueOnError: true
   - task: PublishBuildArtifacts@1
     inputs:
-      artifactName: 'vendor-windows-fpack.exe'
+      artifactName: 'vendor-win32-fpack.exe'
       pathToPublish: '_build/default/bin/fpack.exe'
 
 - job: Package
@@ -94,7 +94,7 @@ jobs:
   - Linux
   - MacOS
   - Windows
-  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  condition: succeeded()
   pool:
     vmImage: 'Ubuntu 16.04'
   steps:
@@ -115,14 +115,18 @@ jobs:
   - task: DownloadBuildArtifacts@0
     displayName: download windows binary
     inputs:
-      artifactName: 'vendor-windows-fpack.exe'
+      artifactName: 'vendor-win32-fpack.exe'
       downloadPath: .
-  - script: cp -R vendor-windows-fpack.exe/fpack.exe dist/vendor-windows
+  - script: cp -R vendor-win32-fpack.exe/fpack.exe dist/vendor-win32
     displayName: copy windows binary
   - script: cp -R node-service dist
     displayName: copy node-service
+  - script: chmod +x dist/vendor-*/*.exe
+    displayName: add executable permissions
+  - script: "cp -R dist fpack && tar -czf fpack.tgz fpack"
+    displayName: create *.tgz to keep permissions
   - task: PublishBuildArtifacts@1
     inputs:
-      artifactName: fpack
-      pathToPublish: dist
+      artifactName: fpack.tgz
+      pathToPublish: fpack.tgz
 

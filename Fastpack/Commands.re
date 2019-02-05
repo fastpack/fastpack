@@ -82,6 +82,78 @@ module Build = {
     ));
 };
 
+module Transpile = {
+  let run = (filename: string) =>
+    Lwt_main.run(
+      {
+        let all_transpilers =
+          FastpackTranspiler.[
+            ReactJSX.transpile,
+            StripFlow.transpile,
+            Class.transpile,
+            ObjectSpread.transpile,
+          ];
+        let%lwt source = Lwt_io.(with_file(~mode=Input, filename, read));
+        /* let%lwt (transpiled, _, _) = Preprocessor.builtin(Some(source)); */
+        let t = Unix.gettimeofday();
+        let (program, _) = FastpackUtil.Parser.parse_source(source);
+        let%lwt () =
+          Lwt_io.(
+            write_line(
+              stdout,
+              Printf.sprintf("Parse: %3.3f", Unix.gettimeofday() -. t),
+            )
+          );
+        let (_transpiled, parsed) =
+          FastpackTranspiler.transpile(all_transpilers, program);
+        let%lwt () =
+          Lwt_io.(
+            write_line(
+              stdout,
+              Printf.sprintf("Transpile: %3.3f", Unix.gettimeofday() -. t),
+            )
+          );
+        let%lwt () =
+          Lwt_io.(
+            write_line(
+              stdout,
+              FastpackTranspiler.runtime
+            )
+          );
+        switch (parsed) {
+        | Some(_) =>
+          Lwt_io.(
+            write_line(
+              stdout,
+              Printf.sprintf("Not modified %3.3f", Unix.gettimeofday() -. t),
+            )
+          )
+        | None =>
+          Lwt_io.(
+            write_line(
+              stdout,
+              Printf.sprintf("Modified %3.3f", Unix.gettimeofday() -. t),
+            )
+          )
+        };
+        /* Lwt_io.(write_line(stdout, transpiled)); */
+      },
+    );
+
+  let filenameT = {
+    let doc = "Filename";
+
+    let docv = "FILENAME";
+    Arg.(required & pos(0, some(string), None) & info([], ~docv, ~doc));
+  };
+  let doc = "transpile one file using the builtin transpiler";
+  let command =
+    register((
+      Term.(const(run) $ filenameT),
+      Term.info("transpile", ~doc, ~sdocs, ~exits),
+    ));
+};
+
 module Watch = {
   let run = (options: Config.t) =>
     run(options.debug, () =>
@@ -101,14 +173,13 @@ module Watch = {
 };
 
 module Worker = {
-  let run = (options: Config.t) => {
-    let {Config.projectRootDir: project_root, outputDir: output_dir, _} = options;
-    Lwt_main.run(Worker.start(~project_root, ~output_dir, ()));
+  let run = () => {
+    Lwt_main.run(Worker.start());
   };
   let doc = "worker subprocess (do not use directly)";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term)),
+      Term.(const(run) $ const(())),
       Term.info("worker", ~doc, ~sdocs, ~exits),
     ));
 };
