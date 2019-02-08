@@ -417,14 +417,10 @@ let runtimeChunk = "window.__fastpack_update_modules__";
 
 let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => {
   let _st = start_time;
-  let%lwt dep_map = DependencyGraph.to_dependency_map(ctx.graph);
-  let exportFinder = ExportFinder.make();
-
-  let ensure_export_exists = (m: Module.t, name) =>
-    switch (exportFinder.exists(dep_map, m, name)) {
-    | ExportFinder.Yes
-    | ExportFinder.Maybe => ()
-    | ExportFinder.No =>
+  let%lwt exportFinder = ExportFinder.make(ctx.graph);
+  let ensure_exports = (m: Module.t) =>
+    switch (ExportFinder.ensure_exports(m, exportFinder)) {
+    | Some((m, name)) =>
       let location_str =
         Module.location_to_string(
           ~base_dir=Some(ctx.current_dir),
@@ -434,32 +430,9 @@ let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => 
       raise(
         Context.PackError(ctx, CannotFindExportedName(name, location_str)),
       );
+    | None => ()
     };
 
-  let ensure_exports = (m: Module.t) =>
-    m.scope
-    |> Scope.bindings
-    |> List.iter(((_, binding)) =>
-         switch (binding) {
-         | {Scope.typ: Scope.Import({remote: Some(remote), source}), _} =>
-           let dep = {
-             Module.Dependency.request: source,
-             requested_from: m.location,
-           };
-           switch (Module.DependencyMap.get(dep, dep_map)) {
-           | None =>
-             failwith(
-               "Something is extremely wrong: resolution error "
-               ++ source
-               ++ " "
-               ++ Module.location_to_string(m.location),
-             )
-           | Some(m) => ensure_export_exists(m, remote)
-           };
-
-         | _ => ()
-         }
-       );
   Logs.debug(x => x("FOLDING CHUNKS"));
   Bundle.foldChunks(
     ((emittedFiles, emittedModules), (chunkName, chunk: Bundle.chunk)) => {

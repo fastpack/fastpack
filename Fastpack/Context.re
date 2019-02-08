@@ -6,7 +6,6 @@ type t = {
   entry_location: Module.location,
   current_location: Module.location,
   resolver: Resolver.t,
-  preprocessor: Preprocessor.t,
   reader: Worker.Reader.t,
   cache: Cache.t,
   graph: DependencyGraph.t,

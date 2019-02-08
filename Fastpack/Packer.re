@@ -11,7 +11,6 @@ type t = {
   cache_report: string,
   project_package: Package.t,
   reporter: Reporter.t,
-  preprocessor: Preprocessor.t,
 };
 type packResult = result(Context.t, Context.t);
 
@@ -37,15 +36,6 @@ let make = (~reporter=None, config: Config.t) => {
   let entry_location = Module.Main(entry_points);
 
   let%lwt tmpOutputDir = FS.makeTempDir(Filename.dirname(config.outputDir));
-
-  /* preprocessor */
-  let%lwt preprocessor =
-    Preprocessor.make(
-      ~project_root=config.projectRootDir,
-      ~current_dir,
-      ~output_dir=tmpOutputDir,
-      (),
-    );
 
   let reader =
     Worker.Reader.make(
@@ -130,7 +120,6 @@ let make = (~reporter=None, config: Config.t) => {
     cache_report,
     project_package,
     reporter,
-    preprocessor,
   });
 };
 
@@ -177,7 +166,6 @@ let rec pack =
     current_location:
       CCOpt.get_or(~default=packer.entry_location, current_location),
     resolver,
-    preprocessor: packer.preprocessor,
     reader: packer.reader,
     graph:
       switch (graph) {
@@ -263,8 +251,7 @@ let rec pack =
 };
 
 let finalize = packer => {
-  let {preprocessor, reader, _} = packer;
-  let%lwt () = Preprocessor.finalize(preprocessor);
+  let {reader, _} = packer;
   let%lwt () = Worker.Reader.finalize(reader);
   Lwt.return_unit;
 };
