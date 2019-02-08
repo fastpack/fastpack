@@ -5,11 +5,9 @@ type t = {
   tmpOutputDir: string,
   entry_location: Module.location,
   current_location: Module.location,
-  stack: list(Module.Dependency.t),
   resolver: Resolver.t,
   preprocessor: Preprocessor.t,
   reader: Worker.Reader.t,
-  export_finder: ExportFinder.t,
   cache: Cache.t,
   graph: DependencyGraph.t,
 };

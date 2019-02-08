@@ -176,11 +176,9 @@ let rec pack =
     entry_location: packer.entry_location,
     current_location:
       CCOpt.get_or(~default=packer.entry_location, current_location),
-    stack: [],
     resolver,
     preprocessor: packer.preprocessor,
     reader: packer.reader,
-    export_finder: ExportFinder.make(),
     graph:
       switch (graph) {
       | None => DependencyGraph.empty()

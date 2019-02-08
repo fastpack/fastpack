@@ -19,132 +19,6 @@ module Bundle = {
     dependencies: list(string),
   };
 
-  let empty = () => {
-    locationToChunk: Hashtbl.create(5000),
-    chunks: Hashtbl.create(500),
-    chunkDependency: Hashtbl.create(500),
-  };
-
-  let nextChunkName = bundle => {
-    let length = Hashtbl.length(bundle.chunks);
-    length > 0 ? string_of_int(length) ++ ".js" : "";
-  };
-
-  let updateLocationHash =
-      (modules: list(Module.t), chunkName: chunkName, bundle: t) =>
-    List.iter(
-      m =>
-        /* let loc = Module.location_to_string(m.Module.location); */
-        /* let cn = */
-        /*   switch (chunkName) { */
-        /*   | Named(name) => name */
-        /*   | Main => "main" */
-        /*   }; */
-        /* Logs.debug(x => x("Module %s => %s", loc, cn)); */
-        Hashtbl.replace(bundle.locationToChunk, m.Module.location, chunkName),
-      modules,
-    );
-
-  let splitChunk = (name: string, modules: list(Module.t), bundle: t) => {
-    Logs.debug(x => x("Split chunk: %s", name));
-    switch (Hashtbl.find_all(bundle.chunks, Named(name))) {
-    | [{modules: chunkModules, dependencies, _}] =>
-      let modulesLocationSet =
-        MLSet.of_list(List.map(m => m.Module.location, modules));
-      let chunkModules =
-        List.filter(
-          m => !MLSet.mem(m.Module.location, modulesLocationSet),
-          chunkModules,
-        );
-      switch (chunkModules) {
-      | [] => (bundle, name)
-      | chunkModules =>
-        /* add new chunk */
-        let newName = nextChunkName(bundle);
-        Hashtbl.replace(
-          bundle.chunks,
-          Named(newName),
-          {name: newName, modules, dependencies: []},
-        );
-        updateLocationHash(modules, Named(newName), bundle);
-        /* modify old chunk */
-        Hashtbl.replace(
-          bundle.chunks,
-          Named(name),
-          {
-            name,
-            modules: chunkModules,
-            dependencies: [newName, ...dependencies],
-          },
-        );
-        updateLocationHash(chunkModules, Named(name), bundle);
-        (bundle, newName);
-      };
-    | _ => failwith("One chunk is expected")
-    };
-  };
-
-  let addNamedChunk = (name: string, modules: list(Module.t), bundle: t) => {
-    /* 0. add new chunk right away */
-    Hashtbl.replace(
-      bundle.chunks,
-      Named(name),
-      {name, modules: [], dependencies: []},
-    );
-    let nextGroup =
-      List.fold_left(
-        ((groupName, group, rest), m) =>
-          switch (
-            Hashtbl.find_all(bundle.locationToChunk, m.Module.location),
-            groupName,
-          ) {
-          | ([], _) => (groupName, group, [m, ...rest])
-          | ([Named(name)], None) => (Some(name), [m, ...group], rest)
-          | ([Named(name)], Some(groupName)) =>
-            name == groupName ?
-              (Some(groupName), [m, ...group], rest) :
-              (Some(groupName), group, [m, ...rest])
-          | ([Main], _) => failwith("Cannot split main chunk")
-          | _ => failwith("Module references more than 1 chunk")
-          },
-        (None, [], []),
-      );
-    let rec splitModules = (modules: list(Module.t), bundle: t) => {
-      let (name, group, rest) = nextGroup(modules);
-      switch (name) {
-      | Some(name) =>
-        let (bundle, newChunk) = splitChunk(name, group, bundle);
-        let (bundle, rest, dependencies) = splitModules(rest, bundle);
-        (bundle, rest, [newChunk, ...dependencies]);
-      | None => (bundle, rest, [])
-      };
-    };
-    let (bundle, modules, dependencies) = splitModules(modules, bundle);
-    Hashtbl.replace(
-      bundle.chunks,
-      Named(name),
-      {name, modules, dependencies},
-    );
-    updateLocationHash(modules, Named(name), bundle);
-    (Named(name), bundle);
-  };
-
-  let addMainChunk = (modules: list(Module.t), bundle: t) => {
-    Hashtbl.replace(
-      bundle.chunks,
-      Main,
-      {name: "", modules, dependencies: []},
-    );
-    updateLocationHash(modules, Main, bundle);
-    (Main, bundle);
-  };
-
-  let addChunk = (modules: list(Module.t), bundle: t) => {
-    let name = nextChunkName(bundle);
-    name == "" ?
-      addMainChunk(modules, bundle) : addNamedChunk(name, modules, bundle);
-  };
-
   type chunkRequest = {
     depRequest: Module.Dependency.t,
     toLocation: Module.location,
@@ -211,32 +85,148 @@ module Bundle = {
   };
 
   let make = (graph: DependencyGraph.t, entry: Module.location) => {
-    let rec make' =
-            (~chunkReqMap=MDM.empty, ~seen=MLSet.empty, ~location, bundle) => {
+    let bundle = {
+      locationToChunk: Hashtbl.create(5000),
+      chunks: Hashtbl.create(500),
+      chunkDependency: Hashtbl.create(500),
+    };
+
+    let nextChunkName = () => {
+      let length = Hashtbl.length(bundle.chunks);
+      length > 0 ? string_of_int(length) ++ ".js" : "";
+    };
+
+    let updateLocationHash = (modules: list(Module.t), chunkName: chunkName) =>
+      List.iter(
+        m =>
+          Hashtbl.replace(
+            bundle.locationToChunk,
+            m.Module.location,
+            chunkName,
+          ),
+        modules,
+      );
+
+    let splitChunk = (name: string, modules: list(Module.t)) => {
+      Logs.debug(x => x("Split chunk: %s", name));
+      switch (Hashtbl.find_all(bundle.chunks, Named(name))) {
+      | [{modules: chunkModules, dependencies, _}] =>
+        let modulesLocationSet =
+          MLSet.of_list(List.map(m => m.Module.location, modules));
+        let chunkModules =
+          List.filter(
+            m => !MLSet.mem(m.Module.location, modulesLocationSet),
+            chunkModules,
+          );
+        switch (chunkModules) {
+        | [] => name
+        | chunkModules =>
+          /* add new chunk */
+          let newName = nextChunkName();
+          Hashtbl.replace(
+            bundle.chunks,
+            Named(newName),
+            {name: newName, modules, dependencies: []},
+          );
+          updateLocationHash(modules, Named(newName));
+          /* modify old chunk */
+          Hashtbl.replace(
+            bundle.chunks,
+            Named(name),
+            {
+              name,
+              modules: chunkModules,
+              dependencies: [newName, ...dependencies],
+            },
+          );
+          updateLocationHash(chunkModules, Named(name));
+          newName;
+        };
+      | _ => failwith("One chunk is expected")
+      };
+    };
+
+    let addMainChunk = (modules: list(Module.t)) => {
+      Hashtbl.replace(
+        bundle.chunks,
+        Main,
+        {name: "", modules, dependencies: []},
+      );
+      updateLocationHash(modules, Main);
+      Main;
+    };
+
+    let addNamedChunk = (name: string, modules: list(Module.t)) => {
+      /* 0. add new chunk right away */
+      Hashtbl.replace(
+        bundle.chunks,
+        Named(name),
+        {name, modules: [], dependencies: []},
+      );
+      let nextGroup =
+        List.fold_left(
+          ((groupName, group, rest), m) =>
+            switch (
+              Hashtbl.find_all(bundle.locationToChunk, m.Module.location),
+              groupName,
+            ) {
+            | ([], _) => (groupName, group, [m, ...rest])
+            | ([Named(name)], None) => (Some(name), [m, ...group], rest)
+            | ([Named(name)], Some(groupName)) =>
+              name == groupName ?
+                (Some(groupName), [m, ...group], rest) :
+                (Some(groupName), group, [m, ...rest])
+            | ([Main], _) => failwith("Cannot split main chunk")
+            | _ => failwith("Module references more than 1 chunk")
+            },
+          (None, [], []),
+        );
+      let rec splitModules = (modules: list(Module.t)) => {
+        let (name, group, rest) = nextGroup(modules);
+        switch (name) {
+        | Some(name) =>
+          let newChunk = splitChunk(name, group);
+          let (rest, dependencies) = splitModules(rest);
+          (rest, [newChunk, ...dependencies]);
+        | None => (rest, [])
+        };
+      };
+      let (modules, dependencies) = splitModules(modules);
+      Hashtbl.replace(
+        bundle.chunks,
+        Named(name),
+        {name, modules, dependencies},
+      );
+      updateLocationHash(modules, Named(name));
+      Named(name);
+    };
+
+    let addChunk = (modules: list(Module.t)) => {
+      let name = nextChunkName();
+      name == "" ? addMainChunk(modules) : addNamedChunk(name, modules);
+    };
+
+    let rec make' = (~chunkReqMap=MDM.empty, ~seen=MLSet.empty, location) => {
       Logs.debug(x => x("Make chunk"));
       let%lwt (modules, chunkRequests, seen) =
         makeChunk(graph, location, seen);
-      Logs.debug(x => x("Make chunk done"));
-      let (chunkName, bundle) = addChunk(modules, bundle);
-      let%lwt (chunkReqMap, bundle) =
+      let chunkName = addChunk(modules);
+      let%lwt chunkReqMap =
         Lwt_list.fold_left_s(
-          ((chunkReqMap, bundle), {depRequest, toLocation: location}) => {
-            let%lwt (chunkName, chunkReqMap, bundle) =
-              make'(~chunkReqMap, ~seen, ~location, bundle);
-            Lwt.return((
-              MDM.add(depRequest, chunkName, chunkReqMap),
-              bundle,
-            ));
+          (chunkReqMap, {depRequest, toLocation: location}) => {
+            let%lwt (chunkName, chunkReqMap) =
+              make'(~chunkReqMap, ~seen, location);
+            Lwt.return(MDM.add(depRequest, chunkName, chunkReqMap));
           },
-          (chunkReqMap, bundle),
+          chunkReqMap,
           List.filter(
             ({toLocation, _}) => !MLSet.mem(toLocation, seen),
             chunkRequests,
           ),
         );
-      Lwt.return((chunkName, chunkReqMap, bundle));
+      Lwt.return((chunkName, chunkReqMap));
     };
-    let%lwt (_, chunkReqMap, bundle) = make'(~location=entry, empty());
+    let%lwt (_, chunkReqMap) = make'(entry);
     Lwt.return((chunkReqMap, bundle));
   };
 
@@ -428,9 +418,10 @@ let runtimeChunk = "window.__fastpack_update_modules__";
 let run = (~start_time, ~bundle, ~chunkRequests, ~withChunk, ctx: Context.t) => {
   let _st = start_time;
   let%lwt dep_map = DependencyGraph.to_dependency_map(ctx.graph);
+  let exportFinder = ExportFinder.make();
 
   let ensure_export_exists = (m: Module.t, name) =>
-    switch (ctx.export_finder.exists(dep_map, m, name)) {
+    switch (exportFinder.exists(dep_map, m, name)) {
     | ExportFinder.Yes
     | ExportFinder.Maybe => ()
     | ExportFinder.No =>
