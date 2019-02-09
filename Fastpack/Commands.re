@@ -1,3 +1,6 @@
+module Process = FastpackUtil.Process;
+module FS = FastpackUtil.FS;
+module StringSet = Set.Make(CCString);
 open Cmdliner;
 
 let exits = Term.default_exits;
@@ -40,6 +43,46 @@ let register = cmd => {
   cmd;
 };
 
+let reportResult = (start_time, result, builder) =>
+  switch (result) {
+  | Error({Builder.reason, _}) =>
+    raise(
+      Context.ExitError(
+        Context.errorToString(builder.Builder.current_dir, reason),
+      ),
+    )
+  | Ok(bundle) =>
+    let cache = builder.Builder.cache;
+    let size = ScopedEmitter.Bundle.getTotalSize(bundle);
+    let modules = DependencyGraph.length(bundle.ScopedEmitter.Bundle.graph);
+    let pretty_size =
+      Printf.(
+        if (size >= 1048576) {
+          sprintf("%.2fMb", float_of_int(size) /. 1048576.0);
+        } else if (size >= 1024) {
+          sprintf(
+            "%dKb",
+            float_of_int(size) /. 1024.0 +. 0.5 |> floor |> int_of_float,
+          );
+        } else {
+          sprintf("%db", size);
+        }
+      );
+    let report =
+      Printf.sprintf(
+        "Packed in %.3fs. Bundle: %s. Modules: %d. Cache: %s.\n",
+        Unix.gettimeofday() -. start_time,
+        pretty_size,
+        modules,
+        switch (builder.Builder.config.cache, Cache.isLoadedEmpty(cache)) {
+        | (Config.Cache.Disable, _) => "disabled"
+        | (Config.Cache.Use, true) => "empty"
+        | (Config.Cache.Use, false) => "used"
+        },
+      );
+    Lwt_io.(write(stdout, report));
+  };
+
 module Build = {
   let run = (options: Config.t, dryRun: bool) =>
     run(options.debug, () =>
@@ -49,55 +92,14 @@ module Build = {
           let%lwt builder = Builder.make(options);
 
           Lwt.finalize(
-            () =>
-              switch%lwt (Builder.build(~dryRun, builder)) {
-              | Error({Builder.reason, _}) =>
-                raise(
-                  Context.ExitError(
-                    Context.errorToString(
-                      builder.Builder.current_dir,
-                      reason,
-                    ),
-                  ),
-                )
-              | Ok(bundle) =>
-                let cache = builder.Builder.cache;
-                let size = ScopedEmitter.Bundle.getTotalSize(bundle);
-                let modules =
-                  DependencyGraph.length(bundle.ScopedEmitter.Bundle.graph);
-                let pretty_size =
-                  Printf.(
-                    if (size >= 1048576) {
-                      sprintf("%.2fMb", float_of_int(size) /. 1048576.0);
-                    } else if (size >= 1024) {
-                      sprintf(
-                        "%dKb",
-                        float_of_int(size)
-                        /. 1024.0
-                        +. 0.5
-                        |> floor
-                        |> int_of_float,
-                      );
-                    } else {
-                      sprintf("%db", size);
-                    }
-                  );
-                let report =
-                  Printf.sprintf(
-                    "Packed in %.3fs. Bundle: %s. Modules: %d. Cache: %s.\n",
-                    Unix.gettimeofday() -. start_time,
-                    pretty_size,
-                    modules,
-                    switch (builder.Builder.config.cache, Cache.isLoadedEmpty(cache)) {
-                    | (Config.Cache.Disable, _) => "disabled"
-                    | (Config.Cache.Use, true) => "empty"
-                    | (Config.Cache.Use, false) => "used"
-                    },
-                  );
-                let%lwt () = Lwt_io.(write(stdout, report));
-
-                Cache.save(cache);
-              },
+            () => {
+              let%lwt result = Builder.build(~dryRun, builder);
+              let%lwt () = reportResult(start_time, result, builder);
+              switch (result) {
+              | Ok(_) => Cache.save(builder.Builder.cache)
+              | _ => Lwt.return_unit
+              };
+            },
             () => Builder.finalize(builder),
           );
         },
@@ -184,12 +186,156 @@ module Transpile = {
 };
 
 module Watch = {
+  module Watchman = {
+    type t = {
+      root: string,
+      process: Process.t,
+      filterFilename: string => bool,
+    };
+
+    let make = (root, filterFilename) => {
+      let subscription = Printf.sprintf("s-%f", Unix.gettimeofday());
+      let subscribe_message =
+        `List([
+          `String("subscribe"),
+          `String(root),
+          `String(subscription),
+          `Assoc([("fields", `List([`String("name")]))]),
+        ])
+        |> Yojson.to_string;
+
+      let cmd = [|"watchman", "--no-save-state", "-j", "--no-pretty", "-p"|];
+      let process = Process.start(cmd);
+      /* TODO: validate if process is started at all */
+      let%lwt () = Process.write(subscribe_message ++ "\n", process);
+      let%lwt _ = Process.readLine(process);
+      /* TODO: validate answer */
+      /*{"version":"4.9.0","subscribe":"mysubscriptionname","clock":"c:1523968199:68646:1:95"}*/
+      /* this line is ignored, receiving possible files */
+      let%lwt _ = Process.readLine(process);
+      Lwt.return({root, filterFilename, process});
+    };
+
+    let rec getFiles = (watchman: t) => {
+      let%lwt line = Process.readLine(watchman.process);
+      open Yojson.Safe.Util;
+      let data = Yojson.Safe.from_string(line);
+      let root = member("root", data) |> to_string;
+      let files =
+        member("files", data)
+        |> to_list
+        |> List.map(to_string)
+        |> List.map(filename => FS.abs_path(root, filename))
+        |> List.filter(watchman.filterFilename)
+        |> List.fold_left(
+             (set, filename) => StringSet.add(filename, set),
+             StringSet.empty,
+           );
+      if (files == StringSet.empty) {
+        getFiles(watchman);
+      } else {
+        Lwt.return(files);
+      };
+    };
+
+    let finalize = watchman => Process.finalize(watchman.process);
+  };
   let run = (options: Config.t) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
-          let%lwt {Watcher.watch, finalize} = Watcher.make(options);
-          Lwt.finalize(watch, finalize);
+          let start_time = Unix.gettimeofday();
+          let%lwt builder = Builder.make(options);
+          let%lwt result = Builder.build(builder);
+          let%lwt () = reportResult(start_time, result, builder);
+          let%lwt watchman =
+            Watchman.make(
+              options.projectRootDir,
+              Builder.getFilenameFilter(builder),
+            );
+
+          let lastResult = ref(result);
+          let lastResultCacheDumped = ref(None);
+          let dumpCache = () =>
+            switch (lastResult^) {
+            | Ok(_) =>
+              let dump = result => {
+                let%lwt () = Cache.save(builder.Builder.cache);
+                lastResultCacheDumped := Some(result);
+                Lwt.return_unit;
+              };
+              switch (lastResultCacheDumped^) {
+              | None => dump(lastResult^)
+              | Some(lastResultCacheDumped) =>
+                if (lastResult^ !== lastResultCacheDumped) {
+                  dump(lastResult^);
+                } else {
+                  Lwt.return_unit;
+                }
+              };
+            | Error(_) => Lwt.return_unit
+            };
+
+          let rec tryRebuilding = (files, prevResult) => {
+            let%lwt nextResult =
+              Lwt.pick([
+                {
+                  let%lwt files = Watchman.getFiles(watchman);
+                  `FilesChanged(files) |> Lwt.return;
+                },
+                {
+                  let%lwt result =
+                    Builder.rebuild(
+                      ~filesChanged=files,
+                      ~prevResult,
+                      builder,
+                    );
+                  `Rebuilt(result) |> Lwt.return;
+                },
+              ]);
+            switch (nextResult) {
+            | `FilesChanged(newFiles) =>
+              tryRebuilding(StringSet.union(files, newFiles), prevResult)
+            | `Rebuilt(result) => Lwt.return(result)
+            };
+          };
+
+          let rec watch = result => {
+            let%lwt files = Watchman.getFiles(watchman);
+            let start_time = Unix.gettimeofday();
+            switch%lwt (
+              Builder.shouldRebuild(
+                ~filesChanged=files,
+                ~prevResult=result,
+                builder,
+              )
+            ) {
+            | None => watch(result)
+            | Some(_) =>
+              let%lwt result = tryRebuilding(files, result);
+              lastResult := result;
+              let%lwt () = reportResult(start_time, result, builder);
+              watch(result);
+            };
+          };
+
+          /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
+           * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
+           * */
+          let (w, u) = Lwt.wait();
+          let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
+          Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
+          Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
+          Lwt.Infix.(
+            Lwt.finalize(
+              () => watch(result) <&> FS.setInterval(5., dumpCache) <?> w,
+              () => {
+                let%lwt () = Watchman.finalize(watchman);
+                let%lwt () = Builder.finalize(builder);
+                Lwt.return_unit;
+              },
+            )
+          );
         },
       )
     );

@@ -213,9 +213,9 @@ let rec build =
   );
 };
 
-let rebuild = (~filesChanged, ~prevResult, builder) =>
+let shouldRebuild = (~filesChanged, ~prevResult, builder: t) =>
   switch (StringSet.elements(filesChanged)) {
-  | [] => Lwt.return(prevResult)
+  | [] => Lwt.return_none
   | _ =>
     StringSet.iter(
       f => Cache.File.invalidate(f, builder.cache),
@@ -228,32 +228,48 @@ let rebuild = (~filesChanged, ~prevResult, builder) =>
       | Error({filesWatched, _}) => filesWatched
       };
     switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
-    | [] => Lwt.return(prevResult)
-    | filesMatched =>
-      let (run, prevRun) =
-        switch (prevResult) {
-        | Error(_) => (true, None)
-        | Ok(bundle) =>
-          switch (
-            DependencyGraph.get_changed_module_locations(
-              bundle.ScopedEmitter.Bundle.graph,
-              filesMatched,
-            )
-            |> Module.LocationSet.elements
-          ) {
-          | [] => (false, None)
-          | [location] =>
-            DependencyGraph.remove_module(
-              bundle.ScopedEmitter.Bundle.graph,
-              location,
-            );
-            (true, Some({bundle, startLocation: location}));
-          | _ => (true, None)
-          }
-        };
-      run ? build(~filesWatched, ~prevRun, builder) : Lwt.return(prevResult);
+    | [] => Lwt.return_none
+    | filesMatched => Lwt.return_some((filesWatched, filesMatched))
     };
   };
+
+/* TODO: refactor to not call shouldRebuild twice */
+let rebuild = (~filesChanged, ~prevResult, builder) =>
+  switch%lwt (shouldRebuild(~filesChanged, ~prevResult, builder)) {
+  | None => Lwt.return(prevResult)
+  | Some((filesWatched, filesMatched)) =>
+    let (run, prevRun) =
+      switch (prevResult) {
+      | Error(_) => (true, None)
+      | Ok(bundle) =>
+        switch (
+          DependencyGraph.get_changed_module_locations(
+            bundle.ScopedEmitter.Bundle.graph,
+            filesMatched,
+          )
+          |> Module.LocationSet.elements
+        ) {
+        | [] => (false, None)
+        | [location] =>
+          DependencyGraph.remove_module(
+            bundle.ScopedEmitter.Bundle.graph,
+            location,
+          );
+          (true, Some({bundle, startLocation: location}));
+        | _ => (true, None)
+        }
+      };
+    run ? build(~filesWatched, ~prevRun, builder) : Lwt.return(prevResult);
+  };
+
+let getFilenameFilter = (builder: t) => {
+  let {config, tmpOutputDir, _} = builder;
+  filename =>
+    !FilePath.is_subdir(filename, config.outputDir)
+    && !FilePath.is_subdir(filename, tmpOutputDir)
+    && filename != tmpOutputDir
+    && filename != config.outputDir;
+};
 
 let finalize = packer => {
   let {reader, _} = packer;
