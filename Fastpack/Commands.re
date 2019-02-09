@@ -46,31 +46,66 @@ module Build = {
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let%lwt packer = Packer.make(options);
+          let%lwt builder = Builder.make(options);
 
           Lwt.finalize(
             () =>
-              switch%lwt (
-                Packer.pack(
-                  ~dryRun,
-                  ~graph=None,
-                  ~current_location=None,
-                  ~initial=true,
-                  ~start_time,
-                  packer,
+              switch%lwt (Builder.build(~dryRun, builder)) {
+              | Error({Builder.reason, _}) =>
+                raise(
+                  Context.ExitError(
+                    Context.errorToString(
+                      builder.Builder.current_dir,
+                      reason,
+                    ),
+                  ),
                 )
-              ) {
-              | Error(_) => raise(Context.ExitError(""))
-              | Ok(ctx) => Cache.save(ctx.cache)
+              | Ok(bundle) =>
+                let cache = builder.Builder.cache;
+                let size = ScopedEmitter.Bundle.getTotalSize(bundle);
+                let modules =
+                  DependencyGraph.length(bundle.ScopedEmitter.Bundle.graph);
+                let pretty_size =
+                  Printf.(
+                    if (size >= 1048576) {
+                      sprintf("%.2fMb", float_of_int(size) /. 1048576.0);
+                    } else if (size >= 1024) {
+                      sprintf(
+                        "%dKb",
+                        float_of_int(size)
+                        /. 1024.0
+                        +. 0.5
+                        |> floor
+                        |> int_of_float,
+                      );
+                    } else {
+                      sprintf("%db", size);
+                    }
+                  );
+                let report =
+                  Printf.sprintf(
+                    "Packed in %.3fs. Bundle: %s. Modules: %d. Cache: %s.\n",
+                    Unix.gettimeofday() -. start_time,
+                    pretty_size,
+                    modules,
+                    switch (builder.Builder.config.cache, Cache.isLoadedEmpty(cache)) {
+                    | (Config.Cache.Disable, _) => "disabled"
+                    | (Config.Cache.Use, true) => "empty"
+                    | (Config.Cache.Use, false) => "used"
+                    },
+                  );
+                let%lwt () = Lwt_io.(write(stdout, report));
+
+                Cache.save(cache);
               },
-            () => Packer.finalize(packer),
+            () => Builder.finalize(builder),
           );
         },
       )
     );
 
   let dryRunT = {
-    let doc = "Run all the build operations without storing the bundle in the file system";
+    let doc = "all the build operations without storing the bundle in the file system";
     Arg.(value & flag & info(["dry-run"], ~doc));
   };
 
@@ -113,13 +148,7 @@ module Transpile = {
               Printf.sprintf("Transpile: %3.3f", Unix.gettimeofday() -. t),
             )
           );
-        let%lwt () =
-          Lwt_io.(
-            write_line(
-              stdout,
-              FastpackTranspiler.runtime
-            )
-          );
+        let%lwt () = Lwt_io.(write_line(stdout, FastpackTranspiler.runtime));
         switch (parsed) {
         | Some(_) =>
           Lwt_io.(
@@ -173,13 +202,11 @@ module Watch = {
 };
 
 module Worker = {
-  let run = () => {
-    Lwt_main.run(Worker.start());
-  };
+  let run = () => Lwt_main.run(Worker.start());
   let doc = "worker subprocess (do not use directly)";
   let command =
     register((
-      Term.(const(run) $ const(())),
+      Term.(const(run) $ const()),
       Term.info("worker", ~doc, ~sdocs, ~exits),
     ));
 };

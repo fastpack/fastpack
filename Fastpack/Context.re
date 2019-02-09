@@ -17,3 +17,6 @@ exception ExitOK;
 
 let stringOfError = (ctx, error) =>
   Printf.sprintf("\n%s\n", Error.to_string(ctx.current_dir, error));
+
+let errorToString = (current_dir, error) =>
+  Printf.sprintf("\n%s\n", Error.to_string(current_dir, error));

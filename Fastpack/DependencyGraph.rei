@@ -48,6 +48,8 @@ let length: t => int;
 
 let modules: t => Sequence.t((Module.location, Lwt.t(Module.t)));
 
+let iterModules: (t, Module.t => Lwt.t(unit)) => Lwt.t(unit);
+
 /** Lookup module in the depgraph by id. */
 
 let lookup_module: (t, Module.location) => option(Lwt.t(Module.t));

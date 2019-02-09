@@ -169,6 +169,15 @@ let modules = graph =>
   CCHashtbl.to_seq(graph.modules)
   |> Sequence.map(((k, m)) => (k, Lazy.force(m)));
 
+let iterModules = (graph, f) =>
+  Lwt_list.iter_s(
+    ((_, m)) => {
+      let%lwt m = m;
+      f(m);
+    },
+    Sequence.to_list(modules(graph)),
+  );
+
 let ensureModule = (graph, location, makeModule) =>
   switch (lookup_module(graph, location)) {
   | Some(mPromise) => mPromise
