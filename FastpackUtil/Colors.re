@@ -8,7 +8,8 @@ type font =
   | Regular
   | Bold;
 
-let print_with_color = (~font=Regular, ~isTTY=true, str, col) => {
+let print_with_color = (~font=Regular, str, col) => {
+  let isTTY = FS.isatty(Unix.stderr);
   let col =
     switch (col) {
     | Cyan => "36"
@@ -29,3 +30,10 @@ let print_with_color = (~font=Regular, ~isTTY=true, str, col) => {
     str;
   };
 };
+
+let clearScreen = () =>
+  switch (FS.isatty(Unix.stdout)) {
+  | false => Lwt.return_unit
+  | true => let _ = Unix.system("clear"); Lwt.return_unit
+  /* Lwt_io.(write(stdout, "\\033[2J\\033[1;1H")) */
+  };

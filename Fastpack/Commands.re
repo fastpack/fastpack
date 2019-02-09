@@ -46,11 +46,8 @@ let register = cmd => {
 let reportResult = (start_time, result, builder) =>
   switch (result) {
   | Error({Builder.reason, _}) =>
-    raise(
-      Context.ExitError(
-        Context.errorToString(builder.Builder.current_dir, reason),
-      ),
-    )
+    let report = Context.errorToString(builder.Builder.current_dir, reason);
+    Lwt_io.(write(stderr, report));
   | Ok(bundle) =>
     let cache = builder.Builder.cache;
     let size = Bundle.getTotalSize(bundle);
@@ -312,6 +309,7 @@ module Watch = {
             ) {
             | None => watch(result)
             | Some(_) =>
+              let%lwt () = FastpackUtil.Colors.clearScreen();
               let%lwt result = tryRebuilding(files, result);
               lastResult := result;
               let%lwt () = reportResult(start_time, result, builder);
@@ -319,6 +317,7 @@ module Watch = {
             };
           };
 
+          Logs.debug(x => x("HERE!"));
           /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
            * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
            * */
