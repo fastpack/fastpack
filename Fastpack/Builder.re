@@ -11,7 +11,7 @@ type t = {
   project_package: Package.t,
 };
 
-type buildResult = result(ScopedEmitter.Bundle.t, error)
+type buildResult = result(Bundle.t, error)
 and error = {
   reason: Error.reason,
   filesWatched: StringSet.t,
@@ -108,7 +108,7 @@ let make = (config: Config.t) => {
 };
 
 type prevRun = {
-  bundle: ScopedEmitter.Bundle.t,
+  bundle: Bundle.t,
   startLocation: Module.location,
 };
 
@@ -145,7 +145,7 @@ let rec build =
     graph:
       switch (prevRun) {
       | None => DependencyGraph.empty()
-      | Some({bundle, _}) => bundle.ScopedEmitter.Bundle.graph
+      | Some({bundle, _}) => bundle.Bundle.graph
       },
     cache,
   };
@@ -186,10 +186,10 @@ let rec build =
           }
         );
       let%lwt bundle =
-        ScopedEmitter.Bundle.make(ctx.graph, ctx.entry_location);
+        Bundle.make(ctx.graph, ctx.entry_location);
       let%lwt () =
         dryRun ?
-          FS.rmdir(tmpOutputDir) : ScopedEmitter.Bundle.emit(ctx, bundle);
+          FS.rmdir(tmpOutputDir) : Bundle.emit(ctx, bundle);
       Lwt.return_ok(bundle);
     },
     fun
@@ -224,7 +224,7 @@ let shouldRebuild = (~filesChanged, ~prevResult, builder: t) =>
     let filesWatched =
       switch (prevResult) {
       | Ok(bundle) =>
-        DependencyGraph.get_files(bundle.ScopedEmitter.Bundle.graph)
+        DependencyGraph.get_files(bundle.Bundle.graph)
       | Error({filesWatched, _}) => filesWatched
       };
     switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
@@ -244,7 +244,7 @@ let rebuild = (~filesChanged, ~prevResult, builder) =>
       | Ok(bundle) =>
         switch (
           DependencyGraph.get_changed_module_locations(
-            bundle.ScopedEmitter.Bundle.graph,
+            bundle.Bundle.graph,
             filesMatched,
           )
           |> Module.LocationSet.elements
@@ -252,7 +252,7 @@ let rebuild = (~filesChanged, ~prevResult, builder) =>
         | [] => (false, None)
         | [location] =>
           DependencyGraph.remove_module(
-            bundle.ScopedEmitter.Bundle.graph,
+            bundle.Bundle.graph,
             location,
           );
           (true, Some({bundle, startLocation: location}));

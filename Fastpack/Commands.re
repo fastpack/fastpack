@@ -53,8 +53,8 @@ let reportResult = (start_time, result, builder) =>
     )
   | Ok(bundle) =>
     let cache = builder.Builder.cache;
-    let size = ScopedEmitter.Bundle.getTotalSize(bundle);
-    let modules = DependencyGraph.length(bundle.ScopedEmitter.Bundle.graph);
+    let size = Bundle.getTotalSize(bundle);
+    let modules = DependencyGraph.length(bundle.Bundle.graph);
     let pretty_size =
       Printf.(
         if (size >= 1048576) {

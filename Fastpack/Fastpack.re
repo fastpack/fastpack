@@ -7,13 +7,10 @@ module Context = Context;
 module Module = Module;
 module Resolver = Resolver;
 module Preprocessor = Preprocessor;
-module Reporter = Reporter;
-module Watcher = Watcher;
 module Builder = Builder;
-module ScopedEmitter = ScopedEmitter;
+module Bundle = Bundle;
 module Config = Config;
 module Commands = Commands;
-module Packer = Packer;
 module DependencyGraph = DependencyGraph;
 module Environment = Environment;
 
