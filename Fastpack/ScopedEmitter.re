@@ -138,7 +138,7 @@ if (!global.Buffer) {
   };
 
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
-})
+}) /* --runtimeMain-- */
 |},
     Yojson.to_string(`String(publicPath)),
   );
@@ -584,6 +584,12 @@ module Bundle = {
         CCHashtbl.to_list(bundle.chunks),
       );
     let _ = DependencyGraph.cleanup(bundle.graph, emittedModules);
+    let%lwt () =
+      switch%lwt (FS.stat_option(ctx.config.outputDir)) {
+      | Some({st_kind: Lwt_unix.S_DIR, _}) => FS.rmdir(ctx.config.outputDir)
+      | Some(_) => Lwt_unix.unlink(ctx.config.outputDir)
+      | None => Lwt.return_unit
+      };
     Lwt_unix.rename(ctx.tmpOutputDir, ctx.config.outputDir);
   };
 

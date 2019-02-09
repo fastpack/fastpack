@@ -111,7 +111,7 @@ if (!global.Buffer) {
   };
 
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
-})
+}) /* --runtimeMain-- */
 ({
 /* !s: transpiler-runtime */
 "$fp$runtime":{m:function(module, exports, __fastpack_require__) {

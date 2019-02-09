@@ -107,7 +107,13 @@ let make = (config: Config.t) => {
   });
 };
 
-let rec build = (~dryRun=false, ~bundle=None, ~startLocation=None, builder) => {
+type prevRun = {
+  bundle: ScopedEmitter.Bundle.t,
+  startLocation: Module.location,
+};
+
+let rec build =
+        (~dryRun=false, ~filesWatched=StringSet.empty, ~prevRun=None, builder) => {
   let {current_dir, tmpOutputDir, config, cache, _} = builder;
 
   let resolver =
@@ -130,13 +136,16 @@ let rec build = (~dryRun=false, ~bundle=None, ~startLocation=None, builder) => {
     tmpOutputDir,
     entry_location: builder.entry_location,
     current_location:
-      CCOpt.get_or(~default=builder.entry_location, startLocation),
+      switch (prevRun) {
+      | None => builder.entry_location
+      | Some({startLocation, _}) => startLocation
+      },
     resolver,
     reader: builder.reader,
     graph:
-      switch (bundle) {
+      switch (prevRun) {
       | None => DependencyGraph.empty()
-      | Some(bundle) => bundle.ScopedEmitter.Bundle.graph
+      | Some({bundle, _}) => bundle.ScopedEmitter.Bundle.graph
       },
     cache,
   };
@@ -190,10 +199,14 @@ let rec build = (~dryRun=false, ~bundle=None, ~startLocation=None, builder) => {
           location => Cache.removeModule(location, ctx.cache),
           DependencyGraph.get_module_parents(ctx.graph, location),
         );
-        build(builder);
+        build(~filesWatched, builder);
       }
     | Context.PackError(ctx, reason) => {
-        let filesWatched = DependencyGraph.get_files(ctx.graph);
+        let filesWatched =
+          StringSet.union(
+            DependencyGraph.get_files(ctx.graph),
+            filesWatched,
+          );
         Lwt.return_error({filesWatched, reason});
       }
     | exn => Lwt.fail(exn),
@@ -217,9 +230,9 @@ let rebuild = (~filesChanged, ~prevResult, builder) =>
     switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
     | [] => Lwt.return(prevResult)
     | filesMatched =>
-      let (run, bundle, startLocation) =
+      let (run, prevRun) =
         switch (prevResult) {
-        | Error(_) => (true, None, None)
+        | Error(_) => (true, None)
         | Ok(bundle) =>
           switch (
             DependencyGraph.get_changed_module_locations(
@@ -228,17 +241,17 @@ let rebuild = (~filesChanged, ~prevResult, builder) =>
             )
             |> Module.LocationSet.elements
           ) {
-          | [] => (false, None, None)
+          | [] => (false, None)
           | [location] =>
             DependencyGraph.remove_module(
               bundle.ScopedEmitter.Bundle.graph,
               location,
             );
-            (true, Some(bundle), Some(location));
-          | _ => (true, None, None)
+            (true, Some({bundle, startLocation: location}));
+          | _ => (true, None)
           }
         };
-      run ? build(~bundle, ~startLocation, builder) : Lwt.return(prevResult);
+      run ? build(~filesWatched, ~prevRun, builder) : Lwt.return(prevResult);
     };
   };
 

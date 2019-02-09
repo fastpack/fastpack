@@ -111,7 +111,7 @@ if (!global.Buffer) {
   };
 
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
-})
+}) /* --runtimeMain-- */
 ({
 /* !s: nm/package-1/babel-transpile.js */
 "NM$$babel$$_$$loader$lib$indexDOT$$js$$B$$nm$package$$_$$1$babel$$_$$transpile":{m:function(module, exports, __fastpack_require__) {

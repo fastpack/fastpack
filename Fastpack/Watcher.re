@@ -59,13 +59,6 @@ let rebuild = (~filesChanged: StringSet.t, ~packer, prev_result) => {
       };
     let%lwt newResult =
       if (runPack) {
-        /* let%lwt () = Lwt_io.with_file( */
-        /*   ~mode=Lwt_io.Output, */
-        /*   ~perm=0o644, */
-        /*   ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR], */
-        /*   "watched.txt", */
-        /*   ch => Lwt_list.iter_s(f => Lwt_io.write_line(ch, f), StringSet.elements(filesWatched)), */
-        /* ); */
         Packer.pack(
           ~current_location,
           ~graph,

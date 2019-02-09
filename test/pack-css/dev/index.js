@@ -111,7 +111,7 @@ if (!global.Buffer) {
   };
 
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
-})
+}) /* --runtimeMain-- */
 ({
 /* !s: node_modules/style-loader/lib/urls.js */
 "NM$$style$$_$$loader$lib$urls":{m:function(module, exports, __fastpack_require__) {
