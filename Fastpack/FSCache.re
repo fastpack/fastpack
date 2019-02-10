@@ -53,10 +53,18 @@ let stat = (filename, cache) => {
 
         /* not trusted entry, but we have some info */
         | Some((false, Some(entry))) =>
-          switch%lwt (Lwt_unix.stat(filename)) {
+          switch%lwt (Lwt_unix.lstat(filename)) {
           | stats =>
-            let%lwt target = FastpackUtil.FS.readlink(filename);
-            if (target == filename) {
+            switch (stats.st_kind) {
+            | Lwt_unix.S_LNK =>
+              let%lwt target = FastpackUtil.FS.readlink(filename);
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Link(target))),
+              );
+              stat'(~seen=StringSet.add(filename, seen), target);
+            | _ =>
               let content =
                 switch (entry) {
                 | Entry({stats: cachedStats, content})
@@ -69,39 +77,32 @@ let stat = (filename, cache) => {
                 (true, Some(Entry({stats, content}))),
               );
               Lwt.return(Some(stats));
-            } else {
-              Hashtbl.replace(
-                cache.entries,
-                filename,
-                (true, Some(Link(target))),
-              );
-              stat'(~seen=StringSet.add(filename, seen), target);
-            };
-
+            }
           | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
             Hashtbl.replace(cache.entries, filename, (true, None));
             Lwt.return(None);
           }
         | Some((false, None))
         | None =>
-          switch%lwt (Lwt_unix.stat(filename)) {
+          switch%lwt (Lwt_unix.lstat(filename)) {
           | stats =>
-            let%lwt target = FastpackUtil.FS.readlink(filename);
-            if (target == filename) {
-              Hashtbl.replace(
-                cache.entries,
-                filename,
-                (true, Some(Entry({stats, content: None}))),
-              );
-              Lwt.return(Some(stats));
-            } else {
+            switch (stats.st_kind) {
+            | Lwt_unix.S_LNK =>
+              let%lwt target = FastpackUtil.FS.readlink(filename);
               Hashtbl.replace(
                 cache.entries,
                 filename,
                 (true, Some(Link(target))),
               );
               stat'(~seen=StringSet.add(filename, seen), target);
-            };
+            | _ =>
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Entry({stats, content: None}))),
+              );
+              Lwt.return(Some(stats));
+            }
 
           | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
             Hashtbl.replace(cache.entries, filename, (true, None));
@@ -177,10 +178,18 @@ let read = (filename, cache) => {
           | _ => Lwt.fail(Failure("Impossible cache state: " ++ filename))
           };
         | None =>
-          switch%lwt (Lwt_unix.stat(filename)) {
+          switch%lwt (Lwt_unix.lstat(filename)) {
           | stats =>
-            let%lwt target = FastpackUtil.FS.readlink(filename);
-            if (target == filename) {
+            switch (stats.st_kind) {
+            | Lwt_unix.S_LNK =>
+              let%lwt target = FastpackUtil.FS.readlink(filename);
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Link(target))),
+              );
+              read'(~seen=StringSet.add(filename, seen), target);
+            | _ =>
               let%lwt content = readBinary(filename);
               Hashtbl.replace(
                 cache.entries,
@@ -188,14 +197,7 @@ let read = (filename, cache) => {
                 (true, Some(Entry({stats, content: Some(content)}))),
               );
               Lwt.return(Some(content));
-            } else {
-              Hashtbl.replace(
-                cache.entries,
-                filename,
-                (true, Some(Link(target))),
-              );
-              read'(~seen=StringSet.add(filename, seen), target);
-            };
+            }
 
           | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
             Hashtbl.replace(cache.entries, filename, (true, None));

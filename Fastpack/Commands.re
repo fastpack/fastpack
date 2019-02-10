@@ -341,8 +341,8 @@ for installation instructions:
             ) {
             | None => watch(result)
             | Some(_) =>
-              /* let%lwt () = Terminal.clearScreen(); */
-              let n = 30;
+              let%lwt () = Terminal.clearScreen();
+              let n = 3;
               let elements = StringSet.elements(files);
               let message =
                 "Files changed: \n"

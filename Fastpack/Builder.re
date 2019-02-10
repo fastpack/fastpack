@@ -202,10 +202,7 @@ let rec build =
       }
     | Context.PackError(_, reason) => {
         let filesWatched =
-          StringSet.union(
-            DependencyGraph.get_files(graph),
-            filesWatched,
-          );
+          StringSet.union(DependencyGraph.get_files(graph), filesWatched);
         Lwt.return_error({filesWatched, reason});
       }
     | exn => Lwt.fail(exn),
@@ -263,12 +260,23 @@ let rebuild = (~filesChanged, ~prevResult, builder) =>
   };
 
 let getFilenameFilter = (builder: t) => {
-  let {config, tmpOutputDir, _} = builder;
+  let {config, tmpOutputDir, cache, _} = builder;
+  let inCacheDir =
+    switch (Cache.getFilename(cache)) {
+    | Some(filename) =>
+      let cacheDir = FilePath.dirname(filename);
+      (
+        filename =>
+          FilePath.is_subdir(filename, cacheDir) || filename == cacheDir
+      );
+    | None => (_ => false)
+    };
   filename =>
     !FilePath.is_subdir(filename, config.outputDir)
     && !FilePath.is_subdir(filename, tmpOutputDir)
     && filename != tmpOutputDir
-    && filename != config.outputDir;
+    && filename != config.outputDir
+    && !inCacheDir(filename);
 };
 
 let finalize = packer => {

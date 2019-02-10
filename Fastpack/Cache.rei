@@ -17,6 +17,7 @@ let addModule: (Module.t, t) => unit;
 let getModule: (Module.location, t) => Lwt.t(option(Module.t));
 let removeModule: (Module.location, t) => unit;
 let save: t => Lwt.t(unit);
+let getFilename: t => option(string);
 
 module File: {
   let invalidate: (string, t) => Lwt.t(unit);

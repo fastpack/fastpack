@@ -77,7 +77,10 @@ let make = (load: load) =>
         String.concat(",", List.map(Config.Mock.to_string, mock)),
         String.concat(",", nodeModulesPaths),
         String.concat(",", resolveExtension),
-        String.concat(",", List.map(Config.Preprocessor.toString, preprocess)),
+        String.concat(
+          ",",
+          List.map(Config.Preprocessor.toString, preprocess),
+        ),
       );
     let filename =
       FilePath.concat(
@@ -190,6 +193,12 @@ let save = cache =>
           Lwt_unix.unlink(tempFile);
         },
     );
+  };
+
+let getFilename = cache =>
+  switch (cache.save) {
+  | No => None
+  | Filename(filename) => Some(filename)
   };
 
 module File = {
