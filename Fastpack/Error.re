@@ -45,8 +45,8 @@ let nodelibs = [
 let format_error_header = (~isTTY=true, ~subtitle="", (title, path)) =>
   if (isTTY) {
     (
-      Terminal.print_with_color(title, Red) ++ " " ++ subtitle,
-      Terminal.print_with_color(~font=Bold, path, Cyan),
+      Terminal.print_with_color(~color=Red, title) ++ " " ++ subtitle,
+      Terminal.print_with_color(~font=Bold, ~color=Cyan, path),
     );
   } else {
     (title ++ " " ++ subtitle, path);
@@ -100,13 +100,13 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
             );
           if (String.length(error_substring) > 0) {
             let colored_error =
-              Terminal.print_with_color(error_substring, Red);
+              Terminal.print_with_color(~color=Red, error_substring);
             Logs.debug(x =>
               x("e: %s ... colo: %s", error_substring, colored_error)
             );
             let colored_line =
               CCString.replace(~sub=error_substring, ~by=colored_error, line);
-            Terminal.print_with_color(lineNo, Red) ++ " │ " ++ colored_line;
+            Terminal.print_with_color(~color=Red, lineNo) ++ " │ " ++ colored_line;
           } else {
             line;
           };

@@ -1,20 +1,22 @@
 type color =
-  | Cyan
-  | Red
   | Black
+  | Red
+  | Green
+  | Cyan
   | White;
 
 type font =
   | Regular
   | Bold;
 
-let print_with_color = (~font=Regular, str, col) => {
+let print_with_color = (~font=Regular, ~color, str) => {
   let isTTY = FS.isatty(Unix.stderr);
   let col =
-    switch (col) {
-    | Cyan => "36"
-    | Red => "31"
+    switch (color) {
     | Black => "30"
+    | Red => "31"
+    | Green => "32"
+    | Cyan => "36"
     | White => "37"
     };
 

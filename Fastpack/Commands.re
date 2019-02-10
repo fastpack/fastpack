@@ -44,13 +44,26 @@ let register = cmd => {
   cmd;
 };
 
+let reportCache = builder => {
+  let {Builder.config, cache, _} = builder;
+  let report =
+    Printf.sprintf(
+      "Cache: %s",
+      switch (config.cache, Cache.isLoadedEmpty(cache)) {
+      | (Config.Cache.Disable, _) => "disabled"
+      | (Config.Cache.Use, true) => "empty"
+      | (Config.Cache.Use, false) => "used"
+      },
+    );
+  Lwt_io.(write_line(stdout, report));
+};
+
 let reportResult = (start_time, result, builder) =>
   switch (result) {
   | Error({Builder.reason, _}) =>
     let report = Context.errorToString(builder.Builder.current_dir, reason);
     Lwt_io.(write(stderr, report));
   | Ok(bundle) =>
-    let cache = builder.Builder.cache;
     let size = Bundle.getTotalSize(bundle);
     let modules = DependencyGraph.length(bundle.Bundle.graph);
     let pretty_size =
@@ -67,18 +80,19 @@ let reportResult = (start_time, result, builder) =>
         }
       );
     let report =
-      Printf.sprintf(
-        "Packed in %.3fs. Bundle: %s. Modules: %d. Cache: %s.\n",
-        Unix.gettimeofday() -. start_time,
-        pretty_size,
-        modules,
-        switch (builder.Builder.config.cache, Cache.isLoadedEmpty(cache)) {
-        | (Config.Cache.Disable, _) => "disabled"
-        | (Config.Cache.Use, true) => "empty"
-        | (Config.Cache.Use, false) => "used"
-        },
+      Terminal.(
+        print_with_color(
+          ~font=Bold,
+          ~color=Green,
+          Printf.sprintf(
+            "Done in %.3fs. Bundle: %s. Modules: %d.\n",
+            Unix.gettimeofday() -. start_time,
+            pretty_size,
+            modules,
+          ),
+        )
       );
-    Lwt_io.(write(stdout, report));
+    Lwt_io.(write_line(stdout, report));
   };
 
 module Build = {
@@ -88,7 +102,7 @@ module Build = {
         {
           let start_time = Unix.gettimeofday();
           let%lwt builder = Builder.make(options);
-
+          let%lwt () = reportCache(builder);
           Lwt.finalize(
             () => {
               let%lwt result = Builder.build(~dryRun, builder);
@@ -229,8 +243,8 @@ for installation instructions:
           |},
                   Terminal.print_with_color(
                     ~font=Bold,
+                    ~color=Red,
                     "Cannot start file watching service: watchman",
-                    Red,
                   ),
                   msg,
                 ),
@@ -275,6 +289,7 @@ for installation instructions:
         {
           let start_time = Unix.gettimeofday();
           let%lwt builder = Builder.make(options);
+          let%lwt () = reportCache(builder);
           let%lwt result = Builder.build(builder);
           let%lwt () = reportResult(start_time, result, builder);
           let%lwt watchman =
