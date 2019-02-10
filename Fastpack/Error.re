@@ -1,7 +1,6 @@
 module Loc = Flow_parser.Loc;
 module Scope = FastpackUtil.Scope;
-
-open FastpackUtil.Colors;
+module Terminal = FastpackUtil.Terminal;
 
 /*
    assoc list of nodejs libs and their browser implementations
@@ -46,8 +45,8 @@ let nodelibs = [
 let format_error_header = (~isTTY=true, ~subtitle="", (title, path)) =>
   if (isTTY) {
     (
-      print_with_color(title, Red) ++ " " ++ subtitle,
-      print_with_color(~font=Bold, path, Cyan),
+      Terminal.print_with_color(title, Red) ++ " " ++ subtitle,
+      Terminal.print_with_color(~font=Bold, path, Cyan),
     );
   } else {
     (title ++ " " ++ subtitle, path);
@@ -100,13 +99,14 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
               loc._end.column - loc.start.column,
             );
           if (String.length(error_substring) > 0) {
-            let colored_error = print_with_color(error_substring, Red);
+            let colored_error =
+              Terminal.print_with_color(error_substring, Red);
             Logs.debug(x =>
               x("e: %s ... colo: %s", error_substring, colored_error)
             );
             let colored_line =
               CCString.replace(~sub=error_substring, ~by=colored_error, line);
-            print_with_color(lineNo, Red) ++ " │ " ++ colored_line;
+            Terminal.print_with_color(lineNo, Red) ++ " │ " ++ colored_line;
           } else {
             line;
           };
@@ -230,7 +230,10 @@ let to_string = (package_dir, error) =>
         error_title,
         error_path,
         "",
-        String.concat("\n", List.map(format_error(isTTY), errors)),
+        String.concat(
+          "\n",
+          List.map(format_error(isTTY), CCList.take(2, errors)),
+        ),
         "",
       ],
     );

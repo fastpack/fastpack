@@ -1,5 +1,6 @@
 module Process = FastpackUtil.Process;
 module FS = FastpackUtil.FS;
+module Terminal = FastpackUtil.Terminal;
 module StringSet = Set.Make(CCString);
 open Cmdliner;
 
@@ -202,10 +203,41 @@ module Watch = {
         |> Yojson.to_string;
 
       let cmd = [|"watchman", "--no-save-state", "-j", "--no-pretty", "-p"|];
+      let%lwt () = Lwt_io.(write_line(stdout, "Starting watchman..."));
       let process = Process.start(cmd);
       /* TODO: validate if process is started at all */
-      let%lwt () = Process.write(subscribe_message ++ "\n", process);
-      let%lwt _ = Process.readLine(process);
+      let%lwt _ =
+        Lwt.catch(
+          () => {
+            let%lwt () = Process.write(subscribe_message ++ "\n", process);
+            Process.readLine(process);
+          },
+          fun
+          | Process.NotRunning(msg) =>
+            raise(
+              Context.ExitError(
+                Printf.sprintf(
+                  {|
+%s
+
+Unssuccessfully tried to start watchman using the following command:
+  %s
+
+It looks, like your system doesn't have it installed. Please, check here
+for installation instructions:
+  https://facebook.github.io/watchman/
+          |},
+                  Terminal.print_with_color(
+                    ~font=Bold,
+                    "Cannot start file watching service: watchman",
+                    Red,
+                  ),
+                  msg,
+                ),
+              ),
+            )
+          | exn => raise(exn),
+        );
       /* TODO: validate answer */
       /*{"version":"4.9.0","subscribe":"mysubscriptionname","clock":"c:1523968199:68646:1:95"}*/
       /* this line is ignored, receiving possible files */
@@ -309,7 +341,24 @@ module Watch = {
             ) {
             | None => watch(result)
             | Some(_) =>
-              let%lwt () = FastpackUtil.Colors.clearScreen();
+              let%lwt () = Terminal.clearScreen();
+              let n = 3;
+              let elements = StringSet.elements(files);
+              let message =
+                "Files changed: \n"
+                ++ String.concat(
+                     "\n",
+                     List.map(f => "    " ++ f, CCList.take(n, elements)),
+                   )
+                ++ (
+                  List.length(elements) >= n ?
+                    Printf.sprintf(
+                      "\n    and %d more.\n",
+                      List.length(elements) - n,
+                    ) :
+                    "\n"
+                );
+              let%lwt () = Lwt_io.(write_line(stdout, message));
               let%lwt result = tryRebuilding(files, result);
               lastResult := result;
               let%lwt () = reportResult(start_time, result, builder);
@@ -317,7 +366,6 @@ module Watch = {
             };
           };
 
-          Logs.debug(x => x("HERE!"));
           /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
            * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
            * */
@@ -325,6 +373,16 @@ module Watch = {
           let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
           Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
           Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
+          let%lwt () =
+            Lwt_io.(
+              write_line(
+                stdout,
+                Printf.sprintf(
+                  "Watching directory: %s. (Ctrl+C to exit)",
+                  options.projectRootDir,
+                ),
+              )
+            );
           Lwt.Infix.(
             Lwt.finalize(
               () => watch(result) <&> FS.setInterval(5., dumpCache) <?> w,
