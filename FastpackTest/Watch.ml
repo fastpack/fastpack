@@ -96,7 +96,10 @@ let run_with ~test_name ~cmd ~files f =
             | _ ->
               match r with
               | Ok(bundle) ->
-                let name = List.hd (List.map fst(CCHashtbl.to_list bundle.Bundle.emittedFiles)) in
+                let name =
+                  List.hd
+                    (List.map (fun {Bundle.absPath; _} -> absPath) (Bundle.getFiles bundle))
+                in
                 let%lwt content = Lwt_io.(with_file ~mode:Input name read) in
                 messages := (Re.replace ~f:(fun _ -> "\n") re_modules content) :: !messages;
                 Lwt.return r

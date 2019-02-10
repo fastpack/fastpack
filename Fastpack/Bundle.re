@@ -372,9 +372,6 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
   Lwt.return({...bundle, chunkRequests});
 };
 
-let foldChunks = (f, acc, bundle: t) =>
-  Lwt_list.fold_left_s(f, acc, CCHashtbl.to_list(bundle.chunks));
-
 let rec getChunkDependencies =
         (~seen=StringSet.empty, chunkName: chunkName, bundle: t) =>
   switch (Hashtbl.find_all(bundle.chunkDependency, chunkName)) {
@@ -576,9 +573,11 @@ let emit = (ctx: Context.t, bundle: t) => {
   Lwt_unix.rename(ctx.tmpOutputDir, ctx.config.outputDir);
 };
 
+let getGraph = ({graph, _}: t) => graph;
+
+let getFiles = (bundle: t) =>
+  List.map(snd, CCHashtbl.to_list(bundle.emittedFiles));
+
 let getTotalSize = (bundle: t) =>
-  List.fold_left(
-    (acc, (_, {size, _})) => acc + size,
-    0,
-    CCHashtbl.to_list(bundle.emittedFiles),
-  );
+  List.fold_left((acc, {size, _}) => acc + size, 0, getFiles(bundle));
+

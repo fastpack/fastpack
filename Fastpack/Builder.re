@@ -143,7 +143,7 @@ let rec build =
   let graph =
     switch (prevRun) {
     | None => DependencyGraph.empty()
-    | Some({bundle, _}) => bundle.Bundle.graph
+    | Some({bundle, _}) => Bundle.getGraph(bundle)
     };
 
   let startLocation =
@@ -228,7 +228,7 @@ let shouldRebuild = (~filesChanged, ~prevResult, builder: t) =>
     /* ); */
     let filesWatched =
       switch (prevResult) {
-      | Ok(bundle) => DependencyGraph.get_files(bundle.Bundle.graph)
+      | Ok(bundle) => bundle |> Bundle.getGraph |> DependencyGraph.get_files
       | Error({filesWatched, _}) => filesWatched
       };
     switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
@@ -248,14 +248,14 @@ let rebuild = (~filesChanged, ~prevResult, builder) =>
       | Ok(bundle) =>
         switch (
           DependencyGraph.get_changed_module_locations(
-            bundle.Bundle.graph,
+            Bundle.getGraph(bundle),
             filesMatched,
           )
           |> Module.LocationSet.elements
         ) {
         | [] => (false, None)
         | [location] =>
-          DependencyGraph.remove_module(bundle.Bundle.graph, location);
+          DependencyGraph.remove_module(Bundle.getGraph(bundle), location);
           (true, Some({bundle, startLocation: location}));
         | _ => (true, None)
         }

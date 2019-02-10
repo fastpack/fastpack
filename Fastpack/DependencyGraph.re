@@ -210,7 +210,6 @@ let hasModule = (graph, location) =>
   | None => false
   };
 
-
 type dependencies =
   | NoDependendencies
   | Dependencies(list(Module.Dependency.t), list(Module.Dependency.t));
@@ -242,46 +241,6 @@ let is_json = (location: Module.location) =>
   | _ => false
   };
 
-/* let get_module_type = stmts => { */
-/*   /1* TODO: what if module has only import() expression? *1/ */
-/*   let import_or_export = (module_type, (_, stmt): S.t(Loc.t, Loc.t)) => */
-/*     switch (module_type) { */
-/*     | Module.ESM */
-/*     | Module.CJS_esModule => module_type */
-/*     | Module.CJS => */
-/*       switch (stmt) { */
-/*       | S.Expression({ */
-/*           expression: ( */
-/*             _, */
-/*             E.Assignment({ */
-/*               operator: E.Assignment.Assign, */
-/*               left: ( */
-/*                 _, */
-/*                 P.Expression(( */
-/*                   _, */
-/*                   E.Member({ */
-/*                     _object: (_, E.Identifier((_, "exports"))), */
-/*                     property: E.Member.PropertyIdentifier((_, "__esModule")), */
-/*                     computed: false, */
-/*                     _, */
-/*                   }), */
-/*                 )), */
-/*               ), */
-/*               right: (_, E.Literal({value: L.Boolean(true), _})), */
-/*             }), */
-/*           ), */
-/*           _, */
-/*         }) => Module.CJS_esModule */
-/*       | S.ExportDefaultDeclaration(_) */
-/*       | S.ExportNamedDeclaration(_) */
-/*       | S.ImportDeclaration(_) => Module.ESM */
-/*       | _ => module_type */
-/*       } */
-/*     }; */
-
-/*   List.fold_left(import_or_export, Module.CJS, stmts); */
-/* }; */
-
 let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
   let rec find_package_json_for_filename = filename =>
     if (!FilePath.is_subdir(filename, root_dir)) {
@@ -305,7 +264,6 @@ let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
 };
 
 let read_module = (~ctx: Context.t, graph: t, location: Module.location) => {
-  /* Logs.debug(x => x("READING: %s", Module.location_to_string(location))); */
   let make_module = (location, source) => {
     let%lwt package =
       switch (location) {
@@ -316,10 +274,6 @@ let read_module = (~ctx: Context.t, graph: t, location: Module.location) => {
         find_package_for_filename(ctx.cache, ctx.current_dir, filename)
 
       | Module.File({filename: None, _}) => Lwt.return(ctx.project_package)
-      /* switch (from_module) { */
-      /* | None => Lwt.return(ctx.project_package) */
-      /* | Some((m: Module.t)) => Lwt.return(m.package) */
-      /* } */
       };
 
     let m =
@@ -396,11 +350,7 @@ let read_module = (~ctx: Context.t, graph: t, location: Module.location) => {
       };
 
     /* Make sure module depends on the source file */
-    add_build_dependencies(
-      graph,
-      self_dependency,
-      location,
-    );
+    add_build_dependencies(graph, self_dependency, location);
 
     let recordBuildDependencies =
       Lwt_list.fold_left_s(
@@ -439,18 +389,17 @@ let read_module = (~ctx: Context.t, graph: t, location: Module.location) => {
         };
 
       /* module also depends on the filenames used to transpile it*/
-      add_build_dependencies(
-        graph,
-        build_dependencies,
-        location,
-      );
+      add_build_dependencies(graph, build_dependencies, location);
 
       let%lwt files =
         Lwt_list.map_s(
           filename => {
             /* TODO: No point in keeping these files in cache */
             let%lwt content = Cache.File.readExisting(filename, ctx.cache);
-            Lwt.return((FS.relative_path(ctx.tmpOutputDir, filename), content));
+            Lwt.return((
+              FS.relative_path(ctx.tmpOutputDir, filename),
+              content,
+            ));
           },
           files,
         );
@@ -506,7 +455,8 @@ let build = (ctx: Context.t, startLocation: Module.location, graph: t) => {
       graph,
       location,
       () => {
-        let%lwt (m, deps) = Lwt.no_cancel(read_module(~ctx, graph, location));
+        let%lwt (m, deps) =
+          Lwt.no_cancel(read_module(~ctx, graph, location));
         let%lwt m =
           switch (deps) {
           | NoDependendencies => Lwt.return(m)
@@ -587,12 +537,7 @@ let build = (ctx: Context.t, startLocation: Module.location, graph: t) => {
 
           List.iter(
             ((req, resolved)) =>
-              add_dependency(
-                ~kind,
-                graph,
-                m,
-                (req, resolved),
-              ),
+              add_dependency(~kind, graph, m, (req, resolved)),
             dependencies,
           );
           Lwt.return_unit;

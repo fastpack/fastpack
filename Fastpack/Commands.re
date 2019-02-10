@@ -65,7 +65,7 @@ let reportResult = (start_time, result, builder) =>
     Lwt_io.(write(stderr, report));
   | Ok(bundle) =>
     let size = Bundle.getTotalSize(bundle);
-    let modules = DependencyGraph.length(bundle.Bundle.graph);
+    let modules = DependencyGraph.length(bundle |> Bundle.getGraph);
     let pretty_size =
       Printf.(
         if (size >= 1048576) {
