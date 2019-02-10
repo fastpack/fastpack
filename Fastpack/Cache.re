@@ -155,44 +155,53 @@ let save = cache =>
   | Filename(filename) =>
     let tempDir = FilePath.dirname(filename);
     let suffix = FilePath.basename(filename);
-    let%lwt () = FS.makedirs(tempDir);
-    let (tempFile, oc) =
-      Filename.open_temp_file(
-        ~perms=0o644,
-        ~temp_dir=tempDir,
-        ".fpack",
-        suffix,
-      );
-    close_out(oc);
+    switch%lwt (
+      {
+        let%lwt () = FS.makedirs(tempDir);
+        let (tempFile, oc) =
+          Filename.open_temp_file(
+            ~perms=0o644,
+            ~temp_dir=tempDir,
+            ".fpack",
+            suffix,
+          );
+        close_out(oc);
 
-    let%lwt () =
-      Lwt_io.with_file(
-        ~mode=Lwt_io.Output,
-        ~perm=0o644,
-        ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
-        tempFile,
-        ch =>
-        Lwt_io.write_value(
-          ch,
-          ~flags=[],
-          {
-            files: FSCache.toPersistent(cache.files),
-            modules: CCHashtbl.to_list(cache.modules),
+        let%lwt () =
+          Lwt_io.with_file(
+            ~mode=Lwt_io.Output,
+            ~perm=0o644,
+            ~flags=Unix.[O_CREAT, O_TRUNC, O_RDWR],
+            tempFile,
+            ch =>
+            Lwt_io.write_value(
+              ch,
+              ~flags=[],
+              {
+                files: FSCache.toPersistent(cache.files),
+                modules: CCHashtbl.to_list(cache.modules),
+              },
+            )
+          );
+        Lwt.return(tempFile);
+      }
+    ) {
+    | tempFile =>
+      Lwt.finalize(
+        () =>
+          switch%lwt (Lwt_unix.rename(tempFile, filename)) {
+          | () => Lwt.return_unit
+          | exception (Unix.Unix_error(_)) => Lwt.return_unit
+          | exception (Sys_error(_)) => Lwt.return_unit
           },
-        )
-      );
-
-    Lwt.finalize(
-      () =>
-        switch%lwt (Lwt_unix.rename(tempFile, filename)) {
-        | () => Lwt.return_unit
-        | exception (Sys_error(_)) => Lwt.return_unit
-        },
-      () =>
-        if%lwt (Lwt_unix.file_exists(tempFile)) {
-          Lwt_unix.unlink(tempFile);
-        },
-    );
+        () =>
+          if%lwt (Lwt_unix.file_exists(tempFile)) {
+            Lwt_unix.unlink(tempFile);
+          },
+      )
+    | exception (Unix.Unix_error(_)) => Lwt.return_unit
+    | exception (Sys_error(_)) => Lwt.return_unit
+    };
   };
 
 let getFilename = cache =>

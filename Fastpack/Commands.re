@@ -366,7 +366,7 @@ for installation instructions:
           };
 
           let lastResultCacheDumped = ref(None);
-          let _dumpCache = () =>
+          let dumpCache = () =>
             switch%lwt (readLastResult()) {
             | Ok(_) =>
               let dump = result => {
@@ -408,7 +408,7 @@ for installation instructions:
               () =>
                 collectFileChanges()
                 <&> rebuild()
-                /* <&> FS.setInterval(5., dumpCache) */
+                <&> FS.setInterval(5., dumpCache)
                 <?> w,
               () => {
                 let%lwt () = Watchman.finalize(watchman);

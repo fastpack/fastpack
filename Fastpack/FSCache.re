@@ -78,6 +78,9 @@ let stat = (filename, cache) => {
               );
               Lwt.return(Some(stats));
             }
+          | exception (Sys_error(_)) =>
+            Hashtbl.replace(cache.entries, filename, (true, None));
+            Lwt.return(None);
           | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
             Hashtbl.replace(cache.entries, filename, (true, None));
             Lwt.return(None);
@@ -104,6 +107,9 @@ let stat = (filename, cache) => {
               Lwt.return(Some(stats));
             }
 
+          | exception (Sys_error(_)) =>
+            Hashtbl.replace(cache.entries, filename, (true, None));
+            Lwt.return(None);
           | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
             Hashtbl.replace(cache.entries, filename, (true, None));
             Lwt.return(None);
@@ -121,22 +127,38 @@ let exists = (filename, cache) =>
   };
 
 let read = (filename, cache) => {
-  let readBinary = filename => {
-    let%lwt length = Lwt_io.file_length(filename);
-    let ch = open_in_bin(filename);
-    let content = really_input_string(ch, Int64.to_int(length));
-    close_in_noerr(ch);
-    Lwt.return(content);
-  };
-  let readAndUpdateContent = (filename, entry) => {
-    let%lwt content = readBinary(filename);
-    Hashtbl.replace(
-      cache.entries,
-      filename,
-      (true, Some(Entry({...entry, content: Some(content)}))),
-    );
-    Lwt.return(Some(content));
-  };
+  let readBinary = filename =>
+    switch%lwt (Lwt_io.file_length(filename)) {
+    | length =>
+      let readBinary' = () => {
+        let ch = open_in_bin(filename);
+        let content = really_input_string(ch, Int64.to_int(length));
+        close_in_noerr(ch);
+        Some(content);
+      };
+      let content =
+        try (readBinary'()) {
+        | Unix.Unix_error(Unix.ENOENT, _, _) => None
+        | Sys_error(_) => None
+        };
+      Lwt.return(content);
+    | exception (Unix.Unix_error(Unix.ENOENT, _, _)) => Lwt.return_none
+    | exception (Sys_error(_)) => Lwt.return_none
+    };
+
+  let readAndUpdateContent = (filename, entry) =>
+    switch%lwt (readBinary(filename)) {
+    | Some(_) as content =>
+      Hashtbl.replace(
+        cache.entries,
+        filename,
+        (true, Some(Entry({...entry, content}))),
+      );
+      Lwt.return(content);
+    | None =>
+      Hashtbl.replace(cache.entries, filename, (true, None));
+      Lwt.return_none;
+    };
   let rec read' = (~seen=StringSet.empty, filename) =>
     switch (StringSet.find_opt(filename, seen)) {
     | Some(_) => failwith("read: links cycle in cache")
@@ -190,15 +212,23 @@ let read = (filename, cache) => {
               );
               read'(~seen=StringSet.add(filename, seen), target);
             | _ =>
-              let%lwt content = readBinary(filename);
-              Hashtbl.replace(
-                cache.entries,
-                filename,
-                (true, Some(Entry({stats, content: Some(content)}))),
-              );
-              Lwt.return(Some(content));
+              switch%lwt (readBinary(filename)) {
+              | Some(_) as content =>
+                Hashtbl.replace(
+                  cache.entries,
+                  filename,
+                  (true, Some(Entry({stats, content}))),
+                );
+                Lwt.return(content);
+              | None =>
+                Hashtbl.replace(cache.entries, filename, (true, None));
+                Lwt.return_none;
+              }
             }
 
+          | exception (Sys_error(_)) =>
+            Hashtbl.replace(cache.entries, filename, (true, None));
+            Lwt.return(None);
           | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
             Hashtbl.replace(cache.entries, filename, (true, None));
             Lwt.return(None);
