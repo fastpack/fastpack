@@ -288,8 +288,9 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-Module resolution error: cannot resolve './a'
 /.../test/watch/index.js
+Cannot resolve './a'
+
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'
   Resolving '/.../test/watch/a'.
@@ -376,8 +377,9 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-Module resolution error: cannot resolve './a'
 /.../test/watch/index.js
+Cannot resolve './a'
+
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'
   Resolving '/.../test/watch/a'.
@@ -473,8 +475,9 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-Module resolution error: cannot resolve './b'
 /.../test/watch/index.js
+Cannot resolve './b'
+
 Cannot resolve module
   Resolving './b'. Base directory: '/.../test/watch'
   Resolving '/.../test/watch/b'.
@@ -488,8 +491,9 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-Module resolution error: cannot resolve './a'
 /.../test/watch/index.js
+Cannot resolve './a'
+
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'
   Resolving '/.../test/watch/a'.
@@ -548,8 +552,8 @@ let%expect_test "start with parse error, than fix" =
         >>= (fun _ -> Lwt.return_unit)
     );
   [%expect_exact {|
-Parse error 
 /.../test/watch/index.js
+Parse error
 
 --------------------
 Unexpected identifier at (1:21) - (1:26):
@@ -632,8 +636,9 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-Module resolution error: cannot resolve './index.js'
 $fp$main
+Cannot resolve './index.js'
+
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
   Resolving '/.../test/watch/index.js'.
@@ -647,8 +652,9 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-Module resolution error: cannot resolve './index.js'
 $fp$main
+Cannot resolve './index.js'
+
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
   Resolving '/.../test/watch/index.js'.
@@ -662,8 +668,9 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-Module resolution error: cannot resolve './index.js'
 $fp$main
+Cannot resolve './index.js'
+
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
   Resolving '/.../test/watch/index.js'.
@@ -719,7 +726,10 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-Cannot find exported name 'aa' in module 'a.js'
+/.../test/watch/index.js
+Import Error
+
+Cannot import name 'aa' from 'a.js'
 
 ---------------------------------------------
 
@@ -763,7 +773,10 @@ let%expect_test "start with failing import, fix import" =
        >>= (fun _ -> Lwt.return_unit)
     );
   [%expect_exact {|
-Cannot find exported name 'aa' in module 'a.js'
+/.../test/watch/index.js
+Import Error
+
+Cannot import name 'aa' from 'a.js'
 
 ---------------------------------------------
 

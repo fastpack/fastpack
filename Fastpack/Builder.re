@@ -158,7 +158,6 @@ let rec build =
           Context.PackError(
             ctx,
             NotImplemented(
-              None,
               "Production build is not implemented yet"
               ++ "\nUse `--development` for now",
             ),
@@ -168,8 +167,8 @@ let rec build =
       let%lwt () = DependencyGraph.build(ctx, graph);
       let%lwt exportFinder = ExportFinder.make(graph);
       let%lwt () =
-        DependencyGraph.iterModules(graph, (m: Module.t) =>
-          switch (ExportFinder.ensure_exports(m, exportFinder)) {
+        DependencyGraph.iterModules(graph, (source: Module.t) =>
+          switch (ExportFinder.ensure_exports(source, exportFinder)) {
           | Some((m, name)) =>
             let location_str =
               Module.location_to_string(
@@ -180,7 +179,11 @@ let rec build =
             Lwt.fail(
               Context.PackError(
                 ctx,
-                CannotFindExportedName(name, location_str),
+                CannotFindExportedName(
+                  Module.location_to_string(source.location),
+                  name,
+                  location_str,
+                ),
               ),
             );
           | None => Lwt.return_unit

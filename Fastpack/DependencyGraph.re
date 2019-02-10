@@ -490,7 +490,6 @@ let build = (ctx: Context.t, graph: t) => {
         Context.PackError(
           ctx,
           NotImplemented(
-            None,
             "EcmaScript6 target is not supported "
             ++ "for the regular packer - use flat\n",
           ),

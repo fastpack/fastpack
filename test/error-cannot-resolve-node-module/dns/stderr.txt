@@ -1,4 +1,8 @@
 
-Module resolution error: cannot resolve 'dns'
 /.../test/error-cannot-resolve-node-module/dns.js
-This looks like base node.js library which does not have any browser implementation we are aware of
+Cannot resolve 'dns'
+
+
+This looks like base node.js library which does not have any browser
+implementation we are aware of
+          

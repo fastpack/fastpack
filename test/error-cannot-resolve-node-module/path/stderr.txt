@@ -1,11 +1,14 @@
 
-Module resolution error: cannot resolve 'path'
 /.../test/error-cannot-resolve-node-module/path.js
-This looks like base node.js library and unlikely is required in the browser environment.
-If you still want to use it, first install the browser implementation with:
+Cannot resolve 'path'
 
+
+This looks like base node.js library and unlikely is required in the
+browser environment.
+If you still want to use it, first install the browser implementation with:
+          
 		npm install --save path-browserify
 
-And then add this command line option when running fpack:
+And then add this command line option when running fastpack:
 
 		--mock path:path-browserify

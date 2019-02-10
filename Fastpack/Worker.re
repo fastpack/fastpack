@@ -26,7 +26,7 @@ let to_eval = s => {
 type init = {
   project_root: string,
   output_dir: string,
-  publicPath: string
+  publicPath: string,
 };
 
 type request = {
@@ -53,8 +53,8 @@ and ok = {
 };
 
 let start = () => {
-    let%lwt init: Lwt.t(init) = Lwt_io.read_value(Lwt_io.stdin);
-    let {project_root, output_dir, _} = init;
+  let%lwt init: Lwt.t(init) = Lwt_io.read_value(Lwt_io.stdin);
+  let {project_root, output_dir, _} = init;
 
   let%lwt preprocessor =
     Preprocessor.make(
@@ -612,9 +612,13 @@ let start = () => {
                   remote,
                 )
               )
-            | None => switch(name) {
-              | "__webpack_public_path__" | "__public_path__" =>
-                patch_loc_with(loc, () => "__fastpack_require__.state.publicPath");
+            | None =>
+              switch (name) {
+              | "__webpack_public_path__"
+              | "__public_path__" =>
+                patch_loc_with(loc, () =>
+                  "__fastpack_require__.state.publicPath"
+                )
               | _ => ()
               }
             | _ => ()
@@ -735,12 +739,10 @@ module Reader = {
         () => {
           Logs.debug(x => x("reader created"));
 
-          let process = Process.start([|
-            Environment.getExecutable(),
-            "worker",
-          |]);
+          let process =
+            Process.start([|Environment.getExecutable(), "worker"|]);
           let init = {project_root, output_dir, publicPath};
-          let%lwt() = Process.writeValue(init, process);
+          let%lwt () = Process.writeValue(init, process);
           Lwt.return(process);
         },
       ),
@@ -759,22 +761,23 @@ module Reader = {
         ),
       );
 
+    let location_str = Module.location_to_string(location);
     switch (response) {
     | Complete(data) => Lwt.return_ok(data)
     | ParseError(args) =>
-      let location_str = Module.location_to_string(location);
       let src =
         switch (source) {
         | Some(src) => src
         | None => ""
         };
-      Lwt.return_error(Error.CannotParseFile((location_str, args, src)));
-    | ScopeError(reason) => Lwt.return_error(Error.ScopeError(reason))
+      Lwt.return_error(Error.CannotParseFile(location_str, args, src));
+    | ScopeError(reason) =>
+      Lwt.return_error(Error.ScopeError(location_str, reason))
     | PreprocessorError(message) =>
-      Lwt.return_error(Error.PreprocessorError(message))
+      Lwt.return_error(Error.PreprocessorError(location_str, message))
     | UnhandledCondition(message)
     | Traceback(message) =>
-      Lwt.return_error(Error.UnhandledCondition(message))
+      Lwt.return_error(Error.UnhandledCondition(location_str, message))
     };
   };
 };

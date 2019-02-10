@@ -1,3 +1,6 @@
 
-Cannot find exported name 'b' in module 'a.js'
+/.../test/error-cannot-find-exported-name/index.js
+Import Error
+
+Cannot import name 'b' from 'a.js'
 

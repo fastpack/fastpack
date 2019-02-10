@@ -1,6 +1,6 @@
 
-Parse error 
 /.../test/error-parse/a.js
+Parse error
 
 --------------------
 Unexpected token ; at (3:14) - (3:15):

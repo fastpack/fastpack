@@ -219,7 +219,6 @@ module Watch = {
       let cmd = [|"watchman", "--no-save-state", "-j", "--no-pretty", "-p"|];
       let%lwt () = Lwt_io.(write_line(stdout, "Starting watchman..."));
       let process = Process.start(cmd);
-      /* TODO: validate if process is started at all */
       let%lwt _ =
         Lwt.catch(
           () => {
