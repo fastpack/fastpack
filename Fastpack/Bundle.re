@@ -483,7 +483,7 @@ let emit = (ctx: Context.t, bundle: t) => {
                         },
                       DependencyGraph.lookup_dependencies(
                         ~kind=`All,
-                        ctx.graph,
+                        bundle.graph,
                         m,
                       ),
                     );
@@ -523,7 +523,7 @@ let emit = (ctx: Context.t, bundle: t) => {
                         },
                       DependencyGraph.lookup_dependencies(
                         ~kind=`Dynamic,
-                        ctx.graph,
+                        bundle.graph,
                         m,
                       ),
                     );

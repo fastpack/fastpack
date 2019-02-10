@@ -142,13 +142,14 @@ let rec build =
       },
     resolver,
     reader: builder.reader,
-    graph:
-      switch (prevRun) {
-      | None => DependencyGraph.empty()
-      | Some({bundle, _}) => bundle.Bundle.graph
-      },
     cache,
   };
+
+  let graph =
+    switch (prevRun) {
+    | None => DependencyGraph.empty()
+    | Some({bundle, _}) => bundle.Bundle.graph
+    };
 
   Lwt.catch(
     () => {
@@ -164,10 +165,10 @@ let rec build =
           ),
         );
       };
-      let%lwt () = GraphBuilder.build(ctx);
-      let%lwt exportFinder = ExportFinder.make(ctx.graph);
+      let%lwt () = DependencyGraph.build(ctx, graph);
+      let%lwt exportFinder = ExportFinder.make(graph);
       let%lwt () =
-        DependencyGraph.iterModules(ctx.graph, (m: Module.t) =>
+        DependencyGraph.iterModules(graph, (m: Module.t) =>
           switch (ExportFinder.ensure_exports(m, exportFinder)) {
           | Some((m, name)) =>
             let location_str =
@@ -185,26 +186,24 @@ let rec build =
           | None => Lwt.return_unit
           }
         );
-      let%lwt bundle =
-        Bundle.make(ctx.graph, ctx.entry_location);
+      let%lwt bundle = Bundle.make(graph, ctx.entry_location);
       let%lwt () =
-        dryRun ?
-          FS.rmdir(tmpOutputDir) : Bundle.emit(ctx, bundle);
+        dryRun ? FS.rmdir(tmpOutputDir) : Bundle.emit(ctx, bundle);
       Lwt.return_ok(bundle);
     },
     fun
-    | GraphBuilder.Rebuild(filename, location) => {
+    | DependencyGraph.Rebuild(filename, location) => {
         let%lwt () = Cache.File.invalidate(filename, builder.cache);
         Module.LocationSet.iter(
           location => Cache.removeModule(location, builder.cache),
-          DependencyGraph.get_module_parents(ctx.graph, location),
+          DependencyGraph.get_module_parents(graph, location),
         );
         build(~filesWatched, builder);
       }
-    | Context.PackError(ctx, reason) => {
+    | Context.PackError(_, reason) => {
         let filesWatched =
           StringSet.union(
-            DependencyGraph.get_files(ctx.graph),
+            DependencyGraph.get_files(graph),
             filesWatched,
           );
         Lwt.return_error({filesWatched, reason});
@@ -217,15 +216,18 @@ let shouldRebuild = (~filesChanged, ~prevResult, builder: t) =>
   switch (StringSet.elements(filesChanged)) {
   | [] => Lwt.return_none
   | _ =>
-    let%lwt() = Lwt_list.iter_s(f => Cache.File.invalidate(f, builder.cache), StringSet.elements(filesChanged));
+    let%lwt () =
+      Lwt_list.iter_s(
+        f => Cache.File.invalidate(f, builder.cache),
+        StringSet.elements(filesChanged),
+      );
     /* StringSet.iter( */
     /*   f => Cache.File.invalidate(f, builder.cache), */
     /*   filesChanged, */
     /* ); */
     let filesWatched =
       switch (prevResult) {
-      | Ok(bundle) =>
-        DependencyGraph.get_files(bundle.Bundle.graph)
+      | Ok(bundle) => DependencyGraph.get_files(bundle.Bundle.graph)
       | Error({filesWatched, _}) => filesWatched
       };
     switch (StringSet.(inter(filesChanged, filesWatched) |> elements)) {
@@ -252,10 +254,7 @@ let rebuild = (~filesChanged, ~prevResult, builder) =>
         ) {
         | [] => (false, None)
         | [location] =>
-          DependencyGraph.remove_module(
-            bundle.Bundle.graph,
-            location,
-          );
+          DependencyGraph.remove_module(bundle.Bundle.graph, location);
           (true, Some({bundle, startLocation: location}));
         | _ => (true, None)
         }

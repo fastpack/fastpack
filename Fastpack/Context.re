@@ -8,7 +8,6 @@ type t = {
   resolver: Resolver.t,
   reader: Worker.Reader.t,
   cache: Cache.t,
-  graph: DependencyGraph.t,
 };
 
 exception PackError(t, Error.reason);

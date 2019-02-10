@@ -5,6 +5,7 @@
 type t;
 
 exception Cycle(list(string));
+exception Rebuild(string, Module.location);
 
 /**
  * Construct an empty depgraph
@@ -80,3 +81,7 @@ let get_changed_module_locations: (t, list(string)) => Module.LocationSet.t;
 /** Remove all modules except those which locations are specified */
 
 let cleanup: (t, Module.LocationSet.t) => t;
+
+
+
+let build: (Context.t, t) => Lwt.t(unit)
