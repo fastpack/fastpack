@@ -283,10 +283,91 @@ for installation instructions:
               Builder.getFilenameFilter(builder),
             );
 
+          let changedFiles = ref(StringSet.empty);
+          let changedFilesLock = Lwt_mutex.create();
+
+          let rec collectFileChanges = () => {
+            let%lwt files = Watchman.getFiles(watchman);
+            let%lwt () =
+              Lwt_mutex.with_lock(
+                changedFilesLock,
+                () => {
+                  changedFiles := StringSet.union(changedFiles^, files);
+                  Lwt.return_unit;
+                },
+              );
+            collectFileChanges();
+          };
+
+          let readChangedFiles = () =>
+            Lwt_mutex.with_lock(
+              changedFilesLock,
+              () => {
+                let ret = changedFiles^;
+                changedFiles := StringSet.empty;
+                Lwt.return(ret);
+              },
+            );
+
           let lastResult = ref(result);
+          let lastResultLock = Lwt_mutex.create();
+
+          let readLastResult = () =>
+            Lwt_mutex.with_lock(lastResultLock, () =>
+              Lwt.return(lastResult^)
+            );
+
+          let storeLastResult = result =>
+            Lwt_mutex.with_lock(
+              lastResultLock,
+              () => {
+                lastResult := result;
+                Lwt.return_unit;
+              },
+            );
+
+          let rec rebuild = () => {
+            let start_time = Unix.gettimeofday();
+            let%lwt filesChanged = readChangedFiles();
+            let%lwt prevResult = readLastResult();
+            let%lwt () =
+              switch%lwt (
+                Builder.shouldRebuild(~filesChanged, ~prevResult, builder)
+              ) {
+              | None => Lwt_unix.sleep(0.02)
+              | Some(_) =>
+                let%lwt () = Terminal.clearScreen();
+                let n = 3;
+                let elements = StringSet.elements(filesChanged);
+                let message =
+                  "Files changed: \n"
+                  ++ String.concat(
+                       "\n",
+                       List.map(f => "    " ++ f, CCList.take(n, elements)),
+                     )
+                  ++ (
+                    List.length(elements) >= n ?
+                      Printf.sprintf(
+                        "\n    and %d more.\n",
+                        List.length(elements) - n,
+                      ) :
+                      "\n"
+                  );
+                let%lwt () = Lwt_io.(write_line(stdout, message));
+
+                let%lwt result =
+                  Lwt.protected(
+                    Builder.rebuild(~filesChanged, ~prevResult, builder),
+                  );
+                let%lwt () = reportResult(start_time, result, builder);
+                storeLastResult(result);
+              };
+            rebuild();
+          };
+
           let lastResultCacheDumped = ref(None);
-          let dumpCache = () =>
-            switch (lastResult^) {
+          let _dumpCache = () =>
+            switch%lwt (readLastResult()) {
             | Ok(_) =>
               let dump = result => {
                 let%lwt () = Cache.save(builder.Builder.cache);
@@ -304,67 +385,6 @@ for installation instructions:
               };
             | Error(_) => Lwt.return_unit
             };
-
-          let rec tryRebuilding = (files, prevResult) => {
-            let%lwt nextResult =
-              Lwt.pick([
-                {
-                  let%lwt files = Watchman.getFiles(watchman);
-                  `FilesChanged(files) |> Lwt.return;
-                },
-                {
-                  let%lwt result =
-                    Builder.rebuild(
-                      ~filesChanged=files,
-                      ~prevResult,
-                      builder,
-                    );
-                  `Rebuilt(result) |> Lwt.return;
-                },
-              ]);
-            switch (nextResult) {
-            | `FilesChanged(newFiles) =>
-              tryRebuilding(StringSet.union(files, newFiles), prevResult)
-            | `Rebuilt(result) => Lwt.return(result)
-            };
-          };
-
-          let rec watch = result => {
-            let%lwt files = Watchman.getFiles(watchman);
-            let start_time = Unix.gettimeofday();
-            switch%lwt (
-              Builder.shouldRebuild(
-                ~filesChanged=files,
-                ~prevResult=result,
-                builder,
-              )
-            ) {
-            | None => watch(result)
-            | Some(_) =>
-              let%lwt () = Terminal.clearScreen();
-              let n = 3;
-              let elements = StringSet.elements(files);
-              let message =
-                "Files changed: \n"
-                ++ String.concat(
-                     "\n",
-                     List.map(f => "    " ++ f, CCList.take(n, elements)),
-                   )
-                ++ (
-                  List.length(elements) >= n ?
-                    Printf.sprintf(
-                      "\n    and %d more.\n",
-                      List.length(elements) - n,
-                    ) :
-                    "\n"
-                );
-              let%lwt () = Lwt_io.(write_line(stdout, message));
-              let%lwt result = tryRebuilding(files, result);
-              lastResult := result;
-              let%lwt () = reportResult(start_time, result, builder);
-              watch(result);
-            };
-          };
 
           /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
            * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
@@ -385,7 +405,11 @@ for installation instructions:
             );
           Lwt.Infix.(
             Lwt.finalize(
-              () => watch(result) <&> FS.setInterval(5., dumpCache) <?> w,
+              () =>
+                collectFileChanges()
+                <&> rebuild()
+                /* <&> FS.setInterval(5., dumpCache) */
+                <?> w,
               () => {
                 let%lwt () = Watchman.finalize(watchman);
                 let%lwt () = Builder.finalize(builder);
