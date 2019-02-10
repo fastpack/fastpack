@@ -84,4 +84,4 @@ let cleanup: (t, Module.LocationSet.t) => t;
 
 
 
-let build: (Context.t, t) => Lwt.t(unit)
+let build: (Context.t, Module.location, t) => Lwt.t(unit)

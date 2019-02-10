@@ -135,11 +135,6 @@ let rec build =
     project_package: builder.project_package,
     tmpOutputDir,
     entry_location: builder.entry_location,
-    current_location:
-      switch (prevRun) {
-      | None => builder.entry_location
-      | Some({startLocation, _}) => startLocation
-      },
     resolver,
     reader: builder.reader,
     cache,
@@ -149,6 +144,12 @@ let rec build =
     switch (prevRun) {
     | None => DependencyGraph.empty()
     | Some({bundle, _}) => bundle.Bundle.graph
+    };
+
+  let startLocation =
+    switch (prevRun) {
+    | None => builder.entry_location
+    | Some({startLocation, _}) => startLocation
     };
 
   Lwt.catch(
@@ -164,7 +165,7 @@ let rec build =
           ),
         );
       };
-      let%lwt () = DependencyGraph.build(ctx, graph);
+      let%lwt () = DependencyGraph.build(ctx, startLocation, graph);
       let%lwt exportFinder = ExportFinder.make(graph);
       let%lwt () =
         DependencyGraph.iterModules(graph, (source: Module.t) =>

@@ -482,7 +482,7 @@ let read_module = (~ctx: Context.t, graph: t, location: Module.location) => {
   };
 };
 
-let build = (ctx: Context.t, graph: t) => {
+let build = (ctx: Context.t, startLocation: Module.location, graph: t) => {
   /* TODO: handle this at a higher level, IllegalConfiguration error */
   let%lwt () =
     if (ctx.Context.config.target == Target.ESM) {
@@ -605,6 +605,6 @@ let build = (ctx: Context.t, graph: t) => {
     );
   };
 
-  let%lwt _ = process(~seen=Module.LocationSet.empty, ctx.current_location);
+  let%lwt _ = process(~seen=Module.LocationSet.empty, startLocation);
   Lwt.return_unit;
 };
