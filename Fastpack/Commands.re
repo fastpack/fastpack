@@ -95,7 +95,7 @@ module Build = {
               let%lwt () = reportResult(start_time, result, builder);
               switch (result) {
               | Ok(_) => Cache.save(builder.Builder.cache)
-              | _ => Lwt.return_unit
+              | Error(_) => raise(Context.ExitError(""))
               };
             },
             () => Builder.finalize(builder),
@@ -341,8 +341,8 @@ for installation instructions:
             ) {
             | None => watch(result)
             | Some(_) =>
-              let%lwt () = Terminal.clearScreen();
-              let n = 3;
+              /* let%lwt () = Terminal.clearScreen(); */
+              let n = 30;
               let elements = StringSet.elements(files);
               let message =
                 "Files changed: \n"

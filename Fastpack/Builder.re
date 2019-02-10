@@ -194,9 +194,9 @@ let rec build =
     },
     fun
     | GraphBuilder.Rebuild(filename, location) => {
-        Cache.File.invalidate(filename, ctx.cache);
+        let%lwt () = Cache.File.invalidate(filename, builder.cache);
         Module.LocationSet.iter(
-          location => Cache.removeModule(location, ctx.cache),
+          location => Cache.removeModule(location, builder.cache),
           DependencyGraph.get_module_parents(ctx.graph, location),
         );
         build(~filesWatched, builder);
@@ -217,10 +217,11 @@ let shouldRebuild = (~filesChanged, ~prevResult, builder: t) =>
   switch (StringSet.elements(filesChanged)) {
   | [] => Lwt.return_none
   | _ =>
-    StringSet.iter(
-      f => Cache.File.invalidate(f, builder.cache),
-      filesChanged,
-    );
+    let%lwt() = Lwt_list.iter_s(f => Cache.File.invalidate(f, builder.cache), StringSet.elements(filesChanged));
+    /* StringSet.iter( */
+    /*   f => Cache.File.invalidate(f, builder.cache), */
+    /*   filesChanged, */
+    /* ); */
     let filesWatched =
       switch (prevResult) {
       | Ok(bundle) =>

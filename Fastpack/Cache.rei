@@ -19,7 +19,7 @@ let removeModule: (Module.location, t) => unit;
 let save: t => Lwt.t(unit);
 
 module File: {
-  let invalidate: (string, t) => unit;
+  let invalidate: (string, t) => Lwt.t(unit);
   let exists: (string, t) => Lwt.t(bool);
   let stat: (string, t) => Lwt.t(option(Unix.stats));
   let readExisting: (string, t) => Lwt.t(string);

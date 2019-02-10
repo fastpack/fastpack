@@ -1,8 +1,13 @@
+module StringSet = Set.Make(CCString);
+
 type t = {
   entries: Hashtbl.t(string, (bool, option(entry))),
   locks: Hashtbl.t(string, Lwt_mutex.t),
 }
-and entry = {
+and entry =
+  | Link(string)
+  | Entry(data)
+and data = {
   stats: Unix.stats,
   content: option(string),
 };
@@ -17,60 +22,96 @@ let make = () => make'();
 let isEmpty = cache => Hashtbl.length(cache.entries) == 0;
 let clear = cache => Hashtbl.clear(cache.entries);
 
-let invalidate = (filename, cache) =>
-  Hashtbl.remove(cache.entries, filename);
-
 let withLock = (filename, cache, f) => {
   let lock =
     CCHashtbl.get_or_add(cache.locks, ~k=filename, ~f=_ => Lwt_mutex.create());
   Lwt_mutex.with_lock(lock, f);
 };
 
-let stat = (filename, cache) =>
+let invalidate = (filename, cache) =>
   withLock(filename, cache, () =>
-    switch (Hashtbl.find_opt(cache.entries, filename)) {
-    | Some((true, entry)) =>
-      switch (entry) {
-      | Some(entry) => Lwt.return(Some(entry.stats))
-      | None => Lwt.return(None)
-      }
-    | Some((false, Some(entry))) =>
-      switch%lwt (Lwt_unix.stat(filename)) {
-      | stats =>
-        let content =
-          if (stats.st_mtime != entry.stats.Unix.st_mtime) {
-            None;
-          } else {
-            entry.content;
-          };
-        Hashtbl.replace(
-          cache.entries,
-          filename,
-          (true, Some({stats, content})),
-        );
-        Lwt.return(Some(stats));
-
-      | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
-        Hashtbl.replace(cache.entries, filename, (true, None));
-        Lwt.return(None);
-      }
-    | Some((false, None))
-    | None =>
-      switch%lwt (Lwt_unix.stat(filename)) {
-      | stats =>
-        Hashtbl.replace(
-          cache.entries,
-          filename,
-          (true, Some({stats, content: None})),
-        );
-        Lwt.return(Some(stats));
-
-      | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
-        Hashtbl.replace(cache.entries, filename, (true, None));
-        Lwt.return(None);
-      }
-    }
+    Lwt.return(Hashtbl.remove(cache.entries, filename))
   );
+
+let stat = (filename, cache) => {
+  let rec stat' = (~seen=StringSet.empty, filename) =>
+    switch (StringSet.find_opt(filename, seen)) {
+    | Some(_) => failwith("links cycle in cache")
+    | None =>
+      withLock(filename, cache, () =>
+        switch (Hashtbl.find_opt(cache.entries, filename)) {
+        /* trusted symlink, always go to target */
+        | Some((true, Some(Link(target)))) =>
+          stat'(~seen=StringSet.add(filename, seen), target)
+
+        /* trusted entry, has stats */
+        | Some((true, Some(Entry(entry)))) =>
+          Lwt.return(Some(entry.stats))
+
+        /* trusted entry, no stats */
+        | Some((true, None)) => Lwt.return(None)
+
+        /* not trusted entry, but we have some info */
+        | Some((false, Some(entry))) =>
+          switch%lwt (Lwt_unix.stat(filename)) {
+          | stats =>
+            let%lwt target = FastpackUtil.FS.readlink(filename);
+            if (target == filename) {
+              let content =
+                switch (entry) {
+                | Entry({stats: cachedStats, content})
+                    when stats.st_mtime == cachedStats.Unix.st_mtime => content
+                | _ => None
+                };
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Entry({stats, content}))),
+              );
+              Lwt.return(Some(stats));
+            } else {
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Link(target))),
+              );
+              stat'(~seen=StringSet.add(filename, seen), target);
+            };
+
+          | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
+            Hashtbl.replace(cache.entries, filename, (true, None));
+            Lwt.return(None);
+          }
+        | Some((false, None))
+        | None =>
+          switch%lwt (Lwt_unix.stat(filename)) {
+          | stats =>
+            let%lwt target = FastpackUtil.FS.readlink(filename);
+            if (target == filename) {
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Entry({stats, content: None}))),
+              );
+              Lwt.return(Some(stats));
+            } else {
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Link(target))),
+              );
+              stat'(~seen=StringSet.add(filename, seen), target);
+            };
+
+          | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
+            Hashtbl.replace(cache.entries, filename, (true, None));
+            Lwt.return(None);
+          }
+        }
+      )
+    };
+  stat'(filename);
+};
 
 let exists = (filename, cache) =>
   switch%lwt (stat(filename, cache)) {
@@ -86,51 +127,85 @@ let read = (filename, cache) => {
     close_in_noerr(ch);
     Lwt.return(content);
   };
-  let read' = (filename, entry) => {
-    /* let%lwt content = Lwt_io.(with_file(~mode=Input, filename, read)); */
+  let readAndUpdateContent = (filename, entry) => {
     let%lwt content = readBinary(filename);
     Hashtbl.replace(
       cache.entries,
       filename,
-      (true, Some({...entry, content: Some(content)})),
+      (true, Some(Entry({...entry, content: Some(content)}))),
     );
     Lwt.return(Some(content));
   };
-  withLock(filename, cache, () =>
-    switch (Hashtbl.find_opt(cache.entries, filename)) {
-    | Some((true, Some({content: Some(content), _}))) =>
-      Lwt.return(Some(content))
-    | Some((true, Some({content: None, _} as entry))) =>
-      read'(filename, entry)
-    | Some((true, None)) => Lwt.return(None)
-    | Some((false, _)) =>
-      let%lwt _ = stat(filename, cache);
-      switch (Hashtbl.find_opt(cache.entries, filename)) {
-      | Some((true, Some({content: Some(content), _}))) =>
-        Lwt.return(Some(content))
-      | Some((true, Some({content: None, _} as entry))) =>
-        read'(filename, entry)
-      | Some((true, None)) => Lwt.return(None)
-      | _ => Lwt.fail(Failure("Impossible cache state: " ++ filename))
-      };
+  let rec read' = (~seen=StringSet.empty, filename) =>
+    switch (StringSet.find_opt(filename, seen)) {
+    | Some(_) => failwith("read: links cycle in cache")
     | None =>
-      switch%lwt (Lwt_unix.stat(filename)) {
-      | stats =>
-        /* let%lwt content = Lwt_io.(with_file(~mode=Input, filename, read)); */
-        let%lwt content = readBinary(filename);
-        Hashtbl.replace(
-          cache.entries,
-          filename,
-          (true, Some({stats, content: Some(content)})),
-        );
-        Lwt.return(Some(content));
+      withLock(filename, cache, () =>
+        switch (Hashtbl.find_opt(cache.entries, filename)) {
+        /* trusted symlink, always go to target */
+        | Some((true, Some(Link(target)))) =>
+          read'(~seen=StringSet.add(filename, seen), target)
 
-      | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
-        Hashtbl.replace(cache.entries, filename, (true, None));
-        Lwt.return(None);
-      }
-    }
-  );
+        /* trusted entry, content exists */
+        | Some((true, Some(Entry({content: Some(content), _})))) =>
+          Lwt.return(Some(content))
+
+        /* trusted entry without content, this means that stat was called, but not read */
+        | Some((true, Some(Entry({content: None, _} as entry)))) =>
+          readAndUpdateContent(filename, entry)
+
+        /* trusted entry, file does not exist */
+        | Some((true, None)) => Lwt.return(None)
+
+        | Some((false, _)) =>
+          let%lwt _ = stat(filename, cache);
+          switch (Hashtbl.find_opt(cache.entries, filename)) {
+          /* trusted symlink, always go to target */
+          | Some((true, Some(Link(target)))) =>
+            read'(~seen=StringSet.add(filename, seen), target)
+
+          /* trusted entry, content exists */
+          | Some((true, Some(Entry({content: Some(content), _})))) =>
+            Lwt.return(Some(content))
+
+          /* trusted entry without content, this means that stat was called, but not read */
+          | Some((true, Some(Entry({content: None, _} as entry)))) =>
+            readAndUpdateContent(filename, entry)
+
+          /* trusted entry, file does not exist */
+          | Some((true, None)) => Lwt.return(None)
+          | _ => Lwt.fail(Failure("Impossible cache state: " ++ filename))
+          };
+        | None =>
+          switch%lwt (Lwt_unix.stat(filename)) {
+          | stats =>
+            let%lwt target = FastpackUtil.FS.readlink(filename);
+            if (target == filename) {
+              let%lwt content = readBinary(filename);
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Entry({stats, content: Some(content)}))),
+              );
+              Lwt.return(Some(content));
+            } else {
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Link(target))),
+              );
+              read'(~seen=StringSet.add(filename, seen), target);
+            };
+
+          | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
+            Hashtbl.replace(cache.entries, filename, (true, None));
+            Lwt.return(None);
+          }
+        }
+      )
+    };
+
+  read'(filename);
 };
 
 let readExisting = (filename, cache) =>
