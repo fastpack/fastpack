@@ -1,6 +1,5 @@
 # fastpack
 
-[![Build Status](https://travis-ci.org/fastpack/fastpack.svg?branch=master)](https://travis-ci.org/fastpack/fastpack)
 
 Pack JS code into a single bundle fast & easy.
 
@@ -61,9 +60,6 @@ COMMANDS
        help
            Show this message and exit
 
-       serve
-           watch for file changes, rebuild bundle & serve
-
        watch
            watch for file changes and rebuild the bundle
 
@@ -102,9 +98,6 @@ OPTIONS
        -o DIR, --output=DIR (absent=./bundle)
            Output Directory. The target bundle will be DIR/index.js.
 
-       -p NUMBER, --port=NUMBER (absent=3000)
-           Port for development server to listen on
-
        --postprocess=COMMAND
            Apply shell command on a bundle file. The content of the bundle
            will be sent to STDIN and STDOUT output will be collected. If
@@ -129,9 +122,6 @@ OPTIONS
        --public-path=URL
            URL prefix to download the static assests and JavaScript chunks at
            runtime. Points to the same location as --output-dir.
-
-       --report=[ json ] (absent=text)
-           Output packer statistics
 
        --resolve-extension=EXTENSION
            Provide extensions to be considered by the resolver for the
