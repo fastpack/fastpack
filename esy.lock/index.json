@@ -1,5 +1,5 @@
 {
-  "checksum": "535c166588d0254f58f2ff415ef8ee4e",
+  "checksum": "bd1551361e4f9ddcebcd35e3e00d989a",
   "root": "fastpack@link:./package.json",
   "node": {
     "universalify@0.1.2@d41d8cd9": {
@@ -145,7 +145,7 @@
         "refmterr@3.1.10@d41d8cd9", "ocaml@4.6.10@d41d8cd9",
         "loader-runner@2.4.0@d41d8cd9", "fs-extra@7.0.1@d41d8cd9",
         "chalk@2.4.2@d41d8cd9", "@opam/yojson@opam:1.4.0@83889730",
-        "@opam/utop@opam:2.3.0@ac7267ea", "@opam/sequence@opam:1.1@65b3bb0b",
+        "@opam/utop@opam:2.0.2@832bbc32", "@opam/sequence@opam:1.1@65b3bb0b",
         "@opam/re@opam:1.7.3@83095efd",
         "@opam/ppx_let@opam:v0.11.0@15f51b1c",
         "@opam/ppx_expect@opam:v0.11.1@406d6035",
@@ -347,20 +347,20 @@
         "@opam/base@opam:v0.11.1@0e54024e"
       ]
     },
-    "@opam/utop@opam:2.3.0@ac7267ea": {
-      "id": "@opam/utop@opam:2.3.0@ac7267ea",
+    "@opam/utop@opam:2.0.2@832bbc32": {
+      "id": "@opam/utop@opam:2.0.2@832bbc32",
       "name": "@opam/utop",
-      "version": "opam:2.3.0",
+      "version": "opam:2.0.2",
       "source": {
         "type": "install",
         "source": [
-          "archive:https://opam.ocaml.org/cache/md5/5c/5c9e6d4ca1bea263efb9967b7ad51393#md5:5c9e6d4ca1bea263efb9967b7ad51393",
-          "archive:https://github.com/ocaml-community/utop/releases/download/2.3.0/utop-2.3.0.tbz#md5:5c9e6d4ca1bea263efb9967b7ad51393"
+          "archive:https://opam.ocaml.org/cache/md5/48/48b8a5103868baf6fb42d5ee47b4e4ef#md5:48b8a5103868baf6fb42d5ee47b4e4ef",
+          "archive:https://github.com/diml/utop/releases/download/2.0.2/utop-2.0.2.tbz#md5:48b8a5103868baf6fb42d5ee47b4e4ef"
         ],
         "opam": {
           "name": "utop",
-          "version": "2.3.0",
-          "path": "esy.lock/opam/utop.2.3.0"
+          "version": "2.0.2",
+          "path": "esy.lock/opam/utop.2.0.2"
         }
       },
       "overrides": [],
@@ -370,7 +370,8 @@
         "@opam/lwt_react@opam:1.1.1@a034a5ae",
         "@opam/lwt@opam:4.1.0@111fc2bf",
         "@opam/lambda-term@opam:1.13@08871237",
-        "@opam/dune@opam:1.6.3@a7d7baed", "@opam/cppo@opam:1.6.5@bec3dbd9",
+        "@opam/jbuilder@opam:transition@58bdfe0a",
+        "@opam/cppo@opam:1.6.5@bec3dbd9",
         "@opam/camomile@opam:1.0.1@4a2e8bdd",
         "@opam/base-unix@opam:base@87d0b2eb",
         "@opam/base-threads@opam:base@36803084",
@@ -2060,7 +2061,7 @@
       },
       "overrides": [],
       "dependencies": [
-        "ocaml@4.6.10@d41d8cd9", "@opam/utop@opam:2.3.0@ac7267ea",
+        "ocaml@4.6.10@d41d8cd9", "@opam/utop@opam:2.0.2@832bbc32",
         "@opam/result@opam:1.3@bee8bf2e",
         "@opam/ocamlfind@opam:1.8.0@96572762",
         "@opam/ocamlbuild@opam:0.12.0@6c616094",
