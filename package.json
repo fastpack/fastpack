@@ -30,8 +30,8 @@
   },
   "dependencies": {
     "@esy-ocaml/reason": "*",
-    "@esy-ocaml/rtop": "3.3.0",
     "@fastpack/flow_parser": "0.81.0",
+    "@opam/ocp-indent": "*",
     "@opam/cmdliner": "1.0.2",
     "@opam/containers": "1.3",
     "@opam/fileutils": "0.5.3",
