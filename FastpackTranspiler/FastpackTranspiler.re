@@ -2,6 +2,7 @@ module Error = Error;
 module ReactJSX = ReactJSX;
 module StripFlow = StripFlow;
 module Class = Class;
+module ClassNew = ClassNew;
 module ObjectSpread = ObjectSpread;
 
 /* TODO: make sure it is ES2015 compatible */
