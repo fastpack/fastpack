@@ -8,7 +8,7 @@ let read: (string, t) => Lwt.t(option(string));
 let readExisting: (string, t) => Lwt.t(string);
 let stat: (string, t) => Lwt.t(option(Unix.stats));
 let exists: (string, t) => Lwt.t(bool);
-let invalidate: (string, t) => unit;
+let invalidate: (string, t) => Lwt.t(unit);
 
 type persistent
 let toPersistent: t => persistent

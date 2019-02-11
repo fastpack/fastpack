@@ -1,3 +1,7 @@
+module Process = FastpackUtil.Process;
+module FS = FastpackUtil.FS;
+module Terminal = FastpackUtil.Terminal;
+module StringSet = Set.Make(CCString);
 open Cmdliner;
 
 let exits = Term.default_exits;
@@ -40,37 +44,82 @@ let register = cmd => {
   cmd;
 };
 
+let reportCache = builder => {
+  let {Builder.config, cache, _} = builder;
+  let report =
+    Printf.sprintf(
+      "Cache: %s",
+      switch (config.cache, Cache.isLoadedEmpty(cache)) {
+      | (Config.Cache.Disable, _) => "disabled"
+      | (Config.Cache.Use, true) => "empty"
+      | (Config.Cache.Use, false) => "used"
+      },
+    );
+  Lwt_io.(write_line(stdout, report));
+};
+
+let reportResult = (start_time, result, builder) =>
+  switch (result) {
+  | Error({Builder.reason, _}) =>
+    let report = Context.errorToString(builder.Builder.current_dir, reason);
+    Lwt_io.(write(stderr, report));
+  | Ok(bundle) =>
+    let size = Bundle.getTotalSize(bundle);
+    let modules = DependencyGraph.length(bundle |> Bundle.getGraph);
+    let pretty_size =
+      Printf.(
+        if (size >= 1048576) {
+          sprintf("%.2fMb", float_of_int(size) /. 1048576.0);
+        } else if (size >= 1024) {
+          sprintf(
+            "%dKb",
+            float_of_int(size) /. 1024.0 +. 0.5 |> floor |> int_of_float,
+          );
+        } else {
+          sprintf("%db", size);
+        }
+      );
+    let report =
+      Terminal.(
+        print_with_color(
+          ~font=Bold,
+          ~color=Green,
+          Printf.sprintf(
+            "Done in %.3fs. Bundle: %s. Modules: %d.\n",
+            Unix.gettimeofday() -. start_time,
+            pretty_size,
+            modules,
+          ),
+        )
+      );
+    Lwt_io.(write_line(stdout, report));
+  };
+
 module Build = {
   let run = (options: Config.t, dryRun: bool) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let%lwt packer = Packer.make(options);
-
+          let%lwt builder = Builder.make(options);
+          let%lwt () = reportCache(builder);
           Lwt.finalize(
-            () =>
-              switch%lwt (
-                Packer.pack(
-                  ~dryRun,
-                  ~graph=None,
-                  ~current_location=None,
-                  ~initial=true,
-                  ~start_time,
-                  packer,
-                )
-              ) {
+            () => {
+              let%lwt result = Builder.build(~dryRun, builder);
+              let%lwt () = reportResult(start_time, result, builder);
+              switch (result) {
+              | Ok(_) => Cache.save(builder.Builder.cache)
               | Error(_) => raise(Context.ExitError(""))
-              | Ok(ctx) => Cache.save(ctx.cache)
-              },
-            () => Packer.finalize(packer),
+              };
+            },
+            () => Builder.finalize(builder),
           );
         },
       )
     );
 
   let dryRunT = {
-    let doc = "Run all the build operations without storing the bundle in the file system";
+    let doc = "all the build operations without storing the bundle in the file system";
     Arg.(value & flag & info(["dry-run"], ~doc));
   };
 
@@ -113,13 +162,7 @@ module Transpile = {
               Printf.sprintf("Transpile: %3.3f", Unix.gettimeofday() -. t),
             )
           );
-        let%lwt () =
-          Lwt_io.(
-            write_line(
-              stdout,
-              FastpackTranspiler.runtime
-            )
-          );
+        let%lwt () = Lwt_io.(write_line(stdout, FastpackTranspiler.runtime));
         switch (parsed) {
         | Some(_) =>
           Lwt_io.(
@@ -155,12 +198,239 @@ module Transpile = {
 };
 
 module Watch = {
+  module Watchman = {
+    type t = {
+      root: string,
+      process: Process.t,
+      filterFilename: string => bool,
+    };
+
+    let make = (root, filterFilename) => {
+      let subscription = Printf.sprintf("s-%f", Unix.gettimeofday());
+      let subscribe_message =
+        `List([
+          `String("subscribe"),
+          `String(root),
+          `String(subscription),
+          `Assoc([("fields", `List([`String("name")]))]),
+        ])
+        |> Yojson.to_string;
+
+      let cmd = [|"watchman", "--no-save-state", "-j", "--no-pretty", "-p"|];
+      let%lwt () = Lwt_io.(write_line(stdout, "Starting watchman..."));
+      let process = Process.start(cmd);
+      let%lwt _ =
+        Lwt.catch(
+          () => {
+            let%lwt () = Process.write(subscribe_message ++ "\n", process);
+            Process.readLine(process);
+          },
+          fun
+          | Process.NotRunning(msg) =>
+            raise(
+              Context.ExitError(
+                Printf.sprintf(
+                  {|
+%s
+
+Unssuccessfully tried to start watchman using the following command:
+  %s
+
+It looks, like your system doesn't have it installed. Please, check here
+for installation instructions:
+  https://facebook.github.io/watchman/
+          |},
+                  Terminal.print_with_color(
+                    ~font=Bold,
+                    ~color=Red,
+                    "Cannot start file watching service: watchman",
+                  ),
+                  msg,
+                ),
+              ),
+            )
+          | exn => raise(exn),
+        );
+      /* TODO: validate answer */
+      /*{"version":"4.9.0","subscribe":"mysubscriptionname","clock":"c:1523968199:68646:1:95"}*/
+      /* this line is ignored, receiving possible files */
+      let%lwt _ = Process.readLine(process);
+      Lwt.return({root, filterFilename, process});
+    };
+
+    let rec getFiles = (watchman: t) => {
+      let%lwt line = Process.readLine(watchman.process);
+      open Yojson.Safe.Util;
+      let data = Yojson.Safe.from_string(line);
+      let root = member("root", data) |> to_string;
+      let files =
+        member("files", data)
+        |> to_list
+        |> List.map(to_string)
+        |> List.map(filename => FS.abs_path(root, filename))
+        |> List.filter(watchman.filterFilename)
+        |> List.fold_left(
+             (set, filename) => StringSet.add(filename, set),
+             StringSet.empty,
+           );
+      if (files == StringSet.empty) {
+        getFiles(watchman);
+      } else {
+        Lwt.return(files);
+      };
+    };
+
+    let finalize = watchman => Process.finalize(watchman.process);
+  };
   let run = (options: Config.t) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
-          let%lwt {Watcher.watch, finalize} = Watcher.make(options);
-          Lwt.finalize(watch, finalize);
+          let start_time = Unix.gettimeofday();
+          let%lwt builder = Builder.make(options);
+          let%lwt () = reportCache(builder);
+          let%lwt result = Builder.build(builder);
+          let%lwt () = reportResult(start_time, result, builder);
+          let%lwt watchman =
+            Watchman.make(
+              options.projectRootDir,
+              Builder.getFilenameFilter(builder),
+            );
+
+          let changedFiles = ref(StringSet.empty);
+          let changedFilesLock = Lwt_mutex.create();
+
+          let rec collectFileChanges = () => {
+            let%lwt files = Watchman.getFiles(watchman);
+            let%lwt () =
+              Lwt_mutex.with_lock(
+                changedFilesLock,
+                () => {
+                  changedFiles := StringSet.union(changedFiles^, files);
+                  Lwt.return_unit;
+                },
+              );
+            collectFileChanges();
+          };
+
+          let readChangedFiles = () =>
+            Lwt_mutex.with_lock(
+              changedFilesLock,
+              () => {
+                let ret = changedFiles^;
+                changedFiles := StringSet.empty;
+                Lwt.return(ret);
+              },
+            );
+
+          let lastResult = ref(result);
+          let lastResultLock = Lwt_mutex.create();
+
+          let readLastResult = () =>
+            Lwt_mutex.with_lock(lastResultLock, () =>
+              Lwt.return(lastResult^)
+            );
+
+          let storeLastResult = result =>
+            Lwt_mutex.with_lock(
+              lastResultLock,
+              () => {
+                lastResult := result;
+                Lwt.return_unit;
+              },
+            );
+
+          let rec rebuild = () => {
+            let start_time = Unix.gettimeofday();
+            let%lwt filesChanged = readChangedFiles();
+            let%lwt prevResult = readLastResult();
+            let%lwt () =
+              switch%lwt (
+                Builder.shouldRebuild(~filesChanged, ~prevResult, builder)
+              ) {
+              | None => Lwt_unix.sleep(0.02)
+              | Some(_) =>
+                let%lwt () = Terminal.clearScreen();
+                let n = 3;
+                let elements = StringSet.elements(filesChanged);
+                let message =
+                  "Files changed: \n"
+                  ++ String.concat(
+                       "\n",
+                       List.map(f => "    " ++ f, CCList.take(n, elements)),
+                     )
+                  ++ (
+                    List.length(elements) >= n ?
+                      Printf.sprintf(
+                        "\n    and %d more.\n",
+                        List.length(elements) - n,
+                      ) :
+                      "\n"
+                  );
+                let%lwt () = Lwt_io.(write_line(stdout, message));
+
+                let%lwt result =
+                  Lwt.protected(
+                    Builder.rebuild(~filesChanged, ~prevResult, builder),
+                  );
+                let%lwt () = reportResult(start_time, result, builder);
+                storeLastResult(result);
+              };
+            rebuild();
+          };
+
+          let lastResultCacheDumped = ref(None);
+          let dumpCache = () =>
+            switch%lwt (readLastResult()) {
+            | Ok(_) =>
+              let dump = result => {
+                let%lwt () = Cache.save(builder.Builder.cache);
+                lastResultCacheDumped := Some(result);
+                Lwt.return_unit;
+              };
+              switch (lastResultCacheDumped^) {
+              | None => dump(lastResult^)
+              | Some(lastResultCacheDumped) =>
+                if (lastResult^ !== lastResultCacheDumped) {
+                  dump(lastResult^);
+                } else {
+                  Lwt.return_unit;
+                }
+              };
+            | Error(_) => Lwt.return_unit
+            };
+
+          /* Workaround, since Lwt.finalize doesn't handle the signal's exceptions
+           * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
+           * */
+          let (w, u) = Lwt.wait();
+          let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
+          Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
+          Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
+          let%lwt () =
+            Lwt_io.(
+              write_line(
+                stdout,
+                Printf.sprintf(
+                  "Watching directory: %s. (Ctrl+C to exit)",
+                  options.projectRootDir,
+                ),
+              )
+            );
+          Lwt.Infix.(
+            Lwt.finalize(
+              () =>
+                collectFileChanges()
+                <&> rebuild()
+                <&> FS.setInterval(5., dumpCache)
+                <?> w,
+              () => {
+                let%lwt () = Watchman.finalize(watchman);
+                let%lwt () = Builder.finalize(builder);
+                Lwt.return_unit;
+              },
+            )
+          );
         },
       )
     );
@@ -173,13 +443,11 @@ module Watch = {
 };
 
 module Worker = {
-  let run = () => {
-    Lwt_main.run(Worker.start());
-  };
+  let run = () => Lwt_main.run(Worker.start());
   let doc = "worker subprocess (do not use directly)";
   let command =
     register((
-      Term.(const(run) $ const(())),
+      Term.(const(run) $ const()),
       Term.info("worker", ~doc, ~sdocs, ~exits),
     ));
 };

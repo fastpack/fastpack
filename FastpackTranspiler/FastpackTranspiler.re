@@ -94,9 +94,8 @@ let transpile = (transpilers, program) => {
 let transpile_source = (transpilers, source) => {
   let (program, _) = FastpackUtil.Parser.parse_source(source);
   let (program', modified) = transpile(transpilers, program);
-  switch(modified) {
-    | Some(program) => (source, Some(program))
-    | None => (FastpackUtil.Printer.print(program'), None)
-  }
-
+  switch (modified) {
+  | Some(program) => (source, Some(program))
+  | None => (FastpackUtil.Printer.print(program'), None)
+  };
 };

@@ -35,11 +35,6 @@ module Mock = {
     Format.fprintf(ppf, "%s", to_string(mock));
 };
 
-module Reporter = {
-  type t =
-    | JSON
-    | Text;
-};
 
 module Preprocessor = {
   type t = {
@@ -109,7 +104,6 @@ type t = {
   postprocess: list(string),
   preprocess: list(Preprocessor.t),
   projectRootDir: string,
-  report: Reporter.t,
   resolveExtension: list(string),
   target: Target.t,
 };
@@ -129,7 +123,6 @@ let create =
       ~cache,
       ~preprocess,
       ~postprocess,
-      ~report,
       ~debug,
     ) => {
   let currentDir = Unix.getcwd();
@@ -178,7 +171,6 @@ let create =
     postprocess,
     preprocess,
     projectRootDir,
-    report,
     resolveExtension,
     target,
   };
@@ -199,7 +191,6 @@ let term = {
         postprocess,
         preprocess,
         projectRootDir,
-        report,
         resolveExtension,
         target,
       ) =>
@@ -216,7 +207,6 @@ let term = {
       ~postprocess,
       ~preprocess=List.map(snd, preprocess),
       ~projectRootDir,
-      ~report,
       ~resolveExtension,
       ~target,
     );
@@ -361,16 +351,6 @@ let term = {
     Arg.(value & opt_all(string, []) & info(["postprocess"], ~docv, ~doc));
   };
 
-  let reportT = {
-    let doc = "Output packer statistics";
-    let docv = "[ json ]";
-    let report = Arg.enum(Reporter.[("json", JSON), ("text", Text)]);
-
-    Arg.(
-      value & opt(report, Reporter.Text) & info(["report"], ~docv, ~doc)
-    );
-  };
-
   let debugT = {
     let doc = "Print debug output";
     Arg.(value & flag & info(["d", "debug"], ~doc));
@@ -390,7 +370,6 @@ let term = {
     $ postprocessT
     $ preprocessT
     $ projectRootDirT
-    $ reportT
     $ resolveExtensionT
     $ targetT
   );

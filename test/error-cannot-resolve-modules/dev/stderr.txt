@@ -1,6 +1,7 @@
 
-Module resolution error: cannot resolve './c'
 /.../test/error-cannot-resolve-modules/index.js
+Cannot resolve './c'
+
 Cannot resolve module
   Resolving './c'. Base directory: '/.../test/error-cannot-resolve-modules'
   Resolving '/.../test/error-cannot-resolve-modules/c'.

@@ -1,7 +1,6 @@
 module Loc = Flow_parser.Loc;
 module Scope = FastpackUtil.Scope;
-
-open FastpackUtil.Colors;
+module Terminal = FastpackUtil.Terminal;
 
 /*
    assoc list of nodejs libs and their browser implementations
@@ -43,17 +42,18 @@ let nodelibs = [
   ("zlib", Some("browserify-zlib")),
 ];
 
-let format_error_header = (~isTTY=true, ~subtitle="", (title, path)) =>
-  if (isTTY) {
-    (
-      print_with_color(title, Red) ++ " " ++ subtitle,
-      print_with_color(~font=Bold, path, Cyan),
-    );
-  } else {
-    (title ++ " " ++ subtitle, path);
-  };
+let formatErrorHeader = (~where="", text) =>
+  String.concat(
+    "\n",
+    [
+      Terminal.print_with_color(~font=Bold, ~color=Cyan, where),
+      Terminal.print_with_color(~color=Red, text),
+      "",
+    ],
+  );
 
-let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
+let get_codeframe = (loc: Loc.t, lines) => {
+  let isTTY = FastpackUtil.FS.isatty(Unix.stderr);
   let startLine = max(0, loc.start.line - 2);
   let endLine = min(List.length(lines), loc._end.line + 1);
   let codeframe =
@@ -100,13 +100,16 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
               loc._end.column - loc.start.column,
             );
           if (String.length(error_substring) > 0) {
-            let colored_error = print_with_color(error_substring, Red);
+            let colored_error =
+              Terminal.print_with_color(~color=Red, error_substring);
             Logs.debug(x =>
               x("e: %s ... colo: %s", error_substring, colored_error)
             );
             let colored_line =
               CCString.replace(~sub=error_substring, ~by=colored_error, line);
-            print_with_color(lineNo, Red) ++ " │ " ++ colored_line;
+            Terminal.print_with_color(~color=Red, lineNo)
+            ++ " │ "
+            ++ colored_line;
           } else {
             line;
           };
@@ -117,19 +120,19 @@ let get_codeframe = (~isTTY=false, loc: Loc.t, lines) => {
   String.concat("\n", formatted);
 };
 type reason =
-  | CannotReadModule(string, Module.LocationSet.t)
   | CannotLeavePackageDir(string)
   | CannotResolveModule(string, Module.Dependency.t)
   | CannotParseFile(
-      (string, list((Loc.t, Flow_parser.Parse_error.t)), string),
+      string,
+      list((Loc.t, Flow_parser.Parse_error.t)),
+      string,
     )
-  | NotImplemented(option(Loc.t), string)
+  | NotImplemented(string)
   | CannotRenameModuleBinding(Loc.t, string, Module.Dependency.t)
-  | DependencyCycle(list(string))
-  | CannotFindExportedName(string, string)
-  | ScopeError(Scope.reason)
-  | PreprocessorError(string)
-  | UnhandledCondition(string)
+  | CannotFindExportedName(string, string, string)
+  | ScopeError(string, Scope.reason)
+  | PreprocessorError(string, string)
+  | UnhandledCondition(string, string)
   | CliArgumentError(string);
 
 let loc_to_string = ({Loc.start, _end, _}) =>
@@ -143,54 +146,54 @@ let loc_to_string = ({Loc.start, _end, _}) =>
 
 let to_string = (package_dir, error) =>
   switch (error) {
-  | UnhandledCondition(message) => message
+  | UnhandledCondition(where, error) =>
+    String.concat(
+      "\n",
+      [formatErrorHeader(~where, "Preprocessor Error:"), error],
+    )
 
   | CliArgumentError(message) => "CLI argument error: " ++ message
-
-  | CannotReadModule(filename, _) => "Cannot read file: " ++ filename
 
   | CannotLeavePackageDir(filename) =>
     Printf.sprintf("%s is out of the working directory\n", filename)
 
   /* TODO: rework this a little */
   | CannotResolveModule(msg, dep) =>
-    let isTTY = FastpackUtil.FS.isatty(Unix.stderr);
-    let (error_title, error_path) =
-      format_error_header(
-        ~isTTY,
-        ~subtitle="cannot resolve '" ++ dep.request ++ "'",
-        (
-          "Module resolution error:",
-          Module.location_to_string(dep.requested_from),
-        ),
+    let header =
+      formatErrorHeader(
+        ~where=Module.location_to_string(dep.requested_from),
+        "Cannot resolve '" ++ dep.request ++ "'",
       );
 
     switch (List.assoc_opt(dep.request, nodelibs)) {
-    | None => String.concat("\n", [error_title, error_path, msg])
+    | None => String.concat("\n", [header, msg])
     | Some(None) =>
       String.concat(
         "\n",
         [
-          error_title,
-          error_path,
-          "This looks like base node.js library which does not have any browser implementation we are aware of",
+          header,
+          {|
+This looks like base node.js library which does not have any browser
+implementation we are aware of
+          |},
         ],
       )
     | Some(Some(mock)) =>
       let msg =
         [
-          error_title,
-          error_path,
-          "This looks like base node.js library and unlikely is required in the browser environment.",
-          "If you still want to use it, first install the browser implementation with:",
-          "",
+          header,
+          {|
+This looks like base node.js library and unlikely is required in the
+browser environment.
+If you still want to use it, first install the browser implementation with:
+          |},
           Printf.sprintf("\t\tnpm install --save %s", mock),
         ]
         @ (
           if (mock != dep.request) {
             [
               "",
-              "And then add this command line option when running fpack:",
+              "And then add this command line option when running fastpack:",
               "",
               Printf.sprintf("\t\t--mock %s:%s", dep.request, mock),
             ];
@@ -202,47 +205,40 @@ let to_string = (package_dir, error) =>
       String.concat("\n", msg);
     };
 
-  | CannotParseFile((location_str, errors, source)) =>
-    let isTTY = FastpackUtil.FS.isatty(Unix.stderr);
+  | CannotParseFile(where, errors, source) =>
     let lines =
       String.split_on_char('\n', source)
       |> List.mapi((i, line) => (i + 1, line));
 
-    let format_error = (isTTY, (loc, error)) => {
-      let error_desc = Flow_parser.Parse_error.PP.error(error);
-      String.concat(
-        "\n",
-        [
-          "--------------------",
-          error_desc ++ " at " ++ loc_to_string(loc),
-          "",
-          get_codeframe(~isTTY, loc, lines),
-          "",
-        ],
-      );
-    };
-
-    let (error_title, error_path) =
-      format_error_header(~isTTY, ("Parse error", location_str));
     String.concat(
       "\n",
       [
-        error_title,
-        error_path,
-        "",
-        String.concat("\n", List.map(format_error(isTTY), errors)),
+        formatErrorHeader(~where, "Parse error"),
+        String.concat(
+          "\n",
+          List.map(
+            ((loc, error)) => {
+              let error_desc = Flow_parser.Parse_error.PP.error(error);
+              String.concat(
+                "\n",
+                [
+                  "--------------------",
+                  error_desc ++ " at " ++ loc_to_string(loc),
+                  "",
+                  get_codeframe(loc, lines),
+                  "",
+                ],
+              );
+            },
+            CCList.take(2, errors),
+          ),
+        ),
         "",
       ],
     );
 
-  | NotImplemented(some_loc, message) =>
-    let loc =
-      switch (some_loc) {
-      | Some(loc) => loc_to_string(loc) ++ " "
-      | None => ""
-      };
-
-    loc ++ message;
+  | NotImplemented(message) =>
+    String.concat("\n", [formatErrorHeader("Not Implemented"), message])
 
   | CannotRenameModuleBinding(loc, id, dep) =>
     Printf.sprintf(
@@ -252,24 +248,33 @@ let to_string = (package_dir, error) =>
       Module.Dependency.to_string(~dir=Some(package_dir), dep),
     )
 
-  | DependencyCycle(filenames) =>
-    Printf.sprintf("Dependency cycle detected:\n\t%s\n") @@
-    String.concat("\n\t") @@
-    List.map(
-      filename => CCString.replace(~sub=package_dir ++ "/", ~by="", filename),
-      filenames,
+  | CannotFindExportedName(where, name, location_str) =>
+    String.concat(
+      "\n",
+      [
+        formatErrorHeader(~where, "Import Error"),
+        Printf.sprintf(
+          "Cannot import name '%s' from '%s'\n",
+          name,
+          location_str,
+        ),
+      ],
     )
 
-  | CannotFindExportedName(name, location_str) =>
-    Printf.sprintf(
-      "Cannot find exported name '%s' in module '%s'\n",
-      name,
-      location_str,
+  | ScopeError(where, reason) =>
+    String.concat(
+      "\n",
+      [
+        formatErrorHeader(~where, "Module Scope Error:"),
+        Scope.error_to_string(reason),
+      ],
     )
 
-  | ScopeError(reason) => Scope.error_to_string(reason)
-
-  | PreprocessorError(error) => error
+  | PreprocessorError(where, error) =>
+    String.concat(
+      "\n",
+      [formatErrorHeader(~where, "Preprocessor Error:"), error],
+    )
   };
 
 let ie = FastpackUtil.Error.ie;

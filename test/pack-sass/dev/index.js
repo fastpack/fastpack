@@ -111,7 +111,7 @@ if (!global.Buffer) {
   };
 
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
-})
+}) /* --runtimeMain-- */
 ({
 /* !s: test.scss */
 "NM$$css$$_$$loader$indexDOT$$js$$B$$NM$$sass$$_$$loader$lib$loaderDOT$$js$$B$$testDOT$$scss":{m:function(module, exports, __fastpack_require__) {

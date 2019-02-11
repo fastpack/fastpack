@@ -22,6 +22,8 @@ let rec readlink = filename =>
   | value => readlink(abs_path(FilePath.dirname(filename), value))
   | exception (Unix.Unix_error(Unix.EINVAL, "readlink", _)) =>
     Lwt.return(filename)
+  | exception (Unix.Unix_error(Unix.ENOENT, "readlink", _)) =>
+    Lwt.return(filename)
   };
 
 let relative_path = (dir, filename) => {

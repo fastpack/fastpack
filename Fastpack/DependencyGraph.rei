@@ -5,6 +5,7 @@
 type t;
 
 exception Cycle(list(string));
+exception Rebuild(string, Module.location);
 
 /**
  * Construct an empty depgraph
@@ -48,6 +49,8 @@ let length: t => int;
 
 let modules: t => Sequence.t((Module.location, Lwt.t(Module.t)));
 
+let iterModules: (t, Module.t => Lwt.t(unit)) => Lwt.t(unit);
+
 /** Lookup module in the depgraph by id. */
 
 let lookup_module: (t, Module.location) => option(Lwt.t(Module.t));
@@ -78,3 +81,7 @@ let get_changed_module_locations: (t, list(string)) => Module.LocationSet.t;
 /** Remove all modules except those which locations are specified */
 
 let cleanup: (t, Module.LocationSet.t) => t;
+
+
+
+let build: (Context.t, Module.location, t) => Lwt.t(unit)
