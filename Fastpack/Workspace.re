@@ -50,17 +50,10 @@ let print_patches = patches => {
   patches;
 };
 
-let write =
-    (
-      ~modify=s => s,
-      ~output_channel: Lwt_io.output_channel,
-      ~workspace: t('a),
-      ~ctx: 'a,
-    ) =>
+let write = (~modify=s => s, ~workspace: t('a), ~ctx: 'a) =>
   switch (workspace.patches) {
   | [] =>
     let value = modify(workspace.value);
-    let%lwt () = Lwt_io.write(output_channel, value);
     Lwt.return(value);
   | _ =>
     let fold_patches = patches => {
@@ -105,52 +98,62 @@ let write =
     };
 
     let patches = fold_patches(workspace.patches);
-    /* let () = print_endline w.value in */
-    /* let () = print_endline "----" in */
-    /* let _ = print_patches patches in */
-    /* let () = print_endline "----" in */
-    let rec write_patch = (b_offset, u_offset, value, patches, content) =>
+    let value = workspace.value;
+    let len = String.length(value);
+    let buf = Buffer.create(len);
+    let utf8 = Array.make(len + 1, -1);
+    let (byte, u_value_length) =
+      CCString.fold(
+        ((byte, symbol), c) => {
+          let is_symbol = UTF8.is_symbol(c);
+          if (is_symbol && utf8[symbol] == (-1)) {
+            utf8[symbol] = byte;
+          } else {
+            ();
+          };
+          (byte + 1, is_symbol ? symbol + 1 : symbol);
+        },
+        (0, 0),
+        value,
+      );
+    if (utf8[u_value_length] == (-1)) {
+      utf8[u_value_length] = byte;
+    } else {
+      ();
+    };
+    let rec write_patch = (b_offset, _u_offset, patches) =>
       switch (patches) {
       | [] =>
-        let u_length = UTF8.length(value) - u_offset;
-        let chunk = UTF8.sub(value, u_offset, u_length);
+        /* let u_length = u_value_length - u_offset; */
+        /* let chunk = UTF8.sub(value, u_offset, u_length); */
+        let chunk =
+          String.sub(value, b_offset, String.length(value) - b_offset);
         let modified = modify(chunk);
-        let%lwt () = Lwt_io.write(output_channel, modified);
-
-        Lwt.return(content ++ modified);
-      /* let%lwt () = */
-      /*   Lwt_io.write_from_string_exactly */
-      /*     output_channel */
-      /*     value */
-      /*     b_offset */
-      /*     (String.length chunk) */
-      /* in */
-      /* Lwt.return (content ^ chunk) */
+        Buffer.add_string(buf, modified);
+        Lwt.return(Buffer.contents(buf));
       | [patch, ...patches] =>
-        let u_length = patch.offset_start - u_offset;
-        let chunk = UTF8.sub(value, u_offset, u_length);
+        let b_patch_offset_start = utf8[patch.offset_start];
+        let b_length = b_patch_offset_start - b_offset;
+        let chunk = String.sub(value, b_offset, b_length);
         let modified_chunk = modify(chunk);
         let b_length = String.length(chunk);
-        let%lwt () = Lwt_io.write(output_channel, modified_chunk);
-        /* let%lwt () = Lwt_io.write_from_string_exactly output_channel value b_offset b_length in */
         let patch_content = patch.patch(ctx) |> modify;
-        let%lwt () = Lwt_io.write(output_channel, patch_content);
         let patched_chunk =
-          UTF8.sub(
+          String.sub(
             value,
-            patch.offset_start,
-            patch.offset_end - patch.offset_start,
+            b_patch_offset_start,
+            utf8[patch.offset_end] - b_patch_offset_start,
           );
+        Buffer.add_string(buf, modified_chunk);
+        Buffer.add_string(buf, patch_content);
         write_patch(
           b_offset + b_length + String.length(patched_chunk),
           patch.offset_end,
-          value,
           patches,
-          content ++ modified_chunk ++ patch_content,
         );
       };
 
-    write_patch(0, 0, workspace.value, patches, "");
+    ([@tailcall] write_patch)(0, 0, patches);
   };
 
 let to_string = (w, ctx) => {

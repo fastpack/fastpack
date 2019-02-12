@@ -96,7 +96,7 @@ let reportResult = (start_time, result, builder) =>
   };
 
 module Build = {
-  let run = (options: Config.t, dryRun: bool) =>
+  let run = (options: Config.t, dryRun: bool, one: bool) =>
     run(options.debug, () =>
       Lwt_main.run(
         {
@@ -105,7 +105,7 @@ module Build = {
           let%lwt () = reportCache(builder);
           Lwt.finalize(
             () => {
-              let%lwt result = Builder.build(~dryRun, builder);
+              let%lwt result = Builder.build(~one, ~dryRun, builder);
               let%lwt () = reportResult(start_time, result, builder);
               switch (result) {
               | Ok(_) => Cache.save(builder.Builder.cache)
@@ -123,10 +123,15 @@ module Build = {
     Arg.(value & flag & info(["dry-run"], ~doc));
   };
 
+  let oneT = {
+    let doc = "process one module disregarding its dependencies and output the information";
+    Arg.(value & flag & info(["one-module"], ~doc));
+  };
+
   let doc = "rebuild the bundle on a file change";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term $ dryRunT)),
+      Term.(ret(const(run) $ Config.term $ dryRunT $ oneT)),
       Term.info("build", ~doc, ~sdocs, ~exits),
     ));
 };
@@ -443,7 +448,18 @@ for installation instructions:
 };
 
 module Worker = {
-  let run = () => Lwt_main.run(Worker.start());
+  let worker =
+    Worker.(
+      make(
+        ~init=initFromParent,
+        ~input=inputFromParent,
+        ~output=outputToParent,
+        ~serveForever=true,
+        (),
+      )
+    );
+  let run = () =>
+    Lwt_main.run(Worker.start(worker));
   let doc = "worker subprocess (do not use directly)";
   let command =
     register((

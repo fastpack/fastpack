@@ -127,25 +127,37 @@ let exists = (filename, cache) =>
   };
 
 let read = (filename, cache) => {
-  let readBinary = filename =>
-    switch%lwt (Lwt_io.file_length(filename)) {
-    | length =>
-      let readBinary' = () => {
-        let ch = open_in_bin(filename);
-        let content = really_input_string(ch, Int64.to_int(length));
-        close_in_noerr(ch);
-        Some(content);
-      };
-      let content =
-        try (readBinary'()) {
-        | Unix.Unix_error(Unix.ENOENT, _, _) => None
-        | Sys_error(_) => None
-        };
-      Lwt.return(content);
-    | exception (Unix.Unix_error(Unix.ENOENT, _, _)) => Lwt.return_none
-    | exception (Sys_error(_)) => Lwt.return_none
+  let readBinary =
+    switch (Sys.os_type) {
+    | "Unix" => (
+        filename =>
+          switch%lwt (Lwt_io.(with_file(~mode=Input, filename, read))) {
+          | content => Lwt.return_some(content)
+          | exception (Unix.Unix_error(Unix.ENOENT, _, _)) => Lwt.return_none
+          | exception (Sys_error(_)) => Lwt.return_none
+          }
+      )
+    | _ => (
+        filename =>
+          switch%lwt (Lwt_io.file_length(filename)) {
+          | length =>
+            let readBinary' = () => {
+              let ch = open_in_bin(filename);
+              let content = really_input_string(ch, Int64.to_int(length));
+              close_in_noerr(ch);
+              Some(content);
+            };
+            let content =
+              try (readBinary'()) {
+              | Unix.Unix_error(Unix.ENOENT, _, _) => None
+              | Sys_error(_) => None
+              };
+            Lwt.return(content);
+          | exception (Unix.Unix_error(Unix.ENOENT, _, _)) => Lwt.return_none
+          | exception (Sys_error(_)) => Lwt.return_none
+          }
+      )
     };
-
   let readAndUpdateContent = (filename, entry) =>
     switch%lwt (readBinary(filename)) {
     | Some(_) as content =>

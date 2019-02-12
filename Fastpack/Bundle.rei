@@ -6,6 +6,7 @@ type file = {
   size: int,
 }
 
+let empty: unit => t;
 let make: (DependencyGraph.t, Module.location) => Lwt.t(t);
 let emit: (Context.t, t) => Lwt.t(unit);
 let getGraph: t => DependencyGraph.t;

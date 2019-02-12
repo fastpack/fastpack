@@ -112,8 +112,116 @@ type prevRun = {
   startLocation: Module.location,
 };
 
+let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
+  let t = Unix.gettimeofday();
+  let%lwt () = DependencyGraph.build(ctx, startLocation, graph);
+  Logs.debug(x => x("Graph built: %.3f", Unix.gettimeofday() -. t));
+  let%lwt exportFinder = ExportFinder.make(graph);
+  let%lwt () =
+    DependencyGraph.iterModules(graph, (source: Module.t) =>
+      switch (ExportFinder.ensure_exports(source, exportFinder)) {
+      | Some((m, name)) =>
+        let location_str =
+          Module.location_to_string(
+            ~base_dir=Some(ctx.current_dir),
+            m.location,
+          );
+
+        Lwt.fail(
+          Context.PackError(
+            ctx,
+            CannotFindExportedName(
+              Module.location_to_string(source.location),
+              name,
+              location_str,
+            ),
+          ),
+        );
+      | None => Lwt.return_unit
+      }
+    );
+  let%lwt bundle = Bundle.make(graph, ctx.entry_location);
+  let%lwt () =
+    dryRun ? FS.rmdir(ctx.tmpOutputDir) : Bundle.emit(ctx, bundle);
+  Lwt.return(bundle);
+};
+
+let buildOne = (ctx: Context.t) => {
+  let request =
+    switch (ctx.entry_location) {
+    | Module.Main([entry]) => entry
+    | _ => failwith("one entry point is expected")
+    };
+  let%lwt (location, _) =
+    DependencyGraph.resolve(
+      ctx,
+      {Module.Dependency.request, requested_from: ctx.entry_location},
+    );
+  print_endline(request);
+  print_endline(Module.location_to_string(location));
+  let source = ref(None);
+  let result = ref(None);
+
+  let worker =
+    Worker.(
+      make(
+        ~init=
+          () =>
+            Lwt.return(
+              makeInit(
+                ~project_root=ctx.config.projectRootDir,
+                ~output_dir=ctx.tmpOutputDir,
+                ~publicPath=ctx.config.publicPath,
+                (),
+              ),
+            ),
+        ~input=() => Lwt.return(makeRequest(~location, ~source=source^, ())),
+        ~output=
+          response => {
+            let%lwt result' =
+              Worker.Reader.responseToResult(
+                ~location,
+                ~source=source^,
+                response,
+              );
+            result := Some(result');
+            Lwt.return_unit;
+          },
+        ~serveForever=false,
+        (),
+      )
+    );
+
+  let read = (_location, source') => {
+    source := source';
+    let%lwt () = Worker.start(worker);
+    switch (result^) {
+    | Some(result) => Lwt.return(result)
+    | None => failwith("Didn't collect result")
+    };
+  };
+
+  let bundle = Bundle.empty();
+  let%lwt (m, _) =
+    DependencyGraph.read_module(
+      ~ctx,
+      ~read,
+      ~graph=Bundle.getGraph(bundle),
+      location,
+    );
+  print_endline(m.id);
+
+  Lwt.return(bundle);
+};
+
 let rec build =
-        (~dryRun=false, ~filesWatched=StringSet.empty, ~prevRun=None, builder) => {
+        (
+          ~one=false,
+          ~dryRun=false,
+          ~filesWatched=StringSet.empty,
+          ~prevRun=None,
+          builder,
+        ) => {
   let {current_dir, tmpOutputDir, config, cache, _} = builder;
 
   let resolver =
@@ -165,34 +273,8 @@ let rec build =
           ),
         );
       };
-      let%lwt () = DependencyGraph.build(ctx, startLocation, graph);
-      let%lwt exportFinder = ExportFinder.make(graph);
-      let%lwt () =
-        DependencyGraph.iterModules(graph, (source: Module.t) =>
-          switch (ExportFinder.ensure_exports(source, exportFinder)) {
-          | Some((m, name)) =>
-            let location_str =
-              Module.location_to_string(
-                ~base_dir=Some(ctx.current_dir),
-                m.location,
-              );
-
-            Lwt.fail(
-              Context.PackError(
-                ctx,
-                CannotFindExportedName(
-                  Module.location_to_string(source.location),
-                  name,
-                  location_str,
-                ),
-              ),
-            );
-          | None => Lwt.return_unit
-          }
-        );
-      let%lwt bundle = Bundle.make(graph, ctx.entry_location);
-      let%lwt () =
-        dryRun ? FS.rmdir(tmpOutputDir) : Bundle.emit(ctx, bundle);
+      let%lwt bundle =
+        one ? buildOne(ctx) : buildAll(~dryRun, ~ctx, ~graph, startLocation);
       Lwt.return_ok(bundle);
     },
     fun

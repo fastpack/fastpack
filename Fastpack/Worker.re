@@ -52,9 +52,45 @@ and ok = {
   build_dependencies: list(string),
 };
 
-let start = () => {
+type t = {
+  init: unit => Lwt.t(init),
+  input: unit => Lwt.t(request),
+  output: response => Lwt.t(unit),
+  serveForever: bool,
+};
+
+let make = (~init, ~input, ~output, ~serveForever, ()) => {
+  init,
+  input,
+  output,
+  serveForever,
+};
+
+let makeInit = (~project_root, ~output_dir, ~publicPath, ()) => {
+  project_root,
+  output_dir,
+  publicPath,
+};
+
+let initFromParent = () => {
   let%lwt init: Lwt.t(init) = Lwt_io.read_value(Lwt_io.stdin);
-  let {project_root, output_dir, _} = init;
+  Lwt.return(init);
+};
+
+let makeRequest = (~location, ~source, ()) => {location, source};
+
+let inputFromParent = () => {
+  let%lwt input: Lwt.t(request) = Lwt_io.read_value(Lwt_io.stdin);
+  Lwt.return(input);
+};
+
+let outputToParent = (outputValue: response) =>
+  Lwt_io.write_value(Lwt_io.stdout, outputValue);
+
+let outputToString = (_outputValue: response) => "SOME OUTPUT";
+
+let start = ({init, input, output, serveForever}) => {
+  let%lwt {project_root, output_dir, _} = init();
 
   let%lwt preprocessor =
     Preprocessor.make(
@@ -663,9 +699,9 @@ let start = () => {
   };
 
   let rec process = () => {
-    let%lwt input: Lwt.t(request) = Lwt_io.read_value(Lwt_io.stdin);
-    let {location, source} = input;
-    let%lwt output =
+    let%lwt {location, source} = input();
+    let t = Unix.gettimeofday();
+    let%lwt outputValue =
       Lwt.catch(
         () => {
           let location_str =
@@ -675,6 +711,7 @@ let start = () => {
             );
           let%lwt (source, parsedSource, build_dependencies, files) =
             Preprocessor.run(location, source, preprocessor);
+          Logs.debug(x => x("Preprocess: %.3f", Unix.gettimeofday() -. t));
           let (
             workspace,
             static_dependencies,
@@ -684,13 +721,14 @@ let start = () => {
             module_type,
           ) =
             analyze(location, source, parsedSource);
+          Logs.debug(x => x("Analyze: %.3f", Unix.gettimeofday() -. t));
           let%lwt source =
             Workspace.write(
               ~modify=to_eval,
-              ~output_channel=Lwt_io.null,
               ~workspace,
               ~ctx=(),
             );
+          Logs.debug(x => x("Write: %.3f", Unix.gettimeofday() -. t));
           Lwt.return(
             Complete({
               source:
@@ -721,8 +759,12 @@ let start = () => {
           Traceback(Printexc.(to_string(exn) ++ "\n" ++ get_backtrace()))
           |> Lwt.return,
       );
-    let%lwt () = Lwt_io.write_value(Lwt_io.stdout, output);
-    process();
+    let%lwt () = output(outputValue);
+    if (serveForever) {
+      process();
+    } else {
+      Lwt.return_unit;
+    };
   };
 
   Lwt.finalize(process, () => Preprocessor.finalize(preprocessor));
@@ -750,17 +792,7 @@ module Reader = {
 
   let finalize = reader => Lwt_pool.clear(reader.workerPool);
 
-  let read = (~location, ~source, reader) => {
-    let location_str = Module.location_to_string(location);
-    let%lwt response: Lwt.t(response) =
-      Lwt_pool.use(
-        reader.workerPool,
-        Process.writeAndReadValue(
-          ~msg="READING: " ++ location_str,
-          {location, source},
-        ),
-      );
-
+  let responseToResult = (~location, ~source, response) => {
     let location_str = Module.location_to_string(location);
     switch (response) {
     | Complete(data) => Lwt.return_ok(data)
@@ -779,5 +811,18 @@ module Reader = {
     | Traceback(message) =>
       Lwt.return_error(Error.UnhandledCondition(location_str, message))
     };
+  };
+
+  let read = (~location, ~source, reader) => {
+    let location_str = Module.location_to_string(location);
+    let%lwt response: Lwt.t(response) =
+      Lwt_pool.use(
+        reader.workerPool,
+        Process.writeAndReadValue(
+          ~msg="READING: " ++ location_str,
+          {location, source},
+        ),
+      );
+    responseToResult(~location, ~source, response);
   };
 };

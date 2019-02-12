@@ -227,6 +227,15 @@ let makeChunk = (graph, entry, seen) => {
   Lwt.return((List.rev(modules), chunkRequests, seen));
 };
 
+let empty = () => {
+    graph: DependencyGraph.empty (),
+    chunkRequests: MDM.empty,
+    locationToChunk: Hashtbl.create(5000),
+    chunks: Hashtbl.create(500),
+    chunkDependency: Hashtbl.create(500),
+    emittedFiles: Hashtbl.create(500),
+}
+
 let make = (graph: DependencyGraph.t, entry: Module.location) => {
   let bundle = {
     graph,
