@@ -1,5 +1,26 @@
+type t
+type init
+type request
+type response
 
-let start: unit => Lwt.t('a);
+let make: (
+  ~init: unit => Lwt.t(init),
+  ~input: unit => Lwt.t(request),
+  ~output: response => Lwt.t(unit),
+  ~serveForever: bool,
+  unit) => t
+
+
+let makeInit: (~project_root: string, ~output_dir: string, ~publicPath: string, unit) => init
+let initFromParent: unit => Lwt.t(init);
+
+let makeRequest: (~location: Module.location, ~source: option(string), unit) => request
+let inputFromParent: unit => Lwt.t(request);
+
+let outputToString: response => string
+let outputToParent: response => Lwt.t(unit);
+
+let start: t => Lwt.t(unit);
 
 type ok = {
   source: string,
@@ -23,4 +44,8 @@ module Reader: {
     (~location: Module.location, ~source: option(string), t)
     => Lwt.t(result(ok, Error.reason));
   let finalize: t => Lwt.t(unit);
+
+  let responseToResult: (~location: Module.location, ~source: option(string), response) =>
+Lwt.t(result(ok, Error.reason))
+
 }

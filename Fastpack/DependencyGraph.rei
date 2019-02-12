@@ -83,5 +83,19 @@ let get_changed_module_locations: (t, list(string)) => Module.LocationSet.t;
 let cleanup: (t, Module.LocationSet.t) => t;
 
 
-
 let build: (Context.t, Module.location, t) => Lwt.t(unit)
+let resolve: (Context.t, Module.Dependency.t) => Lwt.t((Module.location, list(string)))
+
+
+
+type dependencies =
+  | NoDependendencies
+  | Dependencies(list(Module.Dependency.t), list(Module.Dependency.t));
+let read_module:
+  (~ctx: Context.t,
+   ~read: (Module.location, option(string)) => Lwt.t(result(Worker.ok, Error.reason)),
+   ~graph: t,
+   Module.location)
+   => Lwt.t((Module.t, dependencies))
+
+

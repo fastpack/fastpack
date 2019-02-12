@@ -16,15 +16,15 @@ let sub = (s, u_offset, u_length) => {
     if (n == 0) {
       pos;
     } else {
-      skip_tail(s, pos + 1, n - 1);
+      ([@tailcall]skip_tail)(s, pos + 1, n - 1);
     }
   and skip_tail = (s, pos, n) =>
     if (pos >= length) {
-      skip(s, length, 0);
+      ([@tailcall]skip)(s, length, 0);
     } else if (is_symbol(s.[pos])) {
-      skip(s, pos, n);
+      ([@tailcall]skip)(s, pos, n);
     } else {
-      skip_tail(s, pos + 1, n);
+      ([@tailcall]skip_tail)(s, pos + 1, n);
     };
 
   let b_start = skip(s, 0, u_offset);
