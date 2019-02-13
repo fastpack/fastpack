@@ -21,5 +21,7 @@
     "url": "https://github.com/fastpack/fastpack/issues"
   },
   "homepage": "https://github.com/fastpack/fastpack#readme",
-  "dependencies": {}
+  "dependencies": {
+    "loader-runner": "^3.0.0"
+  }
 }
