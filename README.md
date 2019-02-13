@@ -18,7 +18,7 @@ medium-sized applications (around 1000 modules). We are finally there!
 You can install via npm (or yarn):
 
 ```
-% npm install fpack
+% npm i fastpack
 ```
 
 ## Usage
