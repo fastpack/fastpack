@@ -263,7 +263,8 @@ let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
   };
 };
 
-let read_module = (~ctx: Context.t, ~read, ~graph: t, location: Module.location) => {
+let read_module =
+    (~ctx: Context.t, ~read, ~graph: t, location: Module.location) => {
   let make_module = (location, source) => {
     let%lwt package =
       switch (location) {
@@ -451,20 +452,15 @@ let build = (ctx: Context.t, startLocation: Module.location, graph: t) => {
 
   /* Gather dependencies */
   let rec process = (~seen: Module.LocationSet.t, location: Module.location) => {
-    let read = (location, source) => Worker.Reader.read(~location, ~source, ctx.reader);
+    let read = (location, source) =>
+      Worker.Reader.read(~location, ~source, ctx.reader);
     add_module_parents(graph, location, seen);
     ensureModule(
       graph,
       location,
       () => {
-        let t = Unix.gettimeofday();
-        let s = Module.location_to_string(location);
         let%lwt (m, deps) =
           Lwt.no_cancel(read_module(~ctx, ~read, ~graph, location));
-        let () = switch(List.rev(String.split_on_char('/', s))) {
-        | ["index.es.js", ..._] => Logs.debug(x => x("index.es.js: %.3f", Unix.gettimeofday() -. t))
-        | _ => ()
-        }
         let%lwt m =
           switch (deps) {
           | NoDependendencies => Lwt.return(m)

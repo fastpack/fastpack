@@ -287,11 +287,15 @@ let rec build =
         build(~filesWatched, builder);
       }
     | Context.PackError(_, reason) => {
+        let%lwt () = FS.rmdir(tmpOutputDir);
         let filesWatched =
           StringSet.union(DependencyGraph.get_files(graph), filesWatched);
         Lwt.return_error({filesWatched, reason});
       }
-    | exn => Lwt.fail(exn),
+    | exn => {
+        let%lwt () = FS.rmdir(tmpOutputDir);
+        Lwt.fail(exn);
+      },
   );
 };
 
@@ -304,10 +308,6 @@ let shouldRebuild = (~filesChanged, ~prevResult, builder: t) =>
         f => Cache.File.invalidate(f, builder.cache),
         StringSet.elements(filesChanged),
       );
-    /* StringSet.iter( */
-    /*   f => Cache.File.invalidate(f, builder.cache), */
-    /*   filesChanged, */
-    /* ); */
     let filesWatched =
       switch (prevResult) {
       | Ok(bundle) => bundle |> Bundle.getGraph |> DependencyGraph.get_files
