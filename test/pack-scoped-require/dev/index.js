@@ -115,7 +115,7 @@ if (!global.Buffer) {
 ({
 /* !s: dep.js */
 "dep":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\nexports.default = \"dep.js\";\n\n//# sourceURL=fpack:///dep.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = \"dep.js\";\n\n//# sourceURL=fpack:///dep.js");
 },
 d: {}
 },
@@ -127,7 +127,7 @@ d: {"./dep":"dep","./dep":"dep"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
 },

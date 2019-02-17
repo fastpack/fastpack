@@ -157,13 +157,13 @@ d: {"!!./node_modules/css-loader/index.js!./test.css":"NM$$css$$_$$loader$indexD
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"style-loader!css-loader!sass-loader!./test.scss\");\n\nconst css = __fastpack_require__(\"./test.css\");\n\n\n\n\nconsole.log(css);\n\ndocument.body.innerHTML =\n  `this text is red\n  <div class=\"x\">this text is blue</div>\n  <div class=\"scss\">SASS: this text is green\n  <span class=\"badge badge-secondary\">With Bootstrap!</span></div>\n  `;\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"style-loader!css-loader!sass-loader!./test.scss\");\n\nconst css = __fastpack_require__(\"./test.css\");\n\n\n\n\nconsole.log(css);\n\ndocument.body.innerHTML =\n  `this text is red\n  <div class=\"x\">this text is blue</div>\n  <div class=\"scss\">SASS: this text is green\n  <span class=\"badge badge-secondary\">With Bootstrap!</span></div>\n  `;\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"style-loader!css-loader!sass-loader!./test.scss":"NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$NM$$sass$$_$$loader$lib$loaderDOT$$js$$B$$testDOT$$scss","./test.css":"NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$testDOT$$css"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
 },

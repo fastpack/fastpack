@@ -115,13 +115,13 @@ if (!global.Buffer) {
 ({
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\nObject.defineProperty(exports, \"get\", {enumerable: true, get: function() {return get;}});\nfunction get() {}\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nObject.defineProperty(exports, \"get\", {enumerable: true, get: function() {return get;}});\nfunction get() {}\n\n//# sourceURL=fpack:///index.js");
 },
 d: {}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
 },

@@ -121,13 +121,13 @@ d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\nconst _1_raw_loader_test_txt = __fastpack_require__(\"raw-loader!./test.txt\");\n\n\ndocument.body.innerHTML = `\n<h1>test.txt</h1>\n<pre>${(__fastpack_require__.default(_1_raw_loader_test_txt))}</pre>\n`;\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1_raw_loader_test_txt = __fastpack_require__(\"raw-loader!./test.txt\");\n\n\ndocument.body.innerHTML = `\n<h1>test.txt</h1>\n<pre>${(__fastpack_require__.default(_1_raw_loader_test_txt))}</pre>\n`;\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"raw-loader!./test.txt":"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
 },

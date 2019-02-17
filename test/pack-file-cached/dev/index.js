@@ -121,13 +121,13 @@ d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\nconst _1_file_loader_publicPath_logo_svg = __fastpack_require__(\"file-loader?publicPath=./!./logo.svg\");\n\ndocument.body.innerHTML = '<img src=\"' + (__fastpack_require__.default(_1_file_loader_publicPath_logo_svg)) + '\"/>';\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1_file_loader_publicPath_logo_svg = __fastpack_require__(\"file-loader?publicPath=./!./logo.svg\");\n\ndocument.body.innerHTML = '<img src=\"' + (__fastpack_require__.default(_1_file_loader_publicPath_logo_svg)) + '\"/>';\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"file-loader?publicPath=./!./logo.svg":"NM$$file$$_$$loader$dist$cjsDOT$$js$$Q$$publicPath$$E$$DOT$$$$$B$$logoDOT$$svg"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
 },

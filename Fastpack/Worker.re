@@ -669,7 +669,7 @@ let start = ({init, input, output, serveForever}) => {
     let module_type = get_module_type(stmts);
     let () =
       if (module_type == Module.ESM) {
-        patch(0, 0, "module.exports.__esModule = true;\n");
+        patch(0, 0, "Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n");
       } else {
         ();
       };

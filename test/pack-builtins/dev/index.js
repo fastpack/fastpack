@@ -121,7 +121,7 @@ d: {}
 },
 /* !s: esm.js */
 "builtin$$B$$esm":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\nexports.default = \"hello, world!\";\n\n//# sourceURL=fpack:///builtin!esm.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = \"hello, world!\";\n\n//# sourceURL=fpack:///builtin!esm.js");
 },
 d: {}
 },
@@ -133,7 +133,7 @@ d: {"$fp$runtime":"$fp$runtime","./esm":"builtin$$B$$esm"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"builtin$$B$$index"}
 },

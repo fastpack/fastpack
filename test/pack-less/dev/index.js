@@ -181,13 +181,13 @@ d: {"!!./node_modules/css-loader/index.js!./node_modules/less-loader/dist/cjs.js
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"style-loader!css-loader!less-loader!./test.less\");\n\n\n\ndocument.body.innerHTML = `<div class=\"less\">LESS: this text is green\n  <span class=\"badge badge-secondary\">With Bootstrap!</span></div>\n  `;\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"style-loader!css-loader!less-loader!./test.less\");\n\n\n\ndocument.body.innerHTML = `<div class=\"less\">LESS: this text is green\n  <span class=\"badge badge-secondary\">With Bootstrap!</span></div>\n  `;\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"style-loader!css-loader!less-loader!./test.less":"NM$$style$$_$$loader$indexDOT$$js$$B$$NM$$css$$_$$loader$indexDOT$$js$$B$$NM$$less$$_$$loader$dist$cjsDOT$$js$$B$$testDOT$$less"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
 },

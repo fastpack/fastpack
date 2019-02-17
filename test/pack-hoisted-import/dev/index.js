@@ -115,7 +115,7 @@ if (!global.Buffer) {
 ({
 /* !s: a.js */
 "a":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\nfunction a1() {return 'a1'};Object.defineProperty(exports, \"a1\", {enumerable: true, get: function() {return a1;}});;\nfunction a2() {return 'a2'};Object.defineProperty(exports, \"a2\", {enumerable: true, get: function() {return a2;}});;\n\n//# sourceURL=fpack:///a.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nfunction a1() {return 'a1'};Object.defineProperty(exports, \"a1\", {enumerable: true, get: function() {return a1;}});;\nfunction a2() {return 'a2'};Object.defineProperty(exports, \"a2\", {enumerable: true, get: function() {return a2;}});;\n\n//# sourceURL=fpack:///a.js");
 },
 d: {}
 },
@@ -127,19 +127,19 @@ d: {}
 },
 /* !s: c.js */
 "c":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\nexports.default = function () { return 'c'};\n\n//# sourceURL=fpack:///c.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = function () { return 'c'};\n\n//# sourceURL=fpack:///c.js");
 },
 d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\nconst _1__a = __fastpack_require__(\"./a\");\nconst _2__a_js = __fastpack_require__(\"./a.js\");\n__fastpack_require__(\"./b\");\n\nconst _3__c = __fastpack_require__(\"./c\");\n\nconsole.log(_1__a.a1() + _2__a_js.a2() + (__fastpack_require__.default(_3__c))());\n\n\n\n\n\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\nconst _2__a_js = __fastpack_require__(\"./a.js\");\n__fastpack_require__(\"./b\");\n\nconst _3__c = __fastpack_require__(\"./c\");\n\nconsole.log(_1__a.a1() + _2__a_js.a2() + (__fastpack_require__.default(_3__c))());\n\n\n\n\n\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a","./a.js":"a","./b":"b","./c":"c"}
 },
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports.__esModule = true;\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
 },
