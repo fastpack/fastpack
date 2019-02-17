@@ -34,7 +34,11 @@ let of_json = (filename, data) => {
               switch (v) {
               | `String(shim) =>
                 let shim = normalize(~package_json_filename=filename, shim);
-                M.add(key, Shim(shim), browser_shim);
+                if (key != shim) {
+                  M.add(key, Shim(shim), browser_shim);
+                } else {
+                  browser_shim;
+                };
               | `Bool(false) => M.add(key, Ignore, browser_shim)
               | _ => browser_shim
               };
