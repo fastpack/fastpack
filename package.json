@@ -1,7 +1,7 @@
 {
   "name": "fastpack",
-  "version": "0.8.1",
-  "description": "Pack JS code into a single bundle fast & easy.",
+  "version": "0.8.2",
+  "description": "Pack JS code fast & easy.",
   "main": "index.js",
   "esy": {
     "build": [ "dune build" ],
