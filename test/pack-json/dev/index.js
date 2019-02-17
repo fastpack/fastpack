@@ -1,8 +1,17 @@
 
 global = this;
-process = { env: {}, browser: true };
-if (!global.Buffer) {
-  global.Buffer = { isBuffer: false };
+global.process = global.process || {};
+global.process.env = global.process.env || {};
+global.process.browser = true;
+if(!global.Buffer) {
+  global.Buffer = function() {
+    throw Error("Buffer is not included in the browser environment. Consider using the polyfill")
+  };
+  global.Buffer.isBuffer = function() {return false};
+}
+if(!global.setImmediate) {
+  global.setImmediate = setTimeout;
+  global.clearImmediate = clearTimeout;
 }
 // This function is a modified version of the one created by the Webpack project
 (function(modules) {
@@ -49,7 +58,7 @@ if (!global.Buffer) {
     publicPath: ""
   };
 
-  window.__fastpack_update_modules__ = function(newModules) {
+  global.__fastpack_update_modules__ = function(newModules) {
     for (var id in newModules) {
       if (modules[id]) {
         throw new Error(
@@ -79,8 +88,8 @@ if (!global.Buffer) {
     },
 
     imp: function(fromModule, request) {
-      if (!window.Promise) {
-        throw Error("window.Promise is undefined, consider using a polyfill");
+      if (!global.Promise) {
+        throw Error("global.Promise is undefined, consider using a polyfill");
       }
       var sourceModule = modules[fromModule];
       var chunks = (sourceModule.c || {})[request] || [];
