@@ -1,0 +1,18 @@
+
+/.../test/error-resolve-case-sensitive/index.js
+Cannot resolve './badCase.js'
+
+File can be found on the filesystem by the requsted name, but doesn't match exactly (case sensitive). This is usually the sign that your module request is not accurate.
+Directory '/.../test/error-resolve-case-sensitive' contains potentially matching files:
+  BadCase.js
+
+  Resolving './badCase.js'. Base directory: '/.../test/error-resolve-case-sensitive'
+  Resolving '/.../test/error-resolve-case-sensitive/badCase.js'.
+  File exists? '/.../test/error-resolve-case-sensitive/badCase.js'
+  ...letter case mismatched. Possible files: BadCase.js
+  File exists? '/.../test/error-resolve-case-sensitive/badCase.js.js'
+  ...no.
+  File exists? '/.../test/error-resolve-case-sensitive/badCase.js.json'
+  ...no.
+  Is directory? '/.../test/error-resolve-case-sensitive/badCase.js'
+  ...letter case mismatched.

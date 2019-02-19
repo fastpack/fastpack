@@ -20,8 +20,10 @@ let save: t => Lwt.t(unit);
 let getFilename: t => option(string);
 
 module File: {
+  type exactMatch = FSCache.exactMatch;
   let invalidate: (string, t) => Lwt.t(unit);
   let exists: (string, t) => Lwt.t(bool);
+  let caseSensitiveExactMatch: (string, t) => Lwt.t(exactMatch);
   let stat: (string, t) => Lwt.t(option(Unix.stats));
   let readExisting: (string, t) => Lwt.t(string);
   let read: (string, t) => Lwt.t(option(string));

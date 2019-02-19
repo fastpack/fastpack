@@ -1,4 +1,5 @@
 module StringSet = Set.Make(CCString);
+module M = Map.Make(CCString);
 
 type t = {
   entries: Hashtbl.t(string, (bool, option(entry))),
@@ -6,10 +7,15 @@ type t = {
 }
 and entry =
   | Link(string)
-  | Entry(data)
-and data = {
+  | File(file)
+  | Dir(dir)
+and file = {
   stats: Unix.stats,
   content: option(string),
+}
+and dir = {
+  dirStats: Unix.stats,
+  files: StringSet.t,
 };
 
 let make' = (~entries=None, ()) => {
@@ -45,8 +51,10 @@ let stat = (filename, cache) => {
           stat'(~seen=StringSet.add(filename, seen), target)
 
         /* trusted entry, has stats */
-        | Some((true, Some(Entry(entry)))) =>
-          Lwt.return(Some(entry.stats))
+        | Some((true, Some(File(entry)))) => Lwt.return(Some(entry.stats))
+
+        | Some((true, Some(Dir(entry)))) =>
+          Lwt.return(Some(entry.dirStats))
 
         /* trusted entry, no stats */
         | Some((true, None)) => Lwt.return(None)
@@ -64,17 +72,39 @@ let stat = (filename, cache) => {
                 (true, Some(Link(target))),
               );
               stat'(~seen=StringSet.add(filename, seen), target);
+            | Lwt_unix.S_DIR =>
+              let%lwt files =
+                Lwt_stream.to_list(Lwt_unix.files_of_directory(filename));
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (
+                  true,
+                  Some(
+                    Dir({
+                      dirStats: stats,
+                      files:
+                        files
+                        |> List.filter(filename =>
+                             filename != "." && filename != ".."
+                           )
+                        |> StringSet.of_list,
+                    }),
+                  ),
+                ),
+              );
+              Lwt.return(Some(stats));
             | _ =>
               let content =
                 switch (entry) {
-                | Entry({stats: cachedStats, content})
+                | File({stats: cachedStats, content})
                     when stats.st_mtime == cachedStats.Unix.st_mtime => content
                 | _ => None
                 };
               Hashtbl.replace(
                 cache.entries,
                 filename,
-                (true, Some(Entry({stats, content}))),
+                (true, Some(File({stats, content}))),
               );
               Lwt.return(Some(stats));
             }
@@ -98,11 +128,33 @@ let stat = (filename, cache) => {
                 (true, Some(Link(target))),
               );
               stat'(~seen=StringSet.add(filename, seen), target);
+            | Lwt_unix.S_DIR =>
+              let%lwt files =
+                Lwt_stream.to_list(Lwt_unix.files_of_directory(filename));
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (
+                  true,
+                  Some(
+                    Dir({
+                      dirStats: stats,
+                      files:
+                        files
+                        |> List.filter(filename =>
+                             filename != "." && filename != ".."
+                           )
+                        |> StringSet.of_list,
+                    }),
+                  ),
+                ),
+              );
+              Lwt.return(Some(stats));
             | _ =>
               Hashtbl.replace(
                 cache.entries,
                 filename,
-                (true, Some(Entry({stats, content: None}))),
+                (true, Some(File({stats, content: None}))),
               );
               Lwt.return(Some(stats));
             }
@@ -124,6 +176,118 @@ let exists = (filename, cache) =>
   switch%lwt (stat(filename, cache)) {
   | Some(_) => Lwt.return(true)
   | None => Lwt.return(false)
+  };
+
+let readdir = (filename, cache) => {
+  let rec readdir' = (~seen=StringSet.empty, filename) =>
+    switch (StringSet.find_opt(filename, seen)) {
+    | Some(_) => failwith("links cycle in cache")
+    | None =>
+      withLock(filename, cache, () =>
+        switch (Hashtbl.find_opt(cache.entries, filename)) {
+        /* trusted symlink, always go to target */
+        | Some((true, Some(Link(target)))) =>
+          readdir'(~seen=StringSet.add(filename, seen), target)
+
+        /* trusted entry, has stats */
+        | Some((true, Some(File(_)))) => Lwt.return_none
+
+        | Some((true, Some(Dir(entry)))) => Lwt.return_some(entry.files)
+
+        /* trusted entry, no stats */
+        | Some((true, None)) => Lwt.return_none
+
+        | Some((false, _))
+        | None =>
+          switch%lwt (Lwt_unix.lstat(filename)) {
+          | stats =>
+            switch (stats.st_kind) {
+            | Lwt_unix.S_LNK =>
+              let%lwt target = FastpackUtil.FS.readlink(filename);
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Link(target))),
+              );
+              readdir'(~seen=StringSet.add(filename, seen), target);
+            | Lwt_unix.S_DIR =>
+              let%lwt files =
+                Lwt_stream.to_list(Lwt_unix.files_of_directory(filename));
+              let files =
+                files
+                |> List.filter(filename =>
+                     filename != "." && filename != ".."
+                   )
+                |> StringSet.of_list;
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(Dir({dirStats: stats, files}))),
+              );
+              Lwt.return_some(files);
+            | _ =>
+              Hashtbl.replace(
+                cache.entries,
+                filename,
+                (true, Some(File({stats, content: None}))),
+              );
+              Lwt.return_none;
+            }
+
+          | exception (Sys_error(_)) =>
+            Hashtbl.replace(cache.entries, filename, (true, None));
+            Lwt.return(None);
+          | exception (Unix.Unix_error(Unix.ENOENT, _, _)) =>
+            Hashtbl.replace(cache.entries, filename, (true, None));
+            Lwt.return(None);
+          }
+        }
+      )
+    };
+  readdir'(filename);
+};
+
+type exactMatch =
+  | Exact
+  | CaseInsensitive(string, list(string))
+  | CaseInsensitiveUTF(string)
+  | MisMatch;
+
+let caseSensitiveExactMatch = (filename, cache) =>
+  switch%lwt (stat(filename, cache)) {
+  | None => Lwt.return(MisMatch)
+  | Some(_) =>
+    let dirname = FilePath.dirname(filename);
+    let basename = FilePath.basename(filename);
+    switch%lwt (readdir(dirname, cache)) {
+    | Some(files) =>
+      StringSet.mem(basename, files) ?
+        Lwt.return(Exact) :
+        {
+          let fileMap =
+            List.fold_left(
+              (fileMap, f) =>
+                M.update(
+                  String.lowercase_ascii(f),
+                  fs =>
+                    switch (fs) {
+                    | Some(fs) => Some([f, ...fs])
+                    | None => Some([f])
+                    },
+                  fileMap,
+                ),
+              M.empty,
+              StringSet.elements(files),
+            );
+          switch(M.find_opt(String.lowercase_ascii(basename), fileMap)) {
+          | Some(fs) => Lwt.return(CaseInsensitive(dirname, fs))
+          | None => Lwt.return(CaseInsensitiveUTF(dirname))
+          }
+        }
+    | None =>
+      /* TODO: report better here */
+      Lwt.return(MisMatch)
+    };
   };
 
 let read = (filename, cache) => {
@@ -164,7 +328,7 @@ let read = (filename, cache) => {
       Hashtbl.replace(
         cache.entries,
         filename,
-        (true, Some(Entry({...entry, content}))),
+        (true, Some(File({...entry, content}))),
       );
       Lwt.return(content);
     | None =>
@@ -182,11 +346,20 @@ let read = (filename, cache) => {
           read'(~seen=StringSet.add(filename, seen), target)
 
         /* trusted entry, content exists */
-        | Some((true, Some(Entry({content: Some(content), _})))) =>
+        | Some((true, Some(Dir(_)))) =>
+          Lwt.fail(
+            Failure(
+              Printf.sprintf(
+                "Trying to read directory as file: %s",
+                filename,
+              ),
+            ),
+          )
+        | Some((true, Some(File({content: Some(content), _})))) =>
           Lwt.return(Some(content))
 
         /* trusted entry without content, this means that stat was called, but not read */
-        | Some((true, Some(Entry({content: None, _} as entry)))) =>
+        | Some((true, Some(File({content: None, _} as entry)))) =>
           readAndUpdateContent(filename, entry)
 
         /* trusted entry, file does not exist */
@@ -200,11 +373,11 @@ let read = (filename, cache) => {
             read'(~seen=StringSet.add(filename, seen), target)
 
           /* trusted entry, content exists */
-          | Some((true, Some(Entry({content: Some(content), _})))) =>
+          | Some((true, Some(File({content: Some(content), _})))) =>
             Lwt.return(Some(content))
 
           /* trusted entry without content, this means that stat was called, but not read */
-          | Some((true, Some(Entry({content: None, _} as entry)))) =>
+          | Some((true, Some(File({content: None, _} as entry)))) =>
             readAndUpdateContent(filename, entry)
 
           /* trusted entry, file does not exist */
@@ -229,7 +402,7 @@ let read = (filename, cache) => {
                 Hashtbl.replace(
                   cache.entries,
                   filename,
-                  (true, Some(Entry({stats, content}))),
+                  (true, Some(File({stats, content}))),
                 );
                 Lwt.return(content);
               | None =>

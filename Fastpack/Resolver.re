@@ -237,6 +237,43 @@ let resolve = (~basedir, request, resolver) => {
       };
     };
 
+  let caseSensitiveStat = filename =>
+    switch%lwt (Cache.File.stat(filename, resolver.cache)) {
+    | Some(stats) =>
+      switch%lwt (
+        Cache.File.caseSensitiveExactMatch(filename, resolver.cache)
+      ) {
+      | FSCache.Exact => Lwt.return(`Ok(stats))
+      | FSCache.MisMatch => Lwt.return(`DoesNotExist)
+      | FSCache.CaseInsensitive(dirname, possibleFiles) =>
+        Lwt.return(`MisMatch((dirname, possibleFiles)))
+      | FSCache.CaseInsensitiveUTF(dirname) =>
+        Lwt.return(`MisMatchUTF(dirname))
+      }
+
+    | None => Lwt.return(`DoesNotExist)
+    };
+
+  let formatCaseSensitiveError = (~files=[], dirname) =>
+    switch (files) {
+    | [] =>
+      Printf.sprintf(
+        {|File can be found on the filesystem by the requsted name, but doesn't match exactly (case sensitive). This is usually the sign that your module request is not accurate.
+Check directory: %s
+|},
+        dirname,
+      )
+    | fs =>
+      Printf.sprintf(
+        {|File can be found on the filesystem by the requsted name, but doesn't match exactly (case sensitive). This is usually the sign that your module request is not accurate.
+Directory '%s' contains potentially matching files:
+  %s
+|},
+        dirname,
+        String.concat(",", fs),
+      )
+    };
+
   let rec resolve_file = (~try_directory=true, path) => {
     let path =
       if (Sys.win32) {
@@ -259,8 +296,18 @@ let resolve = (~basedir, request, resolver) => {
         RunAsync.(
           withContext(
             context,
-            switch%lwt (Cache.File.stat(filename, resolver.cache)) {
-            | Some({Unix.st_kind: Lwt_unix.S_REG, _}) => return(filename)
+            switch%lwt (caseSensitiveStat(filename)) {
+            | `Ok({Unix.st_kind: Lwt_unix.S_REG, _}) => return(filename)
+            | `MisMatchUTF(_) =>
+              withContext("...letter case mismatched.", resolve'(rest))
+            | `MisMatch(_, files) =>
+              withContext(
+                Printf.sprintf(
+                  "...letter case mismatched. Possible files: %s",
+                  String.concat(",", files),
+                ),
+                resolve'(rest),
+              )
             | _ => withContext("...no.", resolve'(rest))
             },
           )
@@ -275,8 +322,8 @@ let resolve = (~basedir, request, resolver) => {
     RunAsync.(
       withContext(
         context,
-        switch%lwt (Cache.File.stat(path, resolver.cache)) {
-        | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) =>
+        switch%lwt (caseSensitiveStat(path)) {
+        | `Ok({Unix.st_kind: Lwt_unix.S_DIR, _}) =>
           let%lwt path = FS.readlink(path);
           withContext(
             "...yes.",
@@ -293,7 +340,19 @@ let resolve = (~basedir, request, resolver) => {
               };
             },
           );
-        | _ => withContext("...no.", error("Cannot resolve module"))
+        | `Ok(_)
+        | `DoesNotExist =>
+          withContext("...no.", error("Cannot resolve module"))
+        | `MisMatch(dirname, files) =>
+          withContext(
+            "...letter case mismatched.",
+            error(formatCaseSensitiveError(~files, dirname)),
+          )
+        | `MisMatchUTF(dirname) =>
+          withContext(
+            "...letter case mismatched.",
+            error(formatCaseSensitiveError(dirname)),
+          )
         },
       )
     );
@@ -333,11 +392,23 @@ let resolve = (~basedir, request, resolver) => {
         RunAsync.(
           withContext(
             context,
-            switch%lwt (Cache.File.stat(path, resolver.cache)) {
-            | Some({Unix.st_kind: Lwt_unix.S_DIR, _}) =>
+            switch%lwt (caseSensitiveStat(path)) {
+            | `Ok({Unix.st_kind: Lwt_unix.S_DIR, _})
+            | `Ok({Unix.st_kind: Lwt_unix.S_REG, _}) =>
               let%lwt path = FS.readlink(path);
               return(path);
-            | _ => withContext("...no.", exists'(rest))
+            | `Ok(_)
+            | `DoesNotExist => withContext("...no.", exists'(rest))
+            | `MisMatch(dirname, files) =>
+              withContext(
+                "...letter case mismatched.",
+                error(formatCaseSensitiveError(~files, dirname)),
+              )
+            | `MisMatchUTF(dirname) =>
+              withContext(
+                "...letter case mismatched.",
+                error(formatCaseSensitiveError(dirname)),
+              )
             },
           )
         );
@@ -412,10 +483,24 @@ let resolve = (~basedir, request, resolver) => {
                         | Some(PathRequest(path)) =>
                           withContext(
                             Printf.sprintf("...yes. '%s'", path),
-                            switch%lwt (Cache.File.stat(path, resolver.cache)) {
-                            | Some({Unix.st_kind: Lwt_unix.S_REG, _}) =>
+                            switch%lwt (caseSensitiveStat(path)) {
+                            | `Ok({Unix.st_kind: Lwt_unix.S_REG, _}) =>
                               return((path, []))
-                            | _ => error("File not found: " ++ path)
+                            | `Ok(_)
+                            | `DoesNotExist =>
+                              error("File not found: " ++ path)
+                            | `MisMatch(dirname, files) =>
+                              withContext(
+                                "...letter case mismatched.",
+                                error(
+                                  formatCaseSensitiveError(~files, dirname),
+                                ),
+                              )
+                            | `MisMatchUTF(dirname) =>
+                              withContext(
+                                "...letter case mismatched.",
+                                error(formatCaseSensitiveError(dirname)),
+                              )
                             },
                           )
                         | Some(InternalRequest(request)) =>

@@ -211,9 +211,12 @@ let getFilename = cache =>
   };
 
 module File = {
+  type exactMatch = FSCache.exactMatch
   let invalidate = (filename, cache: t) =>
     FSCache.invalidate(filename, cache.files);
   let exists = (filename, cache: t) => FSCache.exists(filename, cache.files);
+  let caseSensitiveExactMatch = (filename, cache: t) =>
+    FSCache.caseSensitiveExactMatch(filename, cache.files);
   let stat = (filename, cache: t) => FSCache.stat(filename, cache.files);
   let read = (filename, cache: t) => FSCache.read(filename, cache.files);
   let readExisting = (filename, cache: t) =>
