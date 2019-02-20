@@ -2,6 +2,10 @@ const SKIP_WIN32 = {
   "pack-less\\dev.test.js": true
 };
 
+const SKIP_LINUX = {
+  "error-resolve-case-sensitive/dev.test.js": true
+}
+
 
 const fs = require("fs-extra");
 const { spawnSync } = require("child_process");
@@ -201,6 +205,8 @@ Check test: ${name}
 
   if (process.platform === 'win32' && SKIP_WIN32[name]) {
     f = () => markOk("SKIPPED on Windows");
+  } else if(process.platform === 'linux' && SKIP_LINUX[name]) {
+    f = () => markOk("SKIPPED on Linux");
   }
 
   this.run = () => {
