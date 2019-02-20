@@ -24,6 +24,13 @@ let test f filename =
   in
   Printf.printf "%s" result
 
+let testString f source =
+  let result = Lwt_main.run (
+    Lwt.return (f source)
+  )
+  in
+  Printf.printf "%s" result
+
 let print ~with_scope source =
   let program, _ = FastpackUtil.Parser.parse_source source in
   let result = FastpackUtil.Printer.print ~with_scope program in

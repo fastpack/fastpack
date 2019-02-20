@@ -136,7 +136,7 @@ d: {}
 },
 /* !s: index.js */
 "builtin$$B$$index":{m:function(module, exports, __fastpack_require__) {
-eval("const $__fpack__ = __fastpack_require__(\"$fp$runtime\");\nconst esm = __fastpack_require__(\"./esm\");\nconst {delimiter} = path,\n  rest = $__fpack__.omitProps(path, [\"delimiter\"]);\nconsole.log(path, module, delimiter, rest, esm);\n// The following test makes sure that builtin transpiler strips type annotations\n// from inside JSX\nconst Component = props => React.createElement(\"div\", null, item => {\n    \n  }\n  );\n\n//# sourceURL=fpack:///builtin!index.js");
+eval("const $__fpack__ = __fastpack_require__(\"$fp$runtime\");\nconst esm = __fastpack_require__(\"./esm\");\nconst {delimiter} = path,\n  rest = $__fpack__.omitProps(path, [\"delimiter\"]);\nconsole.log(path, module, delimiter, rest, esm);\n// The following test makes sure that builtin transpiler strips type annotations\n// from inside JSX\nconst Component = props => React.createElement(\"div\", null, \"\", item => {\n    \n  }\n  , \"\");\n\n//# sourceURL=fpack:///builtin!index.js");
 },
 d: {"$fp$runtime":"$fp$runtime","./esm":"builtin$$B$$esm"}
 },

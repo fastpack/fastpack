@@ -6,6 +6,43 @@ module I = Ast.Identifier;
 
 module AstMapper = FastpackUtil.AstMapper;
 
+let nbsp = {
+  let buf = Buffer.create(2);
+  Wtf8.add_wtf_8(buf, 0x00A0);
+  Buffer.contents(buf);
+};
+
+/*
+ Wtf8.fold_wtf_8 (fun () i c -> Printf.printf "N: %d %04x\n" i (match c with | Wtf8.Point p -> p | Malformed -> 0)) () s;;
+                */
+let encodeJSLiteral = s => {
+  let buf = Buffer.create(String.length(s) * 6 + 2);
+  let u = Printf.sprintf("\\u%04x");
+  Buffer.add_char(buf, '"');
+  Wtf8.fold_wtf_8(
+    ((), _, codepoint) =>
+      switch (codepoint) {
+      | Wtf8.Malformed => () /* TODO: should we fail here? */
+      | Wtf8.Point(p) =>
+        switch (p) {
+        | 0x22 => Buffer.add_string(buf, "\\\"")
+        | p when p >= 0x20 && p <= 0x7f => Buffer.add_char(buf, Char.chr(p))
+        | p when p <= 0xFFFF => Buffer.add_string(buf, u(p))
+        | p =>
+          /*
+           https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
+           */
+          Buffer.add_string(buf, u((p - 0x10000) / 0x400 + 0xD800));
+          Buffer.add_string(buf, u((p - 0x10000) mod 0x400 + 0xDC00));
+        }
+      },
+    (),
+    s,
+  );
+  Buffer.add_char(buf, '"');
+  Buffer.contents(buf);
+};
+
 let transpile = (_, program, modified) => {
   let null_expression = (
     Loc.none,
@@ -132,16 +169,26 @@ let transpile = (_, program, modified) => {
                 let value =
                   switch (value) {
                   | None => true_expression
-                  | Some(Attribute.Literal(loc, {value, raw})) => (
+                  | Some(
+                      Attribute.Literal(
+                        loc,
+                        {value: Ast.Literal.String(value), _},
+                      ),
+                    ) => (
                       loc,
                       E.Literal({
-                        value,
+                        value: String(value),
                         raw:
-                          raw
+                          value
                           |> String.split_on_char('\n')
                           |> List.map(String.trim)
-                          |> String.concat("\\n"),
+                          |> String.concat("\\n")
+                          |> encodeJSLiteral,
                       }),
+                    )
+                  | Some(Attribute.Literal(loc, {value, raw})) => (
+                      loc,
+                      E.Literal({value, raw}),
                     )
                   | Some(
                       Attribute.ExpressionContainer(
@@ -222,12 +269,21 @@ let transpile = (_, program, modified) => {
             }) =>
             None
           | Text({value, raw}) =>
-            let raw = trim_text(raw);
+            let value = trim_text(value);
+            /* TODO: this is a bug in flow_parse@0.81. To be removed when we update parser */
+            let value =
+              if (CCString.mem(~sub="&nbsp;", value)
+                  && CCString.mem(~sub="&nbsp;", raw)) {
+                CCString.replace(~sub="&nbsp;", ~by=nbsp, value);
+              } else {
+                value;
+              };
+
             Some((
               loc,
               E.Literal({
                 value: Ast.Literal.String(value),
-                raw: "'" ++ CCString.replace(~sub="'", ~by="\\'", raw) ++ "'",
+                raw: encodeJSLiteral(value),
               }),
             ));
           | Fragment(fragment) => Some((loc, transpile_fragment(fragment)))

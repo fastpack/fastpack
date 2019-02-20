@@ -1,5 +1,5 @@
 (library
  (name        FastpackTranspiler)
   (public_name FastpackTranspiler)
-  (libraries FastpackUtil lwt.unix fileutils yojson)
+  (libraries FastpackUtil lwt.unix fileutils yojson wtf8)
   (preprocess (pps lwt_ppx)))
