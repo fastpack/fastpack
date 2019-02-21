@@ -191,7 +191,13 @@ let resolve = (~basedir, request, resolver) => {
     switch (Hashtbl.find_opt(resolver.preprocessorsCached, filename)) {
     | Some(preprocessors) => preprocessors
     | None =>
-      let relname = FS.relative_path(resolver.current_dir, filename);
+      let relname =
+        FS.relative_path(resolver.current_dir, filename)
+        |> (
+          relname =>
+            Sys.win32 ?
+              CCString.replace(~sub="\\", ~by="/", relname) : relname
+        );
       let preprocessors =
         resolver.preprocessors
         |> List.fold_left(
