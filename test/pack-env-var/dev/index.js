@@ -2,7 +2,9 @@
 global = this;
 global.process = global.process || {};
 global.process.env = global.process.env || {};
+process.env["API_URL"] = "https://example.com";
 process.env["NODE_ENV"] = "development";
+process.env["SECRET"] = "hello";
 global.process.browser = true;
 if(!global.Buffer) {
   global.Buffer = function() {
@@ -125,7 +127,7 @@ if(!global.setImmediate) {
 ({
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nObject.defineProperty(exports, \"get\", {enumerable: true, get: function() {return get;}});\nfunction get() {}\n\n//# sourceURL=fpack:///index.js");
+eval("\nconsole.log(`API_URL=${process.env.API_URL}`);\nconsole.log(`SECRET=${process.env.SECRET}`);\n\n//# sourceURL=fpack:///index.js");
 },
 d: {}
 },

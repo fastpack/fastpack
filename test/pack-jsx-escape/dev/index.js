@@ -2,6 +2,7 @@
 global = this;
 global.process = global.process || {};
 global.process.env = global.process.env || {};
+process.env["NODE_ENV"] = "development";
 global.process.browser = true;
 if(!global.Buffer) {
   global.Buffer = function() {

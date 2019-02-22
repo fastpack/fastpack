@@ -1,5 +1,6 @@
 open Cmdliner;
 module FS = FastpackUtil.FS;
+module M = Map.Make(String);
 
 exception ExitError(string);
 
@@ -34,7 +35,6 @@ module Mock = {
   let print = (ppf, (_, mock)) =>
     Format.fprintf(ppf, "%s", to_string(mock));
 };
-
 
 module Preprocessor = {
   type t = {
@@ -83,6 +83,31 @@ module Preprocessor = {
 
   let toString = ({pattern_s, processors, _}) =>
     Printf.sprintf("%s:%s", pattern_s, String.concat("!", processors));
+
+  let parse = s =>
+    try (Result.Ok((false, ofString(s)))) {
+    | Failure(msg) => Result.Error(`Msg(msg))
+    };
+
+  let print = (ppf, (_, opt)) => Format.fprintf(ppf, "%s", toString(opt));
+};
+
+module EnvVar = {
+  type t = {
+    name: string,
+    default: string,
+  };
+
+  let ofString = s =>
+    switch (String.(s |> trim |> split_on_char('='))) {
+    | [] => raise(Failure("Empty value"))
+    | [name] => {name, default: ""}
+    | [name, default] => {name, default}
+    | [name, ...rest] => {name, default: String.concat("=", rest)}
+    };
+
+  let toString = ({name, default}) => name ++ "=" ++ default;
+
   let parse = s =>
     try (Result.Ok((false, ofString(s)))) {
     | Failure(msg) => Result.Error(`Msg(msg))
@@ -103,6 +128,7 @@ type t = {
   publicPath: string,
   postprocess: list(string),
   preprocess: list(Preprocessor.t),
+  envVar: M.t(string),
   projectRootDir: string,
   resolveExtension: list(string),
   target: Target.t,
@@ -122,6 +148,7 @@ let create =
       ~target,
       ~cache,
       ~preprocess,
+      ~envVar,
       ~postprocess,
       ~debug,
     ) => {
@@ -158,6 +185,24 @@ let create =
          | _ => "." ++ ext
          }
        );
+  let envVar =
+    List.fold_left(
+      (m, {EnvVar.name, default}) =>
+        M.add(
+          name,
+          switch (Unix.getenv(name)) {
+          | value => value
+          | exception Not_found => default
+          },
+          m,
+        ),
+      M.empty,
+      envVar,
+    )
+    |> M.add(
+         "NODE_ENV",
+         mode == Mode.Development ? "development" : "production",
+       );
   {
     cache,
     debug,
@@ -170,6 +215,7 @@ let create =
     publicPath,
     postprocess,
     preprocess,
+    envVar,
     projectRootDir,
     resolveExtension,
     target,
@@ -190,6 +236,7 @@ let term = {
         publicPath,
         postprocess,
         preprocess,
+        envVar,
         projectRootDir,
         resolveExtension,
         target,
@@ -206,6 +253,7 @@ let term = {
       ~publicPath,
       ~postprocess,
       ~preprocess=List.map(snd, preprocess),
+      ~envVar=List.map(snd, envVar),
       ~projectRootDir,
       ~resolveExtension,
       ~target,
@@ -244,9 +292,7 @@ let term = {
       ++ "Points to the same location as --output-dir.";
 
     let docv = "URL";
-    Arg.(
-      value & opt(string, "") & info(["public-path"], ~docv, ~doc)
-    );
+    Arg.(value & opt(string, "") & info(["public-path"], ~docv, ~doc));
   };
 
   let modeT = {
@@ -341,6 +387,19 @@ let term = {
     );
   };
 
+  let envVarT = {
+    let envVar = Arg.conv(EnvVar.(parse, print));
+    let doc =
+      "Specify which variables can be included in the resulting bundle"
+      ++ "from the environment. The form is ENVVAR=DEFAULT_VALUE or just ENVVAR."
+      ++ "In the latter case the default value is \"\"(empty string). If ENV_VAR"
+      ++ " is set in the environment its value will be included. Otherwise, the"
+      ++ " default value is used. The value is visible in the JavaScript code"
+      ++ " as `process.env.ENVVAR` and has the string type";
+    let docv = "ENVVAR[=DEFAULT_VALUE]";
+    Arg.(value & opt_all(envVar, []) & info(["env-var"], ~docv, ~doc));
+  };
+
   let postprocessT = {
     let doc =
       "Apply shell command on a bundle file. The content of the bundle will"
@@ -369,6 +428,7 @@ let term = {
     $ publicPathT
     $ postprocessT
     $ preprocessT
+    $ envVarT
     $ projectRootDirT
     $ resolveExtensionT
     $ targetT

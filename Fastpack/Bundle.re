@@ -1,3 +1,4 @@
+module M = Map.Make(String);
 module MDM = Module.DependencyMap;
 module MLSet = Module.LocationSet;
 module StringSet = Set.Make(String);
@@ -23,12 +24,13 @@ let emit_module_files = (ctx: Context.t, m: Module.t) =>
     m.files,
   );
 
-let runtimeMain = publicPath =>
+let runtimeMain = (envVar, publicPath) =>
   Printf.sprintf(
     {|
 global = this;
 global.process = global.process || {};
 global.process.env = global.process.env || {};
+%s
 global.process.browser = true;
 if(!global.Buffer) {
   global.Buffer = function() {
@@ -149,6 +151,18 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 |},
+    String.concat(
+      "\n",
+      List.map(
+        ((name, value)) =>
+          Printf.sprintf(
+            "process.env[%s] = %s;",
+            Yojson.to_string(`String(name)),
+            Yojson.to_string(`String(value)),
+          ),
+        M.bindings(envVar),
+      ),
+    ),
     Yojson.to_string(`String(publicPath)),
   );
 
@@ -237,13 +251,13 @@ let makeChunk = (graph, entry, seen) => {
 };
 
 let empty = () => {
-    graph: DependencyGraph.empty (),
-    chunkRequests: MDM.empty,
-    locationToChunk: Hashtbl.create(5000),
-    chunks: Hashtbl.create(500),
-    chunkDependency: Hashtbl.create(500),
-    emittedFiles: Hashtbl.create(500),
-}
+  graph: DependencyGraph.empty(),
+  chunkRequests: MDM.empty,
+  locationToChunk: Hashtbl.create(5000),
+  chunks: Hashtbl.create(500),
+  chunkDependency: Hashtbl.create(500),
+  emittedFiles: Hashtbl.create(500),
+};
 
 let make = (graph: DependencyGraph.t, entry: Module.location) => {
   let bundle = {
@@ -462,7 +476,7 @@ let emit = (ctx: Context.t, bundle: t) => {
             let%lwt () =
               emit(
                 switch (chunkName) {
-                | Main => runtimeMain(ctx.config.publicPath)
+                | Main => runtimeMain(ctx.config.envVar, ctx.config.publicPath)
                 | Named(_name) => runtimeChunk
                 },
               );
@@ -598,4 +612,3 @@ let getFiles = (bundle: t) =>
 
 let getTotalSize = (bundle: t) =>
   List.fold_left((acc, {size, _}) => acc + size, 0, getFiles(bundle));
-
