@@ -113,12 +113,21 @@ Per common convention, place your `index.js` file in a `src` directory.
 src/index.js
 ```
 
+Before we finish, let's add the spread operator to `index.js` so that babel and compile it down to plain JavaScript.
+
+```javascript
+const value = { firstName: "John", lastName: "Doe" };
+const nextValue = { ...value };
+```
+
 Let's now run our CLI command using the `--preprocess` option.
 
 ```shell
 $ npx fpack watch --dev src/index.js -o ./dist -n module.js --target app --no-cache --
 preprocess='^src.+\.js$:babel-loader?filename=.babelrc'
 ```
+
+If you look in the output bundle you will see the spread operator compiled to `Object.assign`.
 
 ### Move Commands to NPM Scripts
 
