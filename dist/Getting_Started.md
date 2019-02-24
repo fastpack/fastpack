@@ -73,7 +73,7 @@ Let's try to output the bundle to a new folder with an updated filename. For thi
 npx fpack watch --dev index.js -o ./dist -n module.js
 ```
 
-### Target a Environment
+### Target an Environment
 
 You may want to target a specific environment. For this you use the `--target` option.
 
