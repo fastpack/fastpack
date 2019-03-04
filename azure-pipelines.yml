@@ -11,7 +11,7 @@ jobs:
   steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: '8.9'
+      versionSpec: '8.15.0'
   - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
   - script: docker build -t alpine-fastpack linux-build
@@ -31,7 +31,7 @@ jobs:
   steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: '8.9'
+      versionSpec: '8.15.0'
   - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
   - script: npm install -g yarn@1.12.3
@@ -59,7 +59,7 @@ jobs:
   steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: '8.9'
+      versionSpec: '8.15.0'
   - script: node scripts/replaceCommitVersion.js
     displayName: replace commit
   - script: npm install -g yarn@1.12.3
