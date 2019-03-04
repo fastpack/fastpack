@@ -621,8 +621,8 @@ let getWarnings = ({graph, _}: t) => {
       (warnings, m) => Lwt.return(warnings @ m.Module.warnings),
       [],
     );
-  switch(warnings) {
+  switch (warnings) {
   | [] => Lwt.return_none
-  | _ => Lwt.return_some(String.concat("\n", warnings))
-  }
+  | _ => Lwt.return_some(String.concat("\n", List.sort(compare, warnings)))
+  };
 };
