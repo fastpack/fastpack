@@ -85,10 +85,10 @@ jobs:
   - script: node -r ./_esy/default/pnp.js scripts/setupTest.js
     displayName: setup tests
   - script: node -r ./_esy/default/pnp.js scripts/test.js --no-color
-    displayName: Some integration tests
+    displayName: Integration Tests
     continueOnError: true
   - script: node -r ./_esy/default/pnp.js scripts/test.js --no-color
-    displayName: Some integration tests (retry)
+    displayName: Integration Tests (retry)
     continueOnError: true
   - task: PublishBuildArtifacts@1
     inputs:

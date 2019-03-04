@@ -179,7 +179,7 @@ Check test: ${name}
         saveSnapshot();
         markOk("Sanpshot saved");
       } else {
-        console.log("\n" + result.stderr + "\n");
+        // console.log("\n" + result.stderr + "\n");
         runDiff();
       }
     }
@@ -201,7 +201,7 @@ Check test: ${name}
         saveSnapshot();
         markOk("Sanpshot saved");
       } else {
-        console.log("\n" + result.stdout + "\n");
+        // console.log("\n" + result.stdout + "\n");
         runDiff();
       }
     }

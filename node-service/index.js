@@ -6,8 +6,6 @@ var outputDir = process.argv[2];
 var projectRoot = process.argv[3];
 var stdin = process.stdin;
 
-var reProjectRoot = new RegExp(projectRoot, "g");
-
 if (process.env["FASTPACK_PARENT_PID"]) {
   const parentPid = Number(process.env["FASTPACK_PARENT_PID"]);
 
@@ -45,7 +43,7 @@ function resolve(request) {
 }
 
 function handleError(e) {
-  var message = (e.message || e + "").replace(reProjectRoot, ".");
+  var message = (e.message || e + "");
   var name = e.name || "UnknownError";
   var stack = e.stack || null;
   return { name: name, message: message, stack: stack };

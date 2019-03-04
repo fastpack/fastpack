@@ -147,6 +147,7 @@ module NodeServer = {
         let%lwt () =
           Process.write(Yojson.to_string(message) ++ "\n", process);
         let%lwt line = Process.readLine(process);
+        let sub = project_root ++ (Sys.win32 ? "\\" : "/");
         open Yojson.Safe.Util;
         let data = Yojson.Safe.from_string(line);
         let source = member("source", data) |> to_string_option;
@@ -156,15 +157,17 @@ module NodeServer = {
           |> List.map(to_string_option)
           |> CCList.filter_map(item => item);
         let warnings =
-          strList("warnings")
-          |> List.map(CCString.replace(~sub=project_root, ~by="."));
+          strList("warnings") |> List.map(CCString.replace(~sub, ~by="./"));
         let dependencies = strList("dependencies");
         let files = strList("files");
 
         switch (source) {
         | None =>
           let error =
-            member("error", data) |> member("message") |> to_string;
+            member("error", data)
+            |> member("message")
+            |> to_string
+            |> CCString.replace(~sub, ~by="./");
           Lwt.fail(Error(error));
         | Some(source) =>
           /* Logs.debug(x => x("SOURCE: %s", source)); */
