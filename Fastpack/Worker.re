@@ -48,6 +48,7 @@ and ok = {
   module_type: Module.module_type,
   scope: Scope.t,
   exports: Scope.exports,
+  warnings: list(string),
   files: list(string),
   build_dependencies: list(string),
 };
@@ -669,7 +670,11 @@ let start = ({init, input, output, serveForever}) => {
     let module_type = get_module_type(stmts);
     let () =
       if (module_type == Module.ESM) {
-        patch(0, 0, "Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n");
+        patch(
+          0,
+          0,
+          "Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n",
+        );
       } else {
         ();
       };
@@ -709,7 +714,13 @@ let start = ({init, input, output, serveForever}) => {
               ~base_dir=Some(project_root),
               location,
             );
-          let%lwt (source, parsedSource, build_dependencies, files) =
+          let%lwt {
+            Preprocessor.source,
+            parsedSource,
+            warnings,
+            dependencies: build_dependencies,
+            files,
+          } =
             Preprocessor.run(location, source, preprocessor);
           Logs.debug(x => x("Preprocess: %.3f", Unix.gettimeofday() -. t));
           let (
@@ -723,11 +734,7 @@ let start = ({init, input, output, serveForever}) => {
             analyze(location, source, parsedSource);
           Logs.debug(x => x("Analyze: %.3f", Unix.gettimeofday() -. t));
           let%lwt source =
-            Workspace.write(
-              ~modify=to_eval,
-              ~workspace,
-              ~ctx=(),
-            );
+            Workspace.write(~modify=to_eval, ~workspace, ~ctx=());
           Logs.debug(x => x("Write: %.3f", Unix.gettimeofday() -. t));
           Lwt.return(
             Complete({
@@ -742,6 +749,7 @@ let start = ({init, input, output, serveForever}) => {
               module_type,
               scope,
               exports,
+              warnings,
               build_dependencies,
               files,
             }),

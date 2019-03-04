@@ -195,6 +195,17 @@ let iterModules = (graph, f) =>
     Sequence.to_list(modules(graph)),
   );
 
+let foldModules = (graph, f, acc) =>
+  Lwt_list.fold_left_s(
+    (acc, (_, m)) => {
+      let%lwt m = m;
+      f(acc, m);
+    },
+    acc,
+    Sequence.to_list(modules(graph)),
+  );
+
+
 let ensureModule = (graph, location, makeModule) =>
   switch (lookup_module(graph, location)) {
   | Some(mPromise) => mPromise
@@ -290,6 +301,7 @@ let read_module =
         source,
         scope: FastpackUtil.Scope.empty,
         exports: FastpackUtil.Scope.empty_exports,
+        warnings: [],
       };
     Lwt.return((m, NoDependendencies));
   };
@@ -381,6 +393,7 @@ let read_module =
         module_type,
         scope,
         exports,
+        warnings,
         build_dependencies,
         files,
       } =
@@ -411,7 +424,15 @@ let read_module =
         recordBuildDependencies(self_dependency @ build_dependencies);
 
       Lwt.return((
-        {...m, module_type, scope, exports, build_dependencies, files},
+        {
+          ...m,
+          warnings,
+          module_type,
+          scope,
+          exports,
+          build_dependencies,
+          files,
+        },
         Dependencies(static_dependencies, dynamic_dependencies),
       ));
     };

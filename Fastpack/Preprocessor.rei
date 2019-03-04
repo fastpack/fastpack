@@ -1,4 +1,14 @@
 type t;
+
+type output = {
+  source: string,
+  parsedSource: option(Flow_parser.Flow_ast.program(Flow_parser.Loc.t, Flow_parser.Loc.t)),
+  warnings: list(string),
+  dependencies: list(string),
+  files: list(string),
+};
+
+
 exception Error(string);
 let make: (
   ~project_root: string,
@@ -7,15 +17,6 @@ let make: (
   unit
   ) => Lwt.t(t);
 
-let run:
-  (Module.location, option(string), t)
-  => Lwt.t((
-      string,
-      option(Flow_parser.Flow_ast.program(Flow_parser.Loc.t, Flow_parser.Loc.t)),
-      list(string),
-      list(string)
-      ))
+let run: (Module.location, option(string), t) => Lwt.t(output)
 
 let finalize: t => Lwt.t(unit);
-
-/* let builtin: option(string) => Lwt.t((string, list(string), list(string))); */

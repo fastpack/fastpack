@@ -1,0 +1,16 @@
+Cache: empty
+
+./a.js
+  2:21  warning  Expected '===' and instead saw '=='  eqeqeq
+
+✖ 1 problem (0 errors, 1 warning)
+
+
+./index.js
+  1:9   warning  'notUsed' is defined but never used           no-unused-vars
+  2:13  warning  Comparing to itself is potentially pointless  no-self-compare
+
+✖ 2 problems (0 errors, 2 warnings)
+
+Done in X.XXXs. Bundle: 5Kb. Modules: 3.
+

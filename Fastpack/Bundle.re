@@ -476,7 +476,8 @@ let emit = (ctx: Context.t, bundle: t) => {
             let%lwt () =
               emit(
                 switch (chunkName) {
-                | Main => runtimeMain(ctx.config.envVar, ctx.config.publicPath)
+                | Main =>
+                  runtimeMain(ctx.config.envVar, ctx.config.publicPath)
                 | Named(_name) => runtimeChunk
                 },
               );
@@ -612,3 +613,16 @@ let getFiles = (bundle: t) =>
 
 let getTotalSize = (bundle: t) =>
   List.fold_left((acc, {size, _}) => acc + size, 0, getFiles(bundle));
+
+let getWarnings = ({graph, _}: t) => {
+  let%lwt warnings =
+    DependencyGraph.foldModules(
+      graph,
+      (warnings, m) => Lwt.return(warnings @ m.Module.warnings),
+      [],
+    );
+  switch(warnings) {
+  | [] => Lwt.return_none
+  | _ => Lwt.return_some(String.concat("\n", warnings))
+  }
+};

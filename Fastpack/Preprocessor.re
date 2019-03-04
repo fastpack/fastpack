@@ -1,6 +1,8 @@
 module M = Map.Make(String);
 module FS = FastpackUtil.FS;
 module Process = FastpackUtil.Process;
+module Ast = Flow_parser.Flow_ast;
+module Loc = Flow_parser.Loc;
 
 exception Error(string);
 
@@ -8,6 +10,14 @@ type t = {
   project_root: string,
   current_dir: string,
   output_dir: string,
+};
+
+type output = {
+  source: string,
+  parsedSource: option(Ast.program(Loc.t, Loc.t)),
+  warnings: list(string),
+  dependencies: list(string),
+  files: list(string),
 };
 
 let all_transpilers =
@@ -24,9 +34,16 @@ let builtin = source =>
   | Some(source) =>
     try (
       {
-        let ret = FastpackTranspiler.transpile_source(all_transpilers, source);
+        let (source, parsedSource) =
+          FastpackTranspiler.transpile_source(all_transpilers, source);
         /* Logs.debug(x => x("SOURCE: %s", ret)); */
-        Lwt.return((ret, [], []));
+        Lwt.return({
+          source,
+          parsedSource,
+          warnings: [],
+          dependencies: [],
+          files: [],
+        });
       }
     ) {
     | FastpackTranspiler.Error.TranspilerError(err) =>
@@ -133,17 +150,16 @@ module NodeServer = {
         open Yojson.Safe.Util;
         let data = Yojson.Safe.from_string(line);
         let source = member("source", data) |> to_string_option;
-        let dependencies =
-          member("dependencies", data)
+        let strList = key =>
+          member(key, data)
           |> to_list
           |> List.map(to_string_option)
           |> CCList.filter_map(item => item);
-
-        let files =
-          member("files", data)
-          |> to_list
-          |> List.map(to_string_option)
-          |> CCList.filter_map(item => item);
+        let warnings =
+          strList("warnings")
+          |> List.map(CCString.replace(~sub=project_root, ~by="."));
+        let dependencies = strList("dependencies");
+        let files = strList("files");
 
         switch (source) {
         | None =>
@@ -152,7 +168,13 @@ module NodeServer = {
           Lwt.fail(Error(error));
         | Some(source) =>
           /* Logs.debug(x => x("SOURCE: %s", source)); */
-          Lwt.return(((source, None), dependencies, files))
+          Lwt.return({
+            source,
+            parsedSource: None,
+            warnings,
+            dependencies,
+            files,
+          })
         };
       },
     );
@@ -174,7 +196,14 @@ let run = (location, source, preprocessor: t) =>
       Error.ie(
         "Unexpeceted absence of source for main / builtin / empty module",
       )
-    | Some(source) => Lwt.return((source, None, [], []))
+    | Some(source) =>
+      Lwt.return({
+        source,
+        parsedSource: None,
+        warnings: [],
+        dependencies: [],
+        files: [],
+      })
     }
   | Module.File({filename, preprocessors, _}) =>
     let rec make_chain = (preprocessors, chain) =>
@@ -218,19 +247,33 @@ let run = (location, source, preprocessor: t) =>
         preprocessors,
       );
 
-    let%lwt (source, parsedSource, deps, files) =
+    let%lwt (source, parsedSource, warnings, deps, files) =
       Lwt_list.fold_left_s(
-        ((source, _, deps, files), process) => {
-          let%lwt ((source, parsedSource), more_deps, more_files) = process(source);
-          Lwt.return((Some(source), parsedSource, deps @ more_deps, files @ more_files));
+        ((source, _, warnings, deps, files), process) => {
+          let%lwt {
+            source,
+            parsedSource,
+            warnings: more_warnings,
+            dependencies: more_deps,
+            files: more_files,
+          } =
+            process(source);
+          Lwt.return((
+            Some(source),
+            parsedSource,
+            warnings @ more_warnings,
+            deps @ more_deps,
+            files @ more_files,
+          ));
         },
-        (source, None, [], []),
+        (source, None, [], [], []),
         make_chain(preprocessors, []),
       );
 
     switch (source) {
     | None => Error.ie("Unexpected absence of source after processing")
-    | Some(source) => Lwt.return((source, parsedSource, deps, files))
+    | Some(source) =>
+      Lwt.return({source, parsedSource, warnings, dependencies: deps, files})
     };
   };
 

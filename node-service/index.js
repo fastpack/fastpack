@@ -6,6 +6,8 @@ var outputDir = process.argv[2];
 var projectRoot = process.argv[3];
 var stdin = process.stdin;
 
+var reProjectRoot = new RegExp(projectRoot, "g");
+
 if (process.env["FASTPACK_PARENT_PID"]) {
   const parentPid = Number(process.env["FASTPACK_PARENT_PID"]);
 
@@ -43,7 +45,7 @@ function resolve(request) {
 }
 
 function handleError(e) {
-  var message = e.message || e + "";
+  var message = (e.message || e + "").replace(reProjectRoot, ".");
   var name = e.name || "UnknownError";
   var stack = e.stack || null;
   return { name: name, message: message, stack: stack };
@@ -62,7 +64,13 @@ function extractSource(result) {
 }
 
 function load(message) {
-  var ret = { files: [], dependencies: [], source: null, error: null };
+  var ret = {
+    files: [],
+    dependencies: [],
+    warnings: [],
+    source: null,
+    error: null
+  };
   try {
     var message = JSON.parse(message);
   } catch (e) {
@@ -97,6 +105,12 @@ function load(message) {
           },
           rootContext: rootContext,
           fs: fs,
+          emitWarning: function(error) {
+            ret.warnings.push(error.message || error + "");
+          },
+          emitError: function(error) {
+            ret.error = handleError(error);
+          },
           loadModule: function(request, callback) {
             callback(
               "Fastpack cannot load modules from Webpack loaders: " + request,
@@ -135,7 +149,9 @@ function load(message) {
         }
       },
       function(error, result) {
-        if (error) {
+        if (ret.error) {
+          // error emitted in emitError
+        } else if (error) {
           ret.error = handleError(error);
         } else if (result.result instanceof Array) {
           ret.source = extractSource(result.result);

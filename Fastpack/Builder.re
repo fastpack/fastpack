@@ -365,8 +365,7 @@ let getFilenameFilter = (builder: t) => {
     && !inCacheDir(filename);
 };
 
-let finalize = packer => {
-  let {reader, _} = packer;
+let finalize = ({reader, _}) => {
   let%lwt () = Worker.Reader.finalize(reader);
   Lwt.return_unit;
 };

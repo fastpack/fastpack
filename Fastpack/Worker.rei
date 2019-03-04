@@ -29,6 +29,7 @@ type ok = {
   module_type: Module.module_type,
   scope: FastpackUtil.Scope.t,
   exports: FastpackUtil.Scope.exports,
+  warnings: list(string),
   files: list(string),
   build_dependencies: list(string),
 };

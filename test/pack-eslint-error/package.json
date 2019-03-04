@@ -1,0 +1,26 @@
+{
+  "name": "pack-eslint-warnings",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.15.0",
+    "eslint-config-react-app": "^3.0.7",
+    "eslint-loader": "^2.1.2",
+    "eslint-plugin-flowtype": "2.50.1",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-plugin-jsx-a11y": "6.1.2",
+    "eslint-plugin-react": "7.11.1",
+    "loader-runner": "^3.0.0"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  }
+}

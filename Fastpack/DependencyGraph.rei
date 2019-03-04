@@ -50,6 +50,7 @@ let length: t => int;
 let modules: t => Sequence.t((Module.location, Lwt.t(Module.t)));
 
 let iterModules: (t, Module.t => Lwt.t(unit)) => Lwt.t(unit);
+let foldModules: (t, ('a, Module.t) => Lwt.t('a), 'a) => Lwt.t('a);
 
 /** Lookup module in the depgraph by id. */
 

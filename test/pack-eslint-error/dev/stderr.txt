@@ -1,0 +1,10 @@
+
+/.../test/pack-eslint-error/node_modules/eslint-loader/index.js!/.../test/pack-eslint-error/index.js
+Preprocessor Error:
+
+
+./index.js
+  1:13  error  'notDefinedVar' is not defined  no-undef
+
+✖ 1 problem (1 error, 0 warnings)
+

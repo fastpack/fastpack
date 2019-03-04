@@ -4,8 +4,7 @@ const SKIP_WIN32 = {
 
 const SKIP_LINUX = {
   "error-resolve-case-sensitive/dev.test.js": true
-}
-
+};
 
 const fs = require("fs-extra");
 const { spawnSync } = require("child_process");
@@ -37,8 +36,7 @@ function fixOutput(s) {
     ret = ret.replace(new RegExp(repoRootQuotedJson, "g"), "/...");
     ret = ret.replace(/\\+/g, "/");
     return ret;
-  }
-  else {
+  } else {
     return s.replace(new RegExp(repoRoot, "g"), "/...");
   }
 }
@@ -186,26 +184,32 @@ Check test: ${name}
     }
   };
 
-  const expectResult = result => {
-    fs.ensureDirSync(sandboxOutputDir);
-    fs.emptyDirSync(sandboxOutputDir);
-    fs.writeFileSync(
-      path.join(sandboxOutputDir, "result.txt"),
-      fixOutput(result)
-    );
-    if (!previousResult || SAVE_SNAPSHOT_MODE) {
-      saveSnapshot();
-      markOk("Sanpshot saved");
+  const expectStdout = result => {
+    if (result.code !== 0) {
+      markError("Unexpected Error");
+      process.stdout.write(result.stderr + "\n");
     } else {
-      runDiff();
+      fs.ensureDirSync(sandboxOutputDir);
+      fs.emptyDirSync(sandboxOutputDir);
+      fs.writeFileSync(
+        path.join(sandboxOutputDir, "result.txt"),
+        fixOutput(result.stdout).replace(/\d\.\d\d\ds/, "X.XXXs")
+
+      );
+      if (!previousResult || SAVE_SNAPSHOT_MODE) {
+        saveSnapshot();
+        markOk("Sanpshot saved");
+      } else {
+        runDiff();
+      }
     }
   };
 
   let f = require(testPath);
 
-  if (process.platform === 'win32' && SKIP_WIN32[name]) {
+  if (process.platform === "win32" && SKIP_WIN32[name]) {
     f = () => markOk("SKIPPED on Windows");
-  } else if(process.platform === 'linux' && SKIP_LINUX[name]) {
+  } else if (process.platform === "linux" && SKIP_LINUX[name]) {
     f = () => markOk("SKIPPED on Linux");
   }
 
@@ -237,7 +241,14 @@ Check test: ${name}
               outputDir: sandboxOutputDir
             })
           ),
-        result: result => expectResult(result)
+        stdout: (cmd, opts = {}) =>
+          expectStdout(
+            fpack(cmd, {
+              cwd: opts.cwd ? opts.cwd : workingDir,
+              env: opts.env,
+              outputDir: sandboxOutputDir
+            })
+          )
       });
       let result = all[name];
       if (result === undefined) {

@@ -58,12 +58,18 @@ let reportCache = builder => {
   Lwt_io.(write_line(stdout, report));
 };
 
+let reportWarnings = bundle => switch%lwt(Bundle.getWarnings(bundle)) {
+  | Some(warnings) => Lwt_io.(write_line(stdout, warnings));
+  | None => Lwt.return_unit
+};
+
 let reportResult = (start_time, result, builder) =>
   switch (result) {
   | Error({Builder.reason, _}) =>
     let report = Context.errorToString(builder.Builder.current_dir, reason);
     Lwt_io.(write(stderr, report));
   | Ok(bundle) =>
+    let%lwt () = reportWarnings(bundle);
     let size = Bundle.getTotalSize(bundle);
     let modules = DependencyGraph.length(bundle |> Bundle.getGraph);
     let pretty_size =

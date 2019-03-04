@@ -46,15 +46,14 @@ let location_to_short_string = (~base_dir=None, location) => {
     | Some(base_dir) => FS.relative_path(base_dir, filename)
     };
 
-  switch(location) {
+  switch (location) {
   | Main(_) => "main"
   | EmptyModule => "empty"
   | Runtime => "transpiler-runtime"
-  | File({filename:  Some(filename), _}) => filename_to_string(filename)
-  | File({filename:  None, _}) => "no filename"
-  }
-
-}
+  | File({filename: Some(filename), _}) => filename_to_string(filename)
+  | File({filename: None, _}) => "no filename"
+  };
+};
 
 let location_to_string = (~base_dir=None, location) => {
   let filename_to_string = filename =>
@@ -207,10 +206,11 @@ module LocationSet =
     type t = location;
   });
 
-module LocationMap = Map.Make({
-  let compare = compare_location
-  type t = location
-})
+module LocationMap =
+  Map.Make({
+    let compare = compare_location;
+    type t = location;
+  });
 
 type t = {
   /*** Opaque module id */
@@ -234,4 +234,6 @@ type t = {
   scope: FastpackUtil.Scope.t,
   /*** Module exports */
   exports: FastpackUtil.Scope.exports,
+  /*** Warnings collected from preprocessors */
+  warnings: list(string),
 };
