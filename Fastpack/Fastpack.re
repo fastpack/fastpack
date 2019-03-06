@@ -2,7 +2,6 @@ module Version = Version;
 module Error = Error;
 module Cache = Cache;
 module Mode = Mode;
-module Target = Target;
 module Context = Context;
 module Module = Module;
 module Resolver = Resolver;

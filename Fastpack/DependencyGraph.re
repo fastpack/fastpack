@@ -455,22 +455,6 @@ let read_module =
 };
 
 let build = (ctx: Context.t, startLocation: Module.location, graph: t) => {
-  /* TODO: handle this at a higher level, IllegalConfiguration error */
-  let%lwt () =
-    if (ctx.Context.config.target == Target.ESM) {
-      Lwt.fail(
-        Context.PackError(
-          ctx,
-          NotImplemented(
-            "EcmaScript6 target is not supported "
-            ++ "for the regular packer - use flat\n",
-          ),
-        ),
-      );
-    } else {
-      Lwt.return_unit;
-    };
-
   /* Gather dependencies */
   let rec process = (~seen: Module.LocationSet.t, location: Module.location) => {
     let read = (location, source) =>

@@ -1,6 +1,7 @@
 open Cmdliner;
 module FS = FastpackUtil.FS;
-module M = Map.Make(String);
+module M = CCMap.Make(String);
+module StringSet = Set.Make(String);
 
 exception ExitError(string);
 
@@ -8,6 +9,12 @@ module Cache = {
   type t =
     | Use
     | Disable;
+
+  let toString = cache =>
+    switch (cache) {
+    | Use => "use"
+    | Disable => "disable"
+    };
 };
 
 module Mock = {
@@ -15,25 +22,31 @@ module Mock = {
     | Empty
     | Mock(string);
 
-  let to_string = ((request, mock)) =>
+  let toString = ((request, mock)) =>
     switch (mock) {
     | Empty => request
     | Mock(mock) => request ++ ":" ++ mock
     };
 
-  let parse = s =>
+  let ofString = s =>
     switch (String.(s |> trim |> split_on_char(':'))) {
     | []
-    | [""] => Result.Error(`Msg("Empty config"))
+    | [""] => raise(Failure("Empty config"))
     | [request]
-    | [request, ""] => Result.Ok((false, (request, Empty)))
+    | [request, ""] => (request, Empty)
     | [request, ...rest] =>
       let mock = String.concat(":", rest);
-      Result.Ok((false, (request, Mock(mock))));
+      (request, Mock(mock));
+    };
+
+  let parse = s =>
+    switch (ofString(s)) {
+    | ok => Result.Ok((false, ok))
+    | exception (Failure(msg)) => Result.Error(`Msg(msg))
     };
 
   let print = (ppf, (_, mock)) =>
-    Format.fprintf(ppf, "%s", to_string(mock));
+    Format.fprintf(ppf, "%s", toString(mock));
 };
 
 module Preprocessor = {
@@ -43,42 +56,81 @@ module Preprocessor = {
     processors: list(string),
   };
 
+  let make = (~pattern_s, ~pattern, ~processors, ()) => {
+    pattern_s,
+    pattern,
+    processors,
+  };
+
+  let defaultPattern = ".+";
+
+  let reOfString = s =>
+    switch (Re.Posix.compile_pat(s == "" ? defaultPattern : s)) {
+    | compiled => compiled
+    | exception Re.Posix.Parse_error =>
+      raise(Failure("Invalid regexp. Use POSIX syntax"))
+    };
+
+  let preprocessorOfString = s =>
+    switch (s) {
+    | "" => "builtin"
+    | _ =>
+      switch (String.split_on_char('?', s)) {
+      | [] => raise(Failure("Empty preprocessor"))
+      | [preprocessor] => preprocessor
+      | ["builtin", ""] => "builtin"
+      | ["builtin", ..._] =>
+        raise(Failure("Unexpected options for 'builtin' preprocessor"))
+      | [preprocessor, ...opts] =>
+        preprocessor ++ "?" ++ String.concat("?", opts)
+      }
+    };
+
+  let preprocessorsOfString = s =>
+    switch (String.split_on_char('!', s)) {
+    | [] => raise(Failure("Empty config"))
+    | ps => List.map(preprocessorOfString, ps)
+    };
+
+  let checkList = (preprocessors: list(t)) => {
+    let length = List.length(preprocessors);
+    let defaultPatternPositions =
+      preprocessors
+      |> List.mapi((pos, p) => (pos, p))
+      |> CCList.filter_map(((pos, p)) =>
+           p.pattern_s == defaultPattern ? Some(pos) : None
+         );
+    switch (defaultPatternPositions) {
+    | [] => preprocessors
+    | [pos] when pos == length - 1 => preprocessors
+    | [pos, ..._] =>
+      raise(
+        Failure(
+          Printf.sprintf(
+            "The default preprocessor appears too early at position %d. There are %d more preprocessors which will never be executed.",
+            pos,
+            length - 1 - pos,
+          ),
+        ),
+      )
+    };
+  };
+
   let ofString = s => {
-    let (pattern_s, processors) =
+    let (pattern_s, preprocessors) =
       switch (String.(s |> trim |> split_on_char(':'))) {
       | []
       | [""] => raise(Failure("Empty config"))
       | [pattern_s]
-      | [pattern_s, ""] => (pattern_s, ["builtin"])
-      | [pattern_s, ...rest] =>
-        let processors =
-          String.(rest |> concat(":") |> split_on_char('!'))
-          |> CCList.filter_map(s => {
-               let s = String.trim(s);
-               s == "" ?
-                 None :
-                 (
-                   switch (String.split_on_char('?', s)) {
-                   | [] => raise(Failure("Empty processor"))
-                   | [processor] => Some(processor)
-                   | ["builtin", ""] => Some("builtin")
-                   | [processor, opts] when processor != "builtin" =>
-                     Some(processor ++ "?" ++ opts)
-                   | _ => raise(Failure("Incorrect preprocessor config"))
-                   }
-                 );
-             });
-
-        (pattern_s, processors);
+      | [pattern_s, ""] => (pattern_s, "")
+      | [pattern_s, ...rest] => (pattern_s, String.concat(":", rest))
       };
-
-    let pattern =
-      try (Re.Posix.compile_pat(pattern_s)) {
-      | Re.Posix.Parse_error =>
-        raise(Failure("Pattern regexp parse error. Use POSIX syntax"))
-      };
-
-    {pattern_s, pattern, processors};
+    make(
+      ~pattern_s,
+      ~pattern=reOfString(pattern_s),
+      ~processors=preprocessorsOfString(preprocessors),
+      (),
+    );
   };
 
   let toString = ({pattern_s, processors, _}) =>
@@ -116,9 +168,205 @@ module EnvVar = {
   let print = (ppf, (_, opt)) => Format.fprintf(ppf, "%s", toString(opt));
 };
 
+module File = {
+  open Yojson.Safe;
+  open Run.Syntax;
+
+  type t = {
+    config: M.t(json),
+    source,
+  }
+  and source =
+    | File(string)
+    | Empty;
+
+  let handleExc = f =>
+    switch (f()) {
+    | result => result
+    | exception (Util.Type_error(msg, _)) => error(msg)
+    | exception (Failure(msg)) => error(msg)
+    };
+
+  let failOnError = (f, file) =>
+    switch (f(file)) {
+    | Ok(result) => result
+    | Error((msg, location)) =>
+      let location =
+        switch (location) {
+        | [] => "(root)"
+        | _ => String.concat(".", List.rev(location))
+        };
+      let filename =
+        switch (file.source) {
+        | Empty => "(no file)"
+        | File(filename) => filename
+        };
+      raise(
+        ExitError(
+          Printf.sprintf(
+            "Config Parser Error:\n%s\nLocation: %s\nFile: %s\n",
+            msg,
+            location,
+            filename,
+          ),
+        ),
+      );
+    };
+
+  let knownKeys = ref(StringSet.empty);
+
+  let checkKeys = ({config, _} as file) => {
+    let keys =
+      config
+      |> M.bindings
+      |> List.fold_left(
+           (set, (key, _)) =>
+             switch (key.[0]) {
+             | '_' => set /* we purposely ignore keys starting from '_' */
+             | _ => StringSet.add(key, set)
+             },
+           StringSet.empty,
+         );
+    switch (StringSet.(diff(keys, knownKeys^) |> elements)) {
+    | [] => return(file)
+    | unknown =>
+      error(
+        Printf.sprintf(
+          "Unknown keys in the config file: %s.\nKnown keys are: %s.",
+          String.concat(", ", unknown),
+          knownKeys^ |> StringSet.elements |> String.concat(", "),
+        ),
+      )
+    };
+  };
+
+  let empty = () => {config: M.empty, source: Empty};
+
+  let fromFile = (~fname, data) =>
+    failOnError(
+      ({source, _}) =>
+        switch (from_string(~fname, data)) {
+        | json =>
+          let%bind config =
+            handleExc(() =>
+              Util.to_assoc(json) |> M.add_list(M.empty) |> return
+            );
+          checkKeys({config, source});
+        | exception (Yojson.Json_error(msg)) => error(msg)
+        },
+      {...empty(), source: File(fname)},
+    );
+
+  let value = (key, f) => {
+    knownKeys := StringSet.add(key, knownKeys^);
+    failOnError(({config, _}) =>
+      switch (M.get(key, config)) {
+      | None => return(None)
+      | Some(value) =>
+        switch (Run.withContext(key, handleExc(() => f(value)))) {
+        | Ok(value) => Ok(Some(value))
+        | Error(e) => Error(e)
+        }
+      }
+    );
+  };
+
+  let list = (key, f) => {
+    knownKeys := StringSet.add(key, knownKeys^);
+    failOnError(({config, _}) =>
+      switch (M.get(key, config)) {
+      | None => return([])
+      | Some(value) =>
+        Run.withContext(
+          key,
+          {
+            let%bind list = handleExc(() => Util.to_list(value) |> return);
+            let rec loop = (i, list) =>
+              switch (list) {
+              | [] => return([])
+              | [hd, ...tl] =>
+                let%bind hd =
+                  Run.withContext(string_of_int(i), handleExc(() => f(hd)));
+                let%bind tl = loop(i + 1, tl);
+                return([hd, ...tl]);
+              };
+            loop(0, list);
+          },
+        )
+      }
+    );
+  };
+
+  let string = json => Util.to_string(json) |> return;
+
+  let cache =
+    value("cache", json =>
+      return(Util.to_bool(json) ? Cache.Use : Cache.Disable)
+    );
+
+  let entryPoints = list("entryPoints", string);
+
+  let mock =
+    list("mocks", json => json |> Util.to_string |> Mock.ofString |> return);
+
+  let mode =
+    value("development", json =>
+      return(Util.to_bool(json) ? Mode.Development : Mode.Production)
+    );
+
+  let nodeModulesPaths = list("nodeModulesPaths", string);
+
+  let outputDir = value("outputDir", string);
+
+  let outputFilename = value("outputFilename", string);
+
+  let publicPath = value("publicPath", string);
+
+  let preprocess =
+    list("preprocess", json => {
+      let obj = Util.to_assoc(json) |> M.add_list(M.empty);
+      let%bind (pattern_s, pattern) =
+        switch (M.get("re", obj)) {
+        | None => raise(Failure("Missing expected \"re\" key"))
+        | Some(value) =>
+          Run.withContext(
+            "re",
+            {
+              let pattern_s = Util.to_string(value);
+              let pattern = Preprocessor.reOfString(pattern_s);
+              return((pattern_s, pattern));
+            },
+          )
+        };
+      let%bind processors =
+        switch (M.get("process", obj)) {
+        | None => raise(Failure("Missing expected \"process\" key"))
+        | Some(value) =>
+          Run.withContext(
+            "process",
+            Util.to_string(value)
+            |> Preprocessor.preprocessorsOfString
+            |> return,
+          )
+        };
+      Preprocessor.make(~pattern_s, ~pattern, ~processors, ()) |> return;
+    });
+
+  let envVar =
+    value("envVars", json =>
+      Util.to_assoc(json)
+      |> List.map(((key, json)) => (key, Util.to_string(json)))
+      |> M.add_list(M.empty)
+      |> return
+    );
+
+  let projectRootDir = value("projectRootDir", string);
+
+  let resolveExtension = list("resolveExtensions", string);
+};
+
 type t = {
   cache: Cache.t,
-  debug: bool,
   entryPoints: list(string),
   mock: list((string, Mock.t)),
   mode: Mode.t,
@@ -126,16 +374,16 @@ type t = {
   outputDir: string,
   outputFilename: string,
   publicPath: string,
-  postprocess: list(string),
   preprocess: list(Preprocessor.t),
   envVar: M.t(string),
   projectRootDir: string,
   resolveExtension: list(string),
-  target: Target.t,
+  report: string,
 };
 
 let create =
     (
+      ~configFile,
       ~entryPoints,
       ~outputDir,
       ~outputFilename,
@@ -145,13 +393,83 @@ let create =
       ~nodeModulesPaths,
       ~projectRootDir,
       ~resolveExtension,
-      ~target,
       ~cache,
       ~preprocess,
       ~envVar,
-      ~postprocess,
-      ~debug,
     ) => {
+  let report = Buffer.create(8000000);
+
+  let readConfigFromFile = fname => {
+    let%lwt content = Lwt_io.(with_file(~mode=Input, fname, read));
+    Lwt.return(File.fromFile(~fname, content));
+  };
+
+  let%lwt configFile =
+    switch (configFile) {
+    | Some(filename) =>
+      switch%lwt (Lwt_unix.file_exists(filename)) {
+      | true => readConfigFromFile(filename)
+      | false =>
+        raise(
+          ExitError(
+            Printf.sprintf("Config file %s does not exist", filename),
+          ),
+        )
+      }
+    | None =>
+      let filename = "./fastpack.json";
+      switch%lwt (Lwt_unix.file_exists(filename)) {
+      | true => readConfigFromFile(filename)
+      | false => Lwt.return(File.empty())
+      };
+    };
+
+  let sourceToString = source =>
+    switch (source) {
+    | `File => "config file"
+    | `Arg => "CLI argument"
+    | `Default => "default value"
+    };
+
+  let pickValue = (~prefix, ~valueToString, ~arg, ~file, ~default, ()) => {
+    let (value, source) =
+      switch (arg, file) {
+      | (Some(value), _) => (value, `File)
+      | (None, Some(value)) => (value, `Arg)
+      | _ => (default, `Default)
+      };
+    Buffer.add_string(
+      report,
+      Printf.sprintf(
+        "%s%s # %s",
+        prefix,
+        valueToString(value),
+        sourceToString(source),
+      ),
+    );
+    value;
+  };
+
+  let entryPoints = entryPoints == [] ? ["."] : entryPoints;
+  let outputDir = CCOpt.get_or(~default="./bundle", outputDir);
+  let outputFilename = CCOpt.get_or(~default="index.js", outputFilename);
+  let publicPath = CCOpt.get_or(~default="", publicPath);
+  let mode = CCOpt.get_or(~default=Mode.Production, mode);
+  let nodeModulesPaths =
+    nodeModulesPaths == [] ? ["node_modules"] : nodeModulesPaths;
+  let projectRootDir = CCOpt.get_or(~default=".", projectRootDir);
+  let resolveExtension =
+    resolveExtension == [] ? [".js", ".json"] : resolveExtension;
+  let cache =
+    pickValue(
+      ~prefix="Cache: ",
+      ~valueToString=Cache.toString,
+      ~arg=cache,
+      ~file=File.cache(configFile),
+      ~default=Cache.Use,
+      (),
+    );
+
   let currentDir = Unix.getcwd();
 
   /* output directory & output filename */
@@ -203,9 +521,8 @@ let create =
          "NODE_ENV",
          mode == Mode.Development ? "development" : "production",
        );
-  {
+  Lwt.return({
     cache,
-    debug,
     entryPoints,
     mock,
     mode,
@@ -213,20 +530,19 @@ let create =
     outputDir,
     outputFilename,
     publicPath,
-    postprocess,
     preprocess,
     envVar,
     projectRootDir,
     resolveExtension,
-    target,
-  };
+    report: Buffer.contents(report)
+  });
 };
 
 let term = {
   let run =
       (
+        configFile,
         cache,
-        debug,
         entryPoints,
         mock,
         mode,
@@ -234,16 +550,14 @@ let term = {
         outputDir,
         outputFilename,
         publicPath,
-        postprocess,
         preprocess,
         envVar,
         projectRootDir,
         resolveExtension,
-        target,
       ) =>
     create(
+      ~configFile,
       ~cache,
-      ~debug,
       ~entryPoints,
       ~mock=List.map(snd, mock),
       ~mode,
@@ -251,19 +565,28 @@ let term = {
       ~outputDir,
       ~outputFilename,
       ~publicPath,
-      ~postprocess,
       ~preprocess=List.map(snd, preprocess),
       ~envVar=List.map(snd, envVar),
       ~projectRootDir,
       ~resolveExtension,
-      ~target,
     );
+
+  let configFileT = {
+    let doc = "Config File";
+
+    let docv = "CONFIG";
+    Arg.(
+      value
+      & opt(~vopt=Some("./fastpack.json"), some(string), None)
+      & info(["c", "config"], ~docv, ~doc)
+    );
+  };
 
   let entryPointsT = {
     let doc = "Entry points. Default: ['.']";
 
     let docv = "ENTRY POINTS";
-    Arg.(value & pos_all(string, ["."]) & info([], ~docv, ~doc));
+    Arg.(value & pos_all(string, []) & info([], ~docv, ~doc));
   };
 
   let outputDirT = {
@@ -272,7 +595,9 @@ let term = {
 
     let docv = "DIR";
     Arg.(
-      value & opt(string, "./bundle") & info(["o", "output"], ~docv, ~doc)
+      value
+      & opt(~vopt=Some("./bundle"), some(string), None)
+      & info(["o", "output"], ~docv, ~doc)
     );
   };
 
@@ -282,7 +607,9 @@ let term = {
 
     let docv = "NAME";
     Arg.(
-      value & opt(string, "index.js") & info(["n", "name"], ~docv, ~doc)
+      value
+      & opt(~vopt=Some("index.js"), some(string), None)
+      & info(["n", "name"], ~docv, ~doc)
     );
   };
 
@@ -292,14 +619,18 @@ let term = {
       ++ "Points to the same location as --output-dir.";
 
     let docv = "URL";
-    Arg.(value & opt(string, "") & info(["public-path"], ~docv, ~doc));
+    Arg.(
+      value
+      & opt(~vopt=Some(""), some(string), None)
+      & info(["public-path"], ~docv, ~doc)
+    );
   };
 
   let modeT = {
     open Mode;
     let doc = "Build bundle for development";
-    let development = (Development, Arg.info(["development"], ~doc));
-    Arg.(value & vflag(Production, [development]));
+    let development = (Some(Development), Arg.info(["development"], ~doc));
+    Arg.(value & vflag(None, [development]));
   };
 
   let nodeModulesPathsT = {
@@ -310,7 +641,7 @@ let term = {
     let docv = "PATH";
     Arg.(
       value
-      & opt_all(string, ["node_modules"])
+      & opt_all(string, [])
       & info(["nm", "node-modules"], ~docv, ~doc)
     );
   };
@@ -320,7 +651,11 @@ let term = {
       "Ancestor to which node_modules will be resolved." ++ ". Defaults to '.'";
 
     let docv = "PATH";
-    Arg.(value & opt(string, ".") & info(["project-root"], ~docv, ~doc));
+    Arg.(
+      value
+      & opt(~vopt=Some("."), some(string), None)
+      & info(["project-root"], ~docv, ~doc)
+    );
   };
 
   let mockT = {
@@ -343,27 +678,15 @@ let term = {
 
     let docv = "EXTENSION";
     Arg.(
-      value
-      & opt_all(string, [".js", ".json"])
-      & info(["resolve-extension"], ~docv, ~doc)
+      value & opt_all(string, []) & info(["resolve-extension"], ~docv, ~doc)
     );
-  };
-
-  let targetT = {
-    open Target;
-    let doc = "Deployment target.";
-    let docv = "[ app | esm | cjs ]";
-    let target =
-      Arg.enum([("app", Application), ("esm", ESM), ("cjs", CommonJS)]);
-
-    Arg.(value & opt(target, Application) & info(["target"], ~docv, ~doc));
   };
 
   let cacheT = {
     let doc = "Do not use cache at all (effective in development mode only)";
 
-    let disable = (Cache.Disable, Arg.info(["no-cache"], ~doc));
-    Arg.(value & vflag(Cache.Use, [disable]));
+    let disable = (Some(Cache.Disable), Arg.info(["no-cache"], ~doc));
+    Arg.(value & vflag(None, [disable]));
   };
 
   let preprocessT = {
@@ -400,25 +723,10 @@ let term = {
     Arg.(value & opt_all(envVar, []) & info(["env-var"], ~docv, ~doc));
   };
 
-  let postprocessT = {
-    let doc =
-      "Apply shell command on a bundle file. The content of the bundle will"
-      ++ " be sent to STDIN and STDOUT output will be collected. If multiple"
-      ++ " commands are specified they will be applied in the order of appearance";
-
-    let docv = "COMMAND";
-    Arg.(value & opt_all(string, []) & info(["postprocess"], ~docv, ~doc));
-  };
-
-  let debugT = {
-    let doc = "Print debug output";
-    Arg.(value & flag & info(["d", "debug"], ~doc));
-  };
-
   Term.(
     const(run)
+    $ configFileT
     $ cacheT
-    $ debugT
     $ entryPointsT
     $ mockT
     $ modeT
@@ -426,11 +734,14 @@ let term = {
     $ outputDirT
     $ outputFilenameT
     $ publicPathT
-    $ postprocessT
     $ preprocessT
     $ envVarT
     $ projectRootDirT
     $ resolveExtensionT
-    $ targetT
   );
+};
+
+let debugT = {
+  let doc = "Print debug output";
+  Arg.(value & flag & info(["d", "debug"], ~doc));
 };
