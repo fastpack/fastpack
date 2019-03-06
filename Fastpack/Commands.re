@@ -102,11 +102,12 @@ let reportResult = (start_time, result, builder) =>
   };
 
 module Build = {
-  let run = (options: Config.t, dryRun: bool, one: bool) =>
-    run(options.debug, () =>
+  let run = (options: Lwt.t(Config.t), debug: bool, dryRun: bool, one: bool) =>
+    run(debug, () =>
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
+          let%lwt options = options;
           let%lwt builder = Builder.make(options);
           let%lwt () = reportCache(builder);
           Lwt.finalize(
@@ -137,7 +138,7 @@ module Build = {
   let doc = "rebuild the bundle on a file change";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term $ dryRunT $ oneT)),
+      Term.(ret(const(run) $ Config.term $ Config.debugT  $ dryRunT $ oneT)),
       Term.info("build", ~doc, ~sdocs, ~exits),
     ));
 };
@@ -293,11 +294,12 @@ for installation instructions:
 
     let finalize = watchman => Process.finalize(watchman.process);
   };
-  let run = (options: Config.t) =>
-    run(options.debug, () =>
+  let run = (options: Lwt.t(Config.t), debug) =>
+    run(debug, () =>
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
+          let%lwt options = options;
           let%lwt builder = Builder.make(options);
           let%lwt () = reportCache(builder);
           let%lwt result = Builder.build(builder);
@@ -448,7 +450,7 @@ for installation instructions:
   let doc = "watch for file changes and rebuild the bundle";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term)),
+      Term.(ret(const(run) $ Config.term $ Config.debugT)),
       Term.info("watch", ~doc, ~sdocs, ~exits),
     ));
 };

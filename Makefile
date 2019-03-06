@@ -1,4 +1,4 @@
-.PHONY: test bump-version
+.PHONY: test bump-version build build-dev
 
 b: build
 

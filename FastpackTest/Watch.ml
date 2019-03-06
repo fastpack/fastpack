@@ -27,6 +27,7 @@ let run_with ~test_name ~cmd ~files f =
     in
     Lwt_main.run(
       Lwt.catch (fun () ->
+          let%lwt opts = opts in
           let%lwt () = Lwt_list.iter_s (fun (name, content) ->
               Lwt_io.with_file
                 ~mode:Lwt_io.Output
