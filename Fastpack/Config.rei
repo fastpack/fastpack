@@ -1,6 +1,8 @@
 type t;
 
 exception ExitError(string);
+let raiseConfigError: (~file: string=?, ~location: string=?, string) => 'a;
+
 module Mock: {
   type t =
     | Empty

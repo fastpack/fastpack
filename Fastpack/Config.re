@@ -235,17 +235,7 @@ module File = {
         | Empty => "(no file)"
         | File(filename) => filename
         };
-      raiseConfigError(~file=filename, ~location=location, msg ++ "\n")
-      /* raise( */
-      /*   ExitError( */
-      /*     Printf.sprintf( */
-      /*       "Config Parser Error:\n%s\nLocation: %s\nFile: %s\n", */
-      /*       msg, */
-      /*       location, */
-      /*       filename, */
-      /*     ), */
-      /*   ), */
-      /* ); */
+      raiseConfigError(~file=filename, ~location, msg ++ "\n");
     };
 
   let knownKeys = ref(StringSet.empty);
@@ -451,10 +441,8 @@ let create =
       switch%lwt (Lwt_unix.file_exists(filename)) {
       | true => readConfigFromFile(filename)
       | false =>
-        raise(
-          ExitError(
-            Printf.sprintf("Config file %s does not exist", filename),
-          ),
+        raiseConfigError(
+          Printf.sprintf("Config file %s does not exist\n", filename),
         )
       }
     | None =>
@@ -597,10 +585,10 @@ let create =
         <Pastel>
           "Output filename must be a subpath of the output directory.\n"
           <StringParam title="Output Directory" nl=true>
-            {outputDirValue}
+            outputDirValue
           </StringParam>
           <StringParam title="Output Filename" nl=true>
-            {outputFilenameValue}
+            outputFilenameValue
           </StringParam>
         </Pastel>,
       );

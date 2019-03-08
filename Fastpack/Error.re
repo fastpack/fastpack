@@ -144,7 +144,7 @@ let loc_to_string = ({Loc.start, _end, _}) =>
     _end.column,
   );
 
-let to_string = (package_dir, error) =>
+let toString' = (package_dir, error) =>
   switch (error) {
   | UnhandledCondition(where, error) =>
     String.concat(
@@ -277,4 +277,12 @@ If you still want to use it, first install the browser implementation with:
     )
   };
 
+let toString = (current_dir, error) =>
+  Printf.sprintf("\n%s\n", toString'(current_dir, error));
+
 let ie = FastpackUtil.Error.ie;
+
+exception PackError(reason);
+exception ExitError(string);
+exception ExitOK;
+

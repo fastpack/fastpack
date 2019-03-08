@@ -128,8 +128,7 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
           );
 
         Lwt.fail(
-          Context.PackError(
-            ctx,
+          Error.PackError(
             CannotFindExportedName(
               Module.location_to_string(source.location),
               name,
@@ -264,8 +263,7 @@ let rec build =
     () => {
       if (Config.mode(config) == Mode.Production) {
         raise(
-          Context.PackError(
-            ctx,
+          Error.PackError(
             NotImplemented(
               "Production build is not implemented yet"
               ++ "\nUse `--development` for now",
@@ -286,7 +284,7 @@ let rec build =
         );
         build(~filesWatched, builder);
       }
-    | Context.PackError(_, reason) => {
+    | Error.PackError(reason) => {
         let%lwt () = FS.rmdir(tmpOutputDir);
         let filesWatched =
           StringSet.union(DependencyGraph.get_files(graph), filesWatched);

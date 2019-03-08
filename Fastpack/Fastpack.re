@@ -13,6 +13,6 @@ module Commands = Commands;
 module DependencyGraph = DependencyGraph;
 module Environment = Environment;
 
-exception PackError = Context.PackError;
-exception ExitError = Context.ExitError;
-exception ExitOK = Context.ExitOK;
+exception PackError = Error.PackError;
+exception ExitError = Error.ExitError;
+exception ExitOK = Error.ExitOK;

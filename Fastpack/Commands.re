@@ -16,7 +16,7 @@ let run = (debug, f) => {
   };
   try (`Ok(f())) {
   | Config.ExitError(message)
-  | Context.ExitError(message) =>
+  | Error.ExitError(message) =>
     Lwt_main.run(Lwt_io.(write(stderr, message)));
     /* supress the default behaviour of the cmdliner, since it does a lot
      * of smart stuff */
@@ -33,7 +33,7 @@ let run = (debug, f) => {
       )
     );
     `Error((false, message));
-  | Context.ExitOK => `Ok()
+  | Error.ExitOK => `Ok()
   };
 };
 
@@ -66,7 +66,7 @@ let reportWarnings = bundle => switch%lwt(Bundle.getWarnings(bundle)) {
 let reportResult = (start_time, result, builder) =>
   switch (result) {
   | Error({Builder.reason, _}) =>
-    let report = Context.errorToString(builder.Builder.current_dir, reason);
+    let report = Error.toString(builder.Builder.current_dir, reason);
     Lwt_io.(write(stderr, report));
   | Ok(bundle) =>
     let%lwt () = reportWarnings(bundle);
@@ -136,7 +136,7 @@ module Build = {
               let%lwt () = reportResult(start_time, result, builder);
               switch (result) {
               | Ok(_) => Cache.save(builder.Builder.cache)
-              | Error(_) => raise(Context.ExitError(""))
+              | Error(_) => raise(Error.ExitError(""))
               };
             },
             () => Builder.finalize(builder),
@@ -260,7 +260,7 @@ module Watch = {
           fun
           | Process.NotRunning(msg) =>
             raise(
-              Context.ExitError(
+              Error.ExitError(
                 Printf.sprintf(
                   {|
 %s
@@ -437,7 +437,7 @@ for installation instructions:
            * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
            * */
           let (w, u) = Lwt.wait();
-          let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
+          let exit = _ => Lwt.wakeup_exn(u, Error.ExitOK);
           Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
           Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
           let%lwt () =
