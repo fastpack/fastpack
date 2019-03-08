@@ -34,7 +34,7 @@
     "@opam/sedlex": "1.99.4",
     "@opam/cmdliner": "1.0.2",
     "@opam/containers": "1.3",
-    "@opam/dune": "1.6.3",
+    "@opam/dune": "*",
     "@opam/fileutils": "0.5.3",
     "@opam/fmt": "0.8.5",
     "@opam/logs": "0.6.2",

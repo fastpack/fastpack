@@ -240,7 +240,7 @@ let resolve = (ctx: Context.t, request: Module.Dependency.t) => {
     () => Resolver.resolve(~basedir, request.request, ctx.resolver),
     fun
     | Resolver.Error(path) =>
-      Lwt.fail(Context.PackError(ctx, CannotResolveModule(path, request)))
+      Lwt.fail(Error.PackError(CannotResolveModule(path, request)))
     | exn => raise(exn),
   );
 };
@@ -325,7 +325,7 @@ let read_module =
           let%lwt _ =
             if (!FilePath.is_subdir(filename, Config.projectRootDir(ctx.config))) {
               Lwt.fail(
-                Context.PackError(ctx, CannotLeavePackageDir(filename)),
+                Error.PackError(CannotLeavePackageDir(filename)),
               );
             } else {
               Lwt.return_unit;
@@ -400,7 +400,7 @@ let read_module =
         /* switch%lwt (Worker.Reader.read(~location, ~source, ctx.reader)) { */
         switch%lwt (read(location, source)) {
         | Ok(data) => Lwt.return(data)
-        | Error(reason) => Lwt.fail(Context.PackError(ctx, reason))
+        | Error(reason) => Lwt.fail(Error.PackError(reason))
         };
 
       /* module also depends on the filenames used to transpile it*/
