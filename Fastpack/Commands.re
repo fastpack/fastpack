@@ -49,10 +49,10 @@ let reportCache = builder => {
   let report =
     Printf.sprintf(
       "Cache: %s",
-      switch (config.cache, Cache.isLoadedEmpty(cache)) {
-      | (Config.Cache.Disable, _) => "disabled"
-      | (Config.Cache.Use, true) => "empty"
-      | (Config.Cache.Use, false) => "used"
+      switch (Config.isCacheDisabled(config), Cache.isLoadedEmpty(cache)) {
+      | (true, _) => "disabled"
+      | (false, true) => "empty"
+      | (false, false) => "used"
       },
     );
   Lwt_io.(write_line(stdout, report));
@@ -102,13 +102,13 @@ let reportResult = (start_time, result, builder) =>
   };
 
 module Build = {
-  let run = (options: Lwt.t(Config.t), debug: bool, dryRun: bool, one: bool) =>
+  let run = (config: Lwt.t(Config.t), debug: bool, dryRun: bool, one: bool) =>
     run(debug, () =>
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let%lwt options = options;
-          let%lwt builder = Builder.make(options);
+          let%lwt config = config;
+          let%lwt builder = Builder.make(config);
           let%lwt () = reportCache(builder);
           Lwt.finalize(
             () => {
@@ -294,19 +294,19 @@ for installation instructions:
 
     let finalize = watchman => Process.finalize(watchman.process);
   };
-  let run = (options: Lwt.t(Config.t), debug) =>
+  let run = (config: Lwt.t(Config.t), debug) =>
     run(debug, () =>
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let%lwt options = options;
-          let%lwt builder = Builder.make(options);
+          let%lwt config = config;
+          let%lwt builder = Builder.make(config);
           let%lwt () = reportCache(builder);
           let%lwt result = Builder.build(builder);
           let%lwt () = reportResult(start_time, result, builder);
           let%lwt watchman =
             Watchman.make(
-              options.projectRootDir,
+              Config.projectRootDir(config),
               Builder.getFilenameFilter(builder),
             );
 
@@ -426,7 +426,7 @@ for installation instructions:
                 stdout,
                 Printf.sprintf(
                   "Watching directory: %s. (Ctrl+C to exit)",
-                  options.projectRootDir,
+                  Config.projectRootDir(config),
                 ),
               )
             );

@@ -9,12 +9,11 @@ module Cache = {
   type t =
     | Use
     | Disable;
-
-  let toString = cache =>
-    switch (cache) {
-    | Use => "use"
-    | Disable => "disable"
-    };
+  /* let toString = cache => */
+  /*   switch (cache) { */
+  /*   | Use => "use" */
+  /*   | Disable => "disable" */
+  /*   }; */
 };
 
 module Mock = {
@@ -355,8 +354,9 @@ module File = {
   let envVar =
     value("envVars", json =>
       Util.to_assoc(json)
-      |> List.map(((key, json)) => (key, Util.to_string(json)))
-      |> M.add_list(M.empty)
+      |> List.map(((name, json)) =>
+           {EnvVar.name, default: Util.to_string(json)}
+         )
       |> return
     );
 
@@ -366,20 +366,27 @@ module File = {
 };
 
 type t = {
-  cache: Cache.t,
-  entryPoints: list(string),
-  mock: list((string, Mock.t)),
-  mode: Mode.t,
-  nodeModulesPaths: list(string),
-  outputDir: string,
-  outputFilename: string,
-  publicPath: string,
-  preprocess: list(Preprocessor.t),
-  envVar: M.t(string),
-  projectRootDir: string,
-  resolveExtension: list(string),
-  report: string,
-};
+  cache: value(Cache.t),
+  entryPoints: value(list(string)),
+  mock: list(value((string, Mock.t))),
+  mode: value(Mode.t),
+  nodeModulesPaths: list(value(string)),
+  outputDir: value(string),
+  outputFilename: value(string),
+  publicPath: value(string),
+  preprocess: list(value(Preprocessor.t)),
+  envVar: M.t(value(string)),
+  projectRootDir: value(string),
+  resolveExtension: list(value(string)),
+}
+and value('a) = {
+  source,
+  value: 'a,
+}
+and source =
+  | File
+  | Arg
+  | Default;
 
 let create =
     (
@@ -397,8 +404,6 @@ let create =
       ~preprocess,
       ~envVar,
     ) => {
-  let report = Buffer.create(8000000);
-
   let readConfigFromFile = fname => {
     let%lwt content = Lwt_io.(with_file(~mode=Input, fname, read));
     Lwt.return(File.fromFile(~fname, content));
@@ -424,46 +429,113 @@ let create =
       };
     };
 
-  let sourceToString = source =>
-    switch (source) {
-    | `File => "config file"
-    | `Arg => "CLI argument"
-    | `Default => "default value"
+  let pickValue = (~arg, ~file, ~default, ()) =>
+    switch (arg, file) {
+    | (Some(value), _) => {value, source: File}
+    | (None, Some(value)) => {value, source: Arg}
+    | _ => {value: default, source: Default}
     };
 
-  let pickValue = (~prefix, ~valueToString, ~arg, ~file, ~default, ()) => {
-    let (value, source) =
-      switch (arg, file) {
-      | (Some(value), _) => (value, `File)
-      | (None, Some(value)) => (value, `Arg)
-      | _ => (default, `Default)
-      };
-    Buffer.add_string(
-      report,
-      Printf.sprintf(
-        "%s%s # %s",
-        prefix,
-        valueToString(value),
-        sourceToString(source),
-      ),
-    );
-    value;
-  };
+  let pickListValue = (~arg, ~file, ~default, ()) =>
+    switch (arg, file) {
+    | ([], []) => {value: default, source: Default}
+    | ([], file) => {value: file, source: File}
+    | _ => {value: arg, source: Arg}
+    };
 
-  let entryPoints = entryPoints == [] ? ["."] : entryPoints;
-  let outputDir = CCOpt.get_or(~default="./bundle", outputDir);
-  let outputFilename = CCOpt.get_or(~default="index.js", outputFilename);
-  let publicPath = CCOpt.get_or(~default="", publicPath);
-  let mode = CCOpt.get_or(~default=Mode.Production, mode);
+  let mergeLists = (~arg, ~file, ~default, ()) =>
+    switch (arg, file) {
+    | ([], []) => List.map(value => {value, source: Default}, default)
+    | _ =>
+      List.map(value => {value, source: Arg}, arg)
+      @ List.map(value => {value, source: File}, file)
+    };
+
+  let entryPoints =
+    pickListValue(
+      ~arg=entryPoints,
+      ~file=File.entryPoints(configFile),
+      ~default=["."],
+      (),
+    );
+
+  let outputDir =
+    pickValue(
+      ~arg=outputDir,
+      ~file=File.outputDir(configFile),
+      ~default="./bundle",
+      (),
+    );
+  let outputFilename =
+    pickValue(
+      ~arg=outputFilename,
+      ~file=File.outputFilename(configFile),
+      ~default="index.js",
+      (),
+    );
+  let publicPath =
+    pickValue(
+      ~arg=publicPath,
+      ~file=File.publicPath(configFile),
+      ~default="",
+      (),
+    );
+  let mode =
+    pickValue(
+      ~arg=mode,
+      ~file=File.mode(configFile),
+      ~default=Mode.Production,
+      (),
+    );
+
+  let mock =
+    mergeLists(~arg=mock, ~file=File.mock(configFile), ~default=[], ());
+
   let nodeModulesPaths =
-    nodeModulesPaths == [] ? ["node_modules"] : nodeModulesPaths;
-  let projectRootDir = CCOpt.get_or(~default=".", projectRootDir);
+    mergeLists(
+      ~arg=nodeModulesPaths,
+      ~file=File.nodeModulesPaths(configFile),
+      ~default=["node_modules"],
+      (),
+    );
+  /* nodeModulesPaths == [] ? ["node_modules"] : nodeModulesPaths; */
+  let projectRootDir =
+    pickValue(
+      ~arg=projectRootDir,
+      ~file=File.projectRootDir(configFile),
+      ~default=".",
+      (),
+    );
+
+  let fixExt = exts =>
+    exts
+    |> List.filter(ext => String.trim(ext) != "")
+    |> List.map(ext =>
+         switch (ext.[0]) {
+         | '.' => ext
+         | _ => "." ++ ext
+         }
+       );
   let resolveExtension =
-    resolveExtension == [] ? [".js", ".json"] : resolveExtension;
+    mergeLists(
+      ~arg=fixExt(resolveExtension),
+      ~file=fixExt(File.resolveExtension(configFile)),
+      ~default=[".js", ".json"],
+      (),
+    );
+
+  let preprocess =
+    mergeLists(
+      ~arg=preprocess,
+      ~file=File.preprocess(configFile),
+      ~default=[],
+      (),
+    );
+  let _ =
+    Preprocessor.checkList(List.map(({value, _}) => value, preprocess));
+
   let cache =
     pickValue(
-      ~prefix="Cache: ",
-      ~valueToString=Cache.toString,
       ~arg=cache,
       ~file=File.cache(configFile),
       ~default=Cache.Use,
@@ -474,53 +546,57 @@ let create =
 
   /* output directory & output filename */
   let (outputDir, outputFilename) = {
-    let outputDir = FS.abs_path(currentDir, outputDir);
-    let outputFilename = FS.abs_path(outputDir, outputFilename);
-    let outputFilenameParent = FilePath.dirname(outputFilename);
-    if (outputDir == outputFilenameParent
-        || FilePath.is_updir(outputDir, outputFilenameParent)) {
-      (outputDir, outputFilename);
+    let outputDirValue = FS.abs_path(currentDir, outputDir.value);
+    let outputFilenameValue =
+      FS.abs_path(outputDirValue, outputFilename.value);
+    let outputFilenameParent = FilePath.dirname(outputFilenameValue);
+    if (outputDirValue == outputFilenameParent
+        || FilePath.is_updir(outputDirValue, outputFilenameParent)) {
+      (
+        {...outputDir, value: outputDirValue},
+        {...outputFilename, value: outputFilenameValue},
+      );
     } else {
       let error =
         "Output filename must be a subpath of output directory.\n"
         ++ "Output directory:\n  "
-        ++ outputDir
+        ++ outputDir.value
         ++ "\n"
         ++ "Output filename:\n  "
-        ++ outputFilename
+        ++ outputFilename.value
         ++ "\n";
 
       raise(ExitError(error));
     };
   };
-  let projectRootDir = FastpackUtil.FS.abs_path(currentDir, projectRootDir);
-  let resolveExtension =
-    resolveExtension
-    |> List.filter(ext => String.trim(ext) != "")
-    |> List.map(ext =>
-         switch (ext.[0]) {
-         | '.' => ext
-         | _ => "." ++ ext
-         }
-       );
+  let projectRootDir = {
+    ...projectRootDir,
+    value: FastpackUtil.FS.abs_path(currentDir, projectRootDir.value),
+  };
+  let getEnv = source =>
+    List.map(({EnvVar.name, default}) =>
+      switch (Unix.getenv(name)) {
+      | value => (name, {value, source})
+      | exception Not_found => (name, {value: default, source})
+      }
+    );
   let envVar =
     List.fold_left(
-      (m, {EnvVar.name, default}) =>
-        M.add(
-          name,
-          switch (Unix.getenv(name)) {
-          | value => value
-          | exception Not_found => default
-          },
-          m,
-        ),
+      (m, (name, value)) => M.add(name, value, m),
       M.empty,
-      envVar,
-    )
-    |> M.add(
-         "NODE_ENV",
-         mode == Mode.Development ? "development" : "production",
-       );
+      getEnv(File, File.envVar(configFile) |> CCOpt.get_or(~default=[]))
+      @ getEnv(Arg, envVar)
+      @ [
+        (
+          "NODE_ENV",
+          {
+            value:
+              mode.value == Mode.Development ? "development" : "production",
+            source: mode.source,
+          },
+        ),
+      ],
+    );
   Lwt.return({
     cache,
     entryPoints,
@@ -534,7 +610,6 @@ let create =
     envVar,
     projectRootDir,
     resolveExtension,
-    report: Buffer.contents(report)
   });
 };
 
@@ -745,3 +820,30 @@ let debugT = {
   let doc = "Print debug output";
   Arg.(value & flag & info(["d", "debug"], ~doc));
 };
+
+/* getters */
+let unwrap = ({value, _}) => value;
+
+let isCacheDisabled = ({cache: {value: cache, _}, _}) =>
+  switch (cache) {
+  | Cache.Use => false
+  | Cache.Disable => true
+  };
+
+let entryPoints = ({entryPoints, _}) => unwrap(entryPoints);
+let outputDir = ({outputDir, _}) => unwrap(outputDir);
+let outputFilename = ({outputFilename, _}) => unwrap(outputFilename);
+let projectRootDir = ({projectRootDir, _}) => unwrap(projectRootDir);
+let publicPath = ({publicPath, _}) => unwrap(publicPath);
+let mode = ({mode, _}) => unwrap(mode);
+let mock = ({mock, _}) => List.map(unwrap, mock);
+let nodeModulesPaths = ({nodeModulesPaths, _}) =>
+  List.map(unwrap, nodeModulesPaths);
+let resolveExtension = ({resolveExtension, _}) =>
+  List.map(unwrap, resolveExtension);
+let preprocess = ({preprocess, _}) => List.map(unwrap, preprocess);
+let envVar = ({envVar, _}) =>
+  envVar
+  |> M.bindings
+  |> List.map(((name, value)) => (name, unwrap(value)))
+  |> M.add_list(M.empty)
