@@ -290,7 +290,7 @@ let read_module =
 
     let m =
       Module.{
-        id: make_id(ctx.config.projectRootDir, location),
+        id: make_id(Config.projectRootDir(ctx.config), location),
         location,
         package,
         static_dependencies: [],
@@ -323,7 +323,7 @@ let read_module =
         switch (filename) {
         | Some(filename) =>
           let%lwt _ =
-            if (!FilePath.is_subdir(filename, ctx.config.projectRootDir)) {
+            if (!FilePath.is_subdir(filename, Config.projectRootDir(ctx.config))) {
               Lwt.fail(
                 Context.PackError(ctx, CannotLeavePackageDir(filename)),
               );
