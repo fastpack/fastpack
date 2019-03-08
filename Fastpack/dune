@@ -2,6 +2,6 @@
  (name        Fastpack)
   (public_name Fastpack)
   (library_flags (-linkall))
-  (libraries sequence FastpackUtil FastpackTranspiler lwt.unix logs logs.lwt fileutils yojson containers str flow_parser re re.posix logs.fmt)
+  (libraries sequence FastpackUtil FastpackTranspiler lwt.unix logs logs.lwt fileutils yojson containers str flow_parser re re.posix logs.fmt pastel.lib)
   (preprocess (pps lwt_ppx ppx_let ppx_deriving.std))
 )

@@ -101,6 +101,26 @@ let reportResult = (start_time, result, builder) =>
     Lwt_io.(write_line(stdout, report));
   };
 
+module ExplainConfig = {
+  let run = (config: Lwt.t(Config.t)) =>
+    run(false, () =>
+      Lwt_main.run(
+        {
+          let%lwt config = config;
+          Lwt_io.(write(stdout, Config.prettyPrint(config)));
+        },
+      )
+    );
+
+
+  let doc = "load, validate, and explain the configuration";
+  let command =
+    register((
+      Term.(ret(const(run) $ Config.term)),
+      Term.info("explain-config", ~doc, ~sdocs, ~exits),
+    ));
+};
+
 module Build = {
   let run = (config: Lwt.t(Config.t), debug: bool, dryRun: bool, one: bool) =>
     run(debug, () =>

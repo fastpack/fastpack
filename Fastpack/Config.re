@@ -5,15 +5,50 @@ module StringSet = Set.Make(String);
 
 exception ExitError(string);
 
+module StringParam = {
+  let createElement = (~title, ~nl=false, ~children: list(string), ()) =>
+    <Pastel>
+      <Pastel bold=true> {title ++ ": "} </Pastel>
+      <Pastel> {String.concat("", children)} </Pastel>
+      {nl ? "\n" : ""}
+    </Pastel>;
+};
+
+module MaybeStringParam = {
+  let createElement = (~title, ~value, ~children, ()) =>
+    switch (value) {
+    | None => ""
+    | Some(value) =>
+      <StringParam title nl=true>
+        value
+        {String.concat("", children)}
+      </StringParam>
+    };
+};
+
+let raiseConfigError = (~file=?, ~location=?, msg) =>
+  raise(
+    ExitError(
+      Pastel.(
+        <Pastel>
+          <Pastel bold=true color=Red> "Conguration Error\n" </Pastel>
+          <MaybeStringParam title="File" value=file />
+          <MaybeStringParam title="Location" value=location />
+          msg
+        </Pastel>
+      ),
+    ),
+  );
+
 module Cache = {
   type t =
     | Use
     | Disable;
-  /* let toString = cache => */
-  /*   switch (cache) { */
-  /*   | Use => "use" */
-  /*   | Disable => "disable" */
-  /*   }; */
+  let toString = cache =>
+    switch (cache) {
+    | Use => "use"
+    | Disable => "disable"
+    };
 };
 
 module Mock = {
@@ -200,16 +235,17 @@ module File = {
         | Empty => "(no file)"
         | File(filename) => filename
         };
-      raise(
-        ExitError(
-          Printf.sprintf(
-            "Config Parser Error:\n%s\nLocation: %s\nFile: %s\n",
-            msg,
-            location,
-            filename,
-          ),
-        ),
-      );
+      raiseConfigError(~file=filename, ~location=location, msg ++ "\n")
+      /* raise( */
+      /*   ExitError( */
+      /*     Printf.sprintf( */
+      /*       "Config Parser Error:\n%s\nLocation: %s\nFile: %s\n", */
+      /*       msg, */
+      /*       location, */
+      /*       filename, */
+      /*     ), */
+      /*   ), */
+      /* ); */
     };
 
   let knownKeys = ref(StringSet.empty);
@@ -231,7 +267,7 @@ module File = {
     | unknown =>
       error(
         Printf.sprintf(
-          "Unknown keys in the config file: %s.\nKnown keys are: %s.",
+          "Unexpected parameters in the config file: %s.\nUse one of the following: %s.",
           String.concat(", ", unknown),
           knownKeys^ |> StringSet.elements |> String.concat(", "),
         ),
@@ -431,8 +467,8 @@ let create =
 
   let pickValue = (~arg, ~file, ~default, ()) =>
     switch (arg, file) {
-    | (Some(value), _) => {value, source: File}
-    | (None, Some(value)) => {value, source: Arg}
+    | (Some(value), _) => {value, source: Arg}
+    | (None, Some(value)) => {value, source: File}
     | _ => {value: default, source: Default}
     };
 
@@ -557,16 +593,17 @@ let create =
         {...outputFilename, value: outputFilenameValue},
       );
     } else {
-      let error =
-        "Output filename must be a subpath of output directory.\n"
-        ++ "Output directory:\n  "
-        ++ outputDir.value
-        ++ "\n"
-        ++ "Output filename:\n  "
-        ++ outputFilename.value
-        ++ "\n";
-
-      raise(ExitError(error));
+      raiseConfigError(
+        <Pastel>
+          "Output filename must be a subpath of the output directory.\n"
+          <StringParam title="Output Directory" nl=true>
+            {outputDirValue}
+          </StringParam>
+          <StringParam title="Output Filename" nl=true>
+            {outputFilenameValue}
+          </StringParam>
+        </Pastel>,
+      );
     };
   };
   let projectRootDir = {
@@ -846,4 +883,53 @@ let envVar = ({envVar, _}) =>
   envVar
   |> M.bindings
   |> List.map(((name, value)) => (name, unwrap(value)))
-  |> M.add_list(M.empty)
+  |> M.add_list(M.empty);
+
+/* prettyPrint */
+
+let prettyPrint =
+    (
+      {
+        cache,
+        /* entryPoints, */
+        /* mock, */
+        /* mode, */
+        /* nodeModulesPaths, */
+        outputDir,
+        outputFilename,
+        publicPath,
+        /* preprocess, */
+        /* envVar, */
+        projectRootDir,
+        _,
+        /* resolveExtension, */
+      }: t,
+    ) => {
+  let sourceToString = source =>
+    switch (source) {
+    | File => "file"
+    | Arg => "cli argument"
+    | Default => "default value"
+    };
+  let ppTitle = title => <Pastel bold=true> {title ++ ":\n  "} </Pastel>;
+  let ppString = (~title, {value, source}) =>
+    <Pastel>
+      {title == "" ? "" : ppTitle(title)}
+      {Yojson.Safe.to_string(`String(value))}
+      <Pastel dim=true> {"  # " ++ sourceToString(source)} </Pastel>
+    </Pastel>;
+  String.concat(
+    "\n",
+    [
+      ppString(~title="Project Root Directory", projectRootDir),
+      ppString(~title="Output Directory", outputDir),
+      ppString(~title="Output Filename", outputFilename),
+      ppString(~title="Public Path", publicPath),
+      ppString(
+        ~title="Cache",
+        {value: Cache.toString(unwrap(cache)), source: cache.source},
+      ),
+      "",
+    ],
+  );
+};
