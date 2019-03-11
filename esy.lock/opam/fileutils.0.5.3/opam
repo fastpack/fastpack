@@ -26,6 +26,6 @@ synopsis: "Functions to manipulate real file (POSIX like) and filename."
 flags: light-uninstall
 url {
   src:
-    "https://forge-static.ocamlcore.org/frs/download.php/1728/ocaml-fileutils-0.5.3.tar.gz"
+    "https://download.ocamlcore.org/ocaml-fileutils/ocaml-fileutils/0.5.3/ocaml-fileutils-0.5.3.tar.gz"
   checksum: "md5=9b719b19b96525004c88bf7bc846fa1d"
 }
