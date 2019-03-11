@@ -40,6 +40,7 @@
   "dependencies": {
     "@esy-ocaml/reason": "*",
     "@fastpack/flow_parser": "0.81.0",
+    "@opam/base": "v0.11.1",
     "@opam/sedlex": "1.99.4",
     "@opam/cmdliner": "1.0.2",
     "@opam/containers": "1.3",
