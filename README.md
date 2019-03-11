@@ -1,7 +1,9 @@
 # fastpack
 
 [![Build Status](https://dev.azure.com/fastpack/fastpack/_apis/build/status/fastpack.fastpack)](https://dev.azure.com/fastpack/fastpack/_build/latest?definitionId=1)
-
+[![Backers on Open Collective](https://opencollective.com/fastpack/backers/badge.svg)](#backers)
+ [![Sponsors on Open Collective](https://opencollective.com/fastpack/sponsors/badge.svg)](#sponsors) 
+ 
 Pack JS code into a single bundle fast & easy.
 
 ## Motivation
@@ -194,3 +196,33 @@ And execute commands from there.
 The NPM package is built on every commit to the `master` branch by the
 Microsoft Azure Pipelines (see Artifacts/fpack). Publishing it on npmjs.org
 remains manual for now.
+
+## Contributors
+
+This project exists thanks to all the people who contribute. 
+<a href="https://github.com/fastpack/fastpack/graphs/contributors"><img src="https://opencollective.com/fastpack/contributors.svg?width=890&button=false" /></a>
+
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/fastpack#backer)]
+
+<a href="https://opencollective.com/fastpack#backers" target="_blank"><img src="https://opencollective.com/fastpack/backers.svg?width=890"></a>
+
+
+## Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/fastpack#sponsor)]
+
+<a href="https://opencollective.com/fastpack/sponsor/0/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/1/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/2/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/3/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/4/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/5/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/6/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/7/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/8/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/fastpack/sponsor/9/website" target="_blank"><img src="https://opencollective.com/fastpack/sponsor/9/avatar.svg"></a>
+
+
