@@ -3,8 +3,6 @@ module FS = FastpackUtil.FS;
 module M = CCMap.Make(String);
 module StringSet = Set.Make(String);
 
-exception ExitError(string);
-
 module StringParam = {
   let createElement = (~title, ~nl=false, ~children: list(string), ()) =>
     <Pastel>
@@ -28,7 +26,7 @@ module MaybeStringParam = {
 
 let raiseConfigError = (~file=?, ~location=?, msg) =>
   raise(
-    ExitError(
+    Error.ExitError(
       Pastel.(
         <Pastel>
           <Pastel bold=true color=Red> "Conguration Error\n" </Pastel>
@@ -879,7 +877,7 @@ let prettyPrint =
     (
       {
         cache,
-        /* entryPoints, */
+        entryPoints,
         /* mock, */
         /* mode, */
         /* nodeModulesPaths, */
@@ -893,31 +891,69 @@ let prettyPrint =
         /* resolveExtension, */
       }: t,
     ) => {
-  let sourceToString = source =>
-    switch (source) {
-    | File => "file"
-    | Arg => "cli argument"
-    | Default => "default value"
+  module Source = {
+    let createElement = (~source, ~children, ()) => {
+      let _ = children;
+      <Pastel dim=true>
+        {
+          "   # "
+          ++ (
+            switch (source) {
+            | File => "file"
+            | Arg => "cli argument"
+            | Default => "default value"
+            }
+          )
+        }
+      </Pastel>;
     };
-  let ppTitle = title => <Pastel bold=true> {title ++ ":\n  "} </Pastel>;
-  let ppString = (~title, {value, source}) =>
-    <Pastel>
-      {title == "" ? "" : ppTitle(title)}
-      {Yojson.Safe.to_string(`String(value))}
-      <Pastel dim=true> {"  # " ++ sourceToString(source)} </Pastel>
-    </Pastel>;
-  String.concat(
-    "\n",
-    [
-      ppString(~title="Project Root Directory", projectRootDir),
-      ppString(~title="Output Directory", outputDir),
-      ppString(~title="Output Filename", outputFilename),
-      ppString(~title="Public Path", publicPath),
-      ppString(
-        ~title="Cache",
-        {value: Cache.toString(unwrap(cache)), source: cache.source},
-      ),
-      "",
-    ],
-  );
+  };
+  module Title = {
+    let createElement = (~children, ()) =>
+      switch (String.concat("", children)) {
+      | "" => ""
+      | title => <Pastel bold=true> {title ++ ":\n  "} </Pastel>
+      };
+  };
+  module P = {
+    let createElement = (~json=true, ~title, ~value, ~children, ()) => {
+      let {value, source} = value;
+      let _ = children;
+      <Pastel>
+        <Title> title </Title>
+        {json ? Yojson.Safe.to_string(`String(value)) : value}
+        <Source source />
+        "\n"
+      </Pastel>;
+    };
+  };
+  module Cache_ = {
+    let createElement = (~value, ~children, ()) => {
+      let {value, source} = value;
+      let _ = children;
+      let value = {value: Cache.toString(value), source};
+      <P title="Cache" value />;
+    };
+  };
+  module EntryPoints_ = {
+    let createElement = (~value, ~children, ()) => {
+      let {value, source} = value;
+      let _ = children;
+      let value = {
+        value:
+          Yojson.Safe.to_string(`List(List.map(v => `String(v), value))),
+        source,
+      };
+      <P title="Entry Points" json=false value />;
+    };
+  };
+
+  <Pastel>
+    <EntryPoints_ value=entryPoints />
+    <P title="Project Root Directory" value=projectRootDir />
+    <P title="Output Directory" value=outputDir />
+    <P title="Output Filename" value=outputFilename />
+    <P title="Public Path" value=publicPath />
+    <Cache_ value=cache />
+  </Pastel>;
 };

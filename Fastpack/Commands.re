@@ -10,12 +10,13 @@ let version =
   Version.(Printf.sprintf("%s (Commit: %s)", version, github_commit));
 
 let run = (debug, f) => {
+  let isTTY = Unix.(isatty(stderr) && isatty(stdout));
+  Pastel.(setMode(isTTY ? Terminal : Disabled));
   if (debug) {
     Logs.set_level(Some(Logs.Debug));
     Logs.set_reporter(Logs_fmt.reporter());
   };
   try (`Ok(f())) {
-  | Config.ExitError(message)
   | Error.ExitError(message) =>
     Lwt_main.run(Lwt_io.(write(stderr, message)));
     /* supress the default behaviour of the cmdliner, since it does a lot

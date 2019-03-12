@@ -42,6 +42,38 @@ let nodelibs = [
   ("zlib", Some("browserify-zlib")),
 ];
 
+module Error = {
+  let createElement = (~title, ~where=?, ~children, ()) =>
+    Pastel.(
+      <Pastel>
+        {
+          switch (where) {
+          | None => ""
+          | Some(where) => <Pastel bold=true color=Cyan> where "\n" </Pastel>
+          }
+        }
+        <Pastel bold=true color=Red> title </Pastel>
+        "\n"
+        {String.concat("", children)}
+      </Pastel>
+    );
+};
+
+module CannotResolveModuleError = {
+  let createElement = (~dep, ~children, ()) =>
+    <Pastel>
+      <Error
+        where={
+          Module.location_to_string(dep.Module.Dependency.requested_from)
+        }
+        title={
+          Printf.sprintf("Cannot resolve '%s'", dep.Module.Dependency.request)
+        }>
+        children
+      </Error>
+    </Pastel>;
+};
+
 let formatErrorHeader = (~where="", text) =>
   String.concat(
     "\n",
@@ -132,8 +164,7 @@ type reason =
   | CannotFindExportedName(string, string, string)
   | ScopeError(string, Scope.reason)
   | PreprocessorError(string, string)
-  | UnhandledCondition(string, string)
-  | CliArgumentError(string);
+  | UnhandledCondition(string, string);
 
 let loc_to_string = ({Loc.start, _end, _}) =>
   Printf.sprintf(
@@ -147,12 +178,7 @@ let loc_to_string = ({Loc.start, _end, _}) =>
 let toString' = (package_dir, error) =>
   switch (error) {
   | UnhandledCondition(where, error) =>
-    String.concat(
-      "\n",
-      [formatErrorHeader(~where, "Preprocessor Error:"), error],
-    )
-
-  | CliArgumentError(message) => "CLI argument error: " ++ message
+    <Error where title="Preprocessor Error:"> error </Error>
 
   | CannotLeavePackageDir(filename) =>
     Printf.sprintf("%s is out of the working directory\n", filename)
@@ -285,4 +311,3 @@ let ie = FastpackUtil.Error.ie;
 exception PackError(reason);
 exception ExitError(string);
 exception ExitOK;
-
