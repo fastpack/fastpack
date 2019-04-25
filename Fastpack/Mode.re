@@ -12,7 +12,7 @@ type t =
   | Development
   | Test;
 
-let to_string = m =>
+let toString = m =>
   switch (m) {
   | Production => "production"
   | Development => "development"
@@ -74,9 +74,9 @@ let rec is_matched = (expr, mode) =>
     ) =>
     switch (operator) {
     | E.Binary.Equal
-    | E.Binary.StrictEqual => Some(value == to_string(mode))
+    | E.Binary.StrictEqual => Some(value == toString(mode))
     | E.Binary.NotEqual
-    | E.Binary.StrictNotEqual => Some(value != to_string(mode))
+    | E.Binary.StrictNotEqual => Some(value != toString(mode))
     | _ => None
     }
   | _ => None
@@ -210,7 +210,7 @@ let patch_expression =
         computed: false,
         _,
       }) =>
-      patch_loc(expr_loc, "\"" ++ to_string(mode) ++ "\"");
+      patch_loc(expr_loc, "\"" ++ toString(mode) ++ "\"");
       Visit.Break;
     | _ => Visit.Continue(visit_ctx)
     }

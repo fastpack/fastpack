@@ -96,8 +96,10 @@ module Preprocessor = {
 
   let defaultPattern = ".+";
 
+  let isCatchAll = ({pattern_s, _}) => pattern_s == defaultPattern;
+
   let reOfString = s =>
-    switch (Re.Posix.compile_pat(s == "" ? defaultPattern : s)) {
+    switch (Re.Posix.compile_pat(s)) {
     | compiled => compiled
     | exception Re.Posix.Parse_error =>
       raise(Failure("Invalid regexp. Use POSIX syntax"))
@@ -157,6 +159,7 @@ module Preprocessor = {
       | [pattern_s, ""] => (pattern_s, "")
       | [pattern_s, ...rest] => (pattern_s, String.concat(":", rest))
       };
+    let pattern_s = pattern_s == "" ? defaultPattern : pattern_s;
     make(
       ~pattern_s,
       ~pattern=reOfString(pattern_s),
@@ -878,17 +881,16 @@ let prettyPrint =
       {
         cache,
         entryPoints,
-        /* mock, */
-        /* mode, */
-        /* nodeModulesPaths, */
+        mock,
+        mode,
+        nodeModulesPaths,
         outputDir,
         outputFilename,
         publicPath,
-        /* preprocess, */
-        /* envVar, */
+        preprocess,
+        envVar,
         projectRootDir,
-        _,
-        /* resolveExtension, */
+        resolveExtension,
       }: t,
     ) => {
   module Source = {
@@ -927,18 +929,26 @@ let prettyPrint =
       </Pastel>;
     };
   };
+  module Mode_ = {
+    let createElement = (~value, ~children, ()) => {
+      let _ = children;
+      let {value, source} = value;
+      let value = {value: Mode.toString(value), source};
+      <P title="Mode" value />;
+    };
+  };
   module Cache_ = {
     let createElement = (~value, ~children, ()) => {
-      let {value, source} = value;
       let _ = children;
+      let {value, source} = value;
       let value = {value: Cache.toString(value), source};
       <P title="Cache" value />;
     };
   };
   module EntryPoints_ = {
     let createElement = (~value, ~children, ()) => {
-      let {value, source} = value;
       let _ = children;
+      let {value, source} = value;
       let value = {
         value:
           Yojson.Safe.to_string(`List(List.map(v => `String(v), value))),
@@ -948,12 +958,116 @@ let prettyPrint =
     };
   };
 
+  module L = {
+    let createElement = (~title, ~empty, ~items, ~children, ()) => {
+      let _ = children;
+      <Pastel>
+        <Title> title </Title>
+        {
+          List.length(items) == 0 ?
+            empty :
+            List.map(
+              ({source, value}) =>
+                <Pastel> "- " value <Source source /> </Pastel>,
+              items,
+            )
+            |> String.concat("\n  ")
+        }
+        "\n"
+      </Pastel>;
+    };
+  };
+
+  module NodeModulesPaths_ = {
+    let createElement = (~paths, ~children, ()) => {
+      let _ = children;
+      <L
+        title="Look For Packages In These Locations"
+        empty="No paths defined to search for package dependencies!"
+        items=paths
+      />;
+    };
+  };
+
+  module ResolveExtension_ = {
+    let createElement = (~exts, ~children, ()) => {
+      let _ = children;
+      <L
+        title="Try Extensions When Resolving"
+        empty="No automatic addition of the extension when resolving modules!"
+        items=exts
+      />;
+    };
+  };
+  module Mock_ = {
+    let createElement = (~mocks, ~children, ()) => {
+      let _ = children;
+      <L
+        title="Mocks"
+        empty="No mocks defined"
+        items={
+          List.map(
+            ({value, source}) => {value: Mock.toString(value), source},
+            mocks,
+          )
+        }
+      />;
+    };
+  };
+
+  module EnvVar_ = {
+    let createElement = (~vars, ~children, ()) => {
+      let _ = children;
+      <L
+        title="Inlined Environment Variables"
+        empty="No env. variables inlined"
+        items={
+          List.map(
+            ((name, {value, source})) => {
+              value: name ++ "=" ++ value,
+              source,
+            },
+            vars,
+          )
+        }
+      />;
+    };
+  };
+
+  module Preprocess_ = {
+    let createElement = (~preprocess, ~children, ()) => {
+      let _ = children;
+      <L
+        title="Preprocessors"
+        empty="No preprocessors defined"
+        items=Preprocessor.(
+          List.map(
+            ({value: p, source}) => {
+              value:
+                (isCatchAll(p) ? "default" : "Regexp(" ++ p.pattern_s ++ ")")
+                ++ ": "
+                ++ String.concat("!", p.Preprocessor.processors),
+              source,
+            },
+            preprocess,
+          )
+        )
+      />;
+    };
+  };
+
   <Pastel>
     <EntryPoints_ value=entryPoints />
     <P title="Project Root Directory" value=projectRootDir />
     <P title="Output Directory" value=outputDir />
     <P title="Output Filename" value=outputFilename />
     <P title="Public Path" value=publicPath />
+    <Mode_ value=mode />
     <Cache_ value=cache />
+    <NodeModulesPaths_ paths=nodeModulesPaths />
+    <ResolveExtension_ exts=resolveExtension />
+    <Mock_ mocks=mock />
+    <EnvVar_ vars={M.bindings(envVar)} />
+    <Preprocess_ preprocess />
   </Pastel>;
 };
