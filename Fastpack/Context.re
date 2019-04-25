@@ -9,9 +9,4 @@ type t = {
   cache: Cache.t,
 };
 
-exception PackError(t, Error.reason);
-exception ExitError(string);
-exception ExitOK;
 
-let errorToString = (current_dir, error) =>
-  Printf.sprintf("\n%s\n", Error.to_string(current_dir, error));

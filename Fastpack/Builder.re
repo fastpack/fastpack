@@ -22,7 +22,7 @@ let make = (config: Config.t) => {
 
   /* entry points */
   let%lwt entry_points =
-    config.entryPoints
+    Config.entryPoints(config)
     |> Lwt_list.map_p(entry_point => {
          let abs_path = FS.abs_path(current_dir, entry_point);
          switch%lwt (FS.stat_option(abs_path)) {
@@ -38,30 +38,30 @@ let make = (config: Config.t) => {
 
   let entry_location = Module.Main(entry_points);
 
-  let%lwt tmpOutputDir = FS.makeTempDir(Filename.dirname(config.outputDir));
+  let%lwt tmpOutputDir = FS.makeTempDir(Filename.dirname(Config.outputDir(config)));
 
   let reader =
     Worker.Reader.make(
-      ~project_root=config.projectRootDir,
+      ~project_root=Config.projectRootDir(config),
       ~output_dir=tmpOutputDir,
-      ~publicPath=config.publicPath,
+      ~publicPath=Config.publicPath(config),
       (),
     );
 
   /* cache & cache reporting */
   let%lwt cache =
     Cache.make(
-      switch (config.cache) {
-      | Config.Cache.Disable => Cache.Empty
-      | Config.Cache.Use =>
+      switch (Config.isCacheDisabled(config)) {
+      | true => Cache.Empty
+      | false =>
         Cache.(
           Load({
             currentDir: current_dir,
-            projectRootDir: config.projectRootDir,
-            mock: config.mock,
-            nodeModulesPaths: config.nodeModulesPaths,
-            resolveExtension: config.resolveExtension,
-            preprocess: config.preprocess,
+            projectRootDir: Config.projectRootDir(config),
+            mock: Config.mock(config),
+            nodeModulesPaths: Config.nodeModulesPaths(config),
+            resolveExtension: Config.resolveExtension(config),
+            preprocess: Config.preprocess(config),
           })
         )
       },
@@ -128,8 +128,7 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
           );
 
         Lwt.fail(
-          Context.PackError(
-            ctx,
+          Error.PackError(
             CannotFindExportedName(
               Module.location_to_string(source.location),
               name,
@@ -169,9 +168,9 @@ let buildOne = (ctx: Context.t) => {
           () =>
             Lwt.return(
               makeInit(
-                ~project_root=ctx.config.projectRootDir,
+                ~project_root=Config.projectRootDir(ctx.config),
                 ~output_dir=ctx.tmpOutputDir,
-                ~publicPath=ctx.config.publicPath,
+                ~publicPath=Config.publicPath(ctx.config),
                 (),
               ),
             ),
@@ -226,12 +225,12 @@ let rec build =
 
   let resolver =
     Resolver.make(
-      ~project_root=config.projectRootDir,
+      ~project_root=Config.projectRootDir(config),
       ~current_dir,
-      ~mock=config.mock,
-      ~node_modules_paths=config.nodeModulesPaths,
-      ~extensions=config.resolveExtension,
-      ~preprocessors=config.preprocess,
+      ~mock=Config.mock(config),
+      ~node_modules_paths=Config.nodeModulesPaths(config),
+      ~extensions=Config.resolveExtension(config),
+      ~preprocessors=Config.preprocess(config),
       ~cache,
       (),
     );
@@ -262,10 +261,9 @@ let rec build =
 
   Lwt.catch(
     () => {
-      if (config.mode == Mode.Production) {
+      if (Config.mode(config) == Mode.Production) {
         raise(
-          Context.PackError(
-            ctx,
+          Error.PackError(
             NotImplemented(
               "Production build is not implemented yet"
               ++ "\nUse `--development` for now",
@@ -286,7 +284,7 @@ let rec build =
         );
         build(~filesWatched, builder);
       }
-    | Context.PackError(_, reason) => {
+    | Error.PackError(reason) => {
         let%lwt () = FS.rmdir(tmpOutputDir);
         let filesWatched =
           StringSet.union(DependencyGraph.get_files(graph), filesWatched);
@@ -357,11 +355,12 @@ let getFilenameFilter = (builder: t) => {
       );
     | None => (_ => false)
     };
+  let outputDir = Config.outputDir(config);
   filename =>
-    !FilePath.is_subdir(filename, config.outputDir)
+    !FilePath.is_subdir(filename, outputDir)
     && !FilePath.is_subdir(filename, tmpOutputDir)
     && filename != tmpOutputDir
-    && filename != config.outputDir
+    && filename != outputDir
     && !inCacheDir(filename);
 };
 

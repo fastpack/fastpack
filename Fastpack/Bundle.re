@@ -445,6 +445,11 @@ let rec getChunkDependencies =
   };
 
 let emit = (ctx: Context.t, bundle: t) => {
+  let outputDir = Config.outputDir(ctx.config);
+  let outputFilename = Config.outputFilename(ctx.config);
+  let envVar = Config.envVar(ctx.config);
+  let publicPath = Config.publicPath(ctx.config);
+  let projectRootDir = Config.projectRootDir(ctx.config);
   /* more here */
   let%lwt emittedModules =
     Lwt_list.fold_left_s(
@@ -453,10 +458,7 @@ let emit = (ctx: Context.t, bundle: t) => {
           let filename =
             FS.abs_path(
               ctx.tmpOutputDir,
-              FS.relative_path(
-                ctx.config.outputDir,
-                ctx.config.outputFilename,
-              ),
+              FS.relative_path(outputDir, outputFilename),
             );
           (FilePath.dirname(filename), FilePath.basename(filename));
         };
@@ -477,7 +479,7 @@ let emit = (ctx: Context.t, bundle: t) => {
               emit(
                 switch (chunkName) {
                 | Main =>
-                  runtimeMain(ctx.config.envVar, ctx.config.publicPath)
+                  runtimeMain(envVar, publicPath)
                 | Named(_name) => runtimeChunk
                 },
               );
@@ -488,7 +490,7 @@ let emit = (ctx: Context.t, bundle: t) => {
                   let%lwt () = emit_module_files(ctx, m);
                   let short_str =
                     Module.location_to_short_string(
-                      ~base_dir=Some(ctx.config.projectRootDir),
+                      ~base_dir=Some(projectRootDir),
                       m.location,
                     );
                   let%lwt () =
@@ -583,7 +585,7 @@ let emit = (ctx: Context.t, bundle: t) => {
             let%lwt () = emit("\n});\n");
             /* save the fact that chunk was emitted */
             let relPath = FilePath.make_relative(ctx.tmpOutputDir, filename);
-            let absPath = FS.abs_path(ctx.config.outputDir, relPath);
+            let absPath = FS.abs_path(outputDir, relPath);
             Hashtbl.replace(
               bundle.emittedFiles,
               absPath,
@@ -598,12 +600,12 @@ let emit = (ctx: Context.t, bundle: t) => {
     );
   let _ = DependencyGraph.cleanup(bundle.graph, emittedModules);
   let%lwt () =
-    switch%lwt (FS.stat_option(ctx.config.outputDir)) {
-    | Some({st_kind: Lwt_unix.S_DIR, _}) => FS.rmdir(ctx.config.outputDir)
-    | Some(_) => Lwt_unix.unlink(ctx.config.outputDir)
+    switch%lwt (FS.stat_option(outputDir)) {
+    | Some({st_kind: Lwt_unix.S_DIR, _}) => FS.rmdir(outputDir)
+    | Some(_) => Lwt_unix.unlink(outputDir)
     | None => Lwt.return_unit
     };
-  Lwt_unix.rename(ctx.tmpOutputDir, ctx.config.outputDir);
+  Lwt_unix.rename(ctx.tmpOutputDir, outputDir);
 };
 
 let getGraph = ({graph, _}: t) => graph;

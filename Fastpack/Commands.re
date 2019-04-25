@@ -10,13 +10,14 @@ let version =
   Version.(Printf.sprintf("%s (Commit: %s)", version, github_commit));
 
 let run = (debug, f) => {
+  let isTTY = Unix.(isatty(stderr) && isatty(stdout));
+  Pastel.(setMode(isTTY ? Terminal : Disabled));
   if (debug) {
     Logs.set_level(Some(Logs.Debug));
     Logs.set_reporter(Logs_fmt.reporter());
   };
   try (`Ok(f())) {
-  | Config.ExitError(message)
-  | Context.ExitError(message) =>
+  | Error.ExitError(message) =>
     Lwt_main.run(Lwt_io.(write(stderr, message)));
     /* supress the default behaviour of the cmdliner, since it does a lot
      * of smart stuff */
@@ -33,7 +34,7 @@ let run = (debug, f) => {
       )
     );
     `Error((false, message));
-  | Context.ExitOK => `Ok()
+  | Error.ExitOK => `Ok()
   };
 };
 
@@ -49,10 +50,10 @@ let reportCache = builder => {
   let report =
     Printf.sprintf(
       "Cache: %s",
-      switch (config.cache, Cache.isLoadedEmpty(cache)) {
-      | (Config.Cache.Disable, _) => "disabled"
-      | (Config.Cache.Use, true) => "empty"
-      | (Config.Cache.Use, false) => "used"
+      switch (Config.isCacheDisabled(config), Cache.isLoadedEmpty(cache)) {
+      | (true, _) => "disabled"
+      | (false, true) => "empty"
+      | (false, false) => "used"
       },
     );
   Lwt_io.(write_line(stdout, report));
@@ -66,7 +67,7 @@ let reportWarnings = bundle => switch%lwt(Bundle.getWarnings(bundle)) {
 let reportResult = (start_time, result, builder) =>
   switch (result) {
   | Error({Builder.reason, _}) =>
-    let report = Context.errorToString(builder.Builder.current_dir, reason);
+    let report = Error.toString(builder.Builder.current_dir, reason);
     Lwt_io.(write(stderr, report));
   | Ok(bundle) =>
     let%lwt () = reportWarnings(bundle);
@@ -101,13 +102,34 @@ let reportResult = (start_time, result, builder) =>
     Lwt_io.(write_line(stdout, report));
   };
 
+module ExplainConfig = {
+  let run = (config: Lwt.t(Config.t)) =>
+    run(false, () =>
+      Lwt_main.run(
+        {
+          let%lwt config = config;
+          Lwt_io.(write(stdout, Config.prettyPrint(config)));
+        },
+      )
+    );
+
+
+  let doc = "load, validate, and explain the configuration";
+  let command =
+    register((
+      Term.(ret(const(run) $ Config.term)),
+      Term.info("explain-config", ~doc, ~sdocs, ~exits),
+    ));
+};
+
 module Build = {
-  let run = (options: Config.t, dryRun: bool, one: bool) =>
-    run(options.debug, () =>
+  let run = (config: Lwt.t(Config.t), debug: bool, dryRun: bool, one: bool) =>
+    run(debug, () =>
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let%lwt builder = Builder.make(options);
+          let%lwt config = config;
+          let%lwt builder = Builder.make(config);
           let%lwt () = reportCache(builder);
           Lwt.finalize(
             () => {
@@ -115,7 +137,7 @@ module Build = {
               let%lwt () = reportResult(start_time, result, builder);
               switch (result) {
               | Ok(_) => Cache.save(builder.Builder.cache)
-              | Error(_) => raise(Context.ExitError(""))
+              | Error(_) => raise(Error.ExitError(""))
               };
             },
             () => Builder.finalize(builder),
@@ -137,7 +159,7 @@ module Build = {
   let doc = "rebuild the bundle on a file change";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term $ dryRunT $ oneT)),
+      Term.(ret(const(run) $ Config.term $ Config.debugT  $ dryRunT $ oneT)),
       Term.info("build", ~doc, ~sdocs, ~exits),
     ));
 };
@@ -239,7 +261,7 @@ module Watch = {
           fun
           | Process.NotRunning(msg) =>
             raise(
-              Context.ExitError(
+              Error.ExitError(
                 Printf.sprintf(
                   {|
 %s
@@ -293,18 +315,19 @@ for installation instructions:
 
     let finalize = watchman => Process.finalize(watchman.process);
   };
-  let run = (options: Config.t) =>
-    run(options.debug, () =>
+  let run = (config: Lwt.t(Config.t), debug) =>
+    run(debug, () =>
       Lwt_main.run(
         {
           let start_time = Unix.gettimeofday();
-          let%lwt builder = Builder.make(options);
+          let%lwt config = config;
+          let%lwt builder = Builder.make(config);
           let%lwt () = reportCache(builder);
           let%lwt result = Builder.build(builder);
           let%lwt () = reportResult(start_time, result, builder);
           let%lwt watchman =
             Watchman.make(
-              options.projectRootDir,
+              Config.projectRootDir(config),
               Builder.getFilenameFilter(builder),
             );
 
@@ -415,7 +438,7 @@ for installation instructions:
            * See: https://github.com/ocsigen/lwt/issues/451#issuecomment-325554763
            * */
           let (w, u) = Lwt.wait();
-          let exit = _ => Lwt.wakeup_exn(u, Context.ExitOK);
+          let exit = _ => Lwt.wakeup_exn(u, Error.ExitOK);
           Lwt_unix.on_signal(Sys.sigint, exit) |> ignore;
           Lwt_unix.on_signal(Sys.sigterm, exit) |> ignore;
           let%lwt () =
@@ -424,7 +447,7 @@ for installation instructions:
                 stdout,
                 Printf.sprintf(
                   "Watching directory: %s. (Ctrl+C to exit)",
-                  options.projectRootDir,
+                  Config.projectRootDir(config),
                 ),
               )
             );
@@ -448,7 +471,7 @@ for installation instructions:
   let doc = "watch for file changes and rebuild the bundle";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term)),
+      Term.(ret(const(run) $ Config.term $ Config.debugT)),
       Term.info("watch", ~doc, ~sdocs, ~exits),
     ));
 };

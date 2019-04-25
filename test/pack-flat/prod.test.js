@@ -1,2 +1,2 @@
 
-module.exports = ({ error }) => error("fpack index.js");
+module.exports = ({ error }) => error("fpack build index.js");

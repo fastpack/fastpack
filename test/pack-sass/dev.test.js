@@ -4,5 +4,5 @@ const config = '\\.css$:style-loader!css-loader';
 
 
 module.exports = ({ bundle }) => bundle(`
-fpack index.js --dev --preprocess=${process.platform === 'win32' ? config : "'" + config + "'"}
+fpack build index.js --dev --preprocess=${process.platform === 'win32' ? config : "'" + config + "'"}
 `);

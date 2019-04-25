@@ -27,6 +27,7 @@ let run_with ~test_name ~cmd ~files f =
     in
     Lwt_main.run(
       Lwt.catch (fun () ->
+          let%lwt opts = opts in
           let%lwt () = Lwt_list.iter_s (fun (name, content) ->
               Lwt_io.with_file
                 ~mode:Lwt_io.Output
@@ -104,7 +105,7 @@ let run_with ~test_name ~cmd ~files f =
                 messages := (Re.replace ~f:(fun _ -> "\n") re_modules content) :: !messages;
                 Lwt.return r
               | Error({Builder. reason; _}) ->
-                let error_text = Context.errorToString builder.Builder.current_dir  reason  in
+                let error_text = Error.toString builder.Builder.current_dir  reason  in
                 messages := error_text :: !messages;
                 Lwt.return r
           in

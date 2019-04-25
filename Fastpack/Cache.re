@@ -74,7 +74,7 @@ let make = (load: load) =>
     |},
         currentDir,
         projectRootDir,
-        String.concat(",", List.map(Config.Mock.to_string, mock)),
+        String.concat(",", List.map(Config.Mock.toString, mock)),
         String.concat(",", nodeModulesPaths),
         String.concat(",", resolveExtension),
         String.concat(
