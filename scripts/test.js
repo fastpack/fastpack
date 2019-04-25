@@ -79,10 +79,10 @@ function fpack(cmd, { cwd, outputDir, env }) {
     "fpack.exe"
   );
 
-  cmd = `${binPath} -o ${outputDir} ${cmd
+  cmd = `${binPath} ${cmd
     .substr(prefix.length)
     .replace(/\\\n/g, " ")
-    .replace(/\s{2,}/g, " ")}`;
+    .replace(/\s{2,}/g, " ")} -o ${outputDir}`;
 
   return exe(cmd, { cwd, env });
 }

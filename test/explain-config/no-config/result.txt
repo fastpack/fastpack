@@ -1,0 +1,25 @@
+Entry Points:
+  ["."]   # default value
+Project Root Directory:
+  "/.../test/explain-config"   # default value
+Output Directory:
+  "/.../.sandbox/explain-config---no-config.test.js"   # cli argument
+Output Filename:
+  "/.../.sandbox/explain-config---no-config.test.js/index.js"   # default value
+Public Path:
+  ""   # default value
+Mode:
+  "development"   # cli argument
+Cache:
+  "use"   # default value
+Look For Packages In These Locations:
+  - node_modules   # default value
+Try Extensions When Resolving:
+  - .js   # default value
+  - .json   # default value
+Mocks:
+  No mocks defined
+Inlined Environment Variables:
+  - NODE_ENV=development   # cli argument
+Preprocessors:
+  No preprocessors defined

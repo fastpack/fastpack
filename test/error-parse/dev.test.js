@@ -1,4 +1,4 @@
 
 module.exports = ({error, bundle}) => error(`
-fpack index.js --dev
+fpack build index.js --dev
 `);

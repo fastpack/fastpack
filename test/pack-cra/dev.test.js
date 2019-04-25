@@ -1,6 +1,6 @@
 
 module.exports = ({ bundle }) => bundle(`
-fpack src/index.js \
+fpack build src/index.js \
     --dev \
     --preprocess=^src.+\\.js$ \
     --preprocess=\\.svg$:url-loader \

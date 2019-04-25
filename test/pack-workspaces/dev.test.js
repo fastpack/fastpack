@@ -2,7 +2,7 @@ const path = require("path");
 const appDir = path.join(__dirname, "app");
 module.exports = ({ bundle }) =>
   bundle(`
-fpack index.js \
+fpack build index.js \
   --dev \
   --no-cache \
   --project-root="../" \

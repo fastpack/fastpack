@@ -1,6 +1,6 @@
 
 module.exports = ({ bundle }) => bundle(`
-fpack index.js \
+fpack build index.js \
     --dev \
     --preprocess=\\.js$:builtin
 `);
