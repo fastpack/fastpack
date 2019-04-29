@@ -13,7 +13,7 @@ build: [
   ["jbuilder" "build" "@doc"] {with-doc}
 ]
 depends: [
-  "ocaml"
+  "ocaml" {< "4.08.0"}
   "base-bytes"
   "result"
   "jbuilder" {build}

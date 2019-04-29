@@ -1,4 +1,5 @@
 opam-version: "2.0"
+
 maintainer: "rudi.grinberg@gmail.com"
 authors: [
   "Jerome Vouillon"
@@ -11,16 +12,20 @@ license: "LGPL-2.0 with OCaml linking exception"
 homepage: "https://github.com/ocaml/ocaml-re"
 bug-reports: "https://github.com/ocaml/ocaml-re/issues"
 dev-repo: "git+https://github.com/ocaml/ocaml-re.git"
+
 build: [
-  ["jbuilder" "subst" "-p" name] {pinned}
-  ["jbuilder" "build" "-p" name "-j" jobs]
-  ["jbuilder" "runtest" "-p" name "-j" jobs] {with-test}
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
+
 depends: [
-  "ocaml" {>= "4.02.3"}
-  "jbuilder" {build & >= "1.0+beta10"}
+  "ocaml" {>= "4.02"}
+  "dune" {build}
   "ounit" {with-test}
+  "seq"
 ]
+
 synopsis: "RE is a regular expression library for OCaml"
 description: """
 Pure OCaml regular expressions with:
@@ -28,9 +33,10 @@ Pure OCaml regular expressions with:
 * Posix extended regular expressions (module Re.Posix)
 * Emacs-style regular expressions (module Re.Emacs)
 * Shell-style file globbing (module Re.Glob)
-* Compatibility layer for OCaml's built-in Str module (module Re.Str)"""
+* Compatibility layer for OCaml's built-in Str module (module Re.Str)
+"""
 url {
   src:
-    "https://github.com/ocaml/ocaml-re/releases/download/1.7.3/re-1.7.3.tbz"
-  checksum: "md5=d2a74ca77216861bce4449600a132de9"
+    "https://github.com/ocaml/ocaml-re/releases/download/1.9.0/re-1.9.0.tbz"
+  checksum: "md5=bddaed4f386a22cace7850c9c7dac296"
 }
