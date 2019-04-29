@@ -1,4 +1,4 @@
-module M = Map.Make(String);
+module M = CCMap.Make(String);
 module FS = FastpackUtil.FS;
 module Process = FastpackUtil.Process;
 module Ast = Flow_parser.Flow_ast;
@@ -7,6 +7,7 @@ module Loc = Flow_parser.Loc;
 exception Error(string);
 
 type t = {
+  envVar: M.t(string),
   project_root: string,
   current_dir: string,
   output_dir: string,
@@ -55,6 +56,7 @@ let builtin = source =>
 module NodeServer = {
   let node_project_root = ref("");
   let node_output_dir = ref("");
+  let env = ref([]);
 
   let pool =
     Lwt_pool.create(
@@ -109,15 +111,24 @@ module NodeServer = {
           node_project_root^,
         |];
 
-        Process.start(cmd) |> Lwt.return;
+        Process.start(~env=env^, cmd) |> Lwt.return;
       },
     );
 
   let process =
-      (~project_root, ~current_dir, ~output_dir, ~loaders, ~filename, source) => {
+      (
+        ~envVar,
+        ~project_root,
+        ~current_dir,
+        ~output_dir,
+        ~loaders,
+        ~filename,
+        source,
+      ) => {
     if (node_project_root^ == "") {
       node_project_root := project_root;
       node_output_dir := output_dir;
+      env := M.bindings(envVar);
     };
 
     /* Do not pass binary data through the channel */
@@ -186,8 +197,8 @@ module NodeServer = {
   let finalize = () => Lwt_pool.clear(pool);
 };
 
-let make = (~project_root, ~current_dir, ~output_dir, ()) =>
-  Lwt.return({project_root, current_dir, output_dir});
+let make = (~envVar, ~project_root, ~current_dir, ~output_dir, ()) =>
+  Lwt.return({envVar, project_root, current_dir, output_dir});
 
 let run = (location, source, preprocessor: t) =>
   switch (location) {
@@ -219,11 +230,12 @@ let run = (location, source, preprocessor: t) =>
         switch (loaders) {
         | [] => make_chain(List.tl(rest), [builtin, ...chain])
         | _ =>
-          let {project_root, current_dir, output_dir} = preprocessor;
+          let {project_root, current_dir, output_dir, envVar} = preprocessor;
           make_chain(
             rest,
             [
               NodeServer.process(
+                ~envVar,
                 ~project_root,
                 ~current_dir,
                 ~output_dir,

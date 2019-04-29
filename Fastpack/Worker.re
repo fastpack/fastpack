@@ -1,6 +1,6 @@
 module MLSet = Module.LocationSet;
 module StringSet = Set.Make(String);
-module M = CCMap.Make(CCString);
+module M = CCMap.Make(String);
 
 module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
@@ -24,6 +24,7 @@ let to_eval = s => {
 };
 
 type init = {
+  envVar: M.t(string),
   project_root: string,
   output_dir: string,
   publicPath: string,
@@ -67,7 +68,8 @@ let make = (~init, ~input, ~output, ~serveForever, ()) => {
   serveForever,
 };
 
-let makeInit = (~project_root, ~output_dir, ~publicPath, ()) => {
+let makeInit = (~envVar, ~project_root, ~output_dir, ~publicPath, ()) => {
+  envVar,
   project_root,
   output_dir,
   publicPath,
@@ -91,10 +93,11 @@ let outputToParent = (outputValue: response) =>
 let outputToString = (_outputValue: response) => "SOME OUTPUT";
 
 let start = ({init, input, output, serveForever}) => {
-  let%lwt {project_root, output_dir, _} = init();
+  let%lwt {envVar, project_root, output_dir, _} = init();
 
   let%lwt preprocessor =
     Preprocessor.make(
+      ~envVar,
       ~project_root,
       ~current_dir=Unix.getcwd(),
       ~output_dir,
@@ -781,7 +784,7 @@ let start = ({init, input, output, serveForever}) => {
 module Reader = {
   type t = {workerPool: Lwt_pool.t(Process.t)};
 
-  let make = (~project_root, ~output_dir, ~publicPath, ()) => {
+  let make = (~envVar, ~project_root, ~output_dir, ~publicPath, ()) => {
     workerPool:
       Lwt_pool.create(
         Environment.getCPUCount(),
@@ -791,7 +794,7 @@ module Reader = {
 
           let process =
             Process.start([|Environment.getExecutable(), "worker"|]);
-          let init = {project_root, output_dir, publicPath};
+          let init = {envVar, project_root, output_dir, publicPath};
           let%lwt () = Process.writeValue(init, process);
           Lwt.return(process);
         },

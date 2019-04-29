@@ -2,7 +2,7 @@
 module.exports = ({ bundle }) => bundle(`
 fpack build src/index.js \
     --dev \
-    --preprocess=^src.+\\.js$ \
+    --preprocess=^src.+\\.js$:babel-loader \
     --preprocess=\\.svg$:url-loader \
-    --preprocess=\\.css$:style-loader!css-loader?importLoaders=1!postcss-loader?path=postcss.config.js
+    --preprocess=\\.css$:style-loader!css-loader!postcss-loader?path=postcss.config.js
 `);

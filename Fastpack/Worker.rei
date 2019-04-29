@@ -8,10 +8,15 @@ let make: (
   ~input: unit => Lwt.t(request),
   ~output: response => Lwt.t(unit),
   ~serveForever: bool,
-  unit) => t
+  unit) => t;
 
 
-let makeInit: (~project_root: string, ~output_dir: string, ~publicPath: string, unit) => init
+let makeInit: (
+  ~envVar: CCMap.Make(String).t(string),
+  ~project_root: string,
+  ~output_dir: string,
+  ~publicPath: string,
+  unit) => init;
 let initFromParent: unit => Lwt.t(init);
 
 let makeRequest: (~location: Module.location, ~source: option(string), unit) => request
@@ -37,6 +42,7 @@ type ok = {
 module Reader: {
   type t;
   let make: (
+    ~envVar: CCMap.Make(String).t(string),
     ~project_root: string,
     ~output_dir: string,
     ~publicPath: string,

@@ -11,11 +11,13 @@ type output = {
 
 exception Error(string);
 let make: (
-  ~project_root: string,
-  ~current_dir: string,
-  ~output_dir: string,
-  unit
-  ) => Lwt.t(t);
+    ~envVar: CCMap.Make(String).t(string),
+    ~project_root: string,
+    ~current_dir: string,
+    ~output_dir: string,
+    unit
+  ) =>
+  Lwt.t(t)
 
 let run: (Module.location, option(string), t) => Lwt.t(output)
 

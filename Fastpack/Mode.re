@@ -9,14 +9,12 @@ module Visit = FastpackUtil.Visit;
 
 type t =
   | Production
-  | Development
-  | Test;
+  | Development;
 
 let toString = m =>
   switch (m) {
   | Production => "production"
   | Development => "development"
-  | Test => "test"
   };
 
 let rec is_matched = (expr, mode) =>

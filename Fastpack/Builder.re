@@ -42,6 +42,7 @@ let make = (config: Config.t) => {
 
   let reader =
     Worker.Reader.make(
+      ~envVar=Config.envVar(config),
       ~project_root=Config.projectRootDir(config),
       ~output_dir=tmpOutputDir,
       ~publicPath=Config.publicPath(config),
@@ -168,6 +169,7 @@ let buildOne = (ctx: Context.t) => {
           () =>
             Lwt.return(
               makeInit(
+                ~envVar=Config.envVar(ctx.config),
                 ~project_root=Config.projectRootDir(ctx.config),
                 ~output_dir=ctx.tmpOutputDir,
                 ~publicPath=Config.publicPath(ctx.config),
