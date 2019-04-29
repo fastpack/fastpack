@@ -18,7 +18,7 @@ train: build-dev
 	@esy dune runtest --auto-promote --diff-command "git --no-pager diff --no-index --color"
 
 setup-test:
-	@esy x node scripts/setupTest.js
+	node scripts/setupTest.js
 
 clean-test:
 	@esy x node scripts/cleanTest.js

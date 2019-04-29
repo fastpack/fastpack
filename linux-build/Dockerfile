@@ -37,4 +37,4 @@ COPY shasum /usr/bin
 RUN chmod +x /usr/bin/shasum
 
 RUN npm install --global --unsafe-perm=true esy@0.5.6
-RUN npm install --global --unsafe-perm=true yarn@1.12.3
+RUN npm install --global --unsafe-perm=true yarn
