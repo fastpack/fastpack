@@ -83,7 +83,7 @@ npx fpack watch --dev index.js -o ./dist -n module.js --target app
 
 ### No Caching
 
-You may not what to cache for a clean build. Use the `--no-cache` option for this.
+You may not want to cache for a clean build. Use the `--no-cache` option for this.
 
 ```shell
 npx fpack watch --dev index.js -o ./dist -n module.js --target app ---no-cache
