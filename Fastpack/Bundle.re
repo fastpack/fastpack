@@ -506,11 +506,11 @@ let emit = (ctx: Context.t, bundle: t) => {
 
                   let%lwt jsonDependencies =
                     Lwt_list.map_s(
-                      (({Module.Dependency.request, _}, m)) =>
+                      (({Module.Dependency.encodedRequest, _}, m)) =>
                         switch (m) {
                         | Some(m) =>
                           let%lwt m = m;
-                          Lwt.return((request, `String(m.Module.id)));
+                          Lwt.return((encodedRequest, `String(m.Module.id)));
                         | None => failwith("Should not happen")
                         },
                       DependencyGraph.lookup_dependencies(
@@ -536,7 +536,7 @@ let emit = (ctx: Context.t, bundle: t) => {
                                 dirname,
                               );
                             Some((
-                              dep.Module.Dependency.request,
+                              dep.Module.Dependency.encodedRequest,
                               `List(
                                 List.map(
                                   s =>

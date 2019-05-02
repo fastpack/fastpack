@@ -34,6 +34,7 @@ let rec unwrap_batches = (m: Module.t, finder: t) => {
     ({exports, has_cjs}, batch_request) => {
       let dep = {
         Module.Dependency.request: batch_request,
+        encodedRequest: batch_request,
         requested_from: m.location,
       };
 
@@ -112,6 +113,7 @@ let ensure_exports = (m: Module.t, finder: t) =>
            | {Scope.typ: Scope.Import({remote: Some(remote), source}), _} =>
              let dep = {
                Module.Dependency.request: source,
+               encodedRequest: source,
                requested_from: m.location,
              };
              switch (Module.DependencyMap.get(dep, finder.dependency_map)) {

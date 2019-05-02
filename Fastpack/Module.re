@@ -179,13 +179,19 @@ module Dependency = {
   type t = {
     /*** Original request to a dependency */
     request: string,
+    /*** Request to a dependency as it appears in the resulting bundle */
+    encodedRequest: string,
     /*** The filename this dependency was requested from */
     requested_from: location,
   };
 
-  let compare = Pervasives.compare;
+  let compare = (d1: t, d2: t) =>
+    Pervasives.compare(
+      (d1.request, d1.requested_from),
+      (d2.request, d2.requested_from),
+    );
 
-  let to_string = (~dir=None, {request, requested_from}) => {
+  let to_string = (~dir=None, {request, requested_from, _}) => {
     let requested_from =
       location_to_string(~base_dir=dir, requested_from)
       |> Printf.sprintf(" from module: %s");
@@ -197,7 +203,7 @@ module Dependency = {
 module DependencyMap =
   CCMap.Make({
     type t = Dependency.t;
-    let compare = Pervasives.compare;
+    let compare = Dependency.compare;
   });
 
 module LocationSet =
