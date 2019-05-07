@@ -76,7 +76,7 @@ export default App;
 ```
 
 **src/App.css**
-```
+```CSS
 .App {
   text-align: center;
 }
@@ -152,7 +152,11 @@ And the fastpack configuration as well:
 ```
 
 *The above configuration can be alternatively specified using command-line
-arguments, see `node_modules/.bin/fpack --help` for more details*.
+arguments, for more details run:*
+
+```Bash
+  $ node_modules/.bin/fpack --help
+```
 
 We are good to go! Now run:
 

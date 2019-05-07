@@ -125,8 +125,8 @@ jobs:
       downloadPath: .
   - script: cp -R vendor-win32-fpack.exe/fpack.exe dist/vendor-win32
     displayName: copy windows binary
-  - script: cp -R node-service dist
-    displayName: copy node-service
+  - script: cp -R node-service README.md dist
+    displayName: copy node-service & README
   - script: chmod +x dist/vendor-*/*.exe
     displayName: add executable permissions
   - script: "cp -R dist fpack && tar -czf fpack.tgz fpack"
