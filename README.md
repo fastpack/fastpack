@@ -178,6 +178,7 @@ Voila! Now try running it again and see the power of the persistent cache!
 For more configuration options and usage scenarios see
 [Documentation](https://fastpack.sh/docs/get-started.html).
 
+Have a question or want to contribute? Join us on [Discord](https://discord.gg/4HVCjDh)!
 
 ## Contributors
 
