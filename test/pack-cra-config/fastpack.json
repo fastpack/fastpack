@@ -1,0 +1,17 @@
+{
+    "entryPoints": ["src/index.js"],
+    "preprocess": [
+        {
+            "re": "^src.+\\.js$",
+            "process": "babel-loader"
+        },
+        {
+            "re": "\\.svg$",
+            "process": "url-loader"
+        },
+        {
+            "re": "\\.css$",
+            "process": "style-loader!css-loader!postcss-loader?path=postcss.config.js"
+        }
+    ]
+}
