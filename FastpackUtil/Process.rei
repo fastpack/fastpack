@@ -1,7 +1,8 @@
 type t
 exception NotRunning(string)
 
-let start: array(string) => t;
+let start: (~env: list((string, string))=?, array(string)) => t;
+
 let finalize: t => Lwt.t(unit);
 
 let write: (string, t) => Lwt.t(unit);

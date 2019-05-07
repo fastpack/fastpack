@@ -1,6 +1,6 @@
 module MLSet = Module.LocationSet;
 module StringSet = Set.Make(String);
-module M = CCMap.Make(CCString);
+module M = CCMap.Make(String);
 
 module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
@@ -24,6 +24,7 @@ let to_eval = s => {
 };
 
 type init = {
+  envVar: M.t(string),
   project_root: string,
   output_dir: string,
   publicPath: string,
@@ -67,7 +68,8 @@ let make = (~init, ~input, ~output, ~serveForever, ()) => {
   serveForever,
 };
 
-let makeInit = (~project_root, ~output_dir, ~publicPath, ()) => {
+let makeInit = (~envVar, ~project_root, ~output_dir, ~publicPath, ()) => {
+  envVar,
   project_root,
   output_dir,
   publicPath,
@@ -91,10 +93,11 @@ let outputToParent = (outputValue: response) =>
 let outputToString = (_outputValue: response) => "SOME OUTPUT";
 
 let start = ({init, input, output, serveForever}) => {
-  let%lwt {project_root, output_dir, _} = init();
+  let%lwt {envVar, project_root, output_dir, _} = init();
 
   let%lwt preprocessor =
     Preprocessor.make(
+      ~envVar,
       ~project_root,
       ~current_dir=Unix.getcwd(),
       ~output_dir,
@@ -221,35 +224,39 @@ let start = ({init, input, output, serveForever}) => {
 
     let get_module_default = module_var =>
       Printf.sprintf("(__fastpack_require__.default(%s))", module_var);
-    /* let module_default_vars = ref(M.empty); */
-    /* let ensure_module_default_var = request => */
-    /*   switch (M.get(request, module_default_vars^)) { */
-    /*   | Some(var) => (var, "") */
-    /*   | None => */
-    /*     let (module_var, module_var_definition) = ensure_module_var(request); */
-    /*     let var = avoid_name_collision(module_var ++ "__default"); */
-    /*     let expression = */
-    /*       Printf.sprintf( */
-    /*         "%s.__esModule ? %s.default : %s", */
-    /*         module_var, */
-    /*         module_var, */
-    /*         module_var, */
-    /*       ); */
-    /*     module_default_vars := M.add(request, var, module_default_vars^); */
-    /*     (var, module_var_definition ++ define_var(var, expression)); */
-    /*   }; */
 
     let static_dependencies = ref([]);
     let dynamic_dependencies = ref([]);
+    let current_dir =
+      switch (location) {
+      | Module.File({filename: Some(filename), _}) =>
+        FilePath.dirname(filename)
+      | _ => project_root
+      };
+
+    let encodeDependencyRequest = request =>
+      switch (CCString.to_array(request) |> Array.to_list) {
+      | ['/', ..._] when !Sys.win32 =>
+        "./" ++ FS.relative_path(current_dir, request)
+      | [_, ':', ..._] when Sys.win32 =>
+        ".\\" ++ FS.relative_path(current_dir, request)
+      | _ => request
+      };
+
     let add_dependency = (~kind, request) => {
-      let dep = {Module.Dependency.request, requested_from: location};
+      let encodedRequest = encodeDependencyRequest(request);
+      let dep = {
+        Module.Dependency.request,
+        encodedRequest,
+        requested_from: location,
+      };
       let () =
         switch (kind) {
         | `Static => static_dependencies := [dep, ...static_dependencies^]
         | `Dynamic => dynamic_dependencies := [dep, ...dynamic_dependencies^]
         };
 
-      dep;
+      encodedRequest;
     };
 
     let export_from_specifiers =
@@ -280,7 +287,7 @@ let start = ({init, input, output, serveForever}) => {
       );
 
     let patch_imported_name = (~from_request, _, remote) => {
-      let (module_var, _) = ensure_module_var(from_request);
+      let (module_var, _) = ensure_module_var(encodeDependencyRequest(from_request));
       switch (remote) {
       | "default" => get_module_default(module_var)
       | _ => module_var ++ "." ++ remote
@@ -363,7 +370,7 @@ let start = ({init, input, output, serveForever}) => {
               default,
               _,
             }) =>
-            let dep = add_dependency(~kind=`Static, request);
+            let request = add_dependency(~kind=`Static, request);
             patch_with(
               0,
               0,
@@ -384,41 +391,10 @@ let start = ({init, input, output, serveForever}) => {
                 let patch =
                   switch (has_names) {
                   /* import 'some'; */
-                  | false => fastpack_require(dep.request) ++ ";\n"
+                  | false => fastpack_require(request) ++ ";\n"
                   | true =>
                     let (_, module_var_definition) =
-                      ensure_module_var(~name=namespace, dep.request);
-
-                    /* let default_specifier = */
-                    /*   switch (specifiers) { */
-                    /*   | Some( */
-                    /*       S.ImportDeclaration.ImportNamedSpecifiers( */
-                    /*         specifiers, */
-                    /*       ), */
-                    /*     ) => */
-                    /*     List.exists( */
-                    /*       ( */
-                    /*         { */
-                    /*           S.ImportDeclaration.kind, */
-                    /*           remote: (_, remote), */
-                    /*           _, */
-                    /*         }, */
-                    /*       ) => */
-                    /*         switch (kind) { */
-                    /*         | Some(S.ImportDeclaration.ImportValue) */
-                    /*         | None => remote == "default" */
-                    /*         | _ => false */
-                    /*         }, */
-                    /*       specifiers, */
-                    /*     ) */
-                    /*   | _ => false */
-                    /*   }; */
-
-                    /* let (_, module_default_var_definition) = */
-                    /*   switch (default, default_specifier) { */
-                    /*   | (None, false) => ("", "") */
-                    /*   | _ => ensure_module_default_var(dep.request) */
-                    /*   }; */
+                      ensure_module_var(~name=namespace, request);
 
                     module_var_definition;
                   };
@@ -467,7 +443,7 @@ let start = ({init, input, output, serveForever}) => {
                 Some(S.ExportNamedDeclaration.ExportSpecifiers(specifiers)),
               source: Some((_, {value: request, _})),
             }) =>
-            let _ = add_dependency(~kind=`Static, request);
+            let request = add_dependency(~kind=`Static, request);
             patch_loc_with(loc, () =>
               specifiers
               |> export_from_specifiers
@@ -486,12 +462,12 @@ let start = ({init, input, output, serveForever}) => {
                 ),
               source: Some((_, {value: request, _})),
             }) =>
-            let dep = add_dependency(~kind=`Static, request);
+            let request = add_dependency(~kind=`Static, request);
             patch_loc_with(
               loc,
               () => {
                 let (module_var, module_var_definition) =
-                  ensure_module_var(dep.request);
+                  ensure_module_var(request);
 
                 module_var_definition ++ define_export(spec, module_var);
               },
@@ -504,12 +480,12 @@ let start = ({init, input, output, serveForever}) => {
                 Some(S.ExportNamedDeclaration.ExportBatchSpecifier(_, None)),
               source: Some((_, {value: request, _})),
             }) =>
-            let dep = add_dependency(~kind=`Static, request);
+            let request = add_dependency(~kind=`Static, request);
             patch_loc_with(
               loc,
               () => {
                 let (module_var, module_var_definition) =
-                  ensure_module_var(dep.request);
+                  ensure_module_var(request);
                 let updated_exports =
                   Printf.sprintf(
                     "Object.assign(module.exports, __fastpack_require__.omitDefault(%s));",
@@ -611,8 +587,8 @@ let start = ({init, input, output, serveForever}) => {
           Visit.Continue(visit_ctx);
 
         | E.Import((_, E.Literal({value: L.String(request), _}))) =>
-          let dep = add_dependency(~kind=`Dynamic, request);
-          patch_loc_with(loc, () => fastpack_import(dep.request));
+          let request = add_dependency(~kind=`Dynamic, request);
+          patch_loc_with(loc, () => fastpack_import(request));
           Visit.Break;
 
         | E.Call({
@@ -623,8 +599,8 @@ let start = ({init, input, output, serveForever}) => {
             _,
           }) =>
           if (!has_binding("require")) {
-            let dep = add_dependency(~kind=`Static, request);
-            patch_loc_with(loc, () => fastpack_require(dep.request));
+            let request = add_dependency(~kind=`Static, request);
+            patch_loc_with(loc, () => fastpack_require(request));
           };
           Visit.Break;
 
@@ -781,7 +757,7 @@ let start = ({init, input, output, serveForever}) => {
 module Reader = {
   type t = {workerPool: Lwt_pool.t(Process.t)};
 
-  let make = (~project_root, ~output_dir, ~publicPath, ()) => {
+  let make = (~envVar, ~project_root, ~output_dir, ~publicPath, ()) => {
     workerPool:
       Lwt_pool.create(
         Environment.getCPUCount(),
@@ -791,7 +767,7 @@ module Reader = {
 
           let process =
             Process.start([|Environment.getExecutable(), "worker"|]);
-          let init = {project_root, output_dir, publicPath};
+          let init = {envVar, project_root, output_dir, publicPath};
           let%lwt () = Process.writeValue(init, process);
           Lwt.return(process);
         },

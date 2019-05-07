@@ -11,23 +11,34 @@ exception NotRunning(string);
 
 external pid_of_handle: int => int = "pid_of_handle";
 
-let addPid = env => {
-  let var = "FASTPACK_PARENT_PID";
+let addEnvVar = (var, value, env) =>
   Array.concat([
     CCArray.filter(v => !CCString.mem(~start=0, ~sub=var ++ "=", v), env),
-    [|Printf.sprintf("%s=%d", var, pid_of_handle(Unix.getpid()))|],
+    [|Printf.sprintf("%s=%s", var, value)|],
   ]);
-};
 
-let start = cmd => {
+let addPid =
+  addEnvVar(
+    "FASTPACK_PARENT_PID",
+    Unix.getpid() |> pid_of_handle |> string_of_int,
+  );
+
+let start = (~env=[], cmd) => {
   let (fp_in, process_out) = Lwt_unix.pipe();
   let (process_in, fp_out) = Lwt_unix.pipe();
   let chIn = Lwt_io.of_fd(~mode=Lwt_io.Input, fp_in);
   let chOut = Lwt_io.of_fd(~mode=Lwt_io.Output, fp_out);
+  let env =
+    env
+    |> List.fold_left(
+         (env, (var, value)) => addEnvVar(var, value, env),
+         Unix.environment(),
+       )
+    |> addPid;
   let process =
     Lwt_process.(
       open_process_none(
-        ~env=addPid(Unix.environment()),
+        ~env,
         ~stdin=`FD_move(Lwt_unix.unix_file_descr(process_in)),
         ~stdout=`FD_move(Lwt_unix.unix_file_descr(process_out)),
         ~stderr=`Dev_null,

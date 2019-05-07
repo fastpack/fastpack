@@ -1,16 +1,10 @@
-module M = Map.Make(String);
+module M = CCMap.Make(String);
 module FS = FastpackUtil.FS;
 module Process = FastpackUtil.Process;
 module Ast = Flow_parser.Flow_ast;
 module Loc = Flow_parser.Loc;
 
 exception Error(string);
-
-type t = {
-  project_root: string,
-  current_dir: string,
-  output_dir: string,
-};
 
 type output = {
   source: string,
@@ -20,106 +14,82 @@ type output = {
   files: list(string),
 };
 
-let all_transpilers =
-  FastpackTranspiler.[
-    ReactJSX.transpile,
-    StripFlow.transpile,
-    Class.transpile,
-    ObjectSpread.transpile,
-  ];
-
-let builtin = source =>
-  switch (source) {
-  | None => Lwt.fail(Error("Builtin transpiler always expects source"))
-  | Some(source) =>
-    try (
-      {
-        let (source, parsedSource) =
-          FastpackTranspiler.transpile_source(all_transpilers, source);
-        /* Logs.debug(x => x("SOURCE: %s", ret)); */
-        Lwt.return({
-          source,
-          parsedSource,
-          warnings: [],
-          dependencies: [],
-          files: [],
-        });
-      }
-    ) {
-    | FastpackTranspiler.Error.TranspilerError(err) =>
-      Lwt.fail(Error(FastpackTranspiler.Error.error_to_string(err)))
-    | exn => Lwt.fail(exn)
-    }
+module NodeService = {
+  type t = {
+    project_root: string,
+    output_dir: string,
+    nodeProcessPool: Lwt_pool.t(Process.t),
   };
 
-module NodeServer = {
-  let node_project_root = ref("");
-  let node_output_dir = ref("");
-
-  let pool =
-    Lwt_pool.create(
-      1,
-      ~dispose=Process.finalize,
-      () => {
-        let executable = Environment.getExecutable();
-        let fpack_binary_path =
-          /* TODO: handle on Windows? */
-          (
-            switch (executable.[0]) {
-            | '/'
-            | '.' => executable
-            | _ =>
-              switch (
-                Re.exec_opt(Re.Posix.compile_pat("/|\\\\"), executable)
-              ) {
-              | Some(_) => executable
-              | None => FileUtil.which(Sys.argv[0])
+  let make = (~project_root, ~output_dir, ~env, ()) => {
+    project_root,
+    output_dir,
+    nodeProcessPool:
+      Lwt_pool.create(
+        1,
+        ~dispose=Process.finalize,
+        () => {
+          let executable = Environment.getExecutable();
+          let fpack_binary_path =
+            /* TODO: handle on Windows? */
+            (
+              switch (executable.[0]) {
+              | '/'
+              | '.' => executable
+              | _ =>
+                switch (
+                  Re.exec_opt(Re.Posix.compile_pat("/|\\\\"), executable)
+                ) {
+                | Some(_) => executable
+                | None => FileUtil.which(Sys.argv[0])
+                }
               }
-            }
-          )
-          |> FileUtil.readlink
-          |> FS.abs_path(Unix.getcwd());
+            )
+            |> FileUtil.readlink
+            |> FS.abs_path(Unix.getcwd());
 
-        let rec find_fpack_root = dir =>
-          if (dir == "/") {
-            Error.ie("Cannot find fastpack package directory");
-          } else {
-            if%lwt (Lwt_unix.file_exists @@
-                    FilePath.concat(dir, "package.json")) {
-              Lwt.return(dir);
+          let rec find_fpack_root = dir =>
+            if (dir == "/") {
+              Error.ie("Cannot find fastpack package directory");
             } else {
-              find_fpack_root(FilePath.dirname(dir));
+              if%lwt (Lwt_unix.file_exists @@
+                      FilePath.concat(dir, "package.json")) {
+                Lwt.return(dir);
+              } else {
+                find_fpack_root(FilePath.dirname(dir));
+              };
             };
-          };
 
-        let%lwt fpack_root =
-          find_fpack_root @@ FilePath.dirname(fpack_binary_path);
+          let%lwt fpack_root =
+            find_fpack_root @@ FilePath.dirname(fpack_binary_path);
 
-        Logs.debug(x =>
-          x("process created: %s %s ", fpack_binary_path, fpack_root)
-        );
-        let cmd = [|
-          "node",
-          List.fold_left(
-            FilePath.concat,
-            fpack_root,
-            ["node-service", "index.js"],
-          ),
-          node_output_dir^,
-          node_project_root^,
-        |];
+          Logs.debug(x =>
+            x("process created: %s %s ", fpack_binary_path, fpack_root)
+          );
+          let cmd = [|
+            "node",
+            List.fold_left(
+              FilePath.concat,
+              fpack_root,
+              ["node-service", "index.js"],
+            ),
+            output_dir,
+            project_root,
+          |];
 
-        Process.start(cmd) |> Lwt.return;
-      },
-    );
+          Process.start(~env, cmd) |> Lwt.return;
+        },
+      ),
+  };
 
   let process =
-      (~project_root, ~current_dir, ~output_dir, ~loaders, ~filename, source) => {
-    if (node_project_root^ == "") {
-      node_project_root := project_root;
-      node_output_dir := output_dir;
-    };
-
+      (
+        ~current_dir,
+        ~loaders,
+        ~filename,
+        {project_root, nodeProcessPool, _},
+        source,
+      ) => {
     /* Do not pass binary data through the channel */
     let source =
       switch (filename) {
@@ -142,7 +112,7 @@ module NodeServer = {
       ]);
 
     Lwt_pool.use(
-      pool,
+      nodeProcessPool,
       process => {
         let%lwt () =
           Process.write(Yojson.to_string(message) ++ "\n", process);
@@ -183,11 +153,63 @@ module NodeServer = {
     );
   };
 
-  let finalize = () => Lwt_pool.clear(pool);
+  let finalize = ({nodeProcessPool, _}) => Lwt_pool.clear(nodeProcessPool);
 };
 
-let make = (~project_root, ~current_dir, ~output_dir, ()) =>
-  Lwt.return({project_root, current_dir, output_dir});
+type t = {
+  nodeService: NodeService.t,
+  envVar: M.t(string),
+  project_root: string,
+  current_dir: string,
+  output_dir: string,
+};
+
+let all_transpilers =
+  FastpackTranspiler.[
+    ReactJSX.transpile,
+    StripFlow.transpile,
+    Class.transpile,
+    ObjectSpread.transpile,
+  ];
+
+let builtin = source =>
+  switch (source) {
+  | None => Lwt.fail(Error("Builtin transpiler always expects source"))
+  | Some(source) =>
+    try (
+      {
+        let (source, parsedSource) =
+          FastpackTranspiler.transpile_source(all_transpilers, source);
+        /* Logs.debug(x => x("SOURCE: %s", ret)); */
+        Lwt.return({
+          source,
+          parsedSource,
+          warnings: [],
+          dependencies: [],
+          files: [],
+        });
+      }
+    ) {
+    | FastpackTranspiler.Error.TranspilerError(err) =>
+      Lwt.fail(Error(FastpackTranspiler.Error.error_to_string(err)))
+    | exn => Lwt.fail(exn)
+    }
+  };
+
+let make = (~envVar, ~project_root, ~current_dir, ~output_dir, ()) =>
+  Lwt.return({
+    nodeService:
+      NodeService.make(
+        ~project_root,
+        ~output_dir,
+        ~env=M.bindings(envVar),
+        (),
+      ),
+    envVar,
+    project_root,
+    current_dir,
+    output_dir,
+  });
 
 let run = (location, source, preprocessor: t) =>
   switch (location) {
@@ -219,16 +241,15 @@ let run = (location, source, preprocessor: t) =>
         switch (loaders) {
         | [] => make_chain(List.tl(rest), [builtin, ...chain])
         | _ =>
-          let {project_root, current_dir, output_dir} = preprocessor;
+          let {current_dir, nodeService, _} = preprocessor;
           make_chain(
             rest,
             [
-              NodeServer.process(
-                ~project_root,
+              NodeService.process(
                 ~current_dir,
-                ~output_dir,
                 ~loaders,
                 ~filename,
+                nodeService,
               ),
               ...chain,
             ],
@@ -280,4 +301,4 @@ let run = (location, source, preprocessor: t) =>
     };
   };
 
-let finalize = _ => NodeServer.finalize();
+let finalize = ({nodeService, _}) => NodeService.finalize(nodeService);

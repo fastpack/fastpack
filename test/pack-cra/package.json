@@ -4,12 +4,12 @@
   "private": true,
   "dependencies": {
     "autoprefixer": "7.1.6",
-    "babel-core": "6.26.0",
-    "babel-loader": "7.1.2",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-react-app": "^3.1.1",
-    "babel-runtime": "6.26.0",
-    "css-loader": "0.28.9",
+    "babel-core": "*",
+    "babel-loader": "*",
+    "babel-preset-env": "*",
+    "babel-preset-react-app": "^8.0.0",
+    "babel-runtime": "*",
+    "css-loader": "*",
     "file-loader": "1.1.5",
     "loader-runner": "^2.3.0",
     "object-assign": "4.1.1",
@@ -20,8 +20,8 @@
     "react": "^16.2.0",
     "react-dev-utils": "^5.0.0",
     "react-dom": "^16.2.0",
-    "style-loader": "0.20.1",
-    "url-loader": "0.6.2",
+    "style-loader": "*",
+    "url-loader": "*",
     "whatwg-fetch": "2.0.3"
   }
 }

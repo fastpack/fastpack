@@ -150,7 +150,7 @@ Check test: ${name}
     }
   };
 
-  const expectBundle = result => {
+  const expectBundle = (result, noDiff) => {
     if (result.code !== 0) {
       markError("Error, unexpected stderr");
       process.stdout.write(result.stderr);
@@ -160,7 +160,15 @@ Check test: ${name}
         saveSnapshot();
         markOk("Snapshot saved");
       } else {
-        runDiff();
+        if (!noDiff) {
+          runDiff();
+        } else {
+          if (result.code === 0) {
+            markOk();
+          } else {
+            markError();
+          }
+        }
       }
     }
   };
@@ -195,7 +203,6 @@ Check test: ${name}
       fs.writeFileSync(
         path.join(sandboxOutputDir, "result.txt"),
         fixOutput(result.stdout).replace(/\d\.\d\d\ds/, "X.XXXs")
-
       );
       if (!previousResult || SAVE_SNAPSHOT_MODE) {
         saveSnapshot();
@@ -234,6 +241,15 @@ Check test: ${name}
               env: opts.env,
               outputDir: sandboxOutputDir
             })
+          ),
+        bundleNoDiff: (cmd, opts = {}) =>
+          expectBundle(
+            fpack(cmd, {
+              cwd: opts.cwd ? opts.cwd : workingDir,
+              env: opts.env,
+              outputDir: sandboxOutputDir
+            }),
+            true
           ),
         error: (cmd, opts = {}) =>
           expectError(

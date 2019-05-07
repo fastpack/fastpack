@@ -1,5 +1,6 @@
 const path = require("path");
-const fs = require("fs-extra");
+const fs = require("fs");
+// const fs = require("fs-extra"); // we do not use fs-extra since to avoid `esy x`
 const { spawnSync } = require("child_process");
 
 const testDir = path.join(path.dirname(__dirname), "test");

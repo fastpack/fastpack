@@ -38,10 +38,12 @@ let make = (config: Config.t) => {
 
   let entry_location = Module.Main(entry_points);
 
-  let%lwt tmpOutputDir = FS.makeTempDir(Filename.dirname(Config.outputDir(config)));
+  let%lwt tmpOutputDir =
+    FS.makeTempDir(Filename.dirname(Config.outputDir(config)));
 
   let reader =
     Worker.Reader.make(
+      ~envVar=Config.envVar(config),
       ~project_root=Config.projectRootDir(config),
       ~output_dir=tmpOutputDir,
       ~publicPath=Config.publicPath(config),
@@ -51,9 +53,8 @@ let make = (config: Config.t) => {
   /* cache & cache reporting */
   let%lwt cache =
     Cache.make(
-      switch (Config.isCacheDisabled(config)) {
-      | true => Cache.Empty
-      | false =>
+      Config.isCacheDisabled(config) ?
+        Cache.Empty :
         Cache.(
           Load({
             currentDir: current_dir,
@@ -63,8 +64,7 @@ let make = (config: Config.t) => {
             resolveExtension: Config.resolveExtension(config),
             preprocess: Config.preprocess(config),
           })
-        )
-      },
+        ),
     );
 
   let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
@@ -154,7 +154,11 @@ let buildOne = (ctx: Context.t) => {
   let%lwt (location, _) =
     DependencyGraph.resolve(
       ctx,
-      {Module.Dependency.request, requested_from: ctx.entry_location},
+      {
+        Module.Dependency.request,
+        encodedRequest: request,
+        requested_from: ctx.entry_location,
+      },
     );
   print_endline(request);
   print_endline(Module.location_to_string(location));
@@ -168,6 +172,7 @@ let buildOne = (ctx: Context.t) => {
           () =>
             Lwt.return(
               makeInit(
+                ~envVar=Config.envVar(ctx.config),
                 ~project_root=Config.projectRootDir(ctx.config),
                 ~output_dir=ctx.tmpOutputDir,
                 ~publicPath=Config.publicPath(ctx.config),
