@@ -1,205 +1,183 @@
-# fastpack
+# Fastpack
 
 [![Build Status](https://dev.azure.com/fastpack/fastpack/_apis/build/status/fastpack.fastpack)](https://dev.azure.com/fastpack/fastpack/_build/latest?definitionId=1)
 [![Backers on Open Collective](https://opencollective.com/fastpack/backers/badge.svg)](#backers)
- [![Sponsors on Open Collective](https://opencollective.com/fastpack/sponsors/badge.svg)](#sponsors) 
- 
+ [![Sponsors on Open Collective](https://opencollective.com/fastpack/sponsors/badge.svg)](#sponsors)
+
 Pack JS code into a single bundle fast & easy.
 
-## Motivation
+## Why?
 
-The goal for fastpack is to provide fast and robust development time bundling
-for JavaScript applications which scales up to tens of thousands of modules
-without sacrificing development experience.
+Because JavaScript builds should be faster!
 
-We want sub-1000ms bundle time and sub-100ms incremental rebundle time for
-medium-sized applications (around 1000 modules). We are finally there!
+Here is an example benchmark of bundling ~1600 modules together.
 
-## Installation
 
-You can install via npm (or yarn):
+|   | Fastpack| Parcel| Webpack
+|----|:--:|:--:|:--:
+| initial build| **0.730s**| 9.740s| 3.625s
+| persistent cache| **0.171s**| 1.218s| N/A
+| watch mode| **0.084s**| 0.503s| 0.473s
 
-```
-% npm i fastpack
-```
+## Getting Started
 
-## Usage
+Let's try building the simple React application!
 
-To produce a development bundle:
-
-```
-% fpack --development ./index.js
-```
-
-**Please note**, bundling in production mode is temporarily disabled. Always
-use the `--development` flag for now.
-
-Note that `babel`, `babel-preset-env` and `uglify-js` packages must be
-installed.
-
-## Reference
-
-Run `fpack --help` to see the available invocation options:
-
-```
-NAME
-       fpack - Pack JavaScript code into a single bundle
-
-SYNOPSIS
-       fpack COMMAND ...
-
-COMMANDS
-       PLEASE NOTE: production mode is temporarily disabled. In the meantime,
-       please always use the `--development` flag.
-
-       build
-           rebuild the bundle on a file change
-
-       help
-           Show this message and exit
-
-       watch
-           watch for file changes and rebuild the bundle
-
-       worker
-           worker subprocess (do not use directly)
-
-ARGUMENTS
-       ENTRY POINTS
-           Entry points. Default: ['.']
-
-OPTIONS
-       -d, --debug
-           Print debug output
-
-       --development
-           Build bundle for development
-
-       --dry-run
-           Run all the build operations without storing the bundle in the file
-           system
-
-       --mock=PACKAGE[:SUBSTITUTE]
-           Mock PACKAGE requests with SUBSTITUTE requests. If SUBSTITUTE is
-           omitted empty module is used.
-
-       -n NAME, --name=NAME (absent=index.js)
-           Output File Name. The target bundle filename will be NAME
-
-       --no-cache
-           Do not use cache at all (effective in development mode only)
-
-       --node-modules=PATH, --nm=PATH
-           Paths to 'node_modules' directory. Should be inside the project
-           directory.. Defaults to ['node_modules']
-
-       -o DIR, --output=DIR (absent=./bundle)
-           Output Directory. The target bundle will be DIR/index.js.
-
-       --postprocess=COMMAND
-           Apply shell command on a bundle file. The content of the bundle
-           will be sent to STDIN and STDOUT output will be collected. If
-           multiple commands are specified they will be applied in the order
-           of appearance
-
-       --preprocess=PATTERN:PROCESSOR?OPTIONS[!...]
-           Preprocess modules matching the PATTERN with the PROCESSOR.
-           Optionally, the processor may receive some OPTIONS in form:
-           'x=y&a=b'. There are 2 kinds of currently supported processors:
-           'builtin' and the Webpack loader. 'builtin' preprocessor provides
-           the following transpilers: stripping Flow types, object spread &
-           rest operators, class properties (including statics), class/method
-           decorators, and React-assumed JSX conversion. 'builtin' may be
-           skipped when setting this option, i.e. '\.js$' and '\.js$:builtin'
-           are absolutely equal. An example of using the Webpack loader:
-           '\.js$:babel-loader?filename=.babelrc'.
-
-       --project-root=PATH (absent=.)
-           Ancestor to which node_modules will be resolved.. Defaults to '.'
-
-       --public-path=URL
-           URL prefix to download the static assests and JavaScript chunks at
-           runtime. Points to the same location as --output-dir.
-
-       --resolve-extension=EXTENSION
-           Provide extensions to be considered by the resolver for the
-           extension-less path. Extensions will be tried in the specified
-           order. If no extension should be tried, provide '' as an argument.
-           Defaults to [.js, .json]
-
-       --target=[ app | esm | cjs ] (absent=app)
-           Deployment target.
-
-COMMON OPTIONS
-       --help[=FMT] (default=auto)
-           Show this help in format FMT. The value FMT must be one of `auto',
-           `pager', `groff' or `plain'. With `auto', the format is `pager` or
-           `plain' whenever the TERM env var is `dumb' or undefined.
-
-       --version
-           Show version information.
+```Bash
+  $ mkdir react-app
+  $ cd react-app
+  $ yarn init -y
+  $ yarn add --dev fastpack
+  $ yarn add --dev babel-loader babel-preset-react-app style-loader css-loader url-loader
 ```
 
-## Development
+**src/index.js**
+```JavaScript
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
 
-Make sure you have `esy` (at least `0.2.8` version) installed:
-
-```bash
-npm install -g esy@0.2.11
+ReactDOM.render(<App />, document.getElementById('root'));
 ```
 
-Now install dependencies & build everything:
-
-```bash
-make bootstrap
+**src/index.css**
+```CSS
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
 ```
 
-Then to produce the executable:
+**src/App.js**
+```JavaScript
+import React, { Component } from 'react';
+import logo from './logo.svg';
+import './App.css';
 
-```bash
-make build
+class App extends Component {
+  render() {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <img src={logo} className="App-logo" alt="logo" />
+          <h1 className="App-title">Welcome to React</h1>
+        </header>
+        <p className="App-intro">
+          To get started, edit <code>src/App.js</code> and save to reload.
+        </p>
+      </div>
+    );
+  }
+}
+
+export default App;
 ```
 
-To run tests:
+**src/App.css**
+```
+.App {
+  text-align: center;
+}
 
-```bash
-make test
-make test-integration
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-header {
+  background-color: #222;
+  height: 150px;
+  padding: 20px;
+  color: white;
+}
+
+.App-title {
+  font-size: 1.5em;
+}
+
+.App-intro {
+  font-size: large;
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 ```
 
-To test compiled executables prepend with `esy x`:
-
-```bash
-esy x fpack
+**index.html**
+```HTML
+<!DOCTYPE html>
+<html>
+<head><title>All Builds</title></head>
+<body>
+<div id="root"></div>
+<script type="text/javascript" src="./bundle/index.js"></script>
+</body>
+</html>
 ```
 
-As merlin and others live inside sandboxed environment you'd want to execute
-your editor from inside it:
+Also, add the `logo.svg` of your choice. Now let's add some config:
 
-```bash
-esy vim
-esy nvim
-esy vscode
-esy sublime
+**.babelrc**
+```JavaScript
+{
+    "presets": ["react-app"]
+}
 ```
 
-Alternatively you can enter into sandboxed shell:
+And the fastpack configuration as well:
 
-```bash
-esy shell
+**fastpack.json**
+```JavaScript
+{
+    "entryPoints": ["src/index.js"],
+    "preprocess": [
+        {
+            "re": "^src.+\\.js$",
+            "process": "babel-loader"
+        },
+        {
+            "re": "\\.svg$",
+            "process": "url-loader"
+        },
+        {
+            "re": "\\.css$",
+            "process": "style-loader!css-loader"
+        }
+    ]
+}
 ```
 
-And execute commands from there.
+*The above configuration can be alternatively specified using command-line
+arguments, see `node_modules/.bin/fpack --help` for more details*.
 
-## Release Process
+We are good to go! Now run:
 
-The NPM package is built on every commit to the `master` branch by the
-Microsoft Azure Pipelines (see Artifacts/fpack). Publishing it on npmjs.org
-remains manual for now.
+```Bash
+  $ node_modules/.bin/fpack build --dev
+  Cache: empty
+  Done in 0.880s. Bundle: 942Kb. Modules: 30.
+  $ open index.html
+```
+
+Voila! Now try running it again and see the power of the persistent cache!
+
+```Bash
+  $ node_modules/.bin/fpack build --dev
+  Cache: used
+  Done in 0.032s. Bundle: 942Kb. Modules: 30.
+```
+
+For more configuration options and usage scenarios see
+[Documentation](https://fastpack.sh/docs/get-started.html).
+
 
 ## Contributors
 
-This project exists thanks to all the people who contribute. 
+This project exists thanks to all the people who contribute.
 <a href="https://github.com/fastpack/fastpack/graphs/contributors"><img src="https://opencollective.com/fastpack/contributors.svg?width=890&button=false" /></a>
 
 
