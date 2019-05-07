@@ -186,7 +186,7 @@ Have a question or want to contribute? Join us on [Discord](https://discord.gg/4
 This project exists thanks to all the people who contribute.
 <a href="https://github.com/fastpack/fastpack/graphs/contributors"><img src="https://opencollective.com/fastpack/contributors.svg?width=890&button=false" /></a>
 
-Special thanks to @camsong for providing the
+Special thanks to [@camsong](https://github.com/camsong) for providing the
 [fastpack](https://www.npmjs.com/package/fastpack) name on
 [npmjs.com](npmjs.com)!
 
