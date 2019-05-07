@@ -27,6 +27,7 @@ Let's try building the simple React application!
   $ mkdir react-app
   $ cd react-app
   $ yarn init -y
+  $ yarn add react react-dom
   $ yarn add --dev fastpack
   $ yarn add --dev babel-loader babel-preset-react-app style-loader css-loader url-loader
 ```
@@ -111,7 +112,7 @@ export default App;
 ```HTML
 <!DOCTYPE html>
 <html>
-<head><title>All Builds</title></head>
+<head><title>React App</title></head>
 <body>
 <div id="root"></div>
 <script type="text/javascript" src="./bundle/index.js"></script>
@@ -119,7 +120,7 @@ export default App;
 </html>
 ```
 
-Also, add the `logo.svg` of your choice. Now let's add some config:
+Also, add the `src/logo.svg` of your choice. Now let's add some config:
 
 **.babelrc**
 ```JavaScript
@@ -163,7 +164,7 @@ We are good to go! Now run:
 ```Bash
   $ node_modules/.bin/fpack build --dev
   Cache: empty
-  Done in 0.880s. Bundle: 942Kb. Modules: 30.
+  Done in 0.817s. Bundle: 942Kb. Modules: 30.
   $ open index.html
 ```
 
