@@ -59,7 +59,7 @@ let reportCache = builder => {
   Lwt_io.(write_line(stdout, report));
 };
 
-let reportWarnings = bundle => switch%lwt(Bundle.getWarnings(bundle)) {
+let reportWarnings = bundle => switch(Bundle.getWarnings(bundle)) {
   | Some(warnings) => Lwt_io.(write_line(stdout, warnings));
   | None => Lwt.return_unit
 };

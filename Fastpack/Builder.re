@@ -117,7 +117,7 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
   let%lwt () = DependencyGraph.build(ctx, startLocation, graph);
   Logs.debug(x => x("GRAPH built: %.3f", Unix.gettimeofday() -. t));
   let%lwt exportFinder = ExportFinder.make(graph);
-  let%lwt () =
+  let () =
     DependencyGraph.iterModules(graph, (source: Module.t) =>
       switch (ExportFinder.ensure_exports(source, exportFinder)) {
       | Some((m, name)) =>
@@ -127,7 +127,7 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
             m.location,
           );
 
-        Lwt.fail(
+        raise(
           Error.PackError(
             CannotFindExportedName(
               Module.location_to_string(source.location),
@@ -136,12 +136,12 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
             ),
           ),
         );
-      | None => Lwt.return_unit
+      | None => ()
       }
     );
     /* let t = Unix.gettimeofday(); */
   Logs.debug(x => x("EXPORTS validated: %.3f", Unix.gettimeofday() -. t));
-  let%lwt bundle = Bundle.make(graph, ctx.entry_location);
+  let bundle = Bundle.make(graph, ctx.entry_location);
   Logs.debug(x => x("BUNDLE calculated: %.3f", Unix.gettimeofday() -. t));
   let%lwt () =
     dryRun ? FS.rmdir(ctx.tmpOutputDir) : Bundle.emit(ctx, bundle);
