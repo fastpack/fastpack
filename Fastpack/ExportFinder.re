@@ -22,10 +22,9 @@ type t = {
 };
 
 let make = graph => {
-  
-    let t = Unix.gettimeofday();
-  let%lwt dependency_map = DependencyGraph.to_dependency_map(graph);
-    Logs.debug(x => x("build dependency_map: %.3f", Unix.gettimeofday() -. t));
+  let t = Unix.gettimeofday();
+  let dependency_map = DependencyGraph.to_dependency_map(graph);
+  Logs.debug(x => x("build dependency_map: %.3f", Unix.gettimeofday() -. t));
   Lwt.return({unwrapped_batches: Hashtbl.create(5000), dependency_map});
 };
 

@@ -220,21 +220,22 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
   let makeChunk = (entry, seen) => {
     let rec getStaticChunk = (seen, location: Module.location) =>
       MLSet.mem(location, seen) ?
-        Lwt.return(([], seen)) :
+        ([], seen) :
         (
           switch (MLMap.get(location, staticChunk^)) {
           | Some(modules) =>
-            let modules = List.filter(m => !MLSet.mem(m.Module.location, seen), modules);
+            let modules =
+              List.filter(m => !MLSet.mem(m.Module.location, seen), modules);
             let seen =
               List.fold_left(
                 (seen, m) => MLSet.add(m.Module.location, seen),
                 seen,
                 modules,
               );
-            Lwt.return((modules, seen));
+            (modules, seen);
           | None =>
             let seen = MLSet.add(location, seen);
-            let%lwt m =
+            let m =
               switch (DependencyGraph.lookup_module(graph, location)) {
               | Some(m) => m
               | None =>
@@ -243,51 +244,42 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
                   ++ " not found in the graph",
                 )
               };
-            let%lwt (modules, seen) =
-              Lwt_list.fold_left_s(
-                ((modules, seen), (_, m)) =>
-                  switch (m) {
-                  | None => failwith("Should not happen")
-                  | Some(m) =>
-                    let%lwt m = m;
-                    let%lwt (modules', seen) =
-                      getStaticChunk(seen, m.Module.location);
-                    Lwt.return((modules @ modules', seen));
-                  },
+            let (modules, seen) =
+              Sequence.fold(
+                ((modules, seen), (_, m)) => {
+                  let (modules', seen) =
+                    getStaticChunk(seen, m.Module.location);
+                  (modules @ modules', seen);
+                },
                 ([], seen),
                 DependencyGraph.lookup_dependencies(~kind=`Static, graph, m)
-                |> List.rev,
+                |> Sequence.rev,
               );
             let modules = [m, ...modules];
             staticChunk := MLMap.add(location, modules, staticChunk^);
-            Lwt.return((modules, seen));
+            (modules, seen);
           }
         );
 
-    let%lwt (modules, seen') = getStaticChunk(MLSet.empty, entry);
-    let modules = List.filter(m => !MLSet.mem(m.Module.location, seen), modules);
-    let%lwt chunkRequests =
-      Lwt_list.fold_left_s(
+    let (modules, seen') = getStaticChunk(MLSet.empty, entry);
+    let modules =
+      List.filter(m => !MLSet.mem(m.Module.location, seen), modules);
+    let chunkRequests =
+      List.fold_left(
         (acc, m) => {
-          let%lwt chunkRequests =
+          let chunkRequests =
             DependencyGraph.lookup_dependencies(~kind=`Dynamic, graph, m)
-            |> Lwt_list.rev_map_s(((depRequest, m')) =>
-                 switch (m') {
-                 | None => failwith("Should not happen")
-                 | Some(m') =>
-                   let%lwt m' = m';
-                   Lwt.return({depRequest, toLocation: m'.Module.location});
-                 }
+            |> Sequence.rev
+            |> Sequence.map(((depRequest, m')) =>
+                 {depRequest, toLocation: m'.Module.location}
                );
-          Lwt.return(acc @ chunkRequests);
+          Sequence.append(acc, chunkRequests);
         },
-        [],
+        Sequence.of_list([]),
         modules,
       );
-    Lwt.return((List.rev(modules), chunkRequests, MLSet.union(seen, seen')));
-
+    (List.rev(modules), chunkRequests, MLSet.union(seen, seen'));
     /* HERE! */
-
     /* let rec addModule = (seen, location: Module.location) => */
     /*   MLSet.mem(location, seen) ? */
     /*     Lwt.return(([], [], seen)) : */
@@ -301,9 +293,7 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
     /*             ++ " not found in the graph", */
     /*           ) */
     /*         }; */
-
     /*       let seen = MLSet.add(m.location, seen); */
-
     /*       let%lwt (modules, chunkRequests, seen) = */
     /*         Lwt_list.fold_left_s( */
     /*           ((modules, chunkRequests, seen), (_, m)) => */
@@ -324,7 +314,6 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
     /*           DependencyGraph.lookup_dependencies(~kind=`Static, graph, m) */
     /*           |> List.rev, */
     /*         ); */
-
     /*       let%lwt chunkRequests' = */
     /*         DependencyGraph.lookup_dependencies(~kind=`Dynamic, graph, m) */
     /*         |> List.rev */
@@ -336,7 +325,6 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
     /*                Lwt.return({depRequest, toLocation: m'.Module.location}); */
     /*              } */
     /*            ); */
-
     /*       Lwt.return(( */
     /*         [m, ...modules], */
     /*         chunkRequests' @ chunkRequests, */
@@ -461,43 +449,42 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
   let rec make' = (~chunkReqMap=MDM.empty, ~seen=MLSet.empty, location) => {
     /* Logs.debug(x => x("Make chunk")); */
     let t = Unix.gettimeofday();
-    let%lwt (modules, chunkRequests, seen) = makeChunk(location, seen);
+    let (modules, chunkRequests, seen) = makeChunk(location, seen);
     Logs.debug(x => x("makeChunk: %.3f", Unix.gettimeofday() -. t));
     let chunkName = addChunk(modules);
-    let%lwt chunkReqMap =
-      Lwt_list.fold_left_s(
+    let chunkReqMap =
+      Sequence.fold(
         (chunkReqMap, {depRequest, toLocation: location}) => {
-          let%lwt (chunkName, chunkReqMap) =
+          let (chunkName, chunkReqMap) =
             make'(~chunkReqMap, ~seen, location);
-          Lwt.return(MDM.add(depRequest, chunkName, chunkReqMap));
+          MDM.add(depRequest, chunkName, chunkReqMap);
         },
         chunkReqMap,
-        List.filter(
+        Sequence.filter(
           ({toLocation, _}) => !MLSet.mem(toLocation, seen),
           chunkRequests,
         ),
       );
-    Lwt.return((chunkName, chunkReqMap));
+    (chunkName, chunkReqMap);
   };
-  let%lwt (_, chunkRequests) = make'(entry);
+  let (_, chunkRequests) = make'(entry);
   let bundle = {...bundle, chunkRequests};
 
-/*   List.iter( */
-/*     ((name, chunk)) => */
-/*       Logs.debug(x => */
-/*         x( */
-/*           "chunk: %s %d", */
-/*           switch (name) { */
-/*           | Main => "main" */
-/*           | Named(n) => n */
-/*           }, */
-/*           List.length(chunk.modules), */
-/*         ) */
-/*       ), */
-/*     CCHashtbl.to_list(bundle.chunks), */
-/*   ); */
-
-  Lwt.return(bundle);
+  /*   List.iter( */
+  /*     ((name, chunk)) => */
+  /*       Logs.debug(x => */
+  /*         x( */
+  /*           "chunk: %s %d", */
+  /*           switch (name) { */
+  /*           | Main => "main" */
+  /*           | Named(n) => n */
+  /*           }, */
+  /*           List.length(chunk.modules), */
+  /*         ) */
+  /*       ), */
+  /*     CCHashtbl.to_list(bundle.chunks), */
+  /*   ); */
+  bundle;
 };
 
 let rec getChunkDependencies =
@@ -599,24 +586,22 @@ let emit = (ctx: Context.t, bundle: t) => {
                   let%lwt () = emit(m.Module.source);
                   let%lwt () = emit("\");");
 
-                  let%lwt jsonDependencies =
-                    Lwt_list.map_s(
-                      (({Module.Dependency.encodedRequest, _}, m)) =>
-                        switch (m) {
-                        | Some(m) =>
-                          let%lwt m = m;
-                          Lwt.return((encodedRequest, `String(m.Module.id)));
-                        | None => failwith("Should not happen")
-                        },
+                  let jsonDependencies =
+                    Sequence.map(
+                      (({Module.Dependency.encodedRequest, _}, m)) => (
+                        encodedRequest,
+                        `String(m.Module.id),
+                      ),
                       DependencyGraph.lookup_dependencies(
                         ~kind=`All,
                         bundle.graph,
                         m,
                       ),
-                    );
+                    )
+                    |> Sequence.to_list;
 
                   let chunkDependencies =
-                    CCList.filter_map(
+                    Sequence.filter_map(
                       ((dep, _)) =>
                         switch (MDM.get(dep, bundle.chunkRequests)) {
                         | None => None
@@ -653,7 +638,8 @@ let emit = (ctx: Context.t, bundle: t) => {
                         bundle.graph,
                         m,
                       ),
-                    );
+                    )
+                    |> Sequence.to_list;
 
                   let chunkData =
                     switch (chunkDependencies) {
@@ -712,14 +698,14 @@ let getTotalSize = (bundle: t) =>
   List.fold_left((acc, {size, _}) => acc + size, 0, getFiles(bundle));
 
 let getWarnings = ({graph, _}: t) => {
-  let%lwt warnings =
+  let warnings =
     DependencyGraph.foldModules(
       graph,
-      (warnings, m) => Lwt.return(warnings @ m.Module.warnings),
+      (warnings, m) => warnings @ m.Module.warnings,
       [],
     );
   switch (warnings) {
-  | [] => Lwt.return_none
-  | _ => Lwt.return_some(String.concat("\n", List.sort(compare, warnings)))
+  | [] => None
+  | _ => Some(String.concat("\n", List.sort(compare, warnings)))
   };
 };
