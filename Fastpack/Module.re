@@ -213,7 +213,7 @@ module LocationSet =
   });
 
 module LocationMap =
-  Map.Make({
+  CCMap.Make({
     let compare = compare_location;
     type t = location;
   });

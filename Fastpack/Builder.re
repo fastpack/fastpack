@@ -115,7 +115,7 @@ type prevRun = {
 let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
   let t = Unix.gettimeofday();
   let%lwt () = DependencyGraph.build(ctx, startLocation, graph);
-  Logs.debug(x => x("Graph built: %.3f", Unix.gettimeofday() -. t));
+  Logs.debug(x => x("GRAPH built: %.3f", Unix.gettimeofday() -. t));
   let%lwt exportFinder = ExportFinder.make(graph);
   let%lwt () =
     DependencyGraph.iterModules(graph, (source: Module.t) =>
@@ -139,9 +139,13 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
       | None => Lwt.return_unit
       }
     );
+    /* let t = Unix.gettimeofday(); */
+  Logs.debug(x => x("EXPORTS validated: %.3f", Unix.gettimeofday() -. t));
   let%lwt bundle = Bundle.make(graph, ctx.entry_location);
+  Logs.debug(x => x("BUNDLE calculated: %.3f", Unix.gettimeofday() -. t));
   let%lwt () =
     dryRun ? FS.rmdir(ctx.tmpOutputDir) : Bundle.emit(ctx, bundle);
+  Logs.debug(x => x("BUNDLE emitted: %.3f", Unix.gettimeofday() -. t));
   Lwt.return(bundle);
 };
 

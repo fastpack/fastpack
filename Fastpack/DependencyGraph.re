@@ -71,22 +71,39 @@ let lookup_dependencies = (~kind, graph, m: Module.t) => {
 };
 
 let to_dependency_map = graph => {
-  let to_pairs =
-    CCHashtbl.map_list((_, (dep, location)) =>
-      switch (lookup_module(graph, location)) {
-      | None => failwith("not good at all, unknown location")
-      | Some(m) => (dep, m)
-      }
-    );
 
-  Lwt_list.fold_left_s(
-    (dep_map, (dep, m)) => {
-      let%lwt m = m;
+  let collectDeps = (deps, init) =>
+  deps
+  |> CCHashtbl.values
+  |> Sequence.fold((dep_map, (dep, location))=> {
+      let%lwt m =       switch (lookup_module(graph, location)) {
+      | None => failwith("not good at all, unknown location")
+      | Some(m) => m
+      };
+      let%lwt dep_map = dep_map;
       Module.DependencyMap.add(dep, m, dep_map) |> Lwt.return;
-    },
-    Module.DependencyMap.empty,
-    to_pairs(graph.staticDeps) @ to_pairs(graph.dynamicDeps),
-  );
+
+
+    }, Lwt.return(init))
+  let%lwt dep_map = collectDeps(graph.staticDeps, Module.DependencyMap.empty);
+  let%lwt dep_map = collectDeps(graph.dynamicDeps, dep_map);
+  Lwt.return(dep_map);
+
+  /* let to_pairs = */
+  /*   CCHashtbl.map_list((_, (dep, location)) => */
+  /*     switch (lookup_module(graph, location)) { */
+  /*     | None => failwith("not good at all, unknown location") */
+  /*     | Some(m) => (dep, m) */
+  /*     } */
+  /*   ); */
+  /* Lwt_list.fold_left_s( */
+  /*   (dep_map, (dep, m)) => { */
+  /*     let%lwt m = m; */
+  /*     Module.DependencyMap.add(dep, m, dep_map) |> Lwt.return; */
+  /*   }, */
+  /*   Module.DependencyMap.empty, */
+  /*   to_pairs(graph.staticDeps) @ to_pairs(graph.dynamicDeps), */
+  /* ); */
 };
 
 let add_module = (graph, location, m: Lazy.t(Lwt.t(Module.t))) =>
