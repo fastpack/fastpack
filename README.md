@@ -21,7 +21,7 @@ Here is an example benchmark of bundling ~1600 modules together.
 
 ## Getting Started
 
-Let's try building the simple React application!
+Let's try building a simple React application!
 
 ```Bash
   $ mkdir react-app
