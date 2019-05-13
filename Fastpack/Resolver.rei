@@ -8,6 +8,7 @@ let make:
     ~mock: list((string, Config.Mock.t)),
     ~node_modules_paths: list(string),
     ~extensions: list(string),
+    ~packageMainFields: list(string),
     ~preprocessors: list(Config.Preprocessor.t),
     ~cache: Cache.t,
     unit

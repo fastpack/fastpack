@@ -123,6 +123,12 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
 /* !s: a.js */
 "a":{m:function(module, exports, __fastpack_require__) {
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = \"a\";\n\n//# sourceURL=fpack:///a.js");
@@ -134,13 +140,7 @@ d: {}
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst a = __fastpack_require__(\"./a\");\n\n\n__fastpack_require__.imp(\"./a\").then(m => {\n  console.log('statically imported ./a:', a);\n  console.log('dynamically imported ./a:', m);\n\n  __fastpack_require__.imp(\"./b\").then(m => {\n    console.log('dynamically imported ./b:', m);\n  })\n\n  __fastpack_require__.imp(\"./c\").then(m => {\n    console.log('dynamically imported ./c:', m);\n  })\n})\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a","./a":"a","./b":"b","./c":"c"},
-c: {"./b":["js/2.js","js/3.js"],"./c":["js/1.js","js/3.js"]}
-},
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
-},
-d: {"./index.js":"index"}
+c: {"./b":["js/1.js","js/3.js"],"./c":["js/2.js","js/3.js"]}
 },
 
 });

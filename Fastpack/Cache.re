@@ -12,6 +12,7 @@ and params = {
   mock: list((string, Config.Mock.t)),
   nodeModulesPaths: list(string),
   resolveExtension: list(string),
+  packageMainFields: list(string),
   preprocess: list(Config.Preprocessor.t),
 };
 
@@ -49,6 +50,7 @@ let make = (load: load) =>
       mock,
       nodeModulesPaths,
       resolveExtension,
+      packageMainFields,
       preprocess,
     }) =>
     let node_modules = FilePath.concat(currentDir, "node_modules");
@@ -69,6 +71,7 @@ let make = (load: load) =>
     Project Root Directory: %s
     Mocks: %s
     Node Modules Paths: %s
+    Package.json Main Fields: %s
     Extensions: %s
     Preprocessors: %s
     |},
@@ -76,6 +79,7 @@ let make = (load: load) =>
         projectRootDir,
         String.concat(",", List.map(Config.Mock.toString, mock)),
         String.concat(",", nodeModulesPaths),
+        String.concat(",", packageMainFields),
         String.concat(",", resolveExtension),
         String.concat(
           ",",

@@ -123,6 +123,18 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"builtin$$B$$index"}
+},
+/* !s: index.js */
+"builtin$$B$$index":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__log1 = __fastpack_require__(\"./log1\");\nconst _2__log2 = __fastpack_require__(\"./log2\");\nconst _3__log3 = __fastpack_require__(\"./log3\");\n\n\n\n\n\n(__fastpack_require__.default(_1__log1))();\n(__fastpack_require__.default(_2__log2))();\n(__fastpack_require__.default(_3__log3))();\n\n//# sourceURL=fpack:///builtin!index.js");
+},
+d: {"./log1":"logSourceDOT$$js$$B$$log1","./log2":"builtin$$B$$log2","./log3":"builtin$$B$$log3"}
+},
 /* !s: log1.js */
 "logSourceDOT$$js$$B$$log1":{m:function(module, exports, __fastpack_require__) {
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n\n  exports.default = function () {console.log(\"\\nexport default function() { console.log(1); }\\n\")};\n  \n//# sourceURL=fpack:///logSource.js!log1.js");
@@ -140,18 +152,6 @@ d: {}
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n\nexports.default = function() { console.log(3); }\n\n//# sourceURL=fpack:///builtin!log3.js");
 },
 d: {}
-},
-/* !s: index.js */
-"builtin$$B$$index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__log1 = __fastpack_require__(\"./log1\");\nconst _2__log2 = __fastpack_require__(\"./log2\");\nconst _3__log3 = __fastpack_require__(\"./log3\");\n\n\n\n\n\n(__fastpack_require__.default(_1__log1))();\n(__fastpack_require__.default(_2__log2))();\n(__fastpack_require__.default(_3__log3))();\n\n//# sourceURL=fpack:///builtin!index.js");
-},
-d: {"./log1":"logSourceDOT$$js$$B$$log1","./log2":"builtin$$B$$log2","./log3":"builtin$$B$$log3"}
-},
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
-},
-d: {"./index.js":"builtin$$B$$index"}
 },
 
 });

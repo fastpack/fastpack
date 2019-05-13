@@ -123,11 +123,11 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
-/* !s: test.txt */
-"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports = \"Hello, world!\\n\\nLorem Ipsum is simply dummy text of the printing and typesetting industry.\\nLorem Ipsum has been the industry's standard dummy text ever since the 1500s,\\nwhen an unknown printer took a galley of type and scrambled it to make a type\\nspecimen book. It has survived not only five centuries, but also the leap into\\nelectronic typesetting, remaining essentially unchanged. It was popularised in\\nthe 1960s with the release of Letraset sheets containing Lorem Ipsum passages,\\nand more recently with desktop publishing software like Aldus PageMaker\\nincluding versions of Lorem Ipsum.\\n\"\n//# sourceURL=fpack:///node_modules/raw-loader/index.js!test.txt");
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
-d: {}
+d: {"./index.js":"index"}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
@@ -135,11 +135,11 @@ eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst
 },
 d: {"raw-loader!./test.txt":"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt"}
 },
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+/* !s: test.txt */
+"NM$$raw$$_$$loader$indexDOT$$js$$B$$testDOT$$txt":{m:function(module, exports, __fastpack_require__) {
+eval("module.exports = \"Hello, world!\\n\\nLorem Ipsum is simply dummy text of the printing and typesetting industry.\\nLorem Ipsum has been the industry's standard dummy text ever since the 1500s,\\nwhen an unknown printer took a galley of type and scrambled it to make a type\\nspecimen book. It has survived not only five centuries, but also the leap into\\nelectronic typesetting, remaining essentially unchanged. It was popularised in\\nthe 1960s with the release of Letraset sheets containing Lorem Ipsum passages,\\nand more recently with desktop publishing software like Aldus PageMaker\\nincluding versions of Lorem Ipsum.\\n\"\n//# sourceURL=fpack:///node_modules/raw-loader/index.js!test.txt");
 },
-d: {"./index.js":"index"}
+d: {}
 },
 
 });

@@ -29,6 +29,7 @@ let make = graph => {
 };
 
 let rec unwrap_batches = (m: Module.t, finder: t) => {
+  let sloc = Module.location_to_string(m.location);
   let decorate = (m, exports) =>
     M.map(export => {export, parent_module: m}, exports);
 
@@ -58,6 +59,7 @@ let rec unwrap_batches = (m: Module.t, finder: t) => {
                     failwith(
                       "ExportFinder > Cannot export twice: "
                       ++ key
+                      ++ " in module: " ++ sloc
                       ++ ". Module 1: "
                       ++ Module.location_to_string(v1.parent_module.location)
                       ++ ". Module 2: "

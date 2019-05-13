@@ -390,6 +390,8 @@ module File = {
   let projectRootDir = value("projectRootDir", string);
 
   let resolveExtension = list("resolveExtensions", string);
+
+  let packageMainFields = list("packageMainFields", string);
 };
 
 type t = {
@@ -405,6 +407,7 @@ type t = {
   envVar: M.t(value(string)),
   projectRootDir: value(string),
   resolveExtension: list(value(string)),
+  packageMainFields: list(value(string)),
 }
 and value('a) = {
   source,
@@ -427,6 +430,7 @@ let create =
       ~nodeModulesPaths,
       ~projectRootDir,
       ~resolveExtension,
+      ~packageMainFields,
       ~cache,
       ~preprocess,
       ~envVar,
@@ -541,11 +545,20 @@ let create =
          | _ => "." ++ ext
          }
        );
+
   let resolveExtension =
     mergeLists(
       ~arg=fixExt(resolveExtension),
       ~file=fixExt(File.resolveExtension(configFile)),
       ~default=[".js", ".json"],
+      (),
+    );
+
+  let packageMainFields =
+    mergeLists(
+      ~arg=packageMainFields,
+      ~file=File.packageMainFields(configFile),
+      ~default=["browser", "module", "main"],
       (),
     );
 
@@ -636,6 +649,7 @@ let create =
     envVar,
     projectRootDir,
     resolveExtension,
+    packageMainFields,
   });
 };
 
@@ -655,6 +669,7 @@ let term = {
         envVar,
         projectRootDir,
         resolveExtension,
+        packageMainFields,
       ) =>
     create(
       ~configFile,
@@ -670,6 +685,7 @@ let term = {
       ~envVar=List.map(snd, envVar),
       ~projectRootDir,
       ~resolveExtension,
+      ~packageMainFields,
     );
 
   let configFileT = {
@@ -783,6 +799,18 @@ let term = {
     );
   };
 
+  let packageMainFieldsT = {
+    let doc =
+      "Field name in package.json to determine the package entry point. "
+      ++ "Specify several in desired order. "
+      ++ "Defaults to: [\"browser\", \"module\", \"main\"]";
+
+    let docv = "PACKAGE-MAIN-FIELD";
+    Arg.(
+      value & opt_all(string, []) & info(["package-main-field"], ~docv, ~doc)
+    );
+  };
+
   let cacheT = {
     let doc = "Do not use cache at all (effective in development mode only)";
 
@@ -839,6 +867,7 @@ let term = {
     $ envVarT
     $ projectRootDirT
     $ resolveExtensionT
+    $ packageMainFieldsT
   );
 };
 
@@ -867,6 +896,8 @@ let nodeModulesPaths = ({nodeModulesPaths, _}) =>
   List.map(unwrap, nodeModulesPaths);
 let resolveExtension = ({resolveExtension, _}) =>
   List.map(unwrap, resolveExtension);
+let packageMainFields = ({packageMainFields, _}) =>
+  List.map(unwrap, packageMainFields);
 let preprocess = ({preprocess, _}) => List.map(unwrap, preprocess);
 let envVar = ({envVar, _}) =>
   envVar
@@ -891,6 +922,7 @@ let prettyPrint =
         envVar,
         projectRootDir,
         resolveExtension,
+        packageMainFields,
       }: t,
     ) => {
   module Source = {
@@ -999,6 +1031,18 @@ let prettyPrint =
       />;
     };
   };
+
+  module PackageMainFields_ = {
+    let createElement = (~fields, ~children, ()) => {
+      let _ = children;
+      <L
+        title="Use these package.json fields to determine package entry point"
+        empty="Always use ./index.js"
+        items=fields
+      />;
+    };
+  };
+
   module Mock_ = {
     let createElement = (~mocks, ~children, ()) => {
       let _ = children;
@@ -1066,6 +1110,7 @@ let prettyPrint =
     <Cache_ value=cache />
     <NodeModulesPaths_ paths=nodeModulesPaths />
     <ResolveExtension_ exts=resolveExtension />
+    <PackageMainFields_ fields=packageMainFields />
     <Mock_ mocks=mock />
     <EnvVar_ vars={M.bindings(envVar)} />
     <Preprocess_ preprocess />

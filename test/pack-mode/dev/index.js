@@ -123,11 +123,11 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
-/* !s: prod.js */
-"prod":{m:function(module, exports, __fastpack_require__) {
-eval("module.exports = {prod: true};\n\n//# sourceURL=fpack:///prod.js");
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
-d: {}
+d: {"./index.js":"index"}
 },
 /* !s: dev.js */
 "dev":{m:function(module, exports, __fastpack_require__) {
@@ -141,11 +141,11 @@ eval("\nlet p;\n\n// if-then-no-else\n{}\n\n{}\n\n{}\n\n{}\n\np = __fastpack_req
 },
 d: {"./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./dev":"dev","./prod":"prod","./dev":"dev","./dev":"dev"}
 },
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+/* !s: prod.js */
+"prod":{m:function(module, exports, __fastpack_require__) {
+eval("module.exports = {prod: true};\n\n//# sourceURL=fpack:///prod.js");
 },
-d: {"./index.js":"index"}
+d: {}
 },
 
 });
