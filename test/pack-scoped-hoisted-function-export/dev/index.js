@@ -123,17 +123,17 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
-/* !s: index.js */
-"index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nObject.defineProperty(exports, \"get\", {enumerable: true, get: function() {return get;}});\nfunction get() {}\n\n//# sourceURL=fpack:///index.js");
-},
-d: {}
-},
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
+},
+/* !s: index.js */
+"index":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nObject.defineProperty(exports, \"get\", {enumerable: true, get: function() {return get;}});\nfunction get() {}\n\n//# sourceURL=fpack:///index.js");
+},
+d: {}
 },
 
 });

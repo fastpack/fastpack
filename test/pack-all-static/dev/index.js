@@ -123,6 +123,12 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
 /* !s: a.js */
 "a":{m:function(module, exports, __fastpack_require__) {
 eval("const b = __fastpack_require__(\"./b\");\n\nmodule.exports = function() {\n  console.log('b in a');\n  b();\n};\n\n//# sourceURL=fpack:///a.js");
@@ -140,12 +146,6 @@ d: {}
 eval("const a = __fastpack_require__(\"./a\");\n\n(function() {\n  __fastpack_require__.imp(\"./b\").then(b => {\n    console.log('b in promise');\n    b();\n  })\n\n  let b = __fastpack_require__(\"./b\");\n  a();\n  console.log('b in index');\n  b();\n})();\n\n/*\n$ node <bundle.js>\nside effect of b\nb in a\nb\nb in index\nb\nb in promise\nb\n*/\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a","./b":"b","./b":"b"}
-},
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
-},
-d: {"./index.js":"index"}
 },
 
 });

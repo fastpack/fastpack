@@ -15,7 +15,7 @@ depends: [
   "base-unix"
   "base-threads"
   "ocamlfind" {>= "1.7.2"}
-  "lambda-term" {>= "1.2"}
+  "lambda-term" {>= "1.2" & < "2.0"}
   "lwt"
   "lwt_react"
   "camomile"

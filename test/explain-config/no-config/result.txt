@@ -17,6 +17,10 @@ Look For Packages In These Locations:
 Try Extensions When Resolving:
   - .js   # default value
   - .json   # default value
+Use these package.json fields to determine package entry point:
+  - browser   # default value
+  - module   # default value
+  - main   # default value
 Mocks:
   No mocks defined
 Inlined Environment Variables:

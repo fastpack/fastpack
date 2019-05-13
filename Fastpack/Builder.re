@@ -62,6 +62,7 @@ let make = (config: Config.t) => {
             mock: Config.mock(config),
             nodeModulesPaths: Config.nodeModulesPaths(config),
             resolveExtension: Config.resolveExtension(config),
+            packageMainFields: Config.packageMainFields(config),
             preprocess: Config.preprocess(config),
           })
         ),
@@ -84,7 +85,13 @@ let make = (config: Config.t) => {
     switch%lwt (find_package_json_for_filename(filename)) {
     | Some(package_json) =>
       let%lwt content = Cache.File.readExisting(package_json, cache);
-      Lwt.return(Package.of_json(package_json, content));
+      Lwt.return(
+        Package.of_json(
+          ~mainFields=Config.packageMainFields(config),
+          package_json,
+          content,
+        ),
+      );
     | None => Lwt.return(Package.empty)
     };
   };
@@ -139,7 +146,7 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
       | None => ()
       }
     );
-    /* let t = Unix.gettimeofday(); */
+  /* let t = Unix.gettimeofday(); */
   Logs.debug(x => x("EXPORTS validated: %.3f", Unix.gettimeofday() -. t));
   let bundle = Bundle.make(graph, ctx.entry_location);
   Logs.debug(x => x("BUNDLE calculated: %.3f", Unix.gettimeofday() -. t));
@@ -239,6 +246,7 @@ let rec build =
       ~mock=Config.mock(config),
       ~node_modules_paths=Config.nodeModulesPaths(config),
       ~extensions=Config.resolveExtension(config),
+      ~packageMainFields=Config.packageMainFields(config),
       ~preprocessors=Config.preprocess(config),
       ~cache,
       (),

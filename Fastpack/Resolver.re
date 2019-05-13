@@ -28,6 +28,7 @@ type t = {
   mock_map: RequestMap.t(request),
   node_modules_paths: list(string),
   extensions: list(string),
+  packageMainFields: list(string),
   preprocessors: list(Config.Preprocessor.t),
   cache: Cache.t,
   preprocessorsCached: Hashtbl.t(string, list(string)),
@@ -127,6 +128,7 @@ let make =
       ~mock: list((string, Config.Mock.t)),
       ~node_modules_paths: list(string),
       ~extensions: list(string),
+      ~packageMainFields: list(string),
       ~preprocessors: list(Config.Preprocessor.t),
       ~cache: Cache.t,
       (),
@@ -179,6 +181,7 @@ let make =
     mock_map,
     node_modules_paths,
     extensions,
+    packageMainFields,
     preprocessors,
     cache,
     preprocessorsCached: Hashtbl.create(5000),
@@ -229,7 +232,12 @@ let resolve = (~basedir, request, resolver) => {
       switch%lwt (Cache.File.exists(filename, resolver.cache)) {
       | true =>
         let%lwt content = Cache.File.readExisting(filename, resolver.cache);
-        let package = Package.of_json(filename, content);
+        let package =
+          Package.of_json(
+            ~mainFields=resolver.packageMainFields,
+            filename,
+            content,
+          );
         Hashtbl.replace(resolver.packageJsonCached, dir, package);
         Lwt.return(package);
       | false =>
@@ -340,7 +348,11 @@ Directory '%s' contains potentially matching files:
                 let%lwt content =
                   Cache.File.readExisting(package_json, resolver.cache);
                 let {Package.entry_point, _} =
-                  Package.of_json(package_json, content);
+                  Package.of_json(
+                    ~mainFields=resolver.packageMainFields,
+                    package_json,
+                    content,
+                  );
                 resolve_file(FS.abs_path(path, entry_point));
               | false => resolve_file(~try_directory=false, path ++ "/index")
               };

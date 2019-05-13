@@ -243,3 +243,10 @@ type t = {
   /*** Warnings collected from preprocessors */
   warnings: list(string),
 };
+
+type m = t;
+module Set =
+  Set.Make({
+    type t = m;
+    let compare = (m1, m2) => compare_location(m1.location, m2.location);
+  });

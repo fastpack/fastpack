@@ -75,7 +75,7 @@ let lookup_dependencies = (~kind, graph, m: Module.t) => {
                },
              )
            );
-        /* |> Sequence.persistent_lazy; */
+      /* |> Sequence.persistent_lazy; */
       Hashtbl.replace(cached, m.location, res);
       res;
     };
@@ -233,14 +233,14 @@ let is_json = (location: Module.location) =>
   | _ => false
   };
 
-let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
+let find_package_for_filename = (ctx: Context.t, root_dir, filename) => {
   let rec find_package_json_for_filename = filename =>
     if (!FilePath.is_subdir(filename, root_dir)) {
       Lwt.return_none;
     } else {
       let dirname = FilePath.dirname(filename);
       let package_json = FilePath.concat(dirname, "package.json");
-      if%lwt (Cache.File.exists(package_json, cache)) {
+      if%lwt (Cache.File.exists(package_json, ctx.cache)) {
         Lwt.return_some(package_json);
       } else {
         find_package_json_for_filename(dirname);
@@ -249,8 +249,14 @@ let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
 
   switch%lwt (find_package_json_for_filename(filename)) {
   | Some(package_json) =>
-    let%lwt content = Cache.File.readExisting(package_json, cache);
-    Lwt.return(Package.of_json(package_json, content));
+    let%lwt content = Cache.File.readExisting(package_json, ctx.cache);
+    Lwt.return(
+      Package.of_json(
+        ~mainFields=Config.packageMainFields(ctx.config),
+        package_json,
+        content,
+      ),
+    );
   | None => Lwt.return(Package.empty)
   };
 };
@@ -264,7 +270,7 @@ let read_module =
       | Module.Runtime => Lwt.return(Package.empty)
       | Module.Main(_) => Lwt.return(ctx.project_package)
       | Module.File({filename: Some(filename), _}) =>
-        find_package_for_filename(ctx.cache, ctx.current_dir, filename)
+        find_package_for_filename(ctx, ctx.current_dir, filename)
 
       | Module.File({filename: None, _}) => Lwt.return(ctx.project_package)
       };

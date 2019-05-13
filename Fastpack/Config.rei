@@ -35,6 +35,7 @@ let mode: t => Mode.t
 let mock: t => list((string, Mock.t));
 let nodeModulesPaths: t => list(string);
 let resolveExtension: t => list(string);
+let packageMainFields: t => list(string);
 let preprocess: t => list(Preprocessor.t);
 let envVar: t => CCMap.Make(String).t(string);
 

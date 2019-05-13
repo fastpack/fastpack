@@ -123,11 +123,11 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
-/* !s: render.ts */
-"NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts":{m:function(module, exports, __fastpack_require__) {
-eval("\"use strict\";\nfunction render() {\n    document.body.innerHTML = \"<h1> Hello World from TypeScript!</h1>\";\n}\nmodule.exports = render;\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!render.ts");
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.ts\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
-d: {}
+d: {"./index.ts":"NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts"}
 },
 /* !s: index.ts */
 "NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts":{m:function(module, exports, __fastpack_require__) {
@@ -135,11 +135,11 @@ eval("\"use strict\";\nexports.__esModule = true;\nvar render = __fastpack_requi
 },
 d: {"./render.ts":"NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts"}
 },
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.ts\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+/* !s: render.ts */
+"NM$$ts$$_$$loader$indexDOT$$js$$B$$renderDOT$$ts":{m:function(module, exports, __fastpack_require__) {
+eval("\"use strict\";\nfunction render() {\n    document.body.innerHTML = \"<h1> Hello World from TypeScript!</h1>\";\n}\nmodule.exports = render;\n\n//# sourceURL=fpack:///node_modules/ts-loader/index.js!render.ts");
 },
-d: {"./index.ts":"NM$$ts$$_$$loader$indexDOT$$js$$B$$indexDOT$$ts"}
+d: {}
 },
 
 });

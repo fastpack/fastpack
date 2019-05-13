@@ -123,6 +123,24 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
+/* !s: index.js */
+"index":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__reexport = __fastpack_require__(\"./reexport\");\n\nconsole.log(_1__reexport.x,_1__reexport.y);\n\n//# sourceURL=fpack:///index.js");
+},
+d: {"./reexport":"reexport"}
+},
+/* !s: reexport.js */
+"reexport":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__x = __fastpack_require__(\"./x\");Object.assign(module.exports, __fastpack_require__.omitDefault(_1__x));\nconst _2__y = __fastpack_require__(\"./y\");Object.assign(module.exports, __fastpack_require__.omitDefault(_2__y));\n\n//# sourceURL=fpack:///reexport.js");
+},
+d: {"./x":"x","./y":"y"}
+},
 /* !s: x.js */
 "x":{m:function(module, exports, __fastpack_require__) {
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = \"x exported\";\nconst x = \"x\";;Object.defineProperty(exports, \"x\", {enumerable: true, get: function() {return x;}});\n\n//# sourceURL=fpack:///x.js");
@@ -134,24 +152,6 @@ d: {}
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = \"y exported\";\nconst y = \"y\";;Object.defineProperty(exports, \"y\", {enumerable: true, get: function() {return y;}});\n\n//# sourceURL=fpack:///y.js");
 },
 d: {}
-},
-/* !s: reexport.js */
-"reexport":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__x = __fastpack_require__(\"./x\");Object.assign(module.exports, __fastpack_require__.omitDefault(_1__x));\nconst _2__y = __fastpack_require__(\"./y\");Object.assign(module.exports, __fastpack_require__.omitDefault(_2__y));\n\n//# sourceURL=fpack:///reexport.js");
-},
-d: {"./x":"x","./y":"y"}
-},
-/* !s: index.js */
-"index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__reexport = __fastpack_require__(\"./reexport\");\n\nconsole.log(_1__reexport.x,_1__reexport.y);\n\n//# sourceURL=fpack:///index.js");
-},
-d: {"./reexport":"reexport"}
-},
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
-},
-d: {"./index.js":"index"}
 },
 
 });
