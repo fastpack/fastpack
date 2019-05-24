@@ -75,8 +75,10 @@ module CannotResolveModuleError = {
 
 let formatErrorHeader = (~where="", text) =>
   <Pastel>
-    <Pastel bold=true color=Cyan>where</Pastel>
+    <Pastel bold=true color=Red>where</Pastel>
+    "\n"
     <Pastel color=Red>text</Pastel>
+    "\n"
   </Pastel>
 
 let get_codeframe = (loc: Loc.t, lines) => {
