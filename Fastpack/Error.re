@@ -2,6 +2,8 @@ module Loc = Flow_parser.Loc;
 module Scope = FastpackUtil.Scope;
 module Terminal = FastpackUtil.Terminal;
 
+open Pastel;
+
 /*
    assoc list of nodejs libs and their browser implementations
    as listed on: https://github.com/webpack/node-libs-browser

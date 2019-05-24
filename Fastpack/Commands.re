@@ -3,6 +3,7 @@ module FS = FastpackUtil.FS;
 module Terminal = FastpackUtil.Terminal;
 module StringSet = Set.Make(CCString);
 open Cmdliner;
+open Pastel;
 
 let exits = Term.default_exits;
 let sdocs = Manpage.s_common_options;
