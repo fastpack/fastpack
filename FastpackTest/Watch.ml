@@ -5,6 +5,7 @@ module StringSet = Set.Make(CCString)
 
 let re_modules = Re.Posix.compile_pat "^.+/\\* --runtimeMain-- \\*/"
 let run_with ~test_name ~cmd ~files f =
+  Pastel.(setMode Disabled);
   Unix.putenv "FPACK_FORCE_TTY" "false";
   let test_path = get_test_path test_name in
   Unix.chdir test_path;
@@ -293,8 +294,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-[31m[1m/.../test/watch/index.js[22m[39m
-[31mCannot resolve './a'[39m
+/.../test/watch/index.js
+Cannot resolve './a'
 
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'
@@ -382,8 +383,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-[31m[1m/.../test/watch/index.js[22m[39m
-[31mCannot resolve './a'[39m
+/.../test/watch/index.js
+Cannot resolve './a'
 
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'
@@ -480,8 +481,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-[31m[1m/.../test/watch/index.js[22m[39m
-[31mCannot resolve './b'[39m
+/.../test/watch/index.js
+Cannot resolve './b'
 
 Cannot resolve module
   Resolving './b'. Base directory: '/.../test/watch'
@@ -496,8 +497,8 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-[31m[1m/.../test/watch/index.js[22m[39m
-[31mCannot resolve './a'[39m
+/.../test/watch/index.js
+Cannot resolve './a'
 
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'

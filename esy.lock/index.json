@@ -1,6 +1,6 @@
 {
-  "checksum": "69eeca55f421a16d39d366c604ab9e22",
-  "root": "fastpack@link:./package.json",
+  "checksum": "f0a1debd84e2472b156a948fc19141b5",
+  "root": "fastpack@link-dev:./package.json",
   "node": {
     "universalify@0.1.2@d41d8cd9": {
       "id": "universalify@0.1.2@d41d8cd9",
@@ -617,11 +617,15 @@
       "dependencies": [ "escape-string-regexp@1.0.5@d41d8cd9" ],
       "devDependencies": []
     },
-    "fastpack@link:./package.json": {
-      "id": "fastpack@link:./package.json",
+    "fastpack@link-dev:./package.json": {
+      "id": "fastpack@link-dev:./package.json",
       "name": "fastpack",
-      "version": "link:./package.json",
-      "source": { "type": "link", "path": ".", "manifest": "package.json" },
+      "version": "link-dev:./package.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "package.json"
+      },
       "overrides": [],
       "dependencies": [
         "refmterr@3.1.10@d41d8cd9",
