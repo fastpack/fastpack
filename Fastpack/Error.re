@@ -136,7 +136,7 @@ let get_codeframe = (loc: Loc.t, lines) => {
             let colored_line =
               CCString.replace(~sub=error_substring, ~by=colored_error, line);
 
-            <Pastel color=Red>error_substring</Pastel>
+            <Pastel color=Red>lineNo</Pastel>
             ++ " │ "
             ++ colored_line;
           } else {

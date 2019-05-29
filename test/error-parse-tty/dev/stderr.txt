@@ -1,13 +1,13 @@
 
-[1;36m/.../test/error-parse-tty/a.js[0m
-[0;31mParse error[0m
+[31m[1m/.../test/error-parse-tty/a.js[22m[39m
+[31mParse error[39m
 
 --------------------
 Unexpected token ; at (3:14) - (3:15):
 
  1 │ // missing second half of addition
  2 │ function hello() {
-[0;31m 3[0m │   "§ © Æ ¿" + [0;31m;[0m
+[31m 3[39m │   "§ © Æ ¿" + [31m;[39m
  4 │ }
 
 --------------------
@@ -15,7 +15,7 @@ Unexpected identifier at (10:6) - (10:11):
 
  8 │ 
  9 │ 
-[0;31m10[0m │ let a [0;31maaaaa[0m = 5;
+[31m10[39m │ let a [31maaaaa[39m = 5;
 11 │ export default hello;
 
 

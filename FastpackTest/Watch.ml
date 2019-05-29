@@ -292,8 +292,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-/.../test/watch/index.js
-Cannot resolve './a'
+[31m[1m/.../test/watch/index.js[22m[39m
+[31mCannot resolve './a'[39m
 
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'
@@ -381,8 +381,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-/.../test/watch/index.js
-Cannot resolve './a'
+[31m[1m/.../test/watch/index.js[22m[39m
+[31mCannot resolve './a'[39m
 
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'
@@ -479,8 +479,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-/.../test/watch/index.js
-Cannot resolve './b'
+[31m[1m/.../test/watch/index.js[22m[39m
+[31mCannot resolve './b'[39m
 
 Cannot resolve module
   Resolving './b'. Base directory: '/.../test/watch'
@@ -495,8 +495,8 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-/.../test/watch/index.js
-Cannot resolve './a'
+[31m[1m/.../test/watch/index.js[22m[39m
+[31mCannot resolve './a'[39m
 
 Cannot resolve module
   Resolving './a'. Base directory: '/.../test/watch'
@@ -556,8 +556,8 @@ let%expect_test "start with parse error, than fix" =
         >>= (fun _ -> Lwt.return_unit)
     );
   [%expect_exact {|
-/.../test/watch/index.js
-Parse error
+[31m[1m/.../test/watch/index.js[22m[39m
+[31mParse error[39m
 
 --------------------
 Unexpected identifier at (1:21) - (1:26):
@@ -640,8 +640,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-$fp$main
-Cannot resolve './index.js'
+[31m[1m$fp$main[22m[39m
+[31mCannot resolve './index.js'[39m
 
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
@@ -656,8 +656,8 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-$fp$main
-Cannot resolve './index.js'
+[31m[1m$fp$main[22m[39m
+[31mCannot resolve './index.js'[39m
 
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
@@ -672,8 +672,8 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-$fp$main
-Cannot resolve './index.js'
+[31m[1m$fp$main[22m[39m
+[31mCannot resolve './index.js'[39m
 
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
@@ -730,8 +730,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-/.../test/watch/index.js
-Import Error
+[31m[1m/.../test/watch/index.js[22m[39m
+[31mImport Error[39m
 
 Cannot import name 'aa' from 'a.js'
 
@@ -777,8 +777,8 @@ let%expect_test "start with failing import, fix import" =
        >>= (fun _ -> Lwt.return_unit)
     );
   [%expect_exact {|
-/.../test/watch/index.js
-Import Error
+[31m[1m/.../test/watch/index.js[22m[39m
+[31mImport Error[39m
 
 Cannot import name 'aa' from 'a.js'
 
