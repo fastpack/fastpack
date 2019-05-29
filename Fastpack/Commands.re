@@ -86,19 +86,13 @@ let reportResult = (start_time, result, builder) =>
           sprintf("%db", size);
         }
       );
-    let report =
-      Terminal.(
-        print_with_color(
-          ~font=Bold,
-          ~color=Green,
-          Printf.sprintf(
-            "Done in %.3fs. Bundle: %s. Modules: %d.\n",
-            Unix.gettimeofday() -. start_time,
-            pretty_size,
-            modules,
-          ),
-        )
-      );
+    let reportContent = Printf.sprintf(
+      "Done in %.3fs. Bundle: %s. Modules: %d.\n",
+      Unix.gettimeofday() -. start_time,
+      pretty_size,
+      modules
+    )
+    let report = Pastel.(<Pastel bold=true color=Green>reportContent</Pastel>)
     Lwt_io.(write_line(stdout, report));
   };
 
@@ -273,11 +267,7 @@ It looks, like your system doesn't have it installed. Please, check here
 for installation instructions:
   https://facebook.github.io/watchman/
           |},
-                  Terminal.print_with_color(
-                    ~font=Bold,
-                    ~color=Red,
-                    "Cannot start file watching service: watchman",
-                  ),
+                  Pastel.(<Pastel bold=true color=Red>"Cannot start file watching service: watchman"</Pastel>),
                   msg,
                 ),
               ),

@@ -1,6 +1,5 @@
 module Loc = Flow_parser.Loc;
 module Scope = FastpackUtil.Scope;
-module Terminal = FastpackUtil.Terminal;
 
 /*
    assoc list of nodejs libs and their browser implementations
@@ -75,14 +74,12 @@ module CannotResolveModuleError = {
 };
 
 let formatErrorHeader = (~where="", text) =>
-  String.concat(
-    "\n",
-    [
-      Terminal.print_with_color(~font=Bold, ~color=Cyan, where),
-      Terminal.print_with_color(~color=Red, text),
-      "",
-    ],
-  );
+  <Pastel>
+    <Pastel bold=true color=Red>where</Pastel>
+    "\n"
+    <Pastel color=Red>text</Pastel>
+    "\n"
+  </Pastel>
 
 let get_codeframe = (loc: Loc.t, lines) => {
   let isTTY = FastpackUtil.FS.isatty(Unix.stderr);
@@ -132,14 +129,14 @@ let get_codeframe = (loc: Loc.t, lines) => {
               loc._end.column - loc.start.column,
             );
           if (String.length(error_substring) > 0) {
-            let colored_error =
-              Terminal.print_with_color(~color=Red, error_substring);
+            let colored_error = <Pastel color=Red>error_substring</Pastel>;
             Logs.debug(x =>
               x("e: %s ... colo: %s", error_substring, colored_error)
             );
             let colored_line =
               CCString.replace(~sub=error_substring, ~by=colored_error, line);
-            Terminal.print_with_color(~color=Red, lineNo)
+
+            <Pastel color=Red>error_substring</Pastel>
             ++ " │ "
             ++ colored_line;
           } else {
