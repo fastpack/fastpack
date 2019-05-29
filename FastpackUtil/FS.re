@@ -71,6 +71,9 @@ let is_text_file = filename =>
 let isatty = channel => {
   let forceTTY =
     switch (Sys.getenv_opt("FPACK_FORCE_TTY")) {
+    | Some("false") =>
+      Pastel.(setMode(Disabled));
+      false;
     | Some("true") =>
       Pastel.(setMode(Terminal));
       true;

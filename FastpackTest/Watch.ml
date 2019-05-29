@@ -5,6 +5,7 @@ module StringSet = Set.Make(CCString)
 
 let re_modules = Re.Posix.compile_pat "^.+/\\* --runtimeMain-- \\*/"
 let run_with ~test_name ~cmd ~files f =
+  Unix.putenv "FPACK_FORCE_TTY" "false";
   let test_path = get_test_path test_name in
   Unix.chdir test_path;
   let argv =
@@ -556,8 +557,8 @@ let%expect_test "start with parse error, than fix" =
         >>= (fun _ -> Lwt.return_unit)
     );
   [%expect_exact {|
-[31m[1m/.../test/watch/index.js[22m[39m
-[31mParse error[39m
+/.../test/watch/index.js
+Parse error
 
 --------------------
 Unexpected identifier at (1:21) - (1:26):
@@ -640,8 +641,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-[31m[1m$fp$main[22m[39m
-[31mCannot resolve './index.js'[39m
+$fp$main
+Cannot resolve './index.js'
 
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
@@ -656,8 +657,8 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-[31m[1m$fp$main[22m[39m
-[31mCannot resolve './index.js'[39m
+$fp$main
+Cannot resolve './index.js'
 
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
@@ -672,8 +673,8 @@ Cannot resolve module
   ...no.
 ---------------------------------------------
 
-[31m[1m$fp$main[22m[39m
-[31mCannot resolve './index.js'[39m
+$fp$main
+Cannot resolve './index.js'
 
 Cannot resolve module
   Resolving './index.js'. Base directory: '/.../test/watch'
@@ -730,8 +731,8 @@ d: {"./index.js":"index"}
 });
 ---------------------------------------------
 
-[31m[1m/.../test/watch/index.js[22m[39m
-[31mImport Error[39m
+/.../test/watch/index.js
+Import Error
 
 Cannot import name 'aa' from 'a.js'
 
@@ -777,8 +778,8 @@ let%expect_test "start with failing import, fix import" =
        >>= (fun _ -> Lwt.return_unit)
     );
   [%expect_exact {|
-[31m[1m/.../test/watch/index.js[22m[39m
-[31mImport Error[39m
+/.../test/watch/index.js
+Import Error
 
 Cannot import name 'aa' from 'a.js'
 
