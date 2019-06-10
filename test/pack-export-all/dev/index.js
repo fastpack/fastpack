@@ -137,7 +137,7 @@ d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__reexport_js = __fastpack_require__(\"./reexport.js\");\n\nconsole.log(_1__reexport_js.dep);\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__reexport_js = __fastpack_require__(\"./reexport.js\");\n\nconsole.log((Object(_1__reexport_js[\"dep\"])));\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./reexport.js":"reexport"}
 },

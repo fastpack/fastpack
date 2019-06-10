@@ -287,10 +287,11 @@ let start = ({init, input, output, serveForever}) => {
       );
 
     let patch_imported_name = (~from_request, _, remote) => {
-      let (module_var, _) = ensure_module_var(encodeDependencyRequest(from_request));
+      let (module_var, _) =
+        ensure_module_var(encodeDependencyRequest(from_request));
       switch (remote) {
       | "default" => get_module_default(module_var)
-      | _ => module_var ++ "." ++ remote
+      | _ => Printf.sprintf("(Object(%s[\"%s\"]))", module_var, remote)
       };
     };
 

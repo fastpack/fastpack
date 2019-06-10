@@ -17,7 +17,7 @@ depends: [
   "ppx_sexp_conv" {>= "v0.11" & < "v0.12"}
   "jbuilder" {build & >= "1.0+beta18.1"}
   "ocaml-migrate-parsetree" {>= "1.0"}
-  "ppxlib" {>= "0.1.0"}
+  "ppxlib" {>= "0.1.0" & < "0.9.0"}
 ]
 synopsis: "Assert-like extension nodes that raise useful errors on failure"
 description: "Part of the Jane Street's PPX rewriters collection."

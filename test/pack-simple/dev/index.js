@@ -143,7 +143,7 @@ d: {"./yz":"yz","./yz_reimport.js":"yz_reimport","./cjs":"cjs","./util":"util","
 },
 /* !s: util.js */
 "util":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__x = __fastpack_require__(\"./x\");\nconst allX = _1__x;\nconst YZ = __fastpack_require__(\"./yz\");\n\n\n\n\n\n\nfunction xShouldRemain() {\n  let x = \"this is not updated\";\n  let updateX = () => console.log(x);\n}\n\nif(false) {\n  let x = \"this is not updated as well\";\n  let updateX = () => console.log(x);\n  updateX();\n}\n\nlet $lib1 = {};\nconsole.log($lib1.x);\n\nmodule.exports.sayHello = function() {\n  (__fastpack_require__.default(_1__x))();\n  console.log(\"x before update\", _1__x.x);\n  _1__x.updateX();\n  console.log(\"x after update:\", _1__x.x);\n};\n\n//# sourceURL=fpack:///util.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__x = __fastpack_require__(\"./x\");\nconst allX = _1__x;\nconst YZ = __fastpack_require__(\"./yz\");\n\n\n\n\n\n\nfunction xShouldRemain() {\n  let x = \"this is not updated\";\n  let updateX = () => console.log(x);\n}\n\nif(false) {\n  let x = \"this is not updated as well\";\n  let updateX = () => console.log(x);\n  updateX();\n}\n\nlet $lib1 = {};\nconsole.log($lib1.x);\n\nmodule.exports.sayHello = function() {\n  (__fastpack_require__.default(_1__x))();\n  console.log(\"x before update\", (Object(_1__x[\"x\"])));\n  (Object(_1__x[\"updateX\"]))();\n  console.log(\"x after update:\", (Object(_1__x[\"x\"])));\n};\n\n//# sourceURL=fpack:///util.js");
 },
 d: {"./x":"x","./x":"x","./x":"x","./x":"x","./yz":"yz"}
 },
@@ -167,7 +167,7 @@ d: {"./z":"z","./y":"y"}
 },
 /* !s: yz_reimport.js */
 "yz_reimport":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__y = __fastpack_require__(\"./y\");\nconst _2__z = __fastpack_require__(\"./z\");\n\n\n\nexports.default = {a: _1__y.a, updateA: _1__y.updateA, Z: (__fastpack_require__.default(_2__z))};\n\n//# sourceURL=fpack:///yz_reimport.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__y = __fastpack_require__(\"./y\");\nconst _2__z = __fastpack_require__(\"./z\");\n\n\n\nexports.default = {a: (Object(_1__y[\"a\"])), updateA: (Object(_1__y[\"updateA\"])), Z: (__fastpack_require__.default(_2__z))};\n\n//# sourceURL=fpack:///yz_reimport.js");
 },
 d: {"./y":"y","./z":"z"}
 },
