@@ -137,7 +137,7 @@ d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\n\nconsole.log(_1__a.a1, _1__a.a2, _1__a.a3);\nexports.default = function() {\n  console.log(\"Русский\", \"development\",\n              \"разработка\");\n}\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\n\nconsole.log((Object(_1__a[\"a1\"])), (Object(_1__a[\"a2\"])), (Object(_1__a[\"a3\"])));\nexports.default = function() {\n  console.log(\"Русский\", \"development\",\n              \"разработка\");\n}\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a"}
 },

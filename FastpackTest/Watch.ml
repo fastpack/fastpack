@@ -724,7 +724,7 @@ d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\n console.log(_1__a.a);\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\n console.log((Object(_1__a[\"a\"])));\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a"}
 },
@@ -755,7 +755,7 @@ d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\n console.log(_1__a.aa);\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\n console.log((Object(_1__a[\"aa\"])));\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a"}
 },
@@ -802,7 +802,7 @@ d: {}
 },
 /* !s: index.js */
 "index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\n console.log(_1__a.a);\n\n//# sourceURL=fpack:///index.js");
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__a = __fastpack_require__(\"./a\");\n console.log((Object(_1__a[\"a\"])));\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./a":"a"}
 },

@@ -109,7 +109,8 @@ let normalize_request = (~basedir: string, request) =>
           } else {
             switch (String.split_on_char('/', request)) {
             | [] => error("Bad package request")
-            | [package] => return(PackageRequest((package, None)))
+            | [package]
+            | [package, ""] => return(PackageRequest((package, None)))
             | [package, ...rest] =>
               return(
                 PackageRequest((package, Some(String.concat("/", rest)))),
