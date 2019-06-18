@@ -4,4 +4,4 @@
   (libraries lwt.unix fileutils yojson containers str flow_parser logs logs.cli logs.lwt fmt re re.posix)
   (c_names sysutil)
   (c_flags (:include config/c_link_flags.sexp))
-  (preprocess (pps lwt_ppx)))
+  (preprocess (pps lwt_ppx ppx_deriving.std)))

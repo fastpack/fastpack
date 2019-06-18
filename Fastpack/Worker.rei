@@ -34,6 +34,7 @@ type ok = {
   module_type: Module.module_type,
   scope: FastpackUtil.Scope.t,
   exports: FastpackUtil.Scope.exports,
+  usedImports: FastpackUtil.Scope.ImportSet.t,
   warnings: list(string),
   files: list(string),
   build_dependencies: list(string),

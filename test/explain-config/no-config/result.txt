@@ -8,6 +8,8 @@ Output Filename:
   "/.../.sandbox/explain-config---no-config.test.js/index.js"   # default value
 Public Path:
   ""   # default value
+Check Only Used Exports:
+  false   # default value
 Mode:
   "development"   # cli argument
 Cache:
