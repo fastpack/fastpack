@@ -324,6 +324,7 @@ module File = {
   };
 
   let string = json => Util.to_string(json) |> return;
+  let bool = json => Util.to_bool(json) |> return;
 
   let cache =
     value("cache", json =>
@@ -392,6 +393,8 @@ module File = {
   let resolveExtension = list("resolveExtensions", string);
 
   let packageMainFields = list("packageMainFields", string);
+
+  let exportCheckUsedImportsOnly = value("exportCheckUsedImportsOnly", bool);
 };
 
 type t = {
@@ -408,6 +411,7 @@ type t = {
   projectRootDir: value(string),
   resolveExtension: list(value(string)),
   packageMainFields: list(value(string)),
+  exportCheckUsedImportsOnly: value(bool),
 }
 and value('a) = {
   source,
@@ -434,6 +438,7 @@ let create =
       ~cache,
       ~preprocess,
       ~envVar,
+      ~exportCheckUsedImportsOnly,
     ) => {
   let readConfigFromFile = fname => {
     let%lwt content = Lwt_io.(with_file(~mode=Input, fname, read));
@@ -580,6 +585,14 @@ let create =
       (),
     );
 
+  let exportCheckUsedImportsOnly =
+    pickValue(
+      ~arg=exportCheckUsedImportsOnly,
+      ~file=File.exportCheckUsedImportsOnly(configFile),
+      ~default=false,
+      (),
+    );
+
   let currentDir = Unix.getcwd();
 
   /* output directory & output filename */
@@ -650,6 +663,7 @@ let create =
     projectRootDir,
     resolveExtension,
     packageMainFields,
+    exportCheckUsedImportsOnly,
   });
 };
 
@@ -670,6 +684,7 @@ let term = {
         projectRootDir,
         resolveExtension,
         packageMainFields,
+        exportCheckUsedImportsOnly,
       ) =>
     create(
       ~configFile,
@@ -686,6 +701,7 @@ let term = {
       ~projectRootDir,
       ~resolveExtension,
       ~packageMainFields,
+      ~exportCheckUsedImportsOnly,
     );
 
   let configFileT = {
@@ -807,7 +823,9 @@ let term = {
 
     let docv = "PACKAGE-MAIN-FIELD";
     Arg.(
-      value & opt_all(string, []) & info(["package-main-field"], ~docv, ~doc)
+      value
+      & opt_all(string, [])
+      & info(["package-main-field"], ~docv, ~doc)
     );
   };
 
@@ -852,6 +870,15 @@ let term = {
     Arg.(value & opt_all(envVar, []) & info(["env-var"], ~docv, ~doc));
   };
 
+  let exportCheckUsedImportsOnlyT = {
+    let doc = "Check existance of the used imports only";
+    let set = (
+      Some(true),
+      Arg.info(["export-check-used-imports-only"], ~doc),
+    );
+    Arg.(value & vflag(None, [set]));
+  };
+
   Term.(
     const(run)
     $ configFileT
@@ -868,6 +895,7 @@ let term = {
     $ projectRootDirT
     $ resolveExtensionT
     $ packageMainFieldsT
+    $ exportCheckUsedImportsOnlyT
   );
 };
 
@@ -904,6 +932,8 @@ let envVar = ({envVar, _}) =>
   |> M.bindings
   |> List.map(((name, value)) => (name, unwrap(value)))
   |> M.add_list(M.empty);
+let exportCheckUsedImportsOnly =
+  ({exportCheckUsedImportsOnly, _}) => unwrap(exportCheckUsedImportsOnly);
 
 /* prettyPrint */
 
@@ -923,6 +953,7 @@ let prettyPrint =
         projectRootDir,
         resolveExtension,
         packageMainFields,
+        exportCheckUsedImportsOnly,
       }: t,
     ) => {
   module Source = {
@@ -1106,6 +1137,14 @@ let prettyPrint =
     <P title="Output Directory" value=outputDir />
     <P title="Output Filename" value=outputFilename />
     <P title="Public Path" value=publicPath />
+    <P
+      title="Check Only Used Exports"
+      json=false
+      value={
+        source: exportCheckUsedImportsOnly.source,
+        value: string_of_bool(exportCheckUsedImportsOnly.value),
+      }
+    />
     <Mode_ value=mode />
     <Cache_ value=cache />
     <NodeModulesPaths_ paths=nodeModulesPaths />

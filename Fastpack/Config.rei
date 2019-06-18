@@ -38,5 +38,6 @@ let resolveExtension: t => list(string);
 let packageMainFields: t => list(string);
 let preprocess: t => list(Preprocessor.t);
 let envVar: t => CCMap.Make(String).t(string);
+let exportCheckUsedImportsOnly: t => bool;
 
 let prettyPrint: t => string;

@@ -123,7 +123,12 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
   let t = Unix.gettimeofday();
   let%lwt () = DependencyGraph.build(ctx, startLocation, graph);
   Logs.debug(x => x("GRAPH built: %.3f", Unix.gettimeofday() -. t));
-  let%lwt exportFinder = ExportFinder.make(graph);
+  let%lwt exportFinder =
+    ExportFinder.make(
+      ~exportCheckUsedImportsOnly=
+        Config.exportCheckUsedImportsOnly(ctx.config),
+      graph,
+    );
   let () =
     DependencyGraph.iterModules(graph, (source: Module.t) =>
       switch (ExportFinder.ensure_exports(source, exportFinder)) {

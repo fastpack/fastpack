@@ -240,6 +240,8 @@ type t = {
   scope: FastpackUtil.Scope.t,
   /*** Module exports */
   exports: FastpackUtil.Scope.exports,
+  /*** Used imports */
+  usedImports: FastpackUtil.Scope.ImportSet.t,
   /*** Warnings collected from preprocessors */
   warnings: list(string),
 };

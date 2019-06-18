@@ -288,6 +288,7 @@ let read_module =
         source,
         scope: FastpackUtil.Scope.empty,
         exports: FastpackUtil.Scope.empty_exports,
+        usedImports: FastpackUtil.Scope.ImportSet.empty,
         warnings: [],
       };
     Lwt.return((m, NoDependendencies));
@@ -382,6 +383,7 @@ let read_module =
         module_type,
         scope,
         exports,
+        usedImports,
         warnings,
         build_dependencies,
         files,
@@ -419,6 +421,7 @@ let read_module =
           module_type,
           scope,
           exports,
+          usedImports,
           build_dependencies,
           files,
         },
