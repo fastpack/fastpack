@@ -1,5 +1,4 @@
 opam-version: "2.0"
-name:         "merlin"
 maintainer:   "defree@gmail.com"
 authors:      "The Merlin team"
 homepage:     "https://github.com/ocaml/merlin"
@@ -8,6 +7,7 @@ dev-repo: "git+https://github.com/ocaml/merlin.git"
 build: [
   ["dune" "subst"] {pinned}
   ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 depends: [
   "ocaml" {>= "4.02.1" & < "4.09"}
@@ -61,10 +61,9 @@ See https://github.com/OCamlPro/opam-user-setup
   {success & !user-setup:installed}
 ]
 url {
-  src:
-    "https://github.com/ocaml/merlin/releases/download/v3.3.0/merlin-v3.3.0.tbz"
+  src: "https://github.com/ocaml/merlin/archive/v3.3.1.tar.gz"
   checksum: [
-    "sha256=b342cd38034d477457c89b0c143784ed243621c60954afe26766c793f086ebda"
-    "sha512=73513a7f21124e47eb7609344c30f5cce5e5c5880b9ab8f0c0b52d847bbd2d7c715b522cdc7327db0f935d82bc9a6f9d6312717d50da4252666dd5543991e08c"
+    "md5=b542cacabeb98f9f22c6740f22a9fea7"
+    "sha512=8aa976197a55cdbe38180e80b1ae98b7408734a7a55b975a5be982016e7e723c64e9a82bcb1ff2827b27f9c5d210a2c34665d3e5c18afdaf4b0767b526b3d834"
   ]
 }

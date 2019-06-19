@@ -1,0 +1,28 @@
+opam-version: "2.0"
+maintainer: "Marshall Roch <mroch@fb.com>"
+authors: "Marshall Roch <mroch@fb.com>"
+license: "MIT"
+homepage: "https://github.com/flowtype/ocaml-wtf8"
+doc: "https://github.com/flowtype/ocaml-wtf8"
+bug-reports: "https://github.com/flowtype/ocaml-wtf8/issues"
+depends: [
+  "ocaml" {>= "4.01.0"}
+  "dune" {build & >= "1.0"}
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
+]
+dev-repo: "git+https://github.com/flowtype/ocaml-wtf8.git"
+synopsis: "Encoder and decoder for WTF-8"
+description: """
+WTF-8 is a superset of UTF-8 that allows unpaired surrogates.
+"""
+url {
+  src:
+    "https://github.com/flowtype/ocaml-wtf8/releases/download/v1.0.2/wtf8-v1.0.2.tbz"
+  checksum: [
+    "sha256=779ff72940405918fcb67b6be11909ef82965bbc2f9ff07f9b59f1d27a67cf27"
+    "sha512=fc1201d2178daaebb2f87d47c7b7c9bde06560d70e75fee9c6f741f7348500eaa0850c852847fc7435054cc2de7aa80643174002cb5389483f0fa49dab6e634f"
+  ]
+}

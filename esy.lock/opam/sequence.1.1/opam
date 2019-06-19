@@ -1,0 +1,32 @@
+opam-version: "2.0"
+maintainer: "simon.cruanes.2007@m4x.org"
+authors: "Simon Cruanes"
+homepage: "https://github.com/c-cube/iter/"
+bug-reports: "https://github.com/c-cube/iter/issues"
+license: "BSD-2-clauses"
+doc: "https://c-cube.github.io/iter/"
+tags: ["sequence" "iterator" "iter" "fold"]
+dev-repo: "git+https://github.com/c-cube/iter.git"
+build: [
+  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["jbuilder" "runtest" "-p" name "-j" jobs] {with-test}
+  ["jbuilder" "build" "@doc"] {with-doc}
+]
+depends: [
+  "ocaml" {< "4.08.0"}
+  "base-bytes"
+  "result"
+  "jbuilder" {build}
+  "qcheck" {with-test}
+  "qtest" {with-test}
+  "odoc" {with-doc}
+]
+depopts: "base-bigarray"
+synopsis: "Simple and lightweight sequence abstract data type."
+description: """
+Simple sequence abstract datatype, intended to iterate efficiently
+on collections while performing some transformations."""
+url {
+  src: "https://github.com/c-cube/iter/archive/1.1.tar.gz"
+  checksum: "sha256=30d534e2be90ca511b19f83938631f22966b5a7c959515c0b247c8726c9c61aa"
+}
