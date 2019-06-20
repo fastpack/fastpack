@@ -123,6 +123,30 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"app$index"}
+},
+/* !s: app/index.js */
+"app$index":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1_package_1 = __fastpack_require__(\"package-1\");\nconst _2_package_2 = __fastpack_require__(\"package-2\");\nconst _3_mocked = __fastpack_require__(\"mocked\");\n\n\n\n\nconsole.log((__fastpack_require__.default(_1_package_1)), (__fastpack_require__.default(_2_package_2)), (__fastpack_require__.default(_3_mocked)))\n\n//# sourceURL=fpack:///app/index.js");
+},
+d: {"package-1":"nm$package$$_$$1$index","package-2":"app$nm$package$$_$$2$index","mocked":"app$mock"}
+},
+/* !s: app/mock.js */
+"app$mock":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nfunction mock() {\n  console.log('mock')\n}\nexports.default = mock;\n\n\n//# sourceURL=fpack:///app/mock.js");
+},
+d: {}
+},
+/* !s: app/nm/package-2/index.js */
+"app$nm$package$$_$$2$index":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = function () {\n  console.log('package-2')\n}\n\n//# sourceURL=fpack:///app/nm/package-2/index.js");
+},
+d: {}
+},
 /* !s: nm/package-1/babel-transpile.js */
 "NM$$babel$$_$$loader$lib$indexDOT$$js$$B$$nm$package$$_$$1$babel$$_$$transpile":{m:function(module, exports, __fastpack_require__) {
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\nexports.default = class {\n  constructor() {\n    _defineProperty(this, \"field\", 'babel-transpile');\n  }\n\n}\n//# sourceURL=fpack:///node_modules/babel-loader/lib/index.js!nm/package-1/babel-transpile.js");
@@ -140,30 +164,6 @@ d: {}
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1__babel_transpile_js = __fastpack_require__(\"./babel-transpile.js\");\nconst _2__builtin_transpile_js = __fastpack_require__(\"./builtin-transpile.js\");\n\n\n\nexports.default = function () {\n  console.log('package-1')\n  console.log((__fastpack_require__.default(_1__babel_transpile_js)), (__fastpack_require__.default(_2__builtin_transpile_js)))\n}\n\n//# sourceURL=fpack:///nm/package-1/index.js");
 },
 d: {"./babel-transpile.js":"NM$$babel$$_$$loader$lib$indexDOT$$js$$B$$nm$package$$_$$1$babel$$_$$transpile","./builtin-transpile.js":"builtin$$B$$nm$package$$_$$1$builtin$$_$$transpile"}
-},
-/* !s: app/nm/package-2/index.js */
-"app$nm$package$$_$$2$index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = function () {\n  console.log('package-2')\n}\n\n//# sourceURL=fpack:///app/nm/package-2/index.js");
-},
-d: {}
-},
-/* !s: app/mock.js */
-"app$mock":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nfunction mock() {\n  console.log('mock')\n}\nexports.default = mock;\n\n\n//# sourceURL=fpack:///app/mock.js");
-},
-d: {}
-},
-/* !s: app/index.js */
-"app$index":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nconst _1_package_1 = __fastpack_require__(\"package-1\");\nconst _2_package_2 = __fastpack_require__(\"package-2\");\nconst _3_mocked = __fastpack_require__(\"mocked\");\n\n\n\n\nconsole.log((__fastpack_require__.default(_1_package_1)), (__fastpack_require__.default(_2_package_2)), (__fastpack_require__.default(_3_mocked)))\n\n//# sourceURL=fpack:///app/index.js");
-},
-d: {"package-1":"nm$package$$_$$1$index","package-2":"app$nm$package$$_$$2$index","mocked":"app$mock"}
-},
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
-},
-d: {"./index.js":"app$index"}
 },
 
 });

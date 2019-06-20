@@ -213,7 +213,7 @@ module LocationSet =
   });
 
 module LocationMap =
-  Map.Make({
+  CCMap.Make({
     let compare = compare_location;
     type t = location;
   });
@@ -240,6 +240,15 @@ type t = {
   scope: FastpackUtil.Scope.t,
   /*** Module exports */
   exports: FastpackUtil.Scope.exports,
+  /*** Used imports */
+  usedImports: FastpackUtil.Scope.ImportSet.t,
   /*** Warnings collected from preprocessors */
   warnings: list(string),
 };
+
+type m = t;
+module Set =
+  Set.Make({
+    type t = m;
+    let compare = (m1, m2) => compare_location(m1.location, m2.location);
+  });

@@ -62,6 +62,7 @@ let make = (config: Config.t) => {
             mock: Config.mock(config),
             nodeModulesPaths: Config.nodeModulesPaths(config),
             resolveExtension: Config.resolveExtension(config),
+            packageMainFields: Config.packageMainFields(config),
             preprocess: Config.preprocess(config),
           })
         ),
@@ -84,7 +85,13 @@ let make = (config: Config.t) => {
     switch%lwt (find_package_json_for_filename(filename)) {
     | Some(package_json) =>
       let%lwt content = Cache.File.readExisting(package_json, cache);
-      Lwt.return(Package.of_json(package_json, content));
+      Lwt.return(
+        Package.of_json(
+          ~mainFields=Config.packageMainFields(config),
+          package_json,
+          content,
+        ),
+      );
     | None => Lwt.return(Package.empty)
     };
   };
@@ -115,9 +122,14 @@ type prevRun = {
 let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
   let t = Unix.gettimeofday();
   let%lwt () = DependencyGraph.build(ctx, startLocation, graph);
-  Logs.debug(x => x("Graph built: %.3f", Unix.gettimeofday() -. t));
-  let%lwt exportFinder = ExportFinder.make(graph);
-  let%lwt () =
+  Logs.debug(x => x("GRAPH built: %.3f", Unix.gettimeofday() -. t));
+  let%lwt exportFinder =
+    ExportFinder.make(
+      ~exportCheckUsedImportsOnly=
+        Config.exportCheckUsedImportsOnly(ctx.config),
+      graph,
+    );
+  let () =
     DependencyGraph.iterModules(graph, (source: Module.t) =>
       switch (ExportFinder.ensure_exports(source, exportFinder)) {
       | Some((m, name)) =>
@@ -127,7 +139,7 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
             m.location,
           );
 
-        Lwt.fail(
+        raise(
           Error.PackError(
             CannotFindExportedName(
               Module.location_to_string(source.location),
@@ -136,12 +148,16 @@ let buildAll = (~dryRun: bool, ~ctx: Context.t, ~graph, startLocation) => {
             ),
           ),
         );
-      | None => Lwt.return_unit
+      | None => ()
       }
     );
-  let%lwt bundle = Bundle.make(graph, ctx.entry_location);
+  /* let t = Unix.gettimeofday(); */
+  Logs.debug(x => x("EXPORTS validated: %.3f", Unix.gettimeofday() -. t));
+  let bundle = Bundle.make(graph, ctx.entry_location);
+  Logs.debug(x => x("BUNDLE calculated: %.3f", Unix.gettimeofday() -. t));
   let%lwt () =
     dryRun ? FS.rmdir(ctx.tmpOutputDir) : Bundle.emit(ctx, bundle);
+  Logs.debug(x => x("BUNDLE emitted: %.3f", Unix.gettimeofday() -. t));
   Lwt.return(bundle);
 };
 
@@ -235,6 +251,7 @@ let rec build =
       ~mock=Config.mock(config),
       ~node_modules_paths=Config.nodeModulesPaths(config),
       ~extensions=Config.resolveExtension(config),
+      ~packageMainFields=Config.packageMainFields(config),
       ~preprocessors=Config.preprocess(config),
       ~cache,
       (),

@@ -324,6 +324,7 @@ module File = {
   };
 
   let string = json => Util.to_string(json) |> return;
+  let bool = json => Util.to_bool(json) |> return;
 
   let cache =
     value("cache", json =>
@@ -390,6 +391,10 @@ module File = {
   let projectRootDir = value("projectRootDir", string);
 
   let resolveExtension = list("resolveExtensions", string);
+
+  let packageMainFields = list("packageMainFields", string);
+
+  let exportCheckUsedImportsOnly = value("exportCheckUsedImportsOnly", bool);
 };
 
 type t = {
@@ -405,6 +410,8 @@ type t = {
   envVar: M.t(value(string)),
   projectRootDir: value(string),
   resolveExtension: list(value(string)),
+  packageMainFields: list(value(string)),
+  exportCheckUsedImportsOnly: value(bool),
 }
 and value('a) = {
   source,
@@ -427,9 +434,11 @@ let create =
       ~nodeModulesPaths,
       ~projectRootDir,
       ~resolveExtension,
+      ~packageMainFields,
       ~cache,
       ~preprocess,
       ~envVar,
+      ~exportCheckUsedImportsOnly,
     ) => {
   let readConfigFromFile = fname => {
     let%lwt content = Lwt_io.(with_file(~mode=Input, fname, read));
@@ -541,11 +550,20 @@ let create =
          | _ => "." ++ ext
          }
        );
+
   let resolveExtension =
     mergeLists(
       ~arg=fixExt(resolveExtension),
       ~file=fixExt(File.resolveExtension(configFile)),
       ~default=[".js", ".json"],
+      (),
+    );
+
+  let packageMainFields =
+    mergeLists(
+      ~arg=packageMainFields,
+      ~file=File.packageMainFields(configFile),
+      ~default=["browser", "module", "main"],
       (),
     );
 
@@ -564,6 +582,14 @@ let create =
       ~arg=cache,
       ~file=File.cache(configFile),
       ~default=Cache.Use,
+      (),
+    );
+
+  let exportCheckUsedImportsOnly =
+    pickValue(
+      ~arg=exportCheckUsedImportsOnly,
+      ~file=File.exportCheckUsedImportsOnly(configFile),
+      ~default=false,
       (),
     );
 
@@ -636,6 +662,8 @@ let create =
     envVar,
     projectRootDir,
     resolveExtension,
+    packageMainFields,
+    exportCheckUsedImportsOnly,
   });
 };
 
@@ -655,6 +683,8 @@ let term = {
         envVar,
         projectRootDir,
         resolveExtension,
+        packageMainFields,
+        exportCheckUsedImportsOnly,
       ) =>
     create(
       ~configFile,
@@ -670,6 +700,8 @@ let term = {
       ~envVar=List.map(snd, envVar),
       ~projectRootDir,
       ~resolveExtension,
+      ~packageMainFields,
+      ~exportCheckUsedImportsOnly,
     );
 
   let configFileT = {
@@ -783,6 +815,20 @@ let term = {
     );
   };
 
+  let packageMainFieldsT = {
+    let doc =
+      "Field name in package.json to determine the package entry point. "
+      ++ "Specify several in desired order. "
+      ++ "Defaults to: [\"browser\", \"module\", \"main\"]";
+
+    let docv = "PACKAGE-MAIN-FIELD";
+    Arg.(
+      value
+      & opt_all(string, [])
+      & info(["package-main-field"], ~docv, ~doc)
+    );
+  };
+
   let cacheT = {
     let doc = "Do not use cache at all (effective in development mode only)";
 
@@ -824,6 +870,15 @@ let term = {
     Arg.(value & opt_all(envVar, []) & info(["env-var"], ~docv, ~doc));
   };
 
+  let exportCheckUsedImportsOnlyT = {
+    let doc = "Check existance of the used imports only";
+    let set = (
+      Some(true),
+      Arg.info(["export-check-used-imports-only"], ~doc),
+    );
+    Arg.(value & vflag(None, [set]));
+  };
+
   Term.(
     const(run)
     $ configFileT
@@ -839,6 +894,8 @@ let term = {
     $ envVarT
     $ projectRootDirT
     $ resolveExtensionT
+    $ packageMainFieldsT
+    $ exportCheckUsedImportsOnlyT
   );
 };
 
@@ -867,12 +924,16 @@ let nodeModulesPaths = ({nodeModulesPaths, _}) =>
   List.map(unwrap, nodeModulesPaths);
 let resolveExtension = ({resolveExtension, _}) =>
   List.map(unwrap, resolveExtension);
+let packageMainFields = ({packageMainFields, _}) =>
+  List.map(unwrap, packageMainFields);
 let preprocess = ({preprocess, _}) => List.map(unwrap, preprocess);
 let envVar = ({envVar, _}) =>
   envVar
   |> M.bindings
   |> List.map(((name, value)) => (name, unwrap(value)))
   |> M.add_list(M.empty);
+let exportCheckUsedImportsOnly =
+  ({exportCheckUsedImportsOnly, _}) => unwrap(exportCheckUsedImportsOnly);
 
 /* prettyPrint */
 
@@ -891,6 +952,8 @@ let prettyPrint =
         envVar,
         projectRootDir,
         resolveExtension,
+        packageMainFields,
+        exportCheckUsedImportsOnly,
       }: t,
     ) => {
   module Source = {
@@ -999,6 +1062,18 @@ let prettyPrint =
       />;
     };
   };
+
+  module PackageMainFields_ = {
+    let createElement = (~fields, ~children, ()) => {
+      let _ = children;
+      <L
+        title="Use these package.json fields to determine package entry point"
+        empty="Always use ./index.js"
+        items=fields
+      />;
+    };
+  };
+
   module Mock_ = {
     let createElement = (~mocks, ~children, ()) => {
       let _ = children;
@@ -1062,10 +1137,19 @@ let prettyPrint =
     <P title="Output Directory" value=outputDir />
     <P title="Output Filename" value=outputFilename />
     <P title="Public Path" value=publicPath />
+    <P
+      title="Check Only Used Exports"
+      json=false
+      value={
+        source: exportCheckUsedImportsOnly.source,
+        value: string_of_bool(exportCheckUsedImportsOnly.value),
+      }
+    />
     <Mode_ value=mode />
     <Cache_ value=cache />
     <NodeModulesPaths_ paths=nodeModulesPaths />
     <ResolveExtension_ exts=resolveExtension />
+    <PackageMainFields_ fields=packageMainFields />
     <Mock_ mocks=mock />
     <EnvVar_ vars={M.bindings(envVar)} />
     <Preprocess_ preprocess />

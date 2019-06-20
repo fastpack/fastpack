@@ -18,33 +18,35 @@ let normalize = (~package_json_filename, path) =>
     path;
   };
 
-let of_json = (filename, data) => {
+let of_json = (~mainFields, filename, data) => {
   let data = Yojson.Safe.from_string(String.trim(data));
   Yojson.Safe.Util.(
     try (
       {
-        let main = member("main", data) |> to_string_option;
-        let module_ = member("module", data) |> to_string_option;
-        let (browser, browser_shim) = {
+        let (_, browser_shim) = {
           let field = member("browser", data);
           switch (field) {
           | `Assoc(items) =>
-            let f = (browser_shim, (key, v)) => {
-              let key = normalize(~package_json_filename=filename, key);
-              switch (v) {
-              | `String(shim) =>
-                let shim = normalize(~package_json_filename=filename, shim);
-                if (key != shim) {
-                  M.add(key, Shim(shim), browser_shim);
-                } else {
-                  browser_shim;
-                };
-              | `Bool(false) => M.add(key, Ignore, browser_shim)
-              | _ => browser_shim
-              };
-            };
-
-            let browser_shim = ListLabels.fold_left(~init=M.empty, ~f, items);
+            let browser_shim =
+              List.fold_left(
+                (browser_shim, (key, v)) => {
+                  let key = normalize(~package_json_filename=filename, key);
+                  switch (v) {
+                  | `String(shim) =>
+                    let shim =
+                      normalize(~package_json_filename=filename, shim);
+                    if (key != shim) {
+                      M.add(key, Shim(shim), browser_shim);
+                    } else {
+                      browser_shim;
+                    };
+                  | `Bool(false) => M.add(key, Ignore, browser_shim)
+                  | _ => browser_shim
+                  };
+                },
+                M.empty,
+                items,
+              );
             (None, browser_shim);
           | `String(browser) => (Some(browser), M.empty)
           | _ =>
@@ -54,12 +56,20 @@ let of_json = (filename, data) => {
         };
 
         let entry_point =
-          switch (browser, module_, main) {
-          | (Some(browser), _, _) => "./" ++ browser
-          | (None, Some(module_), _) => "./" ++ module_
-          | (None, None, Some(main)) => "./" ++ main
-          | (None, None, None) => "index.js"
-          };
+          List.fold_left(
+            (found, field) =>
+              switch (found) {
+              | Some(_) => found
+              | None =>
+                switch (member(field, data)) {
+                | `String(value) => Some("./" ++ value)
+                | _ => None
+                }
+              },
+            None,
+            mainFields,
+          )
+          |> CCOpt.get_or(~default="./index.js");
 
         /* TODO: shouldn't this be in Resolver? */
         let entry_point =
@@ -79,7 +89,7 @@ let of_json = (filename, data) => {
     ) {
     | Type_error(_) => {
         filename: None,
-        entry_point: "index.js",
+        entry_point: "./index.js",
         browser_shim: M.empty,
       }
     }

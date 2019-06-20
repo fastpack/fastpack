@@ -11,6 +11,13 @@ type scope_type =
   | BlockScope
   | FunctionScope;
 
+
+[@deriving (show({with_path: false}), eq, ord)]
+type import = {
+  source: string,
+  remote: option(string),
+};
+
 type t = {
   parent: option(t),
   bindings: M.t(binding),
@@ -28,11 +35,12 @@ and typ =
   | Class
   | Var
   | Let
-  | Const
-and import = {
-  source: string,
-  remote: option(string),
-};
+  | Const;
+
+module ImportSet = Set.Make({
+  type t = import;
+  let compare = compare_import;
+})
 
 type exports = {
   has_default: bool,

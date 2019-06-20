@@ -14,7 +14,7 @@ depends: [
   "base" {>= "v0.11" & < "v0.12"}
   "jbuilder" {build & >= "1.0+beta18.1"}
   "ocaml-migrate-parsetree" {>= "1.0"}
-  "ppxlib" {>= "0.3.0"}
+  "ppxlib" {>= "0.3.0" & < "0.9.0"}
 ]
 synopsis:
   "Generation of S-expression conversion functions from type definitions"

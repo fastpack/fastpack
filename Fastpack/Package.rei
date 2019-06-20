@@ -21,7 +21,7 @@ let empty: t;
  * `of_json filename data` where `data` is the raw content of the file
  * */
 
-let of_json: (string, string) => t;
+let of_json: (~mainFields: list(string), string, string) => t
 
 /**
  * Resolve dependncy request through "browser" field.

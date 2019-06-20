@@ -123,6 +123,12 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
 /* !s: data.json */
 "dataDOT$$json":{m:function(module, exports, __fastpack_require__) {
 eval("module.exports = {\"hello\": \"world!\"}\n;");
@@ -140,12 +146,6 @@ d: {}
 eval("let obj = __fastpack_require__(\"./data.json\");\nlet str = __fastpack_require__(\"raw-loader!./data.json\");\n\nconsole.log(\"Object:\", obj);\nconsole.log(\"String:\", str);\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./data.json":"dataDOT$$json","raw-loader!./data.json":"NM$$raw$$_$$loader$indexDOT$$js$$B$$dataDOT$$json"}
-},
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
-},
-d: {"./index.js":"index"}
 },
 
 });

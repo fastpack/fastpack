@@ -1,6 +1,7 @@
 module M = Map.Make(String);
 module MDM = Module.DependencyMap;
 module MLSet = Module.LocationSet;
+module MLMap = Module.LocationMap;
 module StringSet = Set.Make(String);
 module FS = FastpackUtil.FS;
 module Scope = FastpackUtil.Scope;
@@ -181,7 +182,7 @@ and chunkName =
   | Named(string)
 and chunk = {
   name: string,
-  modules: list(Module.t),
+  modules: Module.Set.t,
   dependencies: list(string),
 }
 and file = {
@@ -192,62 +193,7 @@ and file = {
 
 type chunkRequest = {
   depRequest: Module.Dependency.t,
-  toLocation: Module.location,
-};
-
-let makeChunk = (graph, entry, seen) => {
-  let rec addModule = (seen, location: Module.location) =>
-    MLSet.mem(location, seen) ?
-      Lwt.return(([], [], seen)) :
-      {
-        let%lwt m =
-          switch (DependencyGraph.lookup_module(graph, location)) {
-          | Some(m) => m
-          | None =>
-            Error.ie(
-              Module.location_to_string(location) ++ " not found in the graph",
-            )
-          };
-
-        let seen = MLSet.add(m.location, seen);
-
-        let%lwt (modules, chunkRequests, seen) =
-          Lwt_list.fold_left_s(
-            ((modules, chunkRequests, seen), (_, m)) =>
-              switch (m) {
-              | None => failwith("Should not happen")
-              | Some(m) =>
-                let%lwt m = m;
-                /* Logs.debug(x => x("Dep: %s", m.Module.id)); */
-                let%lwt (modules', chunkRequests', seen) =
-                  addModule(seen, m.Module.location);
-                Lwt.return((
-                  modules @ modules',
-                  chunkRequests' @ chunkRequests,
-                  seen,
-                ));
-              },
-            ([], [], seen),
-            DependencyGraph.lookup_dependencies(~kind=`Static, graph, m)
-            |> List.rev,
-          );
-
-        let%lwt chunkRequests' =
-          DependencyGraph.lookup_dependencies(~kind=`Dynamic, graph, m)
-          |> List.rev
-          |> Lwt_list.map_s(((depRequest, m')) =>
-               switch (m') {
-               | None => failwith("Should not happen")
-               | Some(m') =>
-                 let%lwt m' = m';
-                 Lwt.return({depRequest, toLocation: m'.Module.location});
-               }
-             );
-
-        Lwt.return(([m, ...modules], chunkRequests' @ chunkRequests, seen));
-      };
-  let%lwt (modules, chunkRequests, seen) = addModule(seen, entry);
-  Lwt.return((List.rev(modules), chunkRequests, seen));
+  toModule: Module.t,
 };
 
 let empty = () => {
@@ -269,58 +215,171 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
     emittedFiles: Hashtbl.create(500),
   };
 
+  let staticChunk = ref(MLMap.empty);
+
+  let makeChunk = (entry, seen: Module.Set.t) => {
+    let rec getStaticChunk = (seen: Module.Set.t, m: Module.t) =>
+      Module.Set.mem(m, seen) ?
+        (Module.Set.empty, seen) :
+        (
+          switch (MLMap.get(m.location, staticChunk^)) {
+          | Some(modules) =>
+            let modules = Module.Set.diff(modules, seen);
+            let seen = Module.Set.union(modules, seen);
+            (modules, seen);
+          | None =>
+            /* let m = */
+            /*   switch (DependencyGraph.lookup_module(graph, location)) { */
+            /*   | Some(m) => m */
+            /*   | None => */
+            /*     Error.ie( */
+            /*       Module.location_to_string(location) */
+            /*       ++ " not found in the graph", */
+            /*     ) */
+            /*   }; */
+            let seen = Module.Set.add(m, seen);
+            let (modules, seen) =
+              Sequence.fold(
+                ((modules, seen), (_, m)) => {
+                  let (modules', seen) = getStaticChunk(seen, m);
+                  (Module.Set.union(modules, modules'), seen);
+                },
+                (Module.Set.singleton(m), seen),
+                DependencyGraph.lookup_dependencies(~kind=`Static, graph, m),
+              );
+            /* let modules = [m, ...modules]; */
+            staticChunk := MLMap.add(m.location, modules, staticChunk^);
+            (modules, seen);
+          }
+        );
+    let m =
+      switch (DependencyGraph.lookup_module(graph, entry)) {
+      | Some(m) => m
+      | None =>
+        Error.ie(
+          Module.location_to_string(entry) ++ " not found in the graph",
+        )
+      };
+
+    let (modules, seen') = getStaticChunk(Module.Set.empty, m);
+    let modules = Module.Set.diff(modules, seen);
+    /* List.filter(m => !MLSet.mem(m.Module.location, seen), modules); */
+    let chunkRequests =
+      Module.Set.fold(
+        (m, acc) => {
+          let chunkRequests =
+            DependencyGraph.lookup_dependencies(~kind=`Dynamic, graph, m)
+            |> Sequence.map(((depRequest, m')) =>
+                 {depRequest, toModule: m'}
+               );
+          Sequence.append(acc, chunkRequests);
+        },
+        modules,
+        Sequence.of_list([]),
+      );
+    (modules, chunkRequests, Module.Set.union(seen, seen'));
+    /* HERE! */
+    /* let rec addModule = (seen, location: Module.location) => */
+    /*   MLSet.mem(location, seen) ? */
+    /*     Lwt.return(([], [], seen)) : */
+    /*     { */
+    /*       let%lwt m = */
+    /*         switch (DependencyGraph.lookup_module(graph, location)) { */
+    /*         | Some(m) => m */
+    /*         | None => */
+    /*           Error.ie( */
+    /*             Module.location_to_string(location) */
+    /*             ++ " not found in the graph", */
+    /*           ) */
+    /*         }; */
+    /*       let seen = MLSet.add(m.location, seen); */
+    /*       let%lwt (modules, chunkRequests, seen) = */
+    /*         Lwt_list.fold_left_s( */
+    /*           ((modules, chunkRequests, seen), (_, m)) => */
+    /*             switch (m) { */
+    /*             | None => failwith("Should not happen") */
+    /*             | Some(m) => */
+    /*               let%lwt m = m; */
+    /*               /1* Logs.debug(x => x("Dep: %s", m.Module.id)); *1/ */
+    /*               let%lwt (modules', chunkRequests', seen) = */
+    /*                 addModule(seen, m.Module.location); */
+    /*               Lwt.return(( */
+    /*                 modules @ modules', */
+    /*                 chunkRequests' @ chunkRequests, */
+    /*                 seen, */
+    /*               )); */
+    /*             }, */
+    /*           ([], [], seen), */
+    /*           DependencyGraph.lookup_dependencies(~kind=`Static, graph, m) */
+    /*           |> List.rev, */
+    /*         ); */
+    /*       let%lwt chunkRequests' = */
+    /*         DependencyGraph.lookup_dependencies(~kind=`Dynamic, graph, m) */
+    /*         |> List.rev */
+    /*         |> Lwt_list.map_s(((depRequest, m')) => */
+    /*              switch (m') { */
+    /*              | None => failwith("Should not happen") */
+    /*              | Some(m') => */
+    /*                let%lwt m' = m'; */
+    /*                Lwt.return({depRequest, toLocation: m'.Module.location}); */
+    /*              } */
+    /*            ); */
+    /*       Lwt.return(( */
+    /*         [m, ...modules], */
+    /*         chunkRequests' @ chunkRequests, */
+    /*         seen, */
+    /*       )); */
+    /*     }; */
+    /* let%lwt (modules, chunkRequests, seen) = addModule(seen, entry); */
+    /* Lwt.return((List.rev(modules), chunkRequests, seen)); */
+  };
+
   let nextChunkName = () => {
     let length = Hashtbl.length(bundle.chunks);
     length > 0 ? string_of_int(length) ++ ".js" : "";
   };
 
-  let updateLocationHash = (modules: list(Module.t), chunkName: chunkName) =>
-    List.iter(
+  let updateLocationHash = (modules: Module.Set.t, chunkName: chunkName) =>
+    Module.Set.iter(
       m =>
         Hashtbl.replace(bundle.locationToChunk, m.Module.location, chunkName),
       modules,
     );
 
-  let splitChunk = (name: string, modules: list(Module.t)) => {
+  let splitChunk = (name: string, modules: Module.Set.t) => {
     Logs.debug(x => x("Split chunk: %s", name));
     switch (Hashtbl.find_all(bundle.chunks, Named(name))) {
     | [{modules: chunkModules, dependencies, _}] =>
-      let modulesLocationSet =
-        MLSet.of_list(List.map(m => m.Module.location, modules));
-      let chunkModules =
-        List.filter(
-          m => !MLSet.mem(m.Module.location, modulesLocationSet),
-          chunkModules,
-        );
-      switch (chunkModules) {
-      | [] => name
-      | chunkModules =>
-        /* add new chunk */
-        let newName = nextChunkName();
-        Hashtbl.replace(
-          bundle.chunks,
-          Named(newName),
-          {name: newName, modules, dependencies: []},
-        );
-        updateLocationHash(modules, Named(newName));
-        /* modify old chunk */
-        Hashtbl.replace(
-          bundle.chunks,
-          Named(name),
-          {
-            name,
-            modules: chunkModules,
-            dependencies: [newName, ...dependencies],
-          },
-        );
-        updateLocationHash(chunkModules, Named(name));
-        newName;
-      };
+      let chunkModules = Module.Set.diff(chunkModules, modules);
+      Module.Set.is_empty(chunkModules) ?
+        name :
+        {
+          /* add new chunk */
+          let newName = nextChunkName();
+          Hashtbl.replace(
+            bundle.chunks,
+            Named(newName),
+            {name: newName, modules, dependencies: []},
+          );
+          updateLocationHash(modules, Named(newName));
+          /* modify old chunk */
+          Hashtbl.replace(
+            bundle.chunks,
+            Named(name),
+            {
+              name,
+              modules: chunkModules,
+              dependencies: [newName, ...dependencies],
+            },
+          );
+          updateLocationHash(chunkModules, Named(name));
+          newName;
+        };
     | _ => failwith("One chunk is expected")
     };
   };
 
-  let addMainChunk = (modules: list(Module.t)) => {
+  let addMainChunk = (modules: Module.Set.t) => {
     Hashtbl.replace(
       bundle.chunks,
       Main,
@@ -330,32 +389,37 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
     Main;
   };
 
-  let addNamedChunk = (name: string, modules: list(Module.t)) => {
+  let addNamedChunk = (name: string, modules: Module.Set.t) => {
     /* 0. add new chunk right away */
     Hashtbl.replace(
       bundle.chunks,
       Named(name),
-      {name, modules: [], dependencies: []},
+      {name, modules: Module.Set.empty, dependencies: []},
     );
-    let nextGroup =
-      List.fold_left(
-        ((groupName, group, rest), m) =>
+    let nextGroup = modules =>
+      Module.Set.fold(
+        (m, (groupName, group, rest)) =>
           switch (
             Hashtbl.find_all(bundle.locationToChunk, m.Module.location),
             groupName,
           ) {
-          | ([], _) => (groupName, group, [m, ...rest])
-          | ([Named(name)], None) => (Some(name), [m, ...group], rest)
+          | ([], _) => (groupName, group, Module.Set.add(m, rest))
+          | ([Named(name)], None) => (
+              Some(name),
+              Module.Set.add(m, group),
+              rest,
+            )
           | ([Named(name)], Some(groupName)) =>
             name == groupName ?
-              (Some(groupName), [m, ...group], rest) :
-              (Some(groupName), group, [m, ...rest])
+              (Some(groupName), Module.Set.add(m, group), rest) :
+              (Some(groupName), group, Module.Set.add(m, rest))
           | ([Main], _) => failwith("Cannot split main chunk")
           | _ => failwith("Module references more than 1 chunk")
           },
-        (None, [], []),
+        modules,
+        (None, Module.Set.empty, Module.Set.empty),
       );
-    let rec splitModules = (modules: list(Module.t)) => {
+    let rec splitModules = modules => {
       let (name, group, rest) = nextGroup(modules);
       switch (name) {
       | Some(name) =>
@@ -375,33 +439,50 @@ let make = (graph: DependencyGraph.t, entry: Module.location) => {
     Named(name);
   };
 
-  let addChunk = (modules: list(Module.t)) => {
+  let addChunk = (modules: Module.Set.t) => {
     let name = nextChunkName();
     name == "" ? addMainChunk(modules) : addNamedChunk(name, modules);
   };
 
-  let rec make' = (~chunkReqMap=MDM.empty, ~seen=MLSet.empty, location) => {
-    Logs.debug(x => x("Make chunk"));
-    let%lwt (modules, chunkRequests, seen) =
-      makeChunk(graph, location, seen);
+  let rec make' = (~chunkReqMap=MDM.empty, ~seen=Module.Set.empty, location) => {
+    /* Logs.debug(x => x("Make chunk")); */
+    let t = Unix.gettimeofday();
+    let (modules, chunkRequests, seen) = makeChunk(location, seen);
+    Logs.debug(x => x("makeChunk: %.3f", Unix.gettimeofday() -. t));
     let chunkName = addChunk(modules);
-    let%lwt chunkReqMap =
-      Lwt_list.fold_left_s(
-        (chunkReqMap, {depRequest, toLocation: location}) => {
-          let%lwt (chunkName, chunkReqMap) =
-            make'(~chunkReqMap, ~seen, location);
-          Lwt.return(MDM.add(depRequest, chunkName, chunkReqMap));
+    let chunkReqMap =
+      Sequence.fold(
+        (chunkReqMap, {depRequest, toModule: m}) => {
+          let (chunkName, chunkReqMap) =
+            make'(~chunkReqMap, ~seen, m.Module.location);
+          MDM.add(depRequest, chunkName, chunkReqMap);
         },
         chunkReqMap,
-        List.filter(
-          ({toLocation, _}) => !MLSet.mem(toLocation, seen),
+        Sequence.filter(
+          ({toModule, _}) => !Module.Set.mem(toModule, seen),
           chunkRequests,
         ),
       );
-    Lwt.return((chunkName, chunkReqMap));
+    (chunkName, chunkReqMap);
   };
-  let%lwt (_, chunkRequests) = make'(entry);
-  Lwt.return({...bundle, chunkRequests});
+  let (_, chunkRequests) = make'(entry);
+  let bundle = {...bundle, chunkRequests};
+
+  /*   List.iter( */
+  /*     ((name, chunk)) => */
+  /*       Logs.debug(x => */
+  /*         x( */
+  /*           "chunk: %s %d", */
+  /*           switch (name) { */
+  /*           | Main => "main" */
+  /*           | Named(n) => n */
+  /*           }, */
+  /*           List.length(chunk.modules), */
+  /*         ) */
+  /*       ), */
+  /*     CCHashtbl.to_list(bundle.chunks), */
+  /*   ); */
+  bundle;
 };
 
 let rec getChunkDependencies =
@@ -427,7 +508,7 @@ let rec getChunkDependencies =
                     getChunkDependencies(~seen, Named(dep), bundle),
                   ),
                 ),
-              List.length(modules) > 0 ?
+              !Module.Set.is_empty(modules) ?
                 StringSet.singleton(name) : StringSet.empty,
               dependencies,
             )
@@ -444,6 +525,16 @@ let rec getChunkDependencies =
   | found => found
   };
 
+/* let cleanupGraph = (bundle: t) => { */
+/*   let allModules = */
+/*     Sequence.fold( */
+/*       (allModules, chunk) => Module.Set.union(allModules, chunk.modules), */
+/*       Module.Set.empty, */
+/*       CCHashtbl.values(bundle.chunks), */
+/*     ) |> Module.Set.map; */
+/*   (); */
+/* }; */
+
 let emit = (ctx: Context.t, bundle: t) => {
   let outputDir = Config.outputDir(ctx.config);
   let outputFilename = Config.outputFilename(ctx.config);
@@ -452,8 +543,10 @@ let emit = (ctx: Context.t, bundle: t) => {
   let projectRootDir = Config.projectRootDir(ctx.config);
   /* more here */
   let%lwt emittedModules =
-    Lwt_list.fold_left_s(
-      (emittedModules, (chunkName, chunk)) => {
+    Sequence.fold(
+      (emittedModules, chunk) => {
+        let%lwt emittedModules = emittedModules;
+        let (chunkName, chunk) = chunk;
         let (dirname, basename) = {
           let filename =
             FS.abs_path(
@@ -478,8 +571,7 @@ let emit = (ctx: Context.t, bundle: t) => {
             let%lwt () =
               emit(
                 switch (chunkName) {
-                | Main =>
-                  runtimeMain(envVar, publicPath)
+                | Main => runtimeMain(envVar, publicPath)
                 | Named(_name) => runtimeChunk
                 },
               );
@@ -504,24 +596,22 @@ let emit = (ctx: Context.t, bundle: t) => {
                   let%lwt () = emit(m.Module.source);
                   let%lwt () = emit("\");");
 
-                  let%lwt jsonDependencies =
-                    Lwt_list.map_s(
-                      (({Module.Dependency.encodedRequest, _}, m)) =>
-                        switch (m) {
-                        | Some(m) =>
-                          let%lwt m = m;
-                          Lwt.return((encodedRequest, `String(m.Module.id)));
-                        | None => failwith("Should not happen")
-                        },
+                  let jsonDependencies =
+                    Sequence.map(
+                      (({Module.Dependency.encodedRequest, _}, m)) => (
+                        encodedRequest,
+                        `String(m.Module.id),
+                      ),
                       DependencyGraph.lookup_dependencies(
                         ~kind=`All,
                         bundle.graph,
                         m,
                       ),
-                    );
+                    )
+                    |> Sequence.to_list;
 
                   let chunkDependencies =
-                    CCList.filter_map(
+                    Sequence.filter_map(
                       ((dep, _)) =>
                         switch (MDM.get(dep, bundle.chunkRequests)) {
                         | None => None
@@ -558,7 +648,8 @@ let emit = (ctx: Context.t, bundle: t) => {
                         bundle.graph,
                         m,
                       ),
-                    );
+                    )
+                    |> Sequence.to_list;
 
                   let chunkData =
                     switch (chunkDependencies) {
@@ -580,7 +671,7 @@ let emit = (ctx: Context.t, bundle: t) => {
                   Lwt.return(MLSet.add(m.location, emittedModules));
                 },
                 emittedModules,
-                chunk.modules,
+                chunk.modules |> Module.Set.elements,
               );
             let%lwt () = emit("\n});\n");
             /* save the fact that chunk was emitted */
@@ -595,8 +686,8 @@ let emit = (ctx: Context.t, bundle: t) => {
           },
         );
       },
-      MLSet.empty,
-      CCHashtbl.to_list(bundle.chunks),
+      Lwt.return(MLSet.empty),
+      CCHashtbl.to_seq(bundle.chunks),
     );
   let _ = DependencyGraph.cleanup(bundle.graph, emittedModules);
   let%lwt () =
@@ -617,14 +708,14 @@ let getTotalSize = (bundle: t) =>
   List.fold_left((acc, {size, _}) => acc + size, 0, getFiles(bundle));
 
 let getWarnings = ({graph, _}: t) => {
-  let%lwt warnings =
+  let warnings =
     DependencyGraph.foldModules(
       graph,
-      (warnings, m) => Lwt.return(warnings @ m.Module.warnings),
+      (warnings, m) => warnings @ m.Module.warnings,
       [],
     );
   switch (warnings) {
-  | [] => Lwt.return_none
-  | _ => Lwt.return_some(String.concat("\n", List.sort(compare, warnings)))
+  | [] => None
+  | _ => Some(String.concat("\n", List.sort(compare, warnings)))
   };
 };

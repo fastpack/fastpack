@@ -1,0 +1,6 @@
+
+/.../test/error-cannot-find-exported-name/used.js
+Import Error
+
+Cannot import name 'b' from 'a.js'
+

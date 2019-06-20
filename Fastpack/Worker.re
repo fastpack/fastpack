@@ -49,6 +49,7 @@ and ok = {
   module_type: Module.module_type,
   scope: Scope.t,
   exports: Scope.exports,
+  usedImports: Scope.ImportSet.t,
   warnings: list(string),
   files: list(string),
   build_dependencies: list(string),
@@ -259,6 +260,10 @@ let start = ({init, input, output, serveForever}) => {
       encodedRequest;
     };
 
+    let usedImports = ref(Scope.ImportSet.empty);
+    let useImport = import =>
+      usedImports := Scope.ImportSet.add(import, usedImports^);
+
     let export_from_specifiers =
       List.map(
         (
@@ -287,10 +292,11 @@ let start = ({init, input, output, serveForever}) => {
       );
 
     let patch_imported_name = (~from_request, _, remote) => {
-      let (module_var, _) = ensure_module_var(encodeDependencyRequest(from_request));
+      let (module_var, _) =
+        ensure_module_var(encodeDependencyRequest(from_request));
       switch (remote) {
       | "default" => get_module_default(module_var)
-      | _ => module_var ++ "." ++ remote
+      | _ => Printf.sprintf("(Object(%s[\"%s\"]))", module_var, remote)
       };
     };
 
@@ -300,15 +306,17 @@ let start = ({init, input, output, serveForever}) => {
            let local =
              switch (get_binding(local)) {
              | Some({
-                 typ: Scope.Import({source, remote: Some(remote)}),
+                 typ:
+                   Scope.Import({source, remote: Some(remote)} as import),
                  loc,
                  _,
                }) =>
+               useImport(import);
                patch_imported_name(
                  ~from_request=source,
                  (loc, local),
                  remote,
-               )
+               );
              | None =>
                failwith("Cannot export previously undefined name:" ++ local)
              | _ => local
@@ -617,14 +625,18 @@ let start = ({init, input, output, serveForever}) => {
         | E.Identifier((loc, name)) =>
           let () =
             switch (get_binding(name)) {
-            | Some({typ: Scope.Import({source, remote: Some(remote)}), _}) =>
+            | Some({
+                typ: Scope.Import({source, remote: Some(remote)} as import),
+                _,
+              }) =>
+              useImport(import);
               patch_loc_with(loc, () =>
                 patch_imported_name(
                   ~from_request=source,
                   (loc, name),
                   remote,
                 )
-              )
+              );
             | None =>
               switch (name) {
               | "__webpack_public_path__"
@@ -675,6 +687,7 @@ let start = ({init, input, output, serveForever}) => {
       dynamic_dependencies^,
       program_scope,
       exports,
+      usedImports^,
       module_type,
     );
   };
@@ -705,6 +718,7 @@ let start = ({init, input, output, serveForever}) => {
             dynamic_dependencies,
             scope,
             exports,
+            usedImports,
             module_type,
           ) =
             analyze(location, source, parsedSource);
@@ -725,6 +739,7 @@ let start = ({init, input, output, serveForever}) => {
               module_type,
               scope,
               exports,
+              usedImports,
               warnings,
               build_dependencies,
               files,

@@ -123,6 +123,12 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
+/* !s: main */
+"$fp$main":{m:function(module, exports, __fastpack_require__) {
+eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
+},
+d: {"./index.js":"index"}
+},
 /* !s: dep.js */
 "dep":{m:function(module, exports, __fastpack_require__) {
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\nexports.default = \"dep.js\";\n\n//# sourceURL=fpack:///dep.js");
@@ -134,12 +140,6 @@ d: {}
 eval("var dep = __fastpack_require__(\"./dep\");\n\nfunction f(require) {\n  return require(\"./dep\");\n}\n\nfunction g() {\n  var s = f(x => x);\n  var dep2 = __fastpack_require__(\"./dep\");\n  document.body.innerHTML = `Imported: ${dep.default} Imported: ${\n    dep2.default\n  } Untouched: ${s}`;\n}\n\ng();\n\n//# sourceURL=fpack:///index.js");
 },
 d: {"./dep":"dep","./dep":"dep"}
-},
-/* !s: main */
-"$fp$main":{m:function(module, exports, __fastpack_require__) {
-eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
-},
-d: {"./index.js":"index"}
 },
 
 });

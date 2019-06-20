@@ -19,7 +19,8 @@ exception Cycle(list(string));
 exception Rebuild(string, Module.location);
 
 type t = {
-  modules: Hashtbl.t(Module.location, Lazy.t(Lwt.t(Module.t))),
+  size: int,
+  modules: Hashtbl.t(Module.location, Module.t),
   /**
     x.js
     import X from "./y";
@@ -36,61 +37,73 @@ type t = {
     Hashtbl.t(Module.location, (Module.Dependency.t, Module.location)),
   buildDeps: Hashtbl.t(string, Module.location),
   parents: Hashtbl.t(Module.location, Module.LocationSet.t),
+  staticDepsCached:
+    Hashtbl.t(Module.location, Sequence.t((Module.Dependency.t, Module.t))),
+  dynamicDepsCached:
+    Hashtbl.t(Module.location, Sequence.t((Module.Dependency.t, Module.t))),
 };
 
 let empty = (~size=5000, ()) => {
+  size,
   modules: Hashtbl.create(size),
   staticDeps: Hashtbl.create(size * 20),
   dynamicDeps: Hashtbl.create(size * 20),
   buildDeps: Hashtbl.create(size * 5),
   parents: Hashtbl.create(size * 20),
-};
 
-let lookup = (table, key) => Hashtbl.find_opt(table, key);
+  staticDepsCached: Hashtbl.create(size),
+  dynamicDepsCached: Hashtbl.create(size),
+};
 
 let lookup_module = (graph, location) =>
-  switch (lookup(graph.modules, location)) {
-  | None => None
-  | Some(v) => Some(Lazy.force(v))
-  };
+  Hashtbl.find_opt(graph.modules, location);
 
 let lookup_dependencies = (~kind, graph, m: Module.t) => {
-  let dependencies =
-    switch (kind) {
-    | `Static => Hashtbl.find_all(graph.staticDeps, m.location)
-    | `Dynamic => Hashtbl.find_all(graph.dynamicDeps, m.location)
-    | `All =>
-      Hashtbl.find_all(graph.staticDeps, m.location)
-      @ Hashtbl.find_all(graph.dynamicDeps, m.location)
+  let seq = (deps, cached) =>
+    switch (Hashtbl.find_opt(cached, m.location)) {
+    | Some(res) => res
+    | None =>
+      let res =
+        Hashtbl.find_all(deps, m.location)
+        |> Sequence.of_list
+        |> Sequence.map(((dep, location)) =>
+             (
+               dep,
+               switch (lookup_module(graph, location)) {
+               | Some(m) => m
+               | None => failwith("DependencyError: TODO: report it publicly")
+               },
+             )
+           );
+      /* |> Sequence.persistent_lazy; */
+      Hashtbl.replace(cached, m.location, res);
+      res;
     };
-
-  List.map(
-    ((dep, location)) => (dep, lookup_module(graph, location)),
-    dependencies,
-  );
+  switch (kind) {
+  | `All =>
+    Sequence.append(
+      seq(graph.staticDeps, graph.staticDepsCached),
+      seq(graph.dynamicDeps, graph.dynamicDepsCached),
+    )
+  | `Static => seq(graph.staticDeps, graph.staticDepsCached)
+  | `Dynamic => seq(graph.dynamicDeps, graph.dynamicDepsCached)
+  };
 };
 
-let to_dependency_map = graph => {
-  let to_pairs =
-    CCHashtbl.map_list((_, (dep, location)) =>
-      switch (lookup_module(graph, location)) {
-      | None => failwith("not good at all, unknown location")
-      | Some(m) => (dep, m)
-      }
-    );
+let foldModules = (graph, f, acc) =>
+  graph.modules |> CCHashtbl.values |> Sequence.fold(f, acc);
 
-  Lwt_list.fold_left_s(
-    (dep_map, (dep, m)) => {
-      let%lwt m = m;
-      Module.DependencyMap.add(dep, m, dep_map) |> Lwt.return;
-    },
+let to_dependency_map = graph =>
+  foldModules(
+    graph,
+    (dep_map, m) =>
+      lookup_dependencies(~kind=`All, graph, m)
+      |> Sequence.fold(
+           (dep_map, (dep, m)) => Module.DependencyMap.add(dep, m, dep_map),
+           dep_map,
+         ),
     Module.DependencyMap.empty,
-    to_pairs(graph.staticDeps) @ to_pairs(graph.dynamicDeps),
   );
-};
-
-let add_module = (graph, location, m: Lazy.t(Lwt.t(Module.t))) =>
-  Hashtbl.replace(graph.modules, location, m);
 
 let add_module_parents = (graph, location, parents: Module.LocationSet.t) =>
   Hashtbl.add(graph.parents, location, parents);
@@ -136,7 +149,9 @@ let remove_module = (graph, location: Module.location) => {
   Hashtbl.filter_map_inplace(remove, graph.modules);
   Hashtbl.filter_map_inplace(remove, graph.parents);
   Hashtbl.filter_map_inplace(remove, graph.staticDeps);
+  Hashtbl.filter_map_inplace(remove, graph.staticDepsCached);
   Hashtbl.filter_map_inplace(remove, graph.dynamicDeps);
+  Hashtbl.filter_map_inplace(remove, graph.dynamicDepsCached);
   Hashtbl.filter_map_inplace(remove_files, graph.buildDeps);
 };
 
@@ -182,44 +197,10 @@ let cleanup = (graph, emitted_modules) => {
 
 let length = graph => Hashtbl.length(graph.modules);
 
-let modules = graph =>
-  CCHashtbl.to_seq(graph.modules)
-  |> Sequence.map(((k, m)) => (k, Lazy.force(m)));
+let modules = graph => CCHashtbl.to_seq(graph.modules);
 
 let iterModules = (graph, f) =>
-  Lwt_list.iter_s(
-    ((_, m)) => {
-      let%lwt m = m;
-      f(m);
-    },
-    Sequence.to_list(modules(graph)),
-  );
-
-let foldModules = (graph, f, acc) =>
-  Lwt_list.fold_left_s(
-    (acc, (_, m)) => {
-      let%lwt m = m;
-      f(acc, m);
-    },
-    acc,
-    Sequence.to_list(modules(graph)),
-  );
-
-
-let ensureModule = (graph, location, makeModule) =>
-  switch (lookup_module(graph, location)) {
-  | Some(mPromise) => mPromise
-  | None =>
-    let lazyMakeModule = Lazy.from_fun(makeModule);
-    add_module(graph, location, lazyMakeModule);
-    Lazy.force(lazyMakeModule);
-  };
-
-let hasModule = (graph, location) =>
-  switch (Hashtbl.find_opt(graph.modules, location)) {
-  | Some(_) => true
-  | None => false
-  };
+  graph.modules |> CCHashtbl.values |> Sequence.iter(f);
 
 type dependencies =
   | NoDependendencies
@@ -252,14 +233,14 @@ let is_json = (location: Module.location) =>
   | _ => false
   };
 
-let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
+let find_package_for_filename = (ctx: Context.t, root_dir, filename) => {
   let rec find_package_json_for_filename = filename =>
     if (!FilePath.is_subdir(filename, root_dir)) {
       Lwt.return_none;
     } else {
       let dirname = FilePath.dirname(filename);
       let package_json = FilePath.concat(dirname, "package.json");
-      if%lwt (Cache.File.exists(package_json, cache)) {
+      if%lwt (Cache.File.exists(package_json, ctx.cache)) {
         Lwt.return_some(package_json);
       } else {
         find_package_json_for_filename(dirname);
@@ -268,8 +249,14 @@ let find_package_for_filename = (cache: Cache.t, root_dir, filename) => {
 
   switch%lwt (find_package_json_for_filename(filename)) {
   | Some(package_json) =>
-    let%lwt content = Cache.File.readExisting(package_json, cache);
-    Lwt.return(Package.of_json(package_json, content));
+    let%lwt content = Cache.File.readExisting(package_json, ctx.cache);
+    Lwt.return(
+      Package.of_json(
+        ~mainFields=Config.packageMainFields(ctx.config),
+        package_json,
+        content,
+      ),
+    );
   | None => Lwt.return(Package.empty)
   };
 };
@@ -283,7 +270,7 @@ let read_module =
       | Module.Runtime => Lwt.return(Package.empty)
       | Module.Main(_) => Lwt.return(ctx.project_package)
       | Module.File({filename: Some(filename), _}) =>
-        find_package_for_filename(ctx.cache, ctx.current_dir, filename)
+        find_package_for_filename(ctx, ctx.current_dir, filename)
 
       | Module.File({filename: None, _}) => Lwt.return(ctx.project_package)
       };
@@ -301,6 +288,7 @@ let read_module =
         source,
         scope: FastpackUtil.Scope.empty,
         exports: FastpackUtil.Scope.empty_exports,
+        usedImports: FastpackUtil.Scope.ImportSet.empty,
         warnings: [],
       };
     Lwt.return((m, NoDependendencies));
@@ -323,10 +311,12 @@ let read_module =
         switch (filename) {
         | Some(filename) =>
           let%lwt _ =
-            if (!FilePath.is_subdir(filename, Config.projectRootDir(ctx.config))) {
-              Lwt.fail(
-                Error.PackError(CannotLeavePackageDir(filename)),
-              );
+            if (!
+                  FilePath.is_subdir(
+                    filename,
+                    Config.projectRootDir(ctx.config),
+                  )) {
+              Lwt.fail(Error.PackError(CannotLeavePackageDir(filename)));
             } else {
               Lwt.return_unit;
             };
@@ -393,6 +383,7 @@ let read_module =
         module_type,
         scope,
         exports,
+        usedImports,
         warnings,
         build_dependencies,
         files,
@@ -430,6 +421,7 @@ let read_module =
           module_type,
           scope,
           exports,
+          usedImports,
           build_dependencies,
           files,
         },
@@ -455,13 +447,42 @@ let read_module =
 };
 
 let build = (ctx: Context.t, startLocation: Module.location, graph: t) => {
+  let modulePromises = Hashtbl.create(graph.size);
+
+  let hasModule = location =>
+    switch (Hashtbl.find_opt(modulePromises, location)) {
+    | Some(_) => true
+    | None =>
+      switch (Hashtbl.find_opt(graph.modules, location)) {
+      | Some(_) => true
+      | None => false
+      }
+    };
+
+  let ensureModule = (location, makeModule) =>
+    switch (Hashtbl.find_opt(modulePromises, location)) {
+    | Some(m) => Lazy.force(m)
+    | None =>
+      switch (Hashtbl.find_opt(graph.modules, location)) {
+      | Some(m) => Lwt.return(m)
+      | None =>
+        let lazyMakeModule =
+          Lazy.from_fun(() => {
+            let%lwt m = makeModule();
+            Hashtbl.replace(graph.modules, location, m);
+            Lwt.return(m);
+          });
+        Hashtbl.replace(modulePromises, location, lazyMakeModule);
+        Lazy.force(lazyMakeModule);
+      }
+    };
+
   /* Gather dependencies */
   let rec process = (~seen: Module.LocationSet.t, location: Module.location) => {
     let read = (location, source) =>
       Worker.Reader.read(~location, ~source, ctx.reader);
     add_module_parents(graph, location, seen);
     ensureModule(
-      graph,
       location,
       () => {
         let%lwt (m, deps) =
@@ -529,7 +550,7 @@ let build = (ctx: Context.t, startLocation: Module.location, graph: t) => {
             Lwt_list.iter_p(
               ((_, resolved)) => {
                 let%lwt () =
-                  switch (hasModule(graph, resolved)) {
+                  switch (hasModule(resolved)) {
                   | false =>
                     let%lwt _ =
                       process(

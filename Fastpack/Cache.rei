@@ -8,6 +8,7 @@ and params = {
   mock: list((string, Config.Mock.t)),
   nodeModulesPaths: list(string),
   resolveExtension: list(string),
+  packageMainFields: list(string),
   preprocess: list(Config.Preprocessor.t),
 };
 

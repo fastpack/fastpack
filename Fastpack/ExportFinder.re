@@ -17,16 +17,24 @@ type export_exists =
   | No; /* does not exist in ESM */
 
 type t = {
+  exportCheckUsedImportsOnly: bool,
   unwrapped_batches: Hashtbl.t(string, all_exports),
   dependency_map: Module.DependencyMap.t(Module.t),
 };
 
-let make = graph => {
-  let%lwt dependency_map = DependencyGraph.to_dependency_map(graph);
-  Lwt.return({unwrapped_batches: Hashtbl.create(5000), dependency_map});
+let make = (~exportCheckUsedImportsOnly, graph) => {
+  let t = Unix.gettimeofday();
+  let dependency_map = DependencyGraph.to_dependency_map(graph);
+  Logs.debug(x => x("build dependency_map: %.3f", Unix.gettimeofday() -. t));
+  Lwt.return({
+    exportCheckUsedImportsOnly,
+    unwrapped_batches: Hashtbl.create(5000),
+    dependency_map,
+  });
 };
 
 let rec unwrap_batches = (m: Module.t, finder: t) => {
+  let sloc = Module.location_to_string(m.location);
   let decorate = (m, exports) =>
     M.map(export => {export, parent_module: m}, exports);
 
@@ -56,6 +64,8 @@ let rec unwrap_batches = (m: Module.t, finder: t) => {
                     failwith(
                       "ExportFinder > Cannot export twice: "
                       ++ key
+                      ++ " in module: "
+                      ++ sloc
                       ++ ". Module 1: "
                       ++ Module.location_to_string(v1.parent_module.location)
                       ++ ". Module 2: "
@@ -110,7 +120,14 @@ let ensure_exports = (m: Module.t, finder: t) =>
          | Some(_) => found
          | None =>
            switch (binding) {
-           | {Scope.typ: Scope.Import({remote: Some(remote), source}), _} =>
+           | {
+               Scope.typ:
+                 Scope.Import({remote: Some(remote), source} as import),
+               _,
+             }
+               when
+                 !finder.exportCheckUsedImportsOnly
+                 || Scope.ImportSet.mem(import, m.usedImports) =>
              let dep = {
                Module.Dependency.request: source,
                encodedRequest: source,

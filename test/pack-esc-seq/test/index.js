@@ -123,17 +123,17 @@ if(!global.setImmediate) {
   return __fastpack_require__(null, (__fastpack_require__.s = "$fp$main"));
 }) /* --runtimeMain-- */
 ({
-/* !s: index.js */
-"index":{m:function(module, exports, __fastpack_require__) {
-eval("var nonASCIIidentifierStartChars = \"\\xaa\\xb5\\xba\\xc0-\\xd6\\xd8-\\xf6\\xf8-\\u02c1\\u02c6-\\u02d1\";\nconsole.log(nonASCIIidentifierStartChars);\n\n//# sourceURL=fpack:///index.js");
-},
-d: {}
-},
 /* !s: main */
 "$fp$main":{m:function(module, exports, __fastpack_require__) {
 eval("Object.defineProperty(module.exports, \"__esModule\", {value: !0});\n__fastpack_require__(\"./index.js\");\n\n\n\n//# sourceURL=fpack:///$fp$main");
 },
 d: {"./index.js":"index"}
+},
+/* !s: index.js */
+"index":{m:function(module, exports, __fastpack_require__) {
+eval("var nonASCIIidentifierStartChars = \"\\xaa\\xb5\\xba\\xc0-\\xd6\\xd8-\\xf6\\xf8-\\u02c1\\u02c6-\\u02d1\";\nconsole.log(nonASCIIidentifierStartChars);\n\n//# sourceURL=fpack:///index.js");
+},
+d: {}
 },
 
 });

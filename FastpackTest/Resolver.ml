@@ -52,6 +52,7 @@ let resolve
           ~mock
           ~node_modules_paths
           ~extensions
+          ~packageMainFields:["browser";"module";"main"]
           ~preprocessors
           ~cache
           ()
