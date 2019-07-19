@@ -7,7 +7,7 @@ homepage: "https://github.com/c-cube/gen/"
 doc: "https://c-cube.github.io/gen/"
 bug-reports: "https://github.com/c-cube/gen/issues"
 depends: [
-  "dune" {build}
+  "dune"
   "base-bytes"
   "odoc" {with-doc}
   "qtest" {with-test}

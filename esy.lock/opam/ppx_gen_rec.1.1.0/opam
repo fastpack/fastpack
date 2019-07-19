@@ -1,0 +1,27 @@
+opam-version: "2.0"
+maintainer: "Marshall Roch <mroch@fb.com>"
+authors: ["Marshall Roch <mroch@fb.com>"]
+license: "MIT"
+homepage: "https://github.com/flowtype/ocaml-ppx_gen_rec"
+bug-reports: "https://github.com/flowtype/ocaml-ppx_gen_rec/issues"
+depends: [
+  "ocaml"
+  "dune"
+  "ocaml-migrate-parsetree" {>= "1.1.0"}
+]
+build: ["dune" "build" "-p" name "-j" jobs]
+dev-repo: "git+https://github.com/flowtype/ocaml-ppx_gen_rec.git"
+synopsis: "A ppx rewriter that transforms a recursive module expression into a `struct`"
+description: """
+In a recursive module expression, the struct can be derived from the signature automatically
+by the compiler. This package does the same thing, but doing it this way allows ppx_deriving
+to transform the signature and struct separately.
+"""
+url {
+  src:
+    "https://github.com/flowtype/ocaml-ppx_gen_rec/releases/download/v1.1.0/ppx_gen_rec-v1.1.0.tbz"
+  checksum: [
+    "sha256=7061496354023c182f189f02ee3dc5a8ae54dbb75b66a5effb09226ce722913b"
+    "sha512=37dded76035765673947d1d5d5e49ae7d36f80baaf7b5315d78e1392546c93d12ee164ce23baec6007879d3a8277c860c130d27b09be77b0caf736c7144881f0"
+  ]
+}

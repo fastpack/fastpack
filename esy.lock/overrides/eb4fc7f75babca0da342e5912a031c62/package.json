@@ -1,0 +1,30 @@
+{
+  "source": "https://github.com/emcrisostomo/fswatch/releases/download/1.14.0/fswatch-1.14.0.tar.gz#af74e538e9816f158352078d73844367d1c24a7f",
+  "override": {
+    "buildsInSource": true,
+    "build": [
+      [
+        "./configure",
+        "--prefix=#{self.install}",
+        "--disable-dependency-tracking",
+        "--disable-silent-rules",
+        "#{os == 'windows' ? '--host=x86_64-w64-mingw32' : ''}"
+      ],
+      "make",
+      "make install"
+    ],
+    "install": [
+      "make install"
+    ],
+    "exportedEnv": {
+      "FSWATCH_INCLUDE_PATH": {
+        "val": "#{self.install / 'include'}",
+        "scope": "global"
+      },
+      "FSWATCH_BIN_PATH": {
+        "val": "#{self.install / 'fswatch'}",
+        "scope": "global"
+      }
+    }
+  }
+}
