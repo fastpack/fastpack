@@ -59,10 +59,11 @@ let reportCache = builder => {
   Lwt_io.(write_line(stdout, report));
 };
 
-let reportWarnings = bundle => switch(Bundle.getWarnings(bundle)) {
-  | Some(warnings) => Lwt_io.(write_line(stdout, warnings));
+let reportWarnings = bundle =>
+  switch (Bundle.getWarnings(bundle)) {
+  | Some(warnings) => Lwt_io.(write_line(stdout, warnings))
   | None => Lwt.return_unit
-};
+  };
 
 let reportResult = (start_time, result, builder) =>
   switch (result) {
@@ -86,13 +87,15 @@ let reportResult = (start_time, result, builder) =>
           sprintf("%db", size);
         }
       );
-    let reportContent = Printf.sprintf(
-      "Done in %.3fs. Bundle: %s. Modules: %d.\n",
-      Unix.gettimeofday() -. start_time,
-      pretty_size,
-      modules
-    )
-    let report = Pastel.(<Pastel bold=true color=Green>reportContent</Pastel>)
+    let reportContent =
+      Printf.sprintf(
+        "Done in %.3fs. Bundle: %s. Modules: %d.\n",
+        Unix.gettimeofday() -. start_time,
+        pretty_size,
+        modules,
+      );
+    let report =
+      Pastel.(<Pastel bold=true color=Green> reportContent </Pastel>);
     Lwt_io.(write_line(stdout, report));
   };
 
@@ -106,7 +109,6 @@ module ExplainConfig = {
         },
       )
     );
-
 
   let doc = "load, validate, and explain the configuration";
   let command =
@@ -153,7 +155,7 @@ module Build = {
   let doc = "rebuild the bundle on a file change";
   let command =
     register((
-      Term.(ret(const(run) $ Config.term $ Config.debugT  $ dryRunT $ oneT)),
+      Term.(ret(const(run) $ Config.term $ Config.debugT $ dryRunT $ oneT)),
       Term.info("build", ~doc, ~sdocs, ~exits),
     ));
 };
@@ -225,7 +227,7 @@ module Transpile = {
 };
 
 module Watch = {
-  module Watchman = {
+  module FsWatch = {
     type t = {
       root: string,
       process: Process.t,
@@ -233,25 +235,17 @@ module Watch = {
     };
 
     let make = (root, filterFilename) => {
-      let subscription = Printf.sprintf("s-%f", Unix.gettimeofday());
-      let subscribe_message =
-        `List([
-          `String("subscribe"),
-          `String(root),
-          `String(subscription),
-          `Assoc([("fields", `List([`String("name")]))]),
-        ])
-        |> Yojson.to_string;
+      let cmd = [|"fswatch", "--recursive", "--batch-marker", root|];
+      let%lwt () =
+        Lwt_io.(
+          write_line(stdout, CCArray.to_list(cmd) |> CCString.concat(" "))
+        );
+      let%lwt () = Lwt_io.(write_line(stdout, "Starting fswatch..."));
 
-      let cmd = [|"watchman", "--no-save-state", "-j", "--no-pretty", "-p"|];
-      let%lwt () = Lwt_io.(write_line(stdout, "Starting watchman..."));
       let process = Process.start(cmd);
       let%lwt _ =
         Lwt.catch(
-          () => {
-            let%lwt () = Process.write(subscribe_message ++ "\n", process);
-            Process.readLine(process);
-          },
+          () => Process.readLine(process),
           fun
           | Process.NotRunning(msg) =>
             raise(
@@ -260,14 +254,16 @@ module Watch = {
                   {|
 %s
 
-Unssuccessfully tried to start watchman using the following command:
+Unssuccessfully tried to start fswatch using the following command:
   %s
 
-It looks, like your system doesn't have it installed. Please, check here
-for installation instructions:
-  https://facebook.github.io/watchman/
+It should have been installed with fastpack, please file an issue on the repo.
           |},
-                  Pastel.(<Pastel bold=true color=Red>"Cannot start file watching service: watchman"</Pastel>),
+                  Pastel.(
+                    <Pastel bold=true color=Red>
+                      "Cannot start file watching service: fswatch"
+                    </Pastel>
+                  ),
                   msg,
                 ),
               ),
@@ -281,30 +277,22 @@ for installation instructions:
       Lwt.return({root, filterFilename, process});
     };
 
-    let rec getFiles = (watchman: t) => {
-      let%lwt line = Process.readLine(watchman.process);
-      open Yojson.Safe.Util;
-      let data = Yojson.Safe.from_string(line);
-      let root = member("root", data) |> to_string;
-      let files =
-        member("files", data)
-        |> to_list
-        |> List.map(to_string)
-        |> List.map(filename => FS.abs_path(root, filename))
-        |> List.filter(watchman.filterFilename)
-        |> List.fold_left(
-             (set, filename) => StringSet.add(filename, set),
-             StringSet.empty,
-           );
-      if (files == StringSet.empty) {
-        getFiles(watchman);
+    let rec getFiles = (fswatch: t, files) => {
+      let%lwt file = Process.readLine(fswatch.process);
+
+      if (file != "NoOp" && fswatch.filterFilename(file)) {
+        let files = StringSet.add(file, files);
+        getFiles(fswatch, files);
+      } else if (files == StringSet.empty) {
+        getFiles(fswatch, files);
       } else {
         Lwt.return(files);
       };
     };
 
-    let finalize = watchman => Process.finalize(watchman.process);
+    let finalize = fswatch => Process.finalize(fswatch.process);
   };
+
   let run = (config: Lwt.t(Config.t), debug) =>
     run(debug, () =>
       Lwt_main.run(
@@ -315,8 +303,8 @@ for installation instructions:
           let%lwt () = reportCache(builder);
           let%lwt result = Builder.build(builder);
           let%lwt () = reportResult(start_time, result, builder);
-          let%lwt watchman =
-            Watchman.make(
+          let%lwt fswatch =
+            FsWatch.make(
               Config.projectRootDir(config),
               Builder.getFilenameFilter(builder),
             );
@@ -325,7 +313,7 @@ for installation instructions:
           let changedFilesLock = Lwt_mutex.create();
 
           let rec collectFileChanges = () => {
-            let%lwt files = Watchman.getFiles(watchman);
+            let%lwt files = FsWatch.getFiles(fswatch, StringSet.empty);
             let%lwt () =
               Lwt_mutex.with_lock(
                 changedFilesLock,
@@ -449,7 +437,7 @@ for installation instructions:
                 <&> FS.setInterval(5., dumpCache)
                 <?> w,
               () => {
-                let%lwt () = Watchman.finalize(watchman);
+                let%lwt () = FsWatch.finalize(fswatch);
                 let%lwt () = Builder.finalize(builder);
                 Lwt.return_unit;
               },
@@ -477,8 +465,7 @@ module Worker = {
         (),
       )
     );
-  let run = () =>
-    Lwt_main.run(Worker.start(worker));
+  let run = () => Lwt_main.run(Worker.start(worker));
   let doc = "worker subprocess (do not use directly)";
   let command =
     register((
