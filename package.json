@@ -35,7 +35,8 @@
   "homepage": "https://github.com/fastpack/fastpack#readme",
   "resolutions": {
     "@esy-ocaml/reason": "github:facebook/reason#335c3fb2470964c2b4a7d571a8fbd9acdc3c2323",
-    "@esy-ocaml/esy-installer": "0.0.1"
+    "@esy-ocaml/esy-installer": "0.0.1",
+    "esy-fswatch": "ulrikstrid/esy-fswatch:package.json#aedbd37"
   },
   "dependencies": {
     "@esy-ocaml/reason": "*",
@@ -66,7 +67,8 @@
     "ocaml": "~4.6.1",
     "opencollective-postinstall": "^2.0.2",
     "refmterr": "*",
-    "opencollective": "^1.0.3"
+    "opencollective": "^1.0.3",
+    "esy-fswatch": "*"
   },
   "collective": {
     "type": "opencollective",

@@ -7,7 +7,7 @@ doc: "https://github.com/flowtype/ocaml-wtf8"
 bug-reports: "https://github.com/flowtype/ocaml-wtf8/issues"
 depends: [
   "ocaml" {>= "4.01.0"}
-  "dune" {build & >= "1.0"}
+  "dune" {>= "1.0"}
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
