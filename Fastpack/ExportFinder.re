@@ -34,7 +34,6 @@ let make = (~exportCheckUsedImportsOnly, graph) => {
 };
 
 let rec unwrap_batches = (m: Module.t, finder: t) => {
-  let sloc = Module.location_to_string(m.location);
   let decorate = (m, exports) =>
     M.map(export => {export, parent_module: m}, exports);
 
@@ -56,22 +55,8 @@ let rec unwrap_batches = (m: Module.t, finder: t) => {
             M.merge(
               (key, v1, v2) =>
                 switch (v1, v2) {
-                | (Some(v1), Some(v2)) =>
-                  if (key == "default") {
-                    Some(v1);
-                  } else {
-                    /* TODO: define proper error here */
-                    failwith(
-                      "ExportFinder > Cannot export twice: "
-                      ++ key
-                      ++ " in module: "
-                      ++ sloc
-                      ++ ". Module 1: "
-                      ++ Module.location_to_string(v1.parent_module.location)
-                      ++ ". Module 2: "
-                      ++ Module.location_to_string(v2.parent_module.location),
-                    );
-                  }
+                | (Some(v1), Some(_v2)) when key == "default" => Some(v1)
+                | (Some(_v1), Some(v2)) => Some(v2)
                 | (Some(v), None)
                 | (None, Some(v)) => Some(v)
                 | (None, None) => None
